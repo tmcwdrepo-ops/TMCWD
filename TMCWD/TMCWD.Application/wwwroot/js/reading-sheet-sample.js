@@ -1,5 +1,4 @@
 const READING_SHEET_SAMPLE_DATA = [
-  // --- In-Progress (20 rows) ---
   { id: 1,  meterReader: 'Juan dela Cruz',      billingDate: 'Jul 01, 2025', zone: 'ZN-01', forPosting: 3, status: 'In-Progress' },
   { id: 2,  meterReader: 'Ana Lim',             billingDate: 'Jul 02, 2025', zone: 'ZN-04', forPosting: 7, status: 'In-Progress' },
   { id: 3,  meterReader: 'Liza Torres',         billingDate: 'Jul 03, 2025', zone: 'ZN-05', forPosting: 1, status: 'In-Progress' },
@@ -20,8 +19,6 @@ const READING_SHEET_SAMPLE_DATA = [
   { id: 18, meterReader: 'Olivia Reyes',        billingDate: 'Jul 19, 2025', zone: 'ZN-02', forPosting: 4, status: 'In-Progress' },
   { id: 19, meterReader: 'Paulo Santos',        billingDate: 'Jul 20, 2025', zone: 'ZN-06', forPosting: 8, status: 'In-Progress' },
   { id: 20, meterReader: 'Queenie Aguilar',     billingDate: 'Jul 21, 2025', zone: 'ZN-03', forPosting: 0, status: 'In-Progress' },
-
-  // --- Completed (20 rows) ---
   { id: 21, meterReader: 'Maria Santos',        billingDate: 'Jul 01, 2025', zone: 'ZN-02', forPosting: 5, status: 'Completed' },
   { id: 22, meterReader: 'Roberto Reyes',       billingDate: 'Jul 02, 2025', zone: 'ZN-03', forPosting: 2, status: 'Completed' },
   { id: 23, meterReader: 'Carlo Mendoza',       billingDate: 'Jul 03, 2025', zone: 'ZN-01', forPosting: 8, status: 'Completed' },

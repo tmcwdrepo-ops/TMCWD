@@ -275,9 +275,55 @@ function loadPageScript(pageName) {
  * loaded (in order) before the page script runs.
  * Add entries here as new pages with data files are introduced.
  */
-var PAGE_DATA_FILES = {
-  'reading-sheet': ['modules/reading-sheet/reading-sheet-sample.js']
-};
+// var PAGE_DATA_FILES = {
+//   'reading-sheet': ['~/js/reading-sheet-sample.js']
+// };
+
+var PAGE_DATA_FILES =
+    [
+        { id: 1, meterReader: 'Juan dela Cruz', billingDate: 'Jul 01, 2025', zone: 'ZN-01', forPosting: 3, status: 'In-Progress' },
+        { id: 2, meterReader: 'Ana Lim', billingDate: 'Jul 02, 2025', zone: 'ZN-04', forPosting: 7, status: 'In-Progress' },
+        { id: 3, meterReader: 'Liza Torres', billingDate: 'Jul 03, 2025', zone: 'ZN-05', forPosting: 1, status: 'In-Progress' },
+        { id: 4, meterReader: 'Grace Aquino', billingDate: 'Jul 05, 2025', zone: 'ZN-06', forPosting: 5, status: 'In-Progress' },
+        { id: 5, meterReader: 'Ben Ramos', billingDate: 'Jul 06, 2025', zone: 'ZN-02', forPosting: 9, status: 'In-Progress' },
+        { id: 6, meterReader: 'Clara Bautista', billingDate: 'Jul 07, 2025', zone: 'ZN-03', forPosting: 2, status: 'In-Progress' },
+        { id: 7, meterReader: 'Dennis Pascual', billingDate: 'Jul 08, 2025', zone: 'ZN-01', forPosting: 6, status: 'In-Progress' },
+        { id: 8, meterReader: 'Elena Varga', billingDate: 'Jul 09, 2025', zone: 'ZN-07', forPosting: 4, status: 'In-Progress' },
+        { id: 9, meterReader: 'Felix Soriano', billingDate: 'Jul 10, 2025', zone: 'ZN-04', forPosting: 8, status: 'In-Progress' },
+        { id: 10, meterReader: 'Gloria Navarro', billingDate: 'Jul 11, 2025', zone: 'ZN-05', forPosting: 0, status: 'In-Progress' },
+        { id: 11, meterReader: 'Hector Flores', billingDate: 'Jul 12, 2025', zone: 'ZN-02', forPosting: 3, status: 'In-Progress' },
+        { id: 12, meterReader: 'Iris Magtanggol', billingDate: 'Jul 13, 2025', zone: 'ZN-06', forPosting: 7, status: 'In-Progress' },
+        { id: 13, meterReader: 'Joel Manalo', billingDate: 'Jul 14, 2025', zone: 'ZN-03', forPosting: 2, status: 'In-Progress' },
+        { id: 14, meterReader: 'Karen Dela Rosa', billingDate: 'Jul 15, 2025', zone: 'ZN-07', forPosting: 5, status: 'In-Progress' },
+        { id: 15, meterReader: 'Leo Cabrera', billingDate: 'Jul 16, 2025', zone: 'ZN-01', forPosting: 9, status: 'In-Progress' },
+        { id: 16, meterReader: 'Mona Espiritu', billingDate: 'Jul 17, 2025', zone: 'ZN-04', forPosting: 1, status: 'In-Progress' },
+        { id: 17, meterReader: 'Nathan Cruz', billingDate: 'Jul 18, 2025', zone: 'ZN-05', forPosting: 6, status: 'In-Progress' },
+        { id: 18, meterReader: 'Olivia Reyes', billingDate: 'Jul 19, 2025', zone: 'ZN-02', forPosting: 4, status: 'In-Progress' },
+        { id: 19, meterReader: 'Paulo Santos', billingDate: 'Jul 20, 2025', zone: 'ZN-06', forPosting: 8, status: 'In-Progress' },
+        { id: 20, meterReader: 'Queenie Aguilar', billingDate: 'Jul 21, 2025', zone: 'ZN-03', forPosting: 0, status: 'In-Progress' },
+        { id: 21, meterReader: 'Maria Santos', billingDate: 'Jul 01, 2025', zone: 'ZN-02', forPosting: 5, status: 'Completed' },
+        { id: 22, meterReader: 'Roberto Reyes', billingDate: 'Jul 02, 2025', zone: 'ZN-03', forPosting: 2, status: 'Completed' },
+        { id: 23, meterReader: 'Carlo Mendoza', billingDate: 'Jul 03, 2025', zone: 'ZN-01', forPosting: 8, status: 'Completed' },
+        { id: 24, meterReader: 'Dante Villanueva', billingDate: 'Jul 04, 2025', zone: 'ZN-02', forPosting: 1, status: 'Completed' },
+        { id: 25, meterReader: 'Noel Castillo', billingDate: 'Jul 06, 2025', zone: 'ZN-03', forPosting: 7, status: 'Completed' },
+        { id: 26, meterReader: 'Rachel Domingo', billingDate: 'Jul 07, 2025', zone: 'ZN-07', forPosting: 4, status: 'Completed' },
+        { id: 27, meterReader: 'Samuel Ong', billingDate: 'Jul 08, 2025', zone: 'ZN-01', forPosting: 9, status: 'Completed' },
+        { id: 28, meterReader: 'Teresa Padilla', billingDate: 'Jul 09, 2025', zone: 'ZN-04', forPosting: 3, status: 'Completed' },
+        { id: 29, meterReader: 'Ulysses Tan', billingDate: 'Jul 10, 2025', zone: 'ZN-05', forPosting: 6, status: 'Completed' },
+        { id: 30, meterReader: 'Vera Lim', billingDate: 'Jul 11, 2025', zone: 'ZN-06', forPosting: 0, status: 'Completed' },
+        { id: 31, meterReader: 'Walter Gomez', billingDate: 'Jul 12, 2025', zone: 'ZN-02', forPosting: 5, status: 'Completed' },
+        { id: 32, meterReader: 'Xena Fuentes', billingDate: 'Jul 13, 2025', zone: 'ZN-07', forPosting: 8, status: 'Completed' },
+        { id: 33, meterReader: 'Yolanda Hernandez', billingDate: 'Jul 14, 2025', zone: 'ZN-03', forPosting: 2, status: 'Completed' },
+        { id: 34, meterReader: 'Zach Villafuerte', billingDate: 'Jul 15, 2025', zone: 'ZN-01', forPosting: 7, status: 'Completed' },
+        { id: 35, meterReader: 'Amy Coronado', billingDate: 'Jul 16, 2025', zone: 'ZN-04', forPosting: 4, status: 'Completed' },
+        { id: 36, meterReader: 'Bryan Salazar', billingDate: 'Jul 17, 2025', zone: 'ZN-05', forPosting: 9, status: 'Completed' },
+        { id: 37, meterReader: 'Cathy Mendez', billingDate: 'Jul 18, 2025', zone: 'ZN-06', forPosting: 1, status: 'Completed' },
+        { id: 38, meterReader: 'Diego Ramos', billingDate: 'Jul 19, 2025', zone: 'ZN-02', forPosting: 6, status: 'Completed' },
+        { id: 39, meterReader: 'Eva Mercado', billingDate: 'Jul 20, 2025', zone: 'ZN-07', forPosting: 3, status: 'Completed' },
+        { id: 40, meterReader: 'Frank Panganiban', billingDate: 'Jul 21, 2025', zone: 'ZN-03', forPosting: 0, status: 'Completed' }
+    ];
+
+console.log('PAGE_DATA_FILES:', PAGE_DATA_FILES);
 
 
 /**
@@ -393,13 +439,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
   // --- Page navigation: wire data-nav links to loadPage() ---
-  var readingSheetLink = document.querySelector('[data-nav="reading-sheet"]');
-  if (readingSheetLink) {
-    readingSheetLink.addEventListener('click', function(e) {
-      e.preventDefault();
-      loadPage('reading-sheet', 'View Reading Sheet Created');
-    });
-  }
+  // var readingSheetLink = document.querySelector('[data-nav="reading-sheet"]');
+  // if (readingSheetLink) {
+  //   readingSheetLink.addEventListener('click', function(e) {
+  //     e.preventDefault();
+  //     loadPage('reading-sheet', 'View Reading Sheet Created');
+  //   });
+  // }
 
 
   // --- Mobile hamburger ---

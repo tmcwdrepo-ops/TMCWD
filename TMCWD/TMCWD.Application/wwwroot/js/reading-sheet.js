@@ -43,6 +43,8 @@ var readingSheetState = {
  * @param {number} delay
  * @returns {Function}
  */
+
+initReadingSheetPage();
 function debounce(fn, delay) {
   var timer;
   return function() {
