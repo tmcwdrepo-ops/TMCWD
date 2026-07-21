@@ -1,0 +1,767 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = "_insideLayout";
+}
+
+@model TMCWD.Application.Models.RequestViewModel
+
+<style>
+    .negative-stock[data-negativestock="True"] {
+        color: red;
+    }
+</style>
+
+<div id="accordion-collapse-request" data-accordion="collapse" class="rounded-lg border border-default overflow-hidden shadow-xs">
+    <!-- Request Details -->
+    <h2 id="accordion-collapse-heading-1" class="bg-gray-300">
+        <button id="accordion-button-item-1" type="button" class="collapsible-button flex items-center justify-between w-full p-5 font-medium rtl:text-right text-body rounded-t-base border border-t-0 border-x-0 border-b-default hover:text-heading hover:bg-neutral-secondary-medium gap-3" data-accordion-target="#accordion-collapse-body-1" aria-expanded="true" aria-controls="accordion-collapse-body-1">
+            <span>Request Details</span>
+            <svg id="accordion-icon-item-1" data-accordion-icon class="w-5 h-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 15 7-7 7 7" /></svg>
+        </button>
+    </h2>
+    <div id="accordion-collapse-body-1" class="collapsible-body bg-white border border-s-0 border-e-0 border-t-0 border-b-default" aria-labelledby="accordion-collapse-heading-1">
+        <div class="p-4 md:p-5">
+            <!-- Request Details -->
+
+            <p class="text-gray-700">
+                @Html.HiddenFor(x => x.CurrentUser.Id, new { id = "hdCurrentUserId" })
+                @Html.HiddenFor(x => x.AddEditRequest.Id, new { id = "hdRequestId" })
+                @Html.HiddenFor(x => x.AddEditRequest.CustomerId, new { id = "hdAddEditCustomerId" })
+                @Html.HiddenFor(x => x.AddEditRequest.DateCreated, new { id = "hdDateCreated" })
+                @Html.HiddenFor(x => x.AddEditRequest.CreatedBy, new { id = "hdCreatedBy" })
+                @Html.HiddenFor(x => x.AddEditRequest.AccountId, new { id = "hdAccountId" })
+                <input type="hidden" id="hdCustomerName" />
+
+                <div class="grid gap-6 mb-6 md:grid-cols-2">
+                    <div>
+                        <label for="pControlNumber" class="block mb-2.5 text-sm font-medium text-heading">Control No.</label>
+                        <p id="pControlNumber" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body">
+                            @if (Model.AddEditRequest.Id > 0)
+                            {
+                                @Model.AddEditRequest.ControlNumber
+                            }
+                            else
+                            {
+                                @("No yet created . . .")
+                            }
+                        </p>
+                    </div>
+                    <div>
+                        <label for="pDate" class="block mb-2.5 text-sm font-medium text-heading">Date</label>
+                        <p id="pDate" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body">
+                            @if (Model.AddEditRequest.Id > 0)
+                            {
+                                @Model.AddEditRequest.DateCreated.ToString("dd MMM yyyy")
+                            }
+                            else
+                            {
+                                @DateTime.Now.ToString("dd MMM yyyy")
+                            }
+                        </p>
+                    </div>
+                    <div>
+                        <label for="pCustomerName" class="block mb-2.5 text-sm font-medium text-heading">
+                            Account Name
+                            @if (Model.AddEditRequest.Id <= 0)
+                            {
+                                <a id="lnkAccountName" href="#" class="pl-4">
+                                    <i class="fa fa-plus" aria-hidden="true"></i>
+                                </a>
+                            }
+                        </label>
+                        <div id="divCustomerName">
+                            <p id="pCustomerName" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body">
+                            @if (Model.AddEditRequest.CustomerId > 0)
+                            {
+                                @($"{Model.CurrentCustomer.Lastname}, {Model.CurrentCustomer.Firstname} {Model.CurrentCustomer.Middlename}")
+                            }
+                            else
+                            {
+                                @("No customer selectected . . .")
+                            }
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="pPhone" class="block mb-2.5 text-sm font-medium text-heading">Contact No.</label>
+                        <p id="pPhone" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body">
+                        @if (Model.CurrentCustomer.Id > 0)
+                        {
+                            @(Model.CurrentCustomer.PhoneNumber)
+                        }
+                        else
+                        {
+                            @("No customer selectected . . .")
+                        }
+                        </p>
+                    </div>
+                    <div>
+                        <label for="pEmail" class="block mb-2.5 text-sm font-medium text-heading">Email</label>
+                        <p id="pEmail" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body">
+                            @if(Model.AddEditRequest.AccountId > 0)
+                            {
+                                @Model.CurrentCustomer.Email
+                            }
+                            else
+                            {
+                                @("No selected customer . . .")
+                            }
+                        </p>
+                    </div>
+                    <div>
+                        <label for="pAccountNo" class="block mb-2.5 text-sm font-medium text-heading">
+                            Account No
+                            @if (Model.AddEditRequest.Id <= 0)
+                            {
+                                <a id="lnkAccountNo" href="#" class="pl-4 disabled:cursor-not-allowed">
+                                    <i class="fa fa-plus" aria-hidden="true"></i>
+                                </a>
+                            }
+                        </label>
+                        <div id="divAccountDropdown">
+                            <p id="pAccountNo" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body">
+                            @if (Model.AddEditRequest.AccountId > 0)
+                            {
+                                @(Model.CurrentAccount.AccountNumber ?? "")
+                            }
+                            else
+                            {
+                                @("No selected account . . .")
+                            }
+                            </p>
+                        </div>
+                    </div>
+                    <div class="grid col-span-2 gap-1">
+                        <label for="pAddress" class="block mb-2.5 text-sm font-medium text-heading">Service Address</label>
+                        <p id="pAddress" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body">
+                            @if (Model.CurrentAccount.Id > 0)
+                            {
+                                @Model.CurrentAccount.FullAddress
+                            }
+                            else
+                            {
+                                @("No selected account . . .")
+                            }
+                        </p>
+                    </div>
+                    <div class="grid col-span-2 gap-6">
+                        <div id="service-details" data-services="details" class="grid gap-4 mb-6 md:grid-cols-4">
+                        </div>
+                    </div>
+                </div>
+                <div id="divButtons" class="text-right">
+                    <button id="btnCancel" type="button" class="px-4 py-2 text-sm text-white bg-red-700 text-black font-semibold rounded-md hover:bg-red-500 transition duration-150" onclick="location.href='@Url.Action("Requests", "CustomerSupport")'">
+                        <i class="fa-solid fa-xmark mr-4"></i>Cancel
+                    </button>
+                    @* <button id="btnSave" type"button" class="px-4 py-2 text-sm text-white bg-yellow-700 text-white font-semibold rounded-md hover:bg-yellow-500 hover:text-black transition duration-150">
+                            <i class="fa-solid fa-floppy-disk mr-4"></i>Save as Draft
+                        </button>
+                    <button id="btnSubmit" type"button" class="px-4 py-2 text-sm text-white bg-green-600 text-white font-semibold rounded-md hover:bg-green-500 hover:text-black transition duration-150">
+                            <i class="fa-solid fa-paper-plane mr-4"></i>Submit
+                        </button> *@
+                </div>
+            </p>
+
+            <!-- Request Details End -->
+        </div>
+    </div>
+    @if (Model.AddEditRequest.Id > 0){
+        <!--Job Orders-->
+        <h2 id="accordion-collapse-heading-2" class="bg-gray-300">
+            <button id="accordion-button-item-2" type="button" class="collapsible-button flex items-center justify-between w-full p-5 font-medium rtl:text-right text-body rounded-t-base border border-t-0 border-x-0 border-b-default hover:text-heading hover:bg-neutral-secondary-medium gap-3" data-accordion-target="#accordion-collapse-body-1" aria-expanded="true" aria-controls="accordion-collapse-body-1">
+                <span>Job Orders</span>
+                <svg id="accordion-icon-item-2" data-accordion-icon class="w-5 h-5 shrink-0 rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 15 7-7 7 7" /></svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2" class="collapsible-body hidden bg-white border border-s-0 border-e-0 border-t-0 border-b-default p-4" aria-labelledby="accordion-collapse-heading-2">
+            <table id="tblJobOrders" class="customer-select-list w-full text-sm text-left rtl:text-right text-body border">
+                <thead class=" text-sm text-body bg-neutral-secondary-soft border-b rounded-lg border-default">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 font-medium">Date</th>
+                        <th scope="col" class="px-6 py-3 font-medium">Service</th>
+                        <th scope="col" class="px-6 py-3 font-medium">Status</th>
+                        <th scope="col" class="px-6 py-3 font-medium w-16"></th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <!--End Job Orders-->
+    }
+</div>
+
+<vc:customer-selection></vc:customer-selection>
+
+<div id="divAccountSelection">
+    <vc:account-selection customer-id="@Model.AddEditRequest.CustomerId"></vc:account-selection>
+</div>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function(event) {
+
+        var alert = new Alert();
+
+        const accordion = document.getElementById('accordion-collapse-request');
+        accordion.Collapsible();
+
+        const hdRequestId = document.getElementById("hdRequestId");
+        const hdCustomerId = document.getElementById("hdAddEditCustomerId");
+
+        var requestId = 0;
+        var customerId = 0;
+
+        if(hdRequestId) requestId = + hdRequestId.value;
+        if(hdCustomerId) customerId = + hdCustomerId.value;
+
+        const services = document.getElementById("service-details");
+        if(services) services.SetServices({
+            isDisabled: true,
+            getServicesUrl: '@Url.Action("GetInspectionType", "Request")' + '?requestId=' + requestId,
+            selectChange: (ids) => {
+                console.log('IDS:', ids);
+            }
+        });
+
+        @* const btnSubmit = document.getElementById("btnSubmit");
+        const btnSave = document.getElementById("btnSave"); *@
+
+        const btnSubmit = document.createElement('button');
+        btnSubmit.className = 'px-4 py-2 text-sm text-white bg-green-600 text-white font-semibold rounded-md hover:bg-green-500 hover:text-black transition duration-150"';
+        btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane mr-4"></i>Submit`;
+        btnSubmit.type = "button";
+
+        const btnSave = document.createElement('button');
+        btnSave.className = 'px-4 py-2 text-sm text-white bg-yellow-700 text-white font-semibold rounded-md hover:bg-yellow-500 hover:text-black transition duration-150';
+        btnSave.type = 'button';
+        btnSave.innerHTML = `<i class="fa-solid fa-floppy-disk mr-4"></i>Save as Draft`;
+
+        const tblJobOrders = document.getElementById("tblJobOrders");
+        if(tblJobOrders){
+            tblJobOrders.DataTable({
+                processing: true,
+                getUrl: '@Url.Action("GetJobOrders", "JobOrder")' + '?requestId=' + requestId,
+                loadedCallback: (data) => {
+                    if(data == null || data.length == 0){
+                        
+                        let divButtons = document.getElementById('divButtons');
+                        if(divButtons){
+                            divButtons.appendChild(btnSave);
+                            divButtons.appendChild(btnSubmit);
+                        }
+
+                        var chkServices = services.querySelectorAll('input[type="checkbox"]');
+                        console.log('Services Checkboxes:', chkServices);
+                        [...chkServices].forEach((checkbox) => {
+                            checkbox.disabled = false;
+                        });
+                    }
+                },
+                columns:
+                [
+                    { dataMember: 'dateCreated' },
+                    { dataMember: 'service' },
+                    { dataMember: 'statusString' }
+                ],
+                buttonColumnClassNames: 'w-16',
+                buttons:
+                [
+                    { className: 'fa-solid fa-eye', clickCallback: (data) => { window.location.href = '@Url.Action("Index", "JobOrder")' + '?id=' + data.id + '&requestId=' + '@Model.AddEditRequest.Id'; } }
+                ]
+            });
+        }
+
+        @* const cmbInventory = document.getElementById("cmbInventory");
+        if(cmbInventory) cmbInventory.setDropdown(null); *@
+
+        const checkBoxes = document.querySelectorAll('input[type="checkbox"]');
+
+        [...checkBoxes].forEach((checkbox) => {
+            checkbox.addEventListener("change", (evt) => {
+                evt.preventDefault();
+                var targetId = evt.target.id;
+                var typeId = evt.target.dataset.id;
+                var withDetail = evt.target.dataset.withdetail;
+                var requiredAccount = evt.target.dataset.requiredaccount;
+                if(requiredAccount == 'False'){
+                    [...checkBoxes].forEach((checkbox) => {
+                        if(checkbox.id != targetId){
+                            checkbox.checked = false;
+                        }
+                    });
+                }
+                else{
+                    var checkBoxesNoAccount = document.querySelectorAll('[data-requiredaccount="False"]');
+                    [...checkBoxesNoAccount].forEach((checkbox) => {
+                        checkbox.checked = false;
+                    });
+                }
+            });
+        });
+
+        if(btnSave){
+            btnSave.addEventListener("click", async (evt) =>{
+                evt.preventDefault();
+                evt.stopPropagation();
+
+                //let requestId = + document.getElementById("hdRequestId").value;
+                //let customerId = + document.getElementById("hdAddEditCustomerId").value;
+
+                
+
+            });
+        }
+
+        const saveRequestUrl = '@Url.Action("SaveRequest", "CustomerSupport")';
+
+        if(btnSubmit){
+            btnSubmit.addEventListener("click", async (evt) => {
+                evt.preventDefault();
+
+                const requestId = + document.getElementById("hdRequestId").value;
+                const customerId = + document.getElementById("hdAddEditCustomerId").value;
+                const userId = + document.getElementById("hdCurrentUserId").value;
+                const dateCreated = document.getElementById("hdDateCreated").value;
+                const accountId = + document.getElementById("hdAccountId").value;
+
+                if(accountId <= 0 || customerId <= 0){
+                    alert.show({
+                        type: 'warning',
+                        content: 'Please select customer and account before saving the request',
+                        autoHide: true
+                    });
+                    return;
+                }
+
+                var requestDetails = [];
+
+                const serviceCheckBoxes = document.querySelectorAll('input[type="checkbox"]');
+
+                [...serviceCheckBoxes].forEach((checkbox) => {
+                    if(checkbox.checked){
+                        var id = + checkbox.dataset.id;
+                        var typeDetailId = "txtDetail-" + id;
+                        var typeDetail = document.getElementById(typeDetailId)?.value ?? '';
+                        requestDetails.push({
+                            Id: 0,
+                            RequestId: 0,
+                            RequestTypeId: id,
+                            InspectionTypeDetail: typeDetail,
+                            DateCreated: new Date(),
+                            DateUpdated: new Date()
+                        });
+                    }
+                });
+
+                if(requestDetails.length <= 0){
+                    alert.show({
+                        type: 'warning',
+                        content: 'Please select at least one service.',
+                        autoHide: true,
+                        timeOut: 3000
+                    });
+                    return;
+                }
+
+                var data = {
+                    Id: + requestId,
+                    CustomerId: + customerId,
+                    AccountId: + accountId,
+                    Status: 1,
+                    CreatedBy: + userId,
+                    DateCreated: new Date(dateCreated)
+                };
+
+                const saveRequestClient = new WebClient(saveRequestUrl, data);
+                var resultRequestId = + await saveRequestClient.postAsync();
+                const saveDetailUrl = '@Url.Action("SaveRequestDetails", "CustomerSupport")' + "?requestId=" + resultRequestId;
+                if(resultRequestId > 0){
+                    const saveRequestDetailClient = new WebClient(saveDetailUrl, requestDetails);
+                    var isSuccess = await saveRequestDetailClient.postAsync();
+                    if(isSuccess) window.location.href = '@Url.Action("Requests", "CustomerSupport")'
+                }
+
+            });
+        }
+
+        //customerSelectionDialog
+        const lnkAccountName = document.getElementById("lnkAccountName");
+        if(lnkAccountName){
+            lnkAccountName.addEventListener("click", (evt) => {
+            evt.preventDefault();
+            
+            var customerSelectionDialog = new CustomerSelect({
+                getCustomerUrl: '@Url.Action("SearchCustomer", "CustomerSupport")',
+                selectCallback: async (customer) => {
+                    document.getElementById("pCustomerName").innerText = customer.fullName;
+                    document.getElementById("pPhone").innerText = customer.phoneNumber
+                    document.getElementById("pEmail").innerText = customer.email;
+                    document.getElementById("hdAddEditCustomerId").value = customer.id;
+
+                    var accountRefreshUrl = '@Url.Action("RefreshAccountSelectComponent", "CustomerSupport")' + "?customerId=" + customer.id;
+                    const response = await fetch(accountRefreshUrl);
+                    document.getElementById("divAccountSelection").innerHTML = await response.text();
+                } 
+            });
+
+            customerSelectionDialog.show();
+
+        });
+        }
+
+        //account selection dialog
+        const lnkAccountNo = document.getElementById("lnkAccountNo");
+        if(lnkAccountNo){
+            lnkAccountNo.addEventListener("click", (evt) => {
+            evt.preventDefault();
+            const customerId = + document.getElementById("hdAddEditCustomerId").value;
+            const accountId = + document.getElementById("hdAccountId").value;
+            if(+ customerId <= 0){
+                alert.show({
+                    type: 'warning',
+                    content: 'Please select a customer first before selecting an account.',
+                    autoHide: true,
+                    timeOut: 3000
+                });
+            }
+            else {
+                var accountSelect = new AccountSelect({
+                    customerid: document.getElementById("hdAddEditCustomerId").value,
+                    addAccountUrl: '@Url.Action("AddAccount", "Account")',
+                    submitCallback: (accountId, accountNumber, accountAddress) => {
+                        document.getElementById("hdAccountId").value = + accountId;
+                        document.getElementById("pAccountNo").innerText = decodeURIComponent(accountNumber);
+                        document.getElementById("pAddress").innerText = decodeURIComponent(accountAddress);
+                    }
+                });
+
+                accountSelect.show();
+            }
+        });
+        }
+    });
+
+        @* const btnAddRecommendation = document.getElementById("btnAddRecommendation");
+        if(btnAddRecommendation){
+            btnAddRecommendation.addEventListener("click", async (evt) => {
+            evt.preventDefault();
+            const txtRecommendation = document.getElementById("txtRecommendation");
+            var saveRecommendationUrl = '@Url.Action("SaveRecommendation", "CustomerSupport")';
+            var saveRecommendationdata = {
+                requestId: '@Model.AddEditRequest.Id',
+                details: encodeURIComponent(txtRecommendation.value)
+            };
+
+            var recommendationClient = new WebClient(saveRecommendationUrl, saveRecommendationdata);
+            var recommendationResponse = await recommendationClient.postAsync();
+
+            if(recommendationResponse == null) return;
+
+            var userUrl = '@Url.Action("GetUserByIdForTable", "CustomerSupport")' + '?userId=' + recommendationResponse.createdBy;
+            var userClient = new WebClient(userUrl, null);
+            var userResponse = await userClient.getAsync();
+
+            if(userResponse == null) return;
+
+            const divRecommendation = document.getElementById("divRecommendation");
+            const columnParentDiv = document.createElement("div");
+            columnParentDiv.classList.add("grid", "grid-cols-[20%_80%]", "gap-4");
+
+            //column 1
+            const column1 = document.createElement("div");
+            column1.classList.add("border-r-2", "text-center");
+
+            const column1Child1 = document.createElement("div");
+            column1Child1.classList.add("w-full", "mb-2");
+
+            const userIcon = document.createElement("i");
+            userIcon.classList.add("fa-solid", "fa-user");
+            column1Child1.appendChild(userIcon);
+
+            const column1Child2 = document.createElement("div");
+            column1Child2.classList.add("w-full");
+            column1Child2.innerText = userResponse.name;
+
+            column1.appendChild(column1Child1);
+            column1.appendChild(column1Child2);
+            //end column 1
+
+            //column 2
+
+            const column2 = document.createElement("div");
+            column2.classList.add("text-wrap");
+            column2.innerText = txtRecommendation.value
+
+            //end column 2
+
+            columnParentDiv.appendChild(column1);
+            columnParentDiv.appendChild(column2);
+
+            //hr
+            const hr = document.createElement("hr");
+            hr.classList.add("h-px", "my-2", "bg-neutral-quaternary");
+
+            const noRecordDiv = document.getElementById("divRecommendationNoRecord");
+            noRecordDiv.classList.add("hidden");
+
+            divRecommendation.appendChild(columnParentDiv);
+            divRecommendation.appendChild(hr);
+
+            txtRecommendation.value = '';
+        });
+        } *@
+
+        @* const tblMaterials = document.getElementById("tblMaterialList");
+
+        const btnAddMaterial = document.getElementById("btnAddMaterial");
+        if(btnAddMaterial){
+            btnAddMaterial.addEventListener("click", async (evt) => {
+            evt.preventDefault();
+            evt.stopPropagation();
+
+            const selectedInventoryItem = document.getElementsByClassName("selected-value");
+            const txtQuantity = document.getElementById("txtQuantity");
+            const hdRequestId = document.getElementById("hdRequestId");
+            const txtDropdownInput = document.getElementsByClassName("dropdown-input")[0];
+
+            if(selectedInventoryItem && txtQuantity && hdRequestId){
+                var inventoryId = + selectedInventoryItem[0].value;
+                var quantity = + txtQuantity.value;
+                var requestId = + hdRequestId.value;
+
+                var url = '@Url.Action("SaveMaterial", "CustomerSupport")' + "?requestId=" + requestId;
+                var data = {
+                    inventoryId: inventoryId,
+                    quantity: quantity
+                };
+
+                var client = new WebClient(url, data);
+                var response = await client.postAsync();
+
+                if(response){
+                    //add row here
+
+                    var tbody = tblMaterials.querySelector('tbody');
+                    var isNegativeStock = response.material.requestedQuantity > response.inventory.quantity ? "True" : "False";
+                    var noContent = tbody.getElementsByClassName('material-no-item');
+                    if(noContent.length > 0) tbody.replaceChildren();
+
+                    var tr = document.createElement('tr');
+                    tr.classList.add("negative-stock");
+                    tr.dataset.negativestock = isNegativeStock;
+                    tr.innerHTML = `
+                        <td scope="col" class="px-6 py-3 font-base text-sm">${response.inventory.name}</td>
+                        <td scope="col" class="px-6 py-3 font-base text-sm">${response.inventory.uom}</td>
+                        <td scope="col" class="px-6 py-3 font-base text-sm">${response.inventory.quantity}</td>
+                        <td scope="col" class="px-6 py-3 font-base text-sm">
+                            <p id="material-item-quantity-${response.material.id}" class="w-full">
+                                ${response.material.requestedQuantity}
+                            </p>
+                            <p id="material-quantity-input-${response.material.id}" class="w-full hidden">
+                                <input type="number" id="material-text-quantity-item-${response.material.id}" class="w-full border rounded-md p-2" value="${response.material.requestedQuantity}" />
+                            </p>
+                        </td>
+                        <td scope="col" class="px-6 py-3 font-base text-sm">${response.material.unitCost}</td>
+                        <td scope="col" class="px-6 py-3 font-base text-sm">
+                            <p id="material-item-unitcost-${response.material.id}" class="w-full">
+                                ${response.material.newUnitCost}
+                            </p>
+                            <p id="material-unitcost-input-${response.material.id}" class="w-full hidden">
+                                <input type="number" id="material-text-unitcost-item-${response.material.id}" class="w-full border rounded-md p-2" value="${response.material.newUnitCost}" />
+                            </p>
+                        </td>
+                        <td scope="col" class="px-6 py-3 font-base text-sm">${response.material.amount}</td>
+                        <td scope="col" class="px-6 py-3 font-base text-sm">
+                            <div class="w-full grid grid-cols-3 gap-2 text-center">
+                                <div>
+                                    <a id="material-edit-${response.material.id}"
+                                    data-id="${response.material.id}"
+                                    data-quantity="${response.material.requestedQuantity}"
+                                    data-unitcost="${response.material.newUnitCost}"
+                                    data-isset="false"
+                                    href="#"
+                                    class="material-edit">
+                                        <p class="w-full">
+                                            <i class="fa-solid fa-pencil"></i>
+                                        </p>
+                                    </a>
+                                </div>
+                                <div>
+                                    <a id="material-save-${response.material.id}"
+                                    data-id="${response.material.id}"
+                                    data-inventoryid="${response.inventory.id}"
+                                    data-requestid="${response.material.requestId}"
+                                    data-isset="false"
+                                    href="#" class="material-save">
+                                        <p class="w-full">
+                                            <i class="fa-solid fa-save"></i>
+                                        </p>
+                                    </a>
+                                </div>
+                                <div>
+                                    <a id="material-delete-${response.material.id}" data-isset="false" href="#" class="material-delete">
+                                        <p class="w-full">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+
+                    txtQuantity.value = '';
+                    selectedInventoryItem[0].value = '';
+                    txtDropdownInput.value = "";
+                    
+                    alert.show({
+                        type: 'success',
+                        content: 'Successfully added material',
+                        autoHide: true
+                    });
+
+                    const editLink = tr.getElementsByClassName("material-edit")[0];
+                    const saveLink = tr.getElementsByClassName("material-save")[0];
+
+                    setMaterialEditListener(editLink, tblMaterials);
+                    setMaterialSaveListener(saveLink, tblMaterials);
+                }
+                else{
+                    alert.show({
+                        type: 'error',
+                        content: 'Failed to save material',
+                        autoHide: true
+                    });
+                }
+            }
+        });
+        
+            const lnkEditMaterials = tblMaterials.getElementsByClassName("material-edit");
+            const lnkSaveMaterials = tblMaterials.getElementsByClassName("material-save");
+
+            [...lnkEditMaterials].forEach((lnkEdit) => {
+                setMaterialEditListener(lnkEdit, tblMaterials);
+            });
+
+            [...lnkSaveMaterials].forEach((lnkSave) => {
+                setMaterialSaveListener(lnkSave, tblMaterials);
+            });
+        }
+    }); *@
+
+    @* const setMaterialEditListener = function(link, elTable){
+        var alert = new Alert();
+        if(link.dataset.isset == true) return;
+
+        link.addEventListener("click", (evt) => {
+            evt.preventDefault();
+            evt.stopPropagation();
+
+            var materialId = evt.target.parentElement.parentElement.dataset.id;
+            var quantity = evt.target.parentElement.parentElement.dataset.quantity;
+            var cost = evt.target.parentElement.parentElement.dataset.unitcost;
+
+            evt.target.classList.toggle('fa-pencil');
+            evt.target.classList.toggle('fa-xmark')
+            evt.target.classList.toggle('text-red-500');
+
+            const pLabelQuantity = elTable.querySelector("#material-item-quantity-" + materialId);
+            const pLabelInputQuantity = elTable.querySelector("#material-quantity-input-" + materialId);
+
+            const pLabelUnitCost = elTable.querySelector("#material-item-unitcost-" + materialId);
+            const pLabelInputUnitCost = elTable.querySelector("#material-unitcost-input-" + materialId);
+
+            const txtRequiredQuantity =  pLabelInputQuantity.querySelector("#material-text-quantity-item-" + materialId);
+            const txtUnitCost = pLabelInputUnitCost.querySelector("#material-text-unitcost-item-" + materialId);
+
+            pLabelQuantity.classList.toggle("hidden");
+            pLabelInputQuantity.classList.toggle("hidden");
+            txtRequiredQuantity.value = quantity;
+                
+            pLabelUnitCost.classList.toggle("hidden");
+            txtUnitCost.value = cost;
+            pLabelInputUnitCost.classList.toggle("hidden");
+        });
+
+        link.dataset.isset = true;
+    }; *@
+
+    @* const setMaterialSaveListener = function(link, elTable){
+        var alert = new Alert();
+        if(link.dataset.isset == true) return;
+
+        link.addEventListener("click", async (evt) => {
+            evt.preventDefault();
+            evt.stopPropagation();
+
+            var lnk = evt.target.parentElement.parentElement;
+            const id = lnk.dataset.id;
+            const requestId = lnk.dataset.requestid;
+            const inventoryId = lnk.dataset.inventoryid;
+
+            const pLabelQuantity = elTable.querySelector("#material-item-quantity-" + id);
+            const pLabelInputQuantity = elTable.querySelector("#material-quantity-input-" + id);
+
+            const pLabelUnitCost = elTable.querySelector("#material-item-unitcost-" + id);
+            const pLabelInputUnitCost = elTable.querySelector("#material-unitcost-input-" + id);
+
+            const txtRequiredQuantity =  pLabelInputQuantity.querySelector("#material-text-quantity-item-" + id);
+            const txtUnitCost = pLabelInputUnitCost.querySelector("#material-text-unitcost-item-" + id);
+                
+            var quantity = txtRequiredQuantity.value;
+            var unitCost = txtUnitCost.value;
+
+            const parentDiv = lnk.closest('div').previousElementSibling;
+            const editIcon = parentDiv.getElementsByClassName('fa-xmark')[0];
+            const lnkEdit = editIcon.closest('a');
+
+            var url = '@Url.Action("UpdateUnitCostQuantity", "CustomerSupport")'
+            var data = {
+                id: + id,
+                requestId: + requestId,
+                inventoryId: + inventoryId,
+                quantity: + quantity,
+                unitCost: + unitCost
+            };
+            var editClient = new WebClient(url, data);
+            var response = await editClient.putAsync();
+            var isNegativeStock = false;
+            if(response.material.inventoryId > 0){
+                pLabelQuantity.textContent = quantity;
+                pLabelUnitCost.textContent = unitCost;
+                lnkEdit.dataset.quantity = quantity;
+                lnkEdit.dataset.unitcost = unitCost;
+                alert.show({
+                    type: 'success',
+                    content: 'Successfully updated material',
+                    autoHide: true
+                });
+                var isNegativeStock = response.material.requestedQuantity > response.inventory.quantity ? "True" : "False";
+                const parentTr = lnk.closest('tr');
+                parentTr.dataset.negativestock = isNegativeStock;
+            }
+            else{
+                alert.show({
+                    type: 'error',
+                    content: 'Failed to update material',
+                    autoHide: true
+                });
+            }
+
+            pLabelUnitCost.classList.toggle("hidden");
+            pLabelUnitCost.dataset.isNegativeStock = isNegativeStock;
+            pLabelInputUnitCost.classList.toggle("hidden");
+
+            pLabelQuantity.classList.toggle("hidden");
+            pLabelQuantity.dataset.isNegativeStock = isNegativeStock;
+            pLabelInputQuantity.classList.toggle("hidden");
+
+            editIcon.classList.toggle('fa-xmark');
+            editIcon.classList.toggle('fa-pencil');
+            editIcon.classList.toggle('text-red-500');
+        });
+
+        link.dataset.isset=true;
+    }; *@
+
+</script>

@@ -1,0 +1,43 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = "_insideLayout";
+}
+
+@model TMCWD.Application.Models.InspectionTypeViewModel
+
+<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm mt-1">
+    <h5 class="mb-2 text-2xl font-bold text-gray-900">Inspection Type Details</h5>
+    <p class="text-gray-700">
+        @using(Html.BeginForm("SaveUpdateInspectionType", "Admin"))
+        {
+            @Html.HiddenFor(x => x.AddEditInspectionType.Id)
+            @Html.HiddenFor(x => x.AddEditInspectionType.DateCreated)
+            @Html.HiddenFor(x => x.AddEditInspectionType.CreatedBy)
+
+            <div class="grid gap-6 mb-6 md:grid-cols-2">
+                <div>
+                    @Html.LabelFor(x => x.AddEditInspectionType.Name, new { @class = "block mb-2.5 text-sm font-medium text-heading" })
+                    @Html.TextBoxFor(x => x.AddEditInspectionType.Name, new { @class = "bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body", required = "required", placeholder = "Name" })
+                </div>
+                <div>
+                    @Html.CheckBoxFor(x => x.AddEditInspectionType.WithDetail, new { @class = "w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" })
+                    @Html.LabelFor(x => x.AddEditInspectionType.WithDetail, new { @class = "select-none ms-2 text-sm font-medium text-heading" })
+                </div>
+                <div>
+                    @Html.CheckBoxFor(x => x.AddEditInspectionType.IsActive, new { @class = "w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" })
+                    @Html.LabelFor(x => x.AddEditInspectionType.IsActive, new { @class = "select-none ms-2 text-sm font-medium text-heading" })
+                </div>
+            </div>
+            <div>
+                <button type"submit" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition duration-150">
+                    Save
+                </button>
+                <button type="button" class="px-4 py-2 bg-orange-600 text-black font-semibold rounded-md hover:bg-gray-700 transition duration-150" onclick="location.href='@Url.Action("InspectionTypes", "Admin")'">
+                    Cancel
+                </button>
+            </div>
+        }
+    </p>
+</div>

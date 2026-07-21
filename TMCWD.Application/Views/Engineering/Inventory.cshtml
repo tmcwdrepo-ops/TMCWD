@@ -1,0 +1,192 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = "_insideLayout";
+}
+
+@model TMCWD.Application.Models.InventoryViewModel
+
+<!-- Search and Action Button -->
+<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm mt-1">
+    <p class="text-gray-700">
+        <div class="grid grid-cols-3 gap-4">
+            <div class="col-span-2">
+                @Html.TextBoxFor(x => x.SearchString, new { id = "txtSearchString", @class = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600", })
+                @* <input id="txtSearchString" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" /> *@
+            </div>
+            <div class="grid-column">
+                        
+                <button class="rounded-md bg-blue-900 p-2 border border-transparent text-center text-sm text-white transition-all shadow-sm hover:shadow focus:bg-blue-700 focus:shadow-none active:bg-slate-700 hover:bg-slate-700 active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                        type="button" id="btnSeachUser">
+                    <svg width="20px" height="20px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.545 15.467l-3.779-3.779a6.15 6.15 0 0 0 .898-3.21c0-3.417-2.961-6.377-6.378-6.377A6.185 6.185 0 0 0 2.1 8.287c0 3.416 2.961 6.377 6.377 6.377a6.15 6.15 0 0 0 3.115-.844l3.799 3.801a.953.953 0 0 0 1.346 0l.943-.943c.371-.371.236-.84-.135-1.211zM4.004 8.287a4.282 4.282 0 0 1 4.282-4.283c2.366 0 4.474 2.107 4.474 4.474a4.284 4.284 0 0 1-4.283 4.283c-2.366-.001-4.473-2.109-4.473-4.474z" style="fill:rgb(255, 255, 255)" />
+                    </svg>
+                </button>
+                <button class="rounded-md bg-blue-900 p-2 border border-transparent text-center text-sm text-white transition-all shadow-sm hover:shadow focus:bg-blue-700 focus:shadow-none active:bg-slate-700 hover:bg-slate-700 active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                        type="button"
+                        onclick="location.href='@Url.Action("AddEditInventory", "Engineering")'">
+                    <svg width="20px" height="20px" viewBox="0 0 0.6 0.6" id="plus" data-name="Flat Color" xmlns="http://www.w3.org/2000/svg" class="icon flat-color">
+                        <path id="primary" d="M0.3 0.5a0.025 0.025 0 0 1 -0.025 -0.025v-0.15H0.125a0.025 0.025 0 0 1 0 -0.05h0.15V0.125a0.025 0.025 0 0 1 0.05 0v0.15h0.15a0.025 0.025 0 0 1 0 0.05h-0.15v0.15a0.025 0.025 0 0 1 -0.025 0.025" style="fill: rgb(255, 255, 255);" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </p>
+</div>
+<!-- End Search and Action Buttons -->
+
+<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm mt-1">
+    <h5 class="mb-2 text-2xl font-bold text-gray-900">Inventory</h5>
+    <p class="text-gray-700">
+        <!-- Inventory Table -->
+        <table class="border-collapse border border-gray-full w-full ...">
+            <thead>
+                <tr>
+                    <th class="border border-gray-300 p-3 ...">Id #</th>
+                    <th class="border border-gray-300 p-3 ...">Item Name</th>
+                    <th class="border border-gray-300 p-3 ...">UOM</th>
+                    <th class="border border-gray-300 p-3 ...">Unit Cost</th>
+                    <th class="border border-gray-300 p-3 ...">Quantity</th>
+                    <th class="border border-gray-300 p-3 ...">Active</th>
+                    <th class="border border-gray-300 p-3 ..."></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(Model.Inventory == null || Model.Inventory.Count <= 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center border border-gray-300 p-2 ...">No record(s) found . . .</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach(var item in Model.Inventory)
+                    {
+                        <tr>
+                            <td class="border border-gray-300 p-2 ...">@item.Id</td>
+                            <td class="border border-gray-300 p-2 ...">@item.Name</td>
+                            <td class="border border-gray-300 p-2 ...">@item.UOM</td>
+                            <td class="border border-gray-300 p-2 ...">@item.UnitCost</td>
+                            <td class="border border-gray-300 p-2 ...">@item.Quantity</td>
+                            <td class="border border-gray-300 text-center p-2 ...">
+                                @if (item.IsActive)
+                                {
+                                    <i class="fa-solid fa-check text-green-500"></i>
+                                }
+                                else
+                                {
+                                    <i class="fa-solid fa-xmark text-red-500"></i>
+                                }
+                            </td>
+                            <td class="border border-gray-300 p-2 ...">
+                                <a href="@Url.Action("AddEditInventory", "Engineering", new { inventoryId = item.Id })" class="text-center text-gray hover:text-blue-600 transition-colors focus:outline-none p-2">
+                                    <i class="fa fa-pencil" aria-hidden="true"></i>
+                                </a>
+                                <a data-id="@item.Id" data-quantity="@item.Quantity" data-itemname="@item.Name" href="#" class="add-quantity text-center text-gray hover:text-blue-600 transition-colors focus:outline-none p-2">
+                                    <i class="fa fa-plus" aria-hidden="true"></i>
+                                </a>
+                                <a id="lnkShowModal" command="show-modal" data-id="@item.Id" commandfor="deactivateModal" href="#" class="lnkDeactivate deactivateLink text-center text-gray hover:text-blue-600 transition-colors focus:outline-none p-2">
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+        <!-- End Inventory Table -->
+    </p>
+</div>
+<vc:modal-dialog type="deactivate"></vc:modal-dialog>
+<vc:modal-dialog type="number"></vc:modal-dialog>
+
+<!-- Update Quantity Modal -->
+@* <div id="quantityModal" data-dialog-backdrop="modal" data-dialog-backdrop-close="true" class="pointer-events-none fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-60 opacity-0 backdrop-blur-sm transition-opacity duration-300">
+    <div data-dialog="modal" class="relative m-4 p-4 w-2/5 min-w-[40%] max-w-[40%] rounded-lg bg-white shadow-sm">
+        <div class="flex shrink-0 items-center pb-4 text-xl font-medium text-slate-800">
+            <p id="pItemName"></p>
+        </div>
+        <div class="relative border-t border-slate-200 py-4 leading-normal text-slate-600 font-light">
+            Current Quantity: <p id="pCurrentQuantity"></p>
+            <label for="txtQuantity">Quantity:</label>
+            <input type="number" id="txtQuantity" placeholder="Quantity" />
+        </div>
+        <div class="flex shrink-0 flex-wrap items-center pt-4 justify-end">
+            <button id="btnCancelQuantityModal" data-dialog-close="true" class="rounded-md border border-transparent py-2 px-4 text-center text-sm transition-all text-slate-600 hover:bg-slate-100 focus:bg-slate-100 active:bg-slate-100 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none" type="button">
+                Cancel
+            </button>
+            <button id="btnSubmitQuantityModal" data-dialog-close="true" class="rounded-md bg-green-600 py-2 px-4 border border-transparent text-center text-sm text-white transition-all shadow-md hover:shadow-lg focus:bg-green-700 focus:shadow-none active:bg-green-700 hover:bg-green-700 active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none ml-2" type="button">
+                Confirm
+            </button>
+        </div>
+    </div>
+</div> *@
+
+<!-- End Update Quantity Modal -->
+
+<script type="text/javascript">
+
+    var deactivateLinks = document.getElementsByClassName("lnkDeactivate");
+    var addQuantityLinks = document.getElementsByClassName("add-quantity");
+
+    [...deactivateLinks].forEach((link) => {
+        link.addEventListener("click", (evt) => {
+            evt.preventDefault();
+            var id = evt.target.parentElement.dataset.id;
+
+            var deactivateModal = new ModalDialog({
+                type: 'deactivate',
+                title: 'Deactivate Inventory',
+                content: 'Are you sure you want to deactivate inventory? All of inventory data will be permanently removed. This action cannot be undone.',
+                submitCallback: () => {
+                    window.location.href = '@Url.Action("DeactivateInventory", "Engineering")' + '?inventoryId=' + id + '&userId=' + '@Model.CurrentUser.Id';
+                }
+            });
+
+            deactivateModal.show();
+            
+            // showModalDialog({
+            //     type: 'deactivate',
+            //     submitUrl: '@Url.Action("DeactivateInventory", "Engineering")' + '?inventoryId=' + id + '&userId=' + '@Model.CurrentUser.Id',
+            //     title: 'Deactivate Inventory',
+            //     content: 'Are you sure you want to deactivate inventory? All of inventory data will be permanently removed. This action cannot be undone.'
+            // });
+        });
+    });
+
+    [...addQuantityLinks].forEach((link) => {
+        link.addEventListener("click", (evt) => {
+            evt.preventDefault();
+            var itemId = evt.target.parentElement.dataset.id;
+            var itemName = evt.target.parentElement.dataset.itemname;
+            var quantity = evt.target.parentElement.dataset.quantity;
+            var content = 'Current Quantity: ' + quantity;
+
+            var numberDialog = new ModalDialog({
+                type: 'number',
+                title: itemName,
+                content: content,
+                textTitle: 'New Value',
+                submitCallback: (quantity) => {
+                    window.location.href = '@Url.Action("UpdateInventoryQuantity", "Engineering")' + '?itemId=' + itemId + '&newQuantity=' + quantity + '&currentUserId=' + currentUserId;
+                }
+            });
+
+            numberDialog.show();
+
+            // showModalDialog({
+            //     type: 'quantity',
+            //     title: itemName,
+            //     content: content,
+            //     currentValueForInputText: quantity,
+            //     submitCallBack: ((newQuantity) => {
+            //         var currentUserId = '@Model.CurrentUser.Id';
+            //         window.location.href = '@Url.Action("UpdateInventoryQuantity", "Engineering")' + '?itemId=' + itemId + '&newQuantity=' + newQuantity + '&currentUserId=' + currentUserId;
+            //     })
+            // });
+
+        });
+    });
+
+</script>

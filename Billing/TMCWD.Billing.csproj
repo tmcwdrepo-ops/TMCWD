@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TMCWD.Model\TMCWD.Model.csproj" />
+    <ProjectReference Include="..\TMCWD.Services\TMCWD.Services.csproj" />
+    <ProjectReference Include="..\TMCWD.Utility\TMCWD.Utility.csproj" />
+  </ItemGroup>
+
+</Project>

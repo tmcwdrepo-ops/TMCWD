@@ -1,0 +1,140 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = "_insideLayout";
+}
+@model TMCWD.Application.Models.AccountViewModel
+
+<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm mt-1">
+    <h5 class="mb-2 text-2xl font-bold text-gray-900">Account Details (@($"{Model.Customer.Firstname.ToUpper()} {Model.Customer.Lastname.ToUpper()}"))</h5>
+    <p class="text-gray-700">
+        @using (Html.BeginForm("SaveAccount", "Account"))
+        {
+            @Html.HiddenFor(x => x.CustomerId)
+            @Html.HiddenFor(x => x.AddEditAccount.Id)
+            @Html.HiddenFor(x => x.AddEditAccount.CustomerId)
+            @Html.HiddenFor(x => x.AddEditAccount.CreatedBy)
+            @Html.HiddenFor(x => x.AddEditAccount.DateCreated)
+            @Html.HiddenFor(x => x.AddEditAccount.AccountNumber)
+            <div class="grid gap-6 mb-6 md:grid-cols-2">
+            <div>
+                @Html.LabelFor(x => x.AddEditAccount.MeterNumber, new { @class = "block mb-2.5 text-sm font-medium text-heading" })
+                @Html.TextBoxFor(x => x.AddEditAccount.MeterNumber, new { id = "txtMeterNumber", @class = "bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body", required = "required", placeholder = "Meter Number" })
+            </div>
+            <div>
+                @Html.LabelFor(x => x.AddEditAccount.FullAddress, new { @class = "block mb-2.5 text-sm font-medium text-heading" })
+                @Html.TextAreaFor(x => x.AddEditAccount.FullAddress, new { id = "txtAddress", @class = "bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body", required = "required", placeholder = "Address" })
+            </div>
+            <div class="flex items-center mb-4">
+                @Html.CheckBoxFor(x => x.AddEditAccount.IsCurrentAddress, new { id = "chkIsCurrentAddress", @class = "w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" })
+                @Html.LabelFor(x => x.AddEditAccount.IsCurrentAddress, new { @class = "select-none ms-2 text-sm font-medium text-heading" })
+            </div>
+            <div class="flex items-center mb-4">
+                    @Html.LabelFor(x => x.AddEditAccount.Status, new { @class = "select-none ms-2 text-sm font-medium text-heading" })
+                @Html.DropDownListFor(x => x.AddEditAccount.Status, new SelectList(Model.AccountStatuses, "Value", "Text"), new { id = "ddlStatus", @class = "bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" })
+                @* @Html.CheckBoxFor(x => x.AddEditAccount.IsActive, new { id = "chkIsActive", @class = "w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" }) *@
+            </div>
+        </div>
+        <div>
+            <button type"submit" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition duration-150">
+                Save
+            </button>
+                <button id="btnClear" type="button" class="px-4 py-2 bg-orange-600 text-black font-semibold rounded-md hover:bg-gray-700 transition duration-150">
+                Clear
+            </button>
+        </div>
+        }
+    </p>
+</div>
+
+<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm mt-1">
+    <h5 class="mb-2 text-2xl font-bold text-gray-900">Accounts</h5>
+    <p class="text-gray-700">
+        <!-- Accounts Table -->
+        <table class="border-collapse border border-gray-full w-full ...">
+            <thead>
+                <tr>
+                    <th class="border border-gray-300 p-3 ...">Account #</th>
+                    <th class="border border-gray-300 p-3 ...">Meter #</th>
+                    <th class="border border-gray-300 p-3 ...">Address</th>
+                    <th class="border border-gray-300 p-3 ...">Current Address</th>
+                    <th class="border border-gray-300 p-3 ...">Active</th>
+                    <th class="border border-gray-300 p-3 ..."></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(Model.PagedAccountList == null || Model.PagedAccountList.Count <= 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center border border-gray-300 p-2 ...">
+                            No record(s) . . .
+                        </td>
+                    </tr>
+                }
+                else{
+                    foreach (var account in Model.PagedAccountList)
+                    {
+                        <tr>
+                            <td class="border border-gray-300 p-2 ...">@account.AccountNumber</td>
+                            <td class="border border-gray-300 p-2 ...">@account.MeterNumber</td>
+                            <td class="border border-gray-300 p-2 ...">@account.FullAddress</td>
+                            <td class="border border-gray-300 p-2 ...">@(account.IsCurrentAddress ? "Yes" : "No")</td>
+                            <td class="border border-gray-300 p-2 ...">@(account.Status.ToString())</td>
+                            <td class ="border border-gray-300 p-2 ...">
+                                <a href="@Url.Action("Index", "Account", new { customerId = Model.AddEditAccount.CustomerId, accountId = account.Id })" class="text-center text-gray hover:text-blue-600 transition-colors focus:outline-none p-2">
+                                    <i class="fa fa-pencil" aria-hidden="true"></i>
+                                </a>
+                                <a id="lnkShowModal" command="show-modal" data-id="@account.Id" commandfor="deactivateModal" href="#" class="deactivateLink text-center text-gray hover:text-blue-600 transition-colors focus:outline-none p-2">
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+        <!-- End Accounts Table -->
+    </p>
+</div>
+
+<vc:modal-dialog type="deactivate"></vc:modal-dialog>
+
+<script type="text/javascript">
+
+    var btnClear = document.getElementById("btnClear");
+    btnClear.onclick = function(){
+        document.getElementById("txtMeterNumber").value = "";
+        document.getElementById("txtAddress").value = ""
+        document.getElementById("chkIsCurrentAddress").checked = false;
+        document.getElementById("chkIsActive").checked = false;
+    };
+
+    var deactivateLinks = document.getElementsByClassName("deactivateLink");
+
+    [...deactivateLinks].forEach((link) => {
+        link.addEventListener("click", (evt) => {
+            evt.preventDefault();
+            var accountId = evt.target.parentElement.dataset.id;
+
+            var modal = new ModalDialog({
+                type: 'deactivate',
+                title: 'Deactivate Account',
+                content: 'Are you sure you want to deactivate account? All of account data will be permanently removed. This action cannot be undone.',
+                submitCallback: () => {
+                    window.location.href = '@Url.Action("DeactivateAccount", "Account")' + "?accountId=" + accountId;
+                }
+            });
+
+            modal.show();
+
+            // showModalDialog({
+            //     type: 'deactivate',
+            //     submitUrl: '@Url.Action("DeactivateAccount", "Account")' + "?accountId=" + accountId,
+            //     title: 'Deactivate Account',
+            //     content: 'Are you sure you want to deactivate account? All of account data will be permanently removed. This action cannot be undone.'
+            // });
+        });
+    });
+
+</script>

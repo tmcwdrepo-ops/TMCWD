@@ -1,0 +1,316 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="~/js/site.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@@tailwindplus/elements@1" type="module"></script>
+    <style>
+        /* Toast Notification Styles */
+        .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        }
+        
+        .toast {
+        min-width: 300px;
+        max-width: 500px;
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideIn 0.3s ease-out;
+        position: relative;
+        overflow: hidden;
+        }
+        
+        .toast::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        background: currentColor;
+        animation: progress 3s linear;
+        }
+        
+        @@keyframes slideIn {
+        from {
+        transform: translateX(400px);
+        opacity: 0;
+        }
+        to {
+        transform: translateX(0);
+        opacity: 1;
+        }
+        }
+        
+        @@keyframes slideOut {
+        from {
+        transform: translateX(0);
+        opacity: 1;
+        }
+        to {
+        transform: translateX(400px);
+        opacity: 0;
+        }
+        }
+        
+        @@keyframes progress {
+        from { width: 100%; }
+        to { width: 0%; }
+        }
+        
+        .toast.hiding {
+        animation: slideOut 0.3s ease-in forwards;
+        }
+        
+        .toast-success {
+        background: #10b981;
+        color: white;
+        }
+        
+        .toast-error {
+        background: #ef4444;
+        color: white;
+        }
+        
+        .toast-warning {
+        background: #f59e0b;
+        color: white;
+        }
+        
+        .toast-info {
+        background: #3b82f6;
+        color: white;
+        }
+        
+        .toast-icon {
+        font-size: 24px;
+        flex-shrink: 0;
+        }
+        
+        .toast-content {
+        flex: 1;
+        }
+        
+        .toast-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+        }
+        
+        .toast-message {
+        font-size: 14px;
+        opacity: 0.95;
+        }
+        
+        .toast-close {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 20px;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: background 0.2s;
+        }
+        
+        .toast-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Loading Overlay */
+        .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9998;
+        }
+        
+        .loading-overlay.active {
+        display: flex;
+        }
+        
+        .loading-spinner {
+        background: white;
+        padding: 30px 40px;
+        border-radius: 12px;
+        text-align: center;
+        }
+        
+        .spinner {
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 15px;
+        }
+        
+        @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+        }
+        
+        /* Confirmation Dialog */
+        .confirm-dialog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        animation: fadeIn 0.2s;
+        }
+        
+        .confirm-dialog.active {
+        display: flex;
+        }
+        
+        .confirm-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 450px;
+        width: 90%;
+        animation: scaleIn 0.3s;
+        }
+        
+        @@keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+        }
+        
+        @@keyframes scaleIn {
+        from { transform: scale(0.9); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+        }
+        
+        .confirm-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 30px;
+        }
+        
+        .confirm-icon.danger {
+        background: #fee2e2;
+        color: #dc2626;
+        }
+        
+        .confirm-title {
+        font-size: 20px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 10px;
+        color: #1f2937;
+        }
+        
+        .confirm-message {
+        text-align: center;
+        color: #6b7280;
+        margin-bottom: 25px;
+        line-height: 1.5;
+        }
+        
+        .confirm-buttons {
+        display: flex;
+        gap: 10px;
+        }
+        
+        .confirm-buttons button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        }
+        
+        .confirm-cancel {
+        background: #f3f4f6;
+        color: #374151;
+        }
+        
+        .confirm-cancel:hover {
+        background: #e5e7eb;
+        }
+        
+        .confirm-delete {
+        background: #dc2626;
+        color: white;
+        }
+        
+        .confirm-delete:hover {
+        background: #b91c1c;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen">
+
+        <aside class="w-64 bg-blue-900 text-white">
+            <vc:left-side-menu></vc:left-side-menu>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-y-auto">
+            <!-- Top Bar -->
+            <header class="bg-white shadow-sm">
+                @* <div class="flex flex-col items-center justify-normal px-8 py-4"> *@
+                <div class="grid grid-cols-2 justify-normal px-8 py-4">
+                    <div>
+                        <img src="~/images/logo.png" class="inline mr-1 h-16 w-16" />
+                        <h2 class="inline text-xl font-semibold text-gray-800">Trece Martires Water District</h2>
+                    </div>
+                    <div>
+                        <div class="flex w-full items-center space-x-4 px-8 py-4">
+                            <span class="w-full font-semibold text-right text-gray-800">
+                                <vc:logged-in-user></vc:logged-in-user>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <main class="p-8">
+                <vc:alert></vc:alert>
+                @RenderBody()
+            </main>
+        </div>
+</div>
+<vc:modal-dialog></vc:modal-dialog>
+</body>
+</html>

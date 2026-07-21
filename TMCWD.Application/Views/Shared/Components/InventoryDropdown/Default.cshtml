@@ -1,0 +1,35 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@model dynamic
+
+<div id="@Model.Id" class="relative w-full">
+    <div class="w-full border rounded-md">
+        <div class="grid grid-cols-[93%_7%] border-0 gap-1 p-2">
+            <div>
+                <input type="text" class="w-full bg-white text-sm focus:outline-none" />
+            </div>
+            <div>
+                <button type="button" class="border-0 text-center w-full text-sm">
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="absolute w-full bg-white border rounded-md p-3 text-sm mt-1">
+        @if(Model.Items == null || Model.Items.Count <= 0)
+        {
+            <span class="w-full text-center">No inventory found</span>
+        }
+        else
+        {
+            foreach(var item in Model.Items)
+            {
+                <div id="item1" class="w-full mb-1 hover:bg-blue-600 hover:text-white p-1">@item.Name</div>
+            }
+        }
+    </div>
+</div>

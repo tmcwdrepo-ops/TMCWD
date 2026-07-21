@@ -1,0 +1,97 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = "_insideLayout";
+}
+
+@model TMCWD.Application.Models.OtherFeeTypeViewModel
+
+<style>
+    .negative-stock[data-negativestock="True"] {
+        color: red;
+    }
+</style>
+
+@using (Html.BeginForm("SaveUpdateOtherFeeType", "Admin"))
+{
+    <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm mt-1">
+        <p class="text-gray-700">
+            <div class="grid grid-cols-[30%_10%_60%] gap-4">
+                <div>
+                    @Html.TextBoxFor(x => x.AddEditOtherViewType.Name, new { id = "txtName", @class = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600", placeholder = "Name" })
+                </div>
+                <div>
+                    @Html.TextBoxFor(x => x.AddEditOtherViewType.DefaultValue, new { id = "txtDefaultValue", @class = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600", placeholder = "Default Value" })
+                </div>
+                <div>
+                    <div class="grid grid-cols-[6%_6%_82%] gap-2">
+                        <div>
+                            <button class="rounded-md bg-blue-900 p-2 border border-transparent text-center text-sm text-white transition-all shadow-sm hover:shadow focus:bg-blue-700 focus:shadow-none active:bg-slate-700 hover:bg-slate-700 active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                            type="button" id="btnSeachUser">
+                                <svg width="20px" height="20px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M17.545 15.467l-3.779-3.779a6.15 6.15 0 0 0 .898-3.21c0-3.417-2.961-6.377-6.378-6.377A6.185 6.185 0 0 0 2.1 8.287c0 3.416 2.961 6.377 6.377 6.377a6.15 6.15 0 0 0 3.115-.844l3.799 3.801a.953.953 0 0 0 1.346 0l.943-.943c.371-.371.236-.84-.135-1.211zM4.004 8.287a4.282 4.282 0 0 1 4.282-4.283c2.366 0 4.474 2.107 4.474 4.474a4.284 4.284 0 0 1-4.283 4.283c-2.366-.001-4.473-2.109-4.473-4.474z" style="fill:rgb(255, 255, 255)" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div>
+                            <button class="rounded-md bg-blue-900 p-2 border border-transparent text-center text-sm text-white transition-all shadow-sm hover:shadow focus:bg-blue-700 focus:shadow-none active:bg-slate-700 hover:bg-slate-700 active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                            type="submit">
+                                <svg width="20px" height="20px" viewBox="0 0 0.6 0.6" id="plus" data-name="Flat Color" xmlns="http://www.w3.org/2000/svg" class="icon flat-color">
+                                    <path id="primary" d="M0.3 0.5a0.025 0.025 0 0 1 -0.025 -0.025v-0.15H0.125a0.025 0.025 0 0 1 0 -0.05h0.15V0.125a0.025 0.025 0 0 1 0.05 0v0.15h0.15a0.025 0.025 0 0 1 0 0.05h-0.15v0.15a0.025 0.025 0 0 1 -0.025 0.025" style="fill: rgb(255, 255, 255);" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </p>
+    </div>
+
+    <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm mt-1">
+        <h5 class="mb-2 text-2xl font-bold text-gray-900">Other Fee Types</h5>
+        <p class="text-gray-700">
+            <table id="tblOtherFeeTypes" class="customer-select-list w-full text-sm text-left rtl:text-right text-body">
+                <thead class=" text-sm text-body bg-neutral-secondary-soft border-b rounded-lg border-default">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 font-medium">#</th>
+                        <th scope="col" class="px-6 py-3 font-medium">Name</th>
+                        <th scope="col" class="px-6 py-3 font-medium">Default Value</th>
+                        <th scope="col" class="px-6 py-3 font-medium"></th>
+                    </tr>
+                </thead>
+            </table>
+        </p>
+    </div>
+}
+
+<script type="text/javascript">
+
+    const table = document.getElementById("tblOtherFeeTypes");
+    table.DataTable({
+        processing: true,
+        stockCheck: { srcDataMember: 'quantity', compareToDataMember: 'requiredQuantity' },
+        getUrl: '@Url.Action("GetOtherFeeTypes", "Admin")',
+        columns: [
+            {dataMember: 'id', isEditable: false },
+            {dataMember: 'name', isEditable: true },
+            {dataMember: 'defaultValue', isEditable: true },
+        ],
+        buttons:[
+            { className: 'fa-solid fa-pencil', toggleIcons: ['fa-pencil', 'fa-xmark'], isEditButton: true },
+            { className: 'fa-solid fa-floppy-disk', isSaveButton: true, clickCallback: (data) => saveData(data) },
+            { className: 'fas fa-trash', clickCallback: (data) => deleteData(data) }
+        ]
+    });
+    
+    async function saveData(data){
+        var saveUrl = '@Url.Action("SaveOtherFeeType", "Admin")'
+        var client = new WebClient(saveUrl, data);
+        var response = await client.postAsync();
+        if(response) window.location.reload();
+    };
+
+    function deleteData(data){
+        console.log('Delete Data:', data);
+    };
+</script>

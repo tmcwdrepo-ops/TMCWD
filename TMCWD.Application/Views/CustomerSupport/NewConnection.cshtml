@@ -1,0 +1,223 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = "_insideLayout";
+}
+
+@model TMCWD.Application.Models.NewApplicationViewModel
+
+<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm mt-1">
+    <h5 class="mb-2 text-2xl font-bold text-gray-900">New Connection</h5>
+    <hr class="h-px my-8 bg-neutral-quaternary">
+    <p class="text-gray-700">
+        <h4 class="inline mb-2 text-lg font-bold text-gray-900">Personal Information</h4>
+        <button id="btnSearchCustomer" class="inline border rounded-md bg-blue-700 py-2 px-4 text-white focus:border-none">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+        <div class="grid grid-cols-3 gap-4">
+            <div>
+                <label for="txtLastname" class="text-sm pl-2 font-medium">Lastname</label>
+                @Html.TextBoxFor(x => x.Lastname, new { id = "txtLastname", maxlength = "50", type = "text", @class = "block pl-4 w-full border rounded-md min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6", placeholder = "Lastname", required="true" })
+                @* <input id="txtLastname" maxlength="50" type="text" class="block pl-4 w-full border rounded-md min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6" placeholder="Lastname" required /> *@
+            </div>
+            <div>
+                <label for="txtFirstname" class="text-sm pl-2 font-medium">Firstname</label>
+                @Html.TextBoxFor(x => x.Firstname, new { id = "txtFirstname", maxlength = "50", type = "text", @class = "block pl-4 w-full border rounded-md min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6", placeholder = "Firstname", required = "true" })
+            </div>
+            <div>
+                <label for="txtMiddlename" class="text-sm pl-2 font-medium">Middlename</label>
+                @Html.TextBoxFor(x => x.Middlename, new { id = "txtMiddlename", maxlength = "50", type = "text", @class = "block pl-4 w-full border rounded-md rounded-md min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6", placeholder = "Middlename" })
+            </div>
+            <div>
+                <label for="txtPhone" class="text-sm pl-2 font-medium">Phone Number</label>
+                @Html.TextBoxFor(x => x.Phone, new { id = "txtPhone", maxlength = "11", type = "text", @class = "block w-full pl-4 border rounded-md rounded-md min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6", placeholder = "Phone Number", required = "true" })
+            </div>
+            <div>
+                <label for="txtEmail" class="text-sm pl-2 font-medium">Email</label>
+                @Html.TextBoxFor(x => x.Email, new { id = "txtEmail", maxlength = "100", type = "email", @class = "block w-full pl-4 border rounded-md rounded-md min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6", placeholder = "Email Address", required = "true" })
+            </div>
+        </div>
+        <h4 class="my-4 text-lg font-bold text-gray-900">Address</h4>
+        <div class="grid grid-cols-3 gap-4">
+            <div>
+                <label for="txtUnitNo" class="text-sm pl-2 font-medium">Unit No.</label>
+                @Html.TextBoxFor(x => x.UnitNo, new { id = "txtUnitNo", maxlength = "10", type = "text", @class = "block w-full pl-4 border rounded-md rounded-md min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6", placeholder = "Unit No." })
+            </div>
+            <div>
+                <label for="txtBuilding" class="text-sm pl-2 font-medium">Appartment / Building</label>
+                @Html.TextBoxFor(x => x.Building, new { id = "txtBuilding", maxlength = "50", type = "text", @class = "block w-full pl-4 border rounded-md rounded-md min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6", placeholder = "Building / Apartment" })
+            </div>
+            <div>
+                <label for="txtHouseNo" class="text-sm pl-2 font-medium">House No.</label>
+                @Html.TextBoxFor(x => x.HouseNo, new { id = "txtHouseNo", maxlength = "10", type = "text", @class = "block w-full border rounded-md rounded-md min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6", placeholder = "House No.", required = "true" })
+            </div>
+            <div>
+                <label for="txtStreet" class="text-sm pl-2 font-medium">Street</label>
+                @Html.TextBoxFor(x => x.Street, new { id = "txtStreet", type = "text", maxlength = "150", @class = "block w-full pl-4 border rounded-md rounded-md min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6", placeholder = "Street", required = "true" })
+            </div>
+            <div>
+                <label for="txtBarangay" class="text-sm pl-2 font-medium">Barangay</label>
+                @Html.TextBoxFor(x => x.Barangay, new { id = "txtBarangay", type = "text", maxlength = "150", @class = "block w-full pl-4 border rounded-md rounded-md min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6", placeholder = "Barangay", required = "true" })
+            </div>
+        </div>
+    </p>
+    <hr class="h-px my-8 bg-neutral-quaternary">
+    <div class="w-full text-right">
+        <button id="btnCancel" type="button" class="border p-3 text-sm rounded-md bg-red-700 mr-4 hover:bg-red-500 text-white">
+            <i class="fa-solid fa-xmark mr-2"></i>Cancel
+        </button>
+        <button id="btnSaveDraft" type="button" class="border p-3 text-sm text-white rounded-md bg-yellow-700 mr-4 hover:bg-yellow-500 hover:text-black">
+            <i class="fa-solid fa-floppy-disk mr-2"></i>Save as Draft
+        </button>
+        <button id="btnSubmit" type="button" class="border p-3 text-sm rounded-md text-white bg-green-700 mr-4 hover:bg-green-500 hover:text-black">
+            <i class="fa-solid fa-paper-plane mr-2"></i>Submit
+        </button>
+    </div>
+</div>
+<input type="hidden" id="hdCustomerId" />
+<vc:customer-selection></vc:customer-selection>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function(){
+
+        const alert = new Alert();
+
+        var btnSearchCustomer = document.getElementById("btnSearchCustomer");
+
+        var customerSelect = new CustomerSelect({
+                getCustomerUrl: '@Url.Action("SearchCustomer", "CustomerSupport")',
+                selectCallback: (data) => {
+                    var txtLastname = document.getElementById('txtLastname');
+                    var txtFirstname = document.getElementById('txtFirstname');
+                    var txtMiddlename = document.getElementById('txtMiddlename');
+                    var txtPhone = document.getElementById('txtPhone');
+                    var txtEmail = document.getElementById('txtEmail');
+                    var hdCustomerId = document.getElementById('hdCustomerId');
+                    txtLastname.value = decodeURIComponent(data.lastname);
+                    txtFirstname.value = decodeURIComponent(data.firstname);
+                    txtMiddlename.value = decodeURIComponent(data.middlename);
+                    txtPhone.value = decodeURIComponent(data.phoneNumber);
+                    txtEmail.value = decodeURIComponent(data.email);
+                    hdCustomerId.value = data.id;
+                }
+            });
+
+        btnSearchCustomer.addEventListener("click", (evt) => {
+            evt.preventDefault();
+            evt.stopPropagation();
+
+            customerSelect.show();
+
+        });
+
+        const btnCancel = document.getElementById("btnCancel");
+        if(btnCancel){
+
+            btnCancel.addEventListener("click", (evt) => {
+                evt.preventDefault();
+                evt.stopPropagation();
+                window.location.href = '@Url.Action("Index", "CustomerSupport")';
+
+            });
+        }
+
+        const btnSaveDraft = document.getElementById("btnSaveDraft");
+        if(btnSaveDraft){
+            btnSaveDraft.addEventListener("click", async (evt) => {
+                evt.preventDefault();
+                evt.stopPropagation();
+                let hdCustomerId = document.getElementById("hdCustomerId");
+                if(hdCustomerId){
+                    let customerId = parseInt(hdCustomerId.value);
+                    createRequest(customerId == NaN ? 0 : customerId, true);
+                }
+            });
+        }
+
+        const btnSubmit = document.getElementById("btnSubmit");
+        if(btnSubmit){
+            btnSubmit.addEventListener("click", async (evt) => {
+                evt.preventDefault();
+                evt.stopPropagation();
+                let hdCustomerId = document.getElementById("hdCustomerId");
+                if(hdCustomerId){
+                    let customerId = parseInt(hdCustomerId.value);
+                    createRequest(customerId == NaN ? 0 : customerId, false);
+                }
+            });
+        }
+
+        async function createRequest(custId, isDraft){
+        var customerId = 0;
+
+        if(custId == 0){
+
+            const lastname = document.getElementById("txtLastname").value;
+            const firstname = document.getElementById("txtFirstname").value;
+            const middlename = document.getElementById("txtMiddlename").value;
+            const phone = document.getElementById("txtPhone").value;
+            const email = document.getElementById("txtEmail").value;
+
+            const customer = {
+                lastname: lastname,
+                firstname: firstname,
+                middlename: middlename,
+                phoneNumber: phone,
+                email: email
+            };
+
+            const customerClient = new WebClient('@Url.Action("SaveUpdateCustomer", "Customer")', customer);
+            const customerResponse = await customerClient.postAsync();
+            if(customerResponse) customerId = + customerResponse.id;
+        }
+        else customerId = custId;
+
+        const unitNo = document.getElementById("txtUnitNo").value;
+        const building = document.getElementById("txtBuilding").value;
+        const houseNo = document.getElementById("txtHouseNo").value;
+        const street = document.getElementById("txtStreet").value;
+        const barangay = document.getElementById("txtBarangay").value;
+
+        const account = {
+            customerId: customerId,
+            unitNumber: unitNo,
+            building: building,
+            houseNumber: houseNo,
+            street: street,
+            barangay: barangay
+        };
+
+        const accountClient = new WebClient('@Url.Action("SaveUpdateAccount", "Account")', account);
+        const accountResponse = await accountClient.postAsync();
+
+        console.log('Account Response:', accountResponse);
+
+        if(accountResponse) {
+            //'@Url.Action("CreateRequest", "Request")' + '?customerId=' + customerId + "&accountId=" + accountResponse.id + "&isDraft=" + (isDraft ? "1" : "0")
+            var params = {
+                customerId: customerId,
+                accountId: accountResponse.id,
+                isDraft: isDraft
+            };
+            var requestUrl = '@Url.Action("CreateRequest", "Request")' + '?customerId=' + customerId + "&accountId=" + accountResponse.id + "&isDraft=" + isDraft;
+            //var requestUrl = '@Url.Action("CreateRequest", "Request")';
+            //var requestUrl = `${@Url.Action("CreateRequest", "Request")}?customerId=${customerId}&accountId=${accountResponse.id}&isDraft=${isDraft}`;
+            console.log('Request URL:', requestUrl);
+            console.log('Details:', params);
+            var requestClient = new WebClient(requestUrl, params);
+            var requestResponse = await requestClient.postAsync();
+            if(requestResponse) {
+                window.location.href = '@Url.Action("Index", "CustomerSupport")';
+            }
+            else{
+                alert.show( { type: 'error', content: 'Failed to save request information.' } );
+            }
+        }
+        else alert.show({ type: 'error', content: 'Failed to save account information' });
+    }
+
+
+    });
+
+</script>

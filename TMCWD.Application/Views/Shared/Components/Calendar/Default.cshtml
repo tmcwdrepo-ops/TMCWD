@@ -1,0 +1,375 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@model string
+
+<div id="@Model" class="w-full">
+    <div class="w-full p-4 grid grid-cols-[80%_20%] gap-2">
+        <div>
+            <div id="divDateContainer" class="w-full border border-gray-300 rounded"></div>
+        </div>
+        <div>
+            <a id="lnkShowCalendar" href="#" class="w-full">
+                <i class="fa-solid fa-calendar"></i>
+            </a>
+        </div>
+    </div>
+    <div id="divCalendarBody" class="flex items-center justify-center w-full min-h-screen bg-gray-50 hidden">
+        <div class="flex bg-white shadow-lg rounded-xl">f
+            <div class="flex flex-col">
+                <div class="flex divide-x">
+                    <div class="flex flex-col px-6 pt-5 pb-6 border-b border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <button id="btnPrevious" class="flex items-center justify-center p-2 rounded-xl hover:bg-gray-50">
+                                <svg class="w-6 h-6 text-gray-900 stroke-current" fill="none">
+                                    <path d="M13.25 8.75L9.75 12l3.5 3.25"
+                                          stroke-width="1.5"
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                            <div id="divTitle" class="text-sm font-semibold">
+                                <a id="lnkMonth" href="#" class="w-full">February</a>
+                                <a id="lnkYear" href="#" class="w-full hidden">February</a>
+                            </div>
+                            <button id="btnNext" class="flex items-center justify-center p-2 rounded-xl hover:bg-gray-50">
+                                <svg class="w-6 h-6 text-gray-900 stroke-current" fill="none">
+                                    <path d="M10.75 8.75l3.5 3.25-3.5 3.25"
+                                          stroke-width="1.5"
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="divContent" class="grid grid-cols-7 text-xs text-center text-gray-900"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function (event) {
+
+        const View = {
+            CALENDAR: 'Calendar',
+            MONTH: 'Month',
+            YEAR: 'Year'
+        };
+
+        var currentView = View.CALENDAR;
+
+        var selectedDate = new Date();
+        var selectedMonth = null;
+        var selectedYear = null;
+        const yearInterval = 15;
+
+        var year = selectedDate.getFullYear();
+        var month = selectedDate.getMonth();
+        var day = selectedDate.getDay();
+
+        const months = [
+            { id: 1, label: 'Jan', name: 'January' },
+            { id: 2, label: 'Feb', name: 'February' },
+            { id: 3, label: 'Mar', name: 'March' },
+            { id: 4, label: 'Apr', name: 'April' },
+            { id: 5, label: 'May', name: 'May' },
+            { id: 6, label: 'Jun', name: 'June' },
+            { id: 7, label: 'Jul', name: 'July' },
+            { id: 8, label: 'Aug', name: 'August' },
+            { id: 9, label: 'Sep', name: 'September' },
+            { id: 10, label: 'Oct', name: 'October' },
+            { id: 11, label: 'Nov', name: 'November' },
+            { id: 12, label: 'Dec', name: 'December' }
+        ];
+
+        const parentDiv = document.getElementById('@Model');
+        const calendarBody = parentDiv.getElementById('divCalendarBody');
+        const lnkShowCalendar = parentDiv.getElementById('lnkShowCalendar');
+
+        if(lnkShowCalendar){
+            lnkShowCalendar.addEventListener('click', (evt) => {
+                evt.preventDefault();
+                evt.stopPropagation();
+
+                if(calendarBody){
+                    calendarBody.classList.toggle('hidden');
+                }
+            });
+        }
+
+
+        const divContent = parentDiv.getElementById('divContent');
+
+        if(divContent)
+        {
+            const lnkMonth = parentDiv.getElementById('lnkMonth');
+            const divTitle = parentDiv.getElementById('divTitle');
+
+            const btnPrevious = parentDiv.getElementById('btnPrevious');
+            const btnNext = parentDiv.getElementById('btnNext');
+
+            const divDateContainer = parentDiv.getElementById('divDateContainer');
+
+            createCalendar({
+                container: divContent,
+                titleElement: divTitle,
+                year: year,
+                month: month,
+                onSelectedMonthChange: (date) => {
+                    selectedDate = date;
+                    divDateContainer.textContent = selectedDate;
+                }
+            });
+            
+            if(lnkMonth){
+                lnkMonth.addEventListener('click', (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    currentView = View.MONTH;
+
+                    if(btnPrevious) btnPrevious.classList.add('hidden');
+                    if(btnNext) btnNext.classList.add('hidden');
+
+                    createMonth({
+                        container: divContent,
+                        titleElement: divTitle,
+                        year: year,
+                        monthsData: months,
+                        onSelectedMonthChange: (month) => {
+                            selectedMonth = month;
+
+                            createCalendar({
+                                container: divContent,
+                                year: year,
+                                month: selectedMonth.id,
+                                selectedDateChange: (date) => {
+                                    selectedDate = date;
+                                    divDateContainer.textContent = selectedDate;
+                                    year = selectedDate.getFullYear();
+                                    month = selectedDate.getMonth();
+                                    day = selectedDate.getDay();
+                                }
+                            });
+
+                        }
+                    });
+                });
+            }
+
+            const lnkYear = parentDiv.getElementById('lnkYear');
+            if(lnkYear){
+
+                lnkYear.addEventListener('click', (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+
+                    if(btnPrevious) btnPrevious.classList.remove('hidden');
+                    if(btnNext) btnNext.classList.remove('hidden');
+
+                    currentView = View.YEAR;
+
+                    createYear({
+                        container: divContent,
+                        year: year,
+                        onYearSelectChange: (year) => {
+                            selectedYear = year;
+                        }
+                    });
+                });
+            }
+
+        }
+
+        if(btnPrevious){
+
+            btnPrevious.addEventListener('click', (evt) => {
+                evt.preventDefault();
+                evt.stopPropagation();
+
+                switch (currentView){
+                    case View.CALENDAR:
+                        if(month > 0){
+                            month = month - 1;
+                        }
+                        else{
+                            year = year - 1;
+                            month = 12;
+                        }
+                        break;
+                    case View.YEAR:
+                        year = year - yearInterval;
+                        break;
+                    default:
+                        break;
+                }
+
+            });
+        }
+
+        if(btnNext){
+            btnNext.addEventListener('click', (evt) => {
+                evt.preventDefault();
+                evt.stopPropagation();
+
+                switch(currentView){
+                    case View.CALENDAR:
+                        if(month < 12){
+                            month = month + 1
+                        }
+                        else{
+                            year = year + 1;
+                            month = 1;
+                        }
+                        break;
+                    case View.YEAR:
+                        year = year + yearInteval;
+                        break;
+                    default:
+                        break;
+                }
+
+            });
+        }
+
+        function createCalendar(options) {
+            const dotw = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            if(btnPrevious) btnPrevious.classList.add('hidden');
+            if(btnNext) btnNext.classList.add('hidden');
+
+            const lastDay = getSelectedDate(options.year, options.month + 1, 0).getDay();
+            var selectedDay = 1;
+
+            if(options.monthsData){
+                var monthData = monthsData.filter((item, index, array) => {
+                    return item.id == options.month;
+                });
+
+                if(monthData){
+                    if(options.titleElement) options.titleElement.textContent = monthData.name;
+                }
+            }
+
+            options.container.replaceChildren();
+            options.container.classList.remove('grid-cols-3');
+            options.container.classList.remove('grid-cols-4');
+            options.container.classList.add('grid-cols-7');
+            
+            [...dotw].foreach((day) => {
+                const span = document.createElement('span');
+
+                span.classList = 'flex items-center justify-center w-10 h-10 font-semibold rounded-lg';
+                span.textContent = day;
+
+                options.container.appendChild(span);
+            });
+
+            for (var i = 1; i <= lastDay; i++) {
+                const span = document.createElement('span');
+                const link = document.createElement('a');
+
+                link.href = '#';
+                link.classList.add('w-full');
+                
+                span.classList = 'flex items-center justify-center w-10 h-10 font-semibold rounded-lg';
+                span.textContent = day;
+
+                link.appendChild(span);
+
+                options.container.appendChild(link);
+
+                link.addEventListener('click', (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    selectedDay = i;
+
+                    if(options.onSelectedDateChange)
+                        options.onSelectedDateChange(new Date(year, month, selectedDay));
+                });
+            }
+        }
+
+        function createMonths(options) {
+
+            options.container.replaceChildren();
+            options.container.classList.remove('grid-cols-7');
+            options.container.classList.remove('grid-cols-4');
+            options.container.classList.add('grid-cols-3');
+
+            if(options.titleElement){
+                options.titleElement.textContent = options.year;
+            }
+
+            [...options.monthsData].forEach((month) => {
+                const span = document.createElement('span');
+                span.classList = 'flex items-center justify-center w-10 h-10 font-semibold rounded-lg';
+                span.textContent = month.label;
+
+                const link = document.createElement('a');
+                link.href = '#';
+                link.classList.add('w-full');
+                link.appendChild(span);
+                options.container.appendChild(link);
+
+                link.addEventListener('click', (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    if(options.onSelectedMonthChange)
+                    {
+                        options.onSelectedMonthChange(month);
+                    }
+                });
+
+            });
+        }
+
+        function createYear(options){
+            options.container.replaceChildrent();
+            options.container.classList.remove('grid-cols-7');
+            options.container.classList.remove('grid-cols-3');
+            options.container.classList.add('grid-cols-4');
+
+            var minYear = options.year;
+            var maxYear = options.year + yearInterval;
+
+            options.titleElement.textContent = minYear + ' - ' + maxYear;
+
+            for(var i = minYear; i <= maxYear; i++){
+                const span = document.createElement('span');
+                span.classList = 'flex items-center justify-center w-10 h-10 font-semibold rounded-lg';
+                span.textContent = i;
+
+                const link = document.createElement('a');
+                link.classList.add('w-full');
+                link.href = '#';
+                link.appendChild(span);
+
+                options.container.appendChild(link);
+
+                link.addEventListener('click', (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    
+                    if(options.onYearSelectChange){
+                        options.onYearSelectChange(year);
+                    }
+                });
+            }
+
+        }
+
+        function getSelectedDate(year, month, day){
+            if(month > 12) {
+                year = year + 1;
+                month = 1;
+            }
+            return new Date(year, month, day);
+        }
+
+    });
+</script>

@@ -1,0 +1,43 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text;
+using TMCWD.Model.Billing.Interfaces;
+
+namespace TMCWD.Model.Billing
+{
+    public class Penalty : IPenalty
+    {
+
+        public Penalty() { }
+
+        [DisplayName("Id")]
+        public int Id { get; set; }
+
+        [DisplayName("Billing Reference Id")]
+        public string BillingReferenceId { get; set; } = string.Empty;
+
+        [DisplayName("Amount")]
+        public decimal Amount { get; set; }
+
+        [DisplayName("Penalty Type Id")]
+        public int PenaltyTypeId { get; set; }
+
+        [Column("PaymentStatus")]
+        public PaymentStatus PaymentStatus { get; set; }
+
+        [DisplayName("Created By")]
+        public int CreatedBy { get; set; }
+
+        [DisplayName("Date Created")]
+        public DateTime DateCreated { get; set; }
+
+        [DisplayName("Updated By")]
+        public int UpdatedBy { get; set; }
+
+        [DisplayName("Date Updated")]
+        public DateTime DateUpdated { get; set; }
+
+    }
+}

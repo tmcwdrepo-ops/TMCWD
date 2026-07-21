@@ -1,0 +1,100 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@model List<TMCWD.Model.CustomerSupport.Account>
+
+<el-dialog>
+    <dialog id="accountSelectionDialog" aria-labelledby="dialog-title" class="account-select-dialog fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
+        <el-dialog-backdrop class="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
+
+        <div tabindex="0" class="flex min-h-full items-end justify-center p-4 text-center focus:outline-none sm:items-center sm:p-0">
+            <el-dialog-panel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-[80%] data-closed:sm:translate-y-0 data-closed:sm:scale-95">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <div class="grid grid-cols-[80%_20%]">
+                                <div>
+                                    <input type="text" id="txtAccountAddress" class="account-select-account-address bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-2.5 py-2 shadow-xs placeholder:text-body" placeholder="Address" required="">
+                                </div>
+                                <div class="pl-4">
+                                    <button id="btnAddAccount" class="account-select-add bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                        <i class="fa fa-plus" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-lg border border-default">
+                                    <table id="tblAccountList" class="account-select-list w-full text-sm text-left rtl:text-right text-body">
+                                        <thead class=" text-sm text-body bg-neutral-secondary-soft border-b rounded-lg border-default">
+                                            <tr>
+                                                <th scope="col" class="px-6 py-3 font-medium text-center"></th>
+                                                <th scope="col" class="px-6 py-3 font-medium text-center">Account #</th>
+                                                <th scope="col" class="px-6 py-3 font-medium text-center">Address</th>
+                                                <th scope="col" class="px-6 py-3 font-medium text-center">Current</th>
+                                                <th scope="col" class="px-6 py-3 font-medium text-center">Active</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (Model.Count <= 0)
+                                            {
+                                                <tr>
+                                                    <td scope="col" class="px-6 py-3 text-center" colspan="5">
+                                                        No record(s) found...
+                                                    </td>
+                                                </tr>
+                                            }
+                                            else
+                                            {
+                                                foreach(var account in Model)
+                                                {
+                                                    <tr class="account-select-list-item border-b border-default hover:bg-neutral-secondary-soft cursor-pointer" data-account-id="@account.Id" data-account-number="@account.AccountNumber" data-account-address="@account.FullAddress">
+                                                        <td class="px-6 py-3 text-center">
+                                                            <input data-id="@account.Id" data-accountno="@account.AccountNumber" data-address="@account.FullAddress" data-current="@account.IsCurrentAddress" type="radio" name="customerSelect" value="@account.Id">
+                                                        </td>
+                                                        <td class="px-6 py-3 text-center">@account.AccountNumber</td>
+                                                        <td class="px-6 py-3 text-center">@account.FullAddress</td>
+                                                        <td class="px-6 py-3 text-center">
+                                                            @if (account.IsCurrentAddress)
+                                                            {
+                                                                <i class='fa-solid fa-check text-green-500'></i>
+                                                            }
+                                                        </td>
+                                                        <td class="px-6 py-3 text-center">
+                                                            @if(account.Status == AccountStatus.Pending)
+                                                            {
+                                                                <i class="fa-solid fa-question text-yellow-500"></i>
+                                                            }
+                                                            else if(account.Status == AccountStatus.Active)
+                                                            {
+                                                                <i class="fa-solid fa-check text-green-500"></i>
+                                                            }
+                                                            else if(account.Status == AccountStatus.Suspended)
+                                                            {
+                                                                <i class="fa-solid fa-pause text-gray-500"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fa-solid fa-xmark text-red-500"></i>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <button id="btnAccountSelectSubmit" type="button" command="close" commandfor="dialog" class="account-select-submit inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-green-500 sm:ml-3 sm:w-auto">Select</button>
+                    <button id="btnAccountSelectCancel" type="button" command="close" commandfor="dialog" class="account-select-cancel mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                </div>
+            </el-dialog-panel>
+        </div>
+    </dialog>
+</el-dialog>

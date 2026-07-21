@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- https://go.microsoft.com/fwlink/?LinkID=208121. -->
+<Project>
+  <PropertyGroup>
+    <_PublishTargetUrl>C:\Projects\TMCWD\TMCWD.Application\bin\Release\net10.0\publish\</_PublishTargetUrl>
+    <History>True|2026-06-11T00:45:34.1111012Z||;True|2026-06-11T08:41:37.1196706+08:00||;True|2026-06-11T08:34:12.4552089+08:00||;True|2026-06-11T08:16:54.0346200+08:00||;True|2026-06-01T10:19:32.2438750+08:00||;True|2026-06-01T10:11:00.4333291+08:00||;True|2026-06-01T10:04:52.4639458+08:00||;True|2026-06-01T10:01:25.6022002+08:00||;True|2026-06-01T09:55:25.8356149+08:00||;True|2026-06-01T09:27:09.0898999+08:00||;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+</Project>

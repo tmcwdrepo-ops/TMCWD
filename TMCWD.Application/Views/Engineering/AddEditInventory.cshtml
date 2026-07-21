@@ -1,0 +1,59 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = "_insideLayout";
+}
+
+@model TMCWD.Application.Models.InventoryViewModel
+
+<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm mt-1">
+    <h5 class="mb-2 text-2xl font-bold text-gray-900">Inventory Details</h5>
+    <p class="text-gray-700">
+        @using (Html.BeginForm("SaveUpdateInventory", "Engineering"))
+        {
+            <div class="grid gap-6 mb-6 md:grid-cols-2">
+                @Html.HiddenFor(x => x.AddEditInventory.Id)
+                @Html.HiddenFor(x => x.AddEditInventory.CreatedBy)
+                @Html.HiddenFor(x => x.AddEditInventory.DateCreated)
+                <div>
+                    @Html.LabelFor(x => x.AddEditInventory.Name, new { @class = "block mb-2.5 text-sm font-medium text-heading" })
+                    @Html.TextBoxFor(x => x.AddEditInventory.Name, new { @class = "bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body", required = "required", placeholder = "Name" })
+                </div>
+                <div>
+                    @Html.LabelFor(x => x.AddEditInventory.Division, new { @class = "block mb-2.5 text-sm font-medium text-heading" })
+                    @Html.TextBoxFor(x => x.AddEditInventory.Division, new { @class = "bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body", required = "required", placeholder = "Division" })
+                </div>
+                <div>
+                    @Html.LabelFor(x => x.AddEditInventory.UOM, new { @class = "block mb-2.5 text-sm font-medium text-heading" })
+                    @Html.TextBoxFor(x => x.AddEditInventory.UOM, new { @class = "bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body", required = "required", placeholder = "Unit of Measure" })
+                </div>
+                <div>
+                    @Html.LabelFor(x => x.AddEditInventory.UnitCost, new { @class = "block mb-2.5 text-sm font-medium text-heading" })
+                    @Html.TextBoxFor(x => x.AddEditInventory.UnitCost, new { type = "number", step = "0.01", @class = "bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body", required = "required", placeholder = "0.00" })
+                </div>
+                <div>
+                    @Html.LabelFor(x => x.AddEditInventory.Quantity, new { @class = "block mb-2.5 text-sm font-medium text-heading" })
+                    @Html.TextBoxFor(x => x.AddEditInventory.Quantity, new { type = "number", step = "0.01", @class = "bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body", required = "required", placeholder = "0.00" })
+                </div>
+                <div>
+                    @Html.LabelFor(x => x.AddEditInventory.UnitSellingPrice, new { @class = "block mb-2.5 text-sm font-medium text-heading" })
+                    @Html.TextBoxFor(x => x.AddEditInventory.UnitSellingPrice, new { type = "number", step = "0.01", @class = "bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-lg focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body", required = "required", placeholder = "0.00" })
+                </div>
+                <div>
+                    @Html.CheckBoxFor(x => x.AddEditInventory.IsActive, new { @class = "w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" })
+                    @Html.LabelFor(x => x.AddEditInventory.IsActive, new { @class = "select-none ms-2 text-sm font-medium text-heading" })
+                </div>
+            </div>
+
+            <div>
+                <button type"submit" class="px-4 py-2 text-sm text-white hover:text-black bg-green-700 hover:bg-green-500 text-white font-semibold rounded-md transition duration-150">
+                    <i class="fa-solid fa-check pt-1 mr-2"></i> Save
+                </button>
+                <button type="button" class="px-4 py-2 text-sm text-white hover:text-black bg-red-700 hover:bg-red-500 text-black font-semibold rounded-md hover:bg-gray-700 transition duration-150" onclick="location.href='@Url.Action("Inventory", "Engineering")'">
+                    <i class="fa-solid fa-xmark pt-1 mr-2"></i> Cancel
+                </button>
+            </div>
+        }
+    </p>
+</div>
