@@ -12,6 +12,20 @@
   "type": "commonjs",
   "devDependencies": {
     "@tailwindcss/cli": "^4.2.4",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.13",
     "tailwindcss": "^4.2.4"
-  }
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.2.4",
+    "@tailwindplus/elements": "^1.0.22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/admintmcwd-dotcom/TMCWD.git"
+  },
+  "bugs": {
+    "url": "https://github.com/admintmcwd-dotcom/TMCWD/issues"
+  },
+  "homepage": "https://github.com/admintmcwd-dotcom/TMCWD#readme"
 }

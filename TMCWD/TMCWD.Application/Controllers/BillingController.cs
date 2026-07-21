@@ -9,22 +9,33 @@ namespace TMCWD.Application.Controllers
 
         #region fields
 
-        private readonly AuthenticatedUserService _user;
-        private readonly BillingTransaction _billTransaction;
+        //private readonly AuthenticatedUserService _user;
+        //private readonly BillingTransaction _billTransaction;
 
         #endregion
 
         #region constructors
 
-        public BillingController(AuthenticatedUserService user, BillingTransaction billTransaction)
+        //public BillingController(AuthenticatedUserService user, BillingTransaction billTransaction)
+        //{
+        //    _user = user;
+        //    _billTransaction = billTransaction;
+        //}
+
+        public BillingController()
         {
-            _user = user;
-            _billTransaction = billTransaction;
+            //_user = user;
+            //_billTransaction = billTransaction;
         }
 
         #endregion
 
         #region methods
+
+        public IActionResult Index()
+        {
+            return View();
+        }
 
         public async Task<IActionResult> GetBillById(int id)
         {
