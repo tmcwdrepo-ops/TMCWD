@@ -1,0 +1,190 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = "_insideLayout";
+}
+
+<!-- ============================================================
+     Reading Sheet — Page Fragment
+     Loaded dynamically into #pageContent by appshell.js.
+     No <html>/<head>/<body> tags. No row data — tbody is
+     populated by scripts/reading-sheet.js at runtime.
+     ============================================================ -->
+<link rel="stylesheet" href="~/css/reading-sheet.css"/>    
+<script src = "~/js/reading-sheet.js/" />
+<section class="page-section" aria-label="View Reading Sheet Created">
+
+  <!-- Toolbar -->
+  <div class="page-toolbar">
+    <div class="page-toolbar__left">
+      <button class="btn btn--green" type="button">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Create New
+      </button>
+      <div class="search-input-wrap">
+        <svg class="search-input__icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M11 11l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <input
+          class="search-input"
+          type="search"
+          placeholder="Search..."
+          aria-label="Search reading sheets"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+    <div class="page-toolbar__right">
+      <label class="status-toggle" aria-label="Show active only">
+        <input class="status-toggle__input" type="checkbox" role="switch" aria-checked="false" />
+        <span class="status-toggle__track" aria-hidden="true">
+          <span class="status-toggle__thumb"></span>
+        </span>
+        <span class="status-toggle__label">Show Completed</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Bulk Actions Bar (hidden until rows are selected) -->
+  <div class="bulk-bar" id="bulkActionsBar" hidden>
+    <span class="bulk-bar__count" id="bulkSelectedCount">0 selected</span>
+    <div class="bulk-bar__actions">
+      <button class="btn btn--danger" type="button" id="bulkDeleteBtn">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Delete Selected
+      </button>
+      <button class="btn btn--ghost" type="button" id="bulkClearBtn">
+        Clear selection
+      </button>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-backdrop" id="deleteModalBackdrop" hidden aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+      <div class="modal__icon modal__icon--danger" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 11v5M14 11v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="modal__title" id="deleteModalTitle">Delete Record</h2>
+      <p class="modal__body">Are you sure you want to delete this record? This action cannot be undone.</p>
+      <div class="modal__actions">
+        <button class="btn btn--ghost" type="button" id="deleteModalCancel">Cancel</button>
+        <button class="btn btn--danger" type="button" id="deleteModalConfirm">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Delete Confirmation Modal -->
+  <div class="modal-backdrop" id="bulkDeleteModalBackdrop" hidden aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bulkDeleteModalTitle">
+      <div class="modal__icon modal__icon--danger" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 11v5M14 11v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="modal__title" id="bulkDeleteModalTitle">Delete Selected Records</h2>
+      <p class="modal__body" id="bulkDeleteModalBody">You are about to delete <strong id="bulkDeleteCount">0</strong> record(s). This cannot be undone.</p>
+      <p class="modal__body">Type <strong>delete all</strong> to confirm.</p>
+      <input
+        class="modal__confirm-input"
+        type="text"
+        id="bulkDeleteConfirmInput"
+        placeholder="delete all"
+        aria-label="Type delete all to confirm"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <div class="modal__actions">
+        <button class="btn btn--ghost" type="button" id="bulkDeleteModalCancel">Cancel</button>
+        <button class="btn btn--danger" type="button" id="bulkDeleteModalConfirm" disabled>Delete All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table panel -->
+  <div class="panel">
+    <div class="table-wrap">
+      <table class="data-table" id="readingSheetTable" aria-label="Reading sheets">
+        <thead>
+          <tr>
+            <th class="col-check" scope="col">
+              <input class="tbl-checkbox" type="checkbox" id="selectAllRows" aria-label="Select all rows" />
+            </th>
+            <th scope="col">
+              <span class="th-inner" data-sort="meterReader">
+                Meter Reader
+                <svg class="sort-icon" viewBox="0 0 10 14" fill="none" aria-hidden="true">
+                  <path d="M5 1v12M1 4l4-3 4 3M1 10l4 3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </th>
+            <th scope="col">
+              <span class="th-inner" data-sort="billingDate">
+                Billing Date
+                <svg class="sort-icon" viewBox="0 0 10 14" fill="none" aria-hidden="true">
+                  <path d="M5 1v12M1 4l4-3 4 3M1 10l4 3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </th>
+            <th scope="col">
+              <span class="th-inner" data-sort="zone">
+                Zone
+                <svg class="sort-icon" viewBox="0 0 10 14" fill="none" aria-hidden="true">
+                  <path d="M5 1v12M1 4l4-3 4 3M1 10l4 3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </th>
+            <th scope="col">
+              <span class="th-inner" data-sort="forPosting">
+                For Posting
+                <svg class="sort-icon" viewBox="0 0 10 14" fill="none" aria-hidden="true">
+                  <path d="M5 1v12M1 4l4-3 4 3M1 10l4 3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </th>
+            <th scope="col">
+              <span class="th-inner">
+                Status
+              </span>
+            </th>
+            <th scope="col" class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="readingSheetBody">
+          <!-- Rows are rendered by initReadingSheetPage() in scripts/reading-sheet.js -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="readingSheetPagination" aria-label="Table pagination">
+      <span class="pagination__summary" id="paginationSummary"></span>
+      <div class="pagination__controls" id="paginationControls">
+        <button class="pagination__btn" type="button" id="prevPageBtn" aria-label="Previous page" disabled>
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Prev
+        </button>
+        <!-- Page number buttons rendered by JS -->
+        <button class="pagination__btn" type="button" id="nextPageBtn" aria-label="Next page">
+          Next
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</section>
