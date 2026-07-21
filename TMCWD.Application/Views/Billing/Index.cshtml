@@ -5,197 +5,185 @@
     Layout = "_insideLayout";
 }
 
-<div id="accordion-collapse-readingsheet" data-accordion="collapse" class="rounded-lg border border-default overflow-hidden shadow-xs">
-    <h2 id="accordion-collapse-heading-1" class="bg-gray-300">
-        <button id="accordion-button-item-1" type="button" class="collapsible-button flex items-center justify-between w-full p-5 font-medium rtl:text-right text-body rounded-t-base border border-t-0 border-x-0 border-b-default hover:text-heading hover:bg-neutral-secondary-medium gap-3" data-accordion-target="#accordion-collapse-body-1" aria-expanded="true" aria-controls="accordion-collapse-body-1">
-            <span>Reading Sheet</span>
-            <svg id="accordion-icon-item-1" data-accordion-icon class="w-5 h-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 15 7-7 7 7" /></svg>
-        </button>
-    </h2>
-    <div id="accordion-collapse-body-1" class="collapsible-body bg-white border border-s-0 border-e-0 border-t-0 border-b-default" aria-labelledby="accordion-collapse-heading-1">
-        <div class="grid grid-cols-2">
-            <div>
-                Zone
-            </div>
-            <div>
-                <!--Zone Dropdown-->
-                <div>
-                    <div class="relative w-full">
-                        <input type="hidden" class="selected-value" />
-                        <select id="cmbZone" class="hidden"></select>
-                        <div class="relative grid grid-cols-[95%_5%] border rounded-md gap-2 text-sm px-4 py-2">
-                            <div class="w-full text-left">
-                                <input type="text" class="dropdown-input w-full focus:outline-none" placeholder="Select Material" />
-                            </div>
-                            <div class="w-full text-right">
-                                <button type="button" class="border-none">
-                                    <i class="fa-solid fa-chevron-down"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="dropdown-options" class="absolute dropdown-options w-full mt-1 border rounded-md py-2 px-2 bg-white max-h-64 overflow-y-scroll hidden">
-                            <p class="w-full hover:bg-blue-500">No materials</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div>
-                Book
-            </div>
-            <div>
-                <!--Book dropdown-->
-                <div>
-                    <div class="relative w-full">
-                        <input type="hidden" class="selected-value" />
-                        <select id="cmbBook" class="hidden"></select>
-                        <div class="relative grid grid-cols-[95%_5%] border rounded-md gap-2 text-sm px-4 py-2">
-                            <div class="w-full text-left">
-                                <input type="text" class="dropdown-input w-full focus:outline-none" placeholder="Select Material" />
-                            </div>
-                            <div class="w-full text-right">
-                                <button type="button" class="border-none">
-                                    <i class="fa-solid fa-chevron-down"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="dropdown-options" class="absolute dropdown-options w-full mt-1 border rounded-md py-2 px-2 bg-white max-h-64 overflow-y-scroll hidden">
-                            <p class="w-full hover:bg-blue-500">No materials</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div>
-                Billing Period
-            </div>
-            <div>
-                
-            </div>
-            <div>
-                Assigned To
-            </div>
-            <div>
-                <!--Dropdown Meter Reader drop down-->
-                <div>
-                    <div class="relative w-full">
-                        <input type="hidden" class="selected-value" />
-                        <select id="cmbAssignedTo" class="hidden"></select>
-                        <div class="relative grid grid-cols-[95%_5%] border rounded-md gap-2 text-sm px-4 py-2">
-                            <div class="w-full text-left">
-                                <input type="text" class="dropdown-input w-full focus:outline-none" placeholder="Select Material" />
-                            </div>
-                            <div class="w-full text-right">
-                                <button type="button" class="border-none">
-                                    <i class="fa-solid fa-chevron-down"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="dropdown-options" class="absolute dropdown-options w-full mt-1 border rounded-md py-2 px-2 bg-white max-h-64 overflow-y-scroll hidden">
-                            <p class="w-full hover:bg-blue-500">No materials</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="grid col-span-2">
-                <button id="btnSave" type="button" class="p-2 border rounded-md"></button>
-            </div>
-        </div>
+<!-- ============================================================
+     Reading Sheet — Page Fragment
+     Loaded dynamically into #pageContent by appshell.js.
+     No <html>/<head>/<body> tags. No row data — tbody is
+     populated by scripts/reading-sheet.js at runtime.
+     ============================================================ -->
+<script src = "~/js/reading-sheet.js"/>
+<section class="page-section" aria-label="View Reading Sheet Created">
+
+  <!-- Toolbar -->
+  <div class="page-toolbar">
+    <div class="page-toolbar__left">
+      <button class="btn btn--green" type="button">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Create New
+      </button>
+      <div class="search-input-wrap">
+        <svg class="search-input__icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M11 11l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <input
+          class="search-input"
+          type="search"
+          placeholder="Search..."
+          aria-label="Search reading sheets"
+          autocomplete="off"
+        />
+      </div>
     </div>
-</div>
+    <div class="page-toolbar__right">
+      <label class="status-toggle" aria-label="Show active only">
+        <input class="status-toggle__input" type="checkbox" role="switch" aria-checked="false" />
+        <span class="status-toggle__track" aria-hidden="true">
+          <span class="status-toggle__thumb"></span>
+        </span>
+        <span class="status-toggle__label">Show Completed</span>
+      </label>
+    </div>
+  </div>
 
-<script type="text/javascript">
-    document.addEventListener("DOMContentLoaded", function(event) {
+  <!-- Bulk Actions Bar (hidden until rows are selected) -->
+  <div class="bulk-bar" id="bulkActionsBar" hidden>
+    <span class="bulk-bar__count" id="bulkSelectedCount">0 selected</span>
+    <div class="bulk-bar__actions">
+      <button class="btn btn--danger" type="button" id="bulkDeleteBtn">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Delete Selected
+      </button>
+      <button class="btn btn--ghost" type="button" id="bulkClearBtn">
+        Clear selection
+      </button>
+    </div>
+  </div>
 
-        var selectedZoneItem = null;
-        var selectedBookItem = null;
-        var selectedUserItem = null
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-backdrop" id="deleteModalBackdrop" hidden aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+      <div class="modal__icon modal__icon--danger" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 11v5M14 11v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="modal__title" id="deleteModalTitle">Delete Record</h2>
+      <p class="modal__body">Are you sure you want to delete this record? This action cannot be undone.</p>
+      <div class="modal__actions">
+        <button class="btn btn--ghost" type="button" id="deleteModalCancel">Cancel</button>
+        <button class="btn btn--danger" type="button" id="deleteModalConfirm">Delete</button>
+      </div>
+    </div>
+  </div>
 
-        const accordion = document.getElementById('accordion-collapse-readingsheet');
-        accordion.Collapsible();
+  <!-- Bulk Delete Confirmation Modal -->
+  <div class="modal-backdrop" id="bulkDeleteModalBackdrop" hidden aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bulkDeleteModalTitle">
+      <div class="modal__icon modal__icon--danger" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 11v5M14 11v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="modal__title" id="bulkDeleteModalTitle">Delete Selected Records</h2>
+      <p class="modal__body" id="bulkDeleteModalBody">You are about to delete <strong id="bulkDeleteCount">0</strong> record(s). This cannot be undone.</p>
+      <p class="modal__body">Type <strong>delete all</strong> to confirm.</p>
+      <input
+        class="modal__confirm-input"
+        type="text"
+        id="bulkDeleteConfirmInput"
+        placeholder="delete all"
+        aria-label="Type delete all to confirm"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <div class="modal__actions">
+        <button class="btn btn--ghost" type="button" id="bulkDeleteModalCancel">Cancel</button>
+        <button class="btn btn--danger" type="button" id="bulkDeleteModalConfirm" disabled>Delete All</button>
+      </div>
+    </div>
+  </div>
 
+  <!-- Table panel -->
+  <div class="panel">
+    <div class="table-wrap">
+      <table class="data-table" id="readingSheetTable" aria-label="Reading sheets">
+        <thead>
+          <tr>
+            <th class="col-check" scope="col">
+              <input class="tbl-checkbox" type="checkbox" id="selectAllRows" aria-label="Select all rows" />
+            </th>
+            <th scope="col">
+              <span class="th-inner" data-sort="meterReader">
+                Meter Reader
+                <svg class="sort-icon" viewBox="0 0 10 14" fill="none" aria-hidden="true">
+                  <path d="M5 1v12M1 4l4-3 4 3M1 10l4 3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </th>
+            <th scope="col">
+              <span class="th-inner" data-sort="billingDate">
+                Billing Date
+                <svg class="sort-icon" viewBox="0 0 10 14" fill="none" aria-hidden="true">
+                  <path d="M5 1v12M1 4l4-3 4 3M1 10l4 3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </th>
+            <th scope="col">
+              <span class="th-inner" data-sort="zone">
+                Zone
+                <svg class="sort-icon" viewBox="0 0 10 14" fill="none" aria-hidden="true">
+                  <path d="M5 1v12M1 4l4-3 4 3M1 10l4 3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </th>
+            <th scope="col">
+              <span class="th-inner" data-sort="forPosting">
+                For Posting
+                <svg class="sort-icon" viewBox="0 0 10 14" fill="none" aria-hidden="true">
+                  <path d="M5 1v12M1 4l4-3 4 3M1 10l4 3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </th>
+            <th scope="col">
+              <span class="th-inner">
+                Status
+              </span>
+            </th>
+            <th scope="col" class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="readingSheetBody">
+          <!-- Rows are rendered by initReadingSheetPage() in scripts/reading-sheet.js -->
+        </tbody>
+      </table>
+    </div>
 
-        const cmbZone = document.getElementById("cmbZone");
+    <!-- Pagination -->
+    <div class="pagination" id="readingSheetPagination" aria-label="Table pagination">
+      <span class="pagination__summary" id="paginationSummary"></span>
+      <div class="pagination__controls" id="paginationControls">
+        <button class="pagination__btn" type="button" id="prevPageBtn" aria-label="Previous page" disabled>
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Prev
+        </button>
+        <!-- Page number buttons rendered by JS -->
+        <button class="pagination__btn" type="button" id="nextPageBtn" aria-label="Next page">
+          Next
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
 
-        if(cmbZone){
-
-            cmbZone.SearchableDropdown({
-                getItemUrl: '@Url.Action("GetZones", "ZoneBook")',
-                getItemParameter : null,
-                dataMemberText: 'zone',
-                dataMemberValue: 'zone',
-                onSelectChange : (selectedItem) => {
-                    selectedZoneItem = selectedItem;
-                },
-                onSelectionClear: () => {
-                    selectedZoneItem = null;
-                }
-            });
-
-            // var zones = zoneClient.getAsync();
-            // if(zones){
-            //     const dropdownOptions = document.getElementById('dropdown-options');
-            //     dropdownOptions.replaceChildren();
-            //     [...zones].forEach((zone) => {
-            //         const lnk = document.createElement('a');
-            //         lnk.href = '#';
-            //         const par = document.createElement('p');
-            //         par.classList.add('w-full', 'px-2', 'py-2', 'hover:bg-blue-500', 'hover:text-white');
-            //         par.textContent = zone.zone;
-            //         lnk.appendChild(par);
-            //         lnk.dataset.itemid = zone.id;
-            //         lnk.dataset.itemname = zone.name;
-            //         //lnk.dataset.unitsellingprice = zone.unitSellingPrice;
-            //         dropdownOptions.appendChild(lnk);
-            //     });
-            // }
-        }
-
-        const cmbBook = document.getElementById('cmbBook');
-
-        if(cmbBook){
-            cmbBook.SearchableDropdown({
-                getItemUrl: '@Url.Action("GetZones", "ZoneBook")',
-                getItemParameter: null,
-                dataMemberText: 'book',
-                dataMemberValue: 'book',
-                onSelectChange: (selectedItem) => {
-                    selectedBookItem = selectedItem;
-                },
-                onSelectionClear: () => {
-                    selectedBookItem = null;
-                }
-            });
-        }
-
-        const cmbAssignedTo = document.getElementById('cmbAssignedTo');
-
-        if (cmbAssignedTo){
-            cmbAssignedTo.SearchableDropdown({
-                getItemUrl: '@Url.Action("GetUsersByRole", "Admin")' + "?role=4",
-                getItemParameter: null,
-                dataMemberText: 'name',
-                dataMemberValue: 'id',
-                onSelectChange: (selectedItem) => {
-                    selectedUserItem = selectedItem
-                },
-                onSelectionClear: () => {
-                    selectedUserItem = null;
-                }
-            });
-        }
-
-        const btnSave = document.getElementById("btnSave");
-
-        if (btnSave) {
-            btnSave.addEventListener("click", (evt) => {
-                evt.preventDefault();
-                evt.stopPropagation();
-
-                var url = '@Url.Action("CreateReadingSheet", "ReadingSheet")' + "?zone=" + zone + '&book=' + book;
-
-                var createSheetClient = new WebClient('@Url.Action("CreateReadingSheet", "ReadingSheet")');
-
-            });
-        }
-
-    });
-</script>
+</section>
