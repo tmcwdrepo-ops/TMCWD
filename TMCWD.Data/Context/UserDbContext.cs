@@ -73,6 +73,8 @@ namespace TMCWD.Data.Context
 
         public DbSet<ZoneBook> ZoneBooks { get; set; }
 
+        public DbSet<ReadingSheetTemplate> ReadingSheetTemplates { get; set; }
+
         #endregion
 
         #region constructors
