@@ -1,40 +1,72 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Staff Portal — Sign In";
 }
 @model TMCWD.Application.Models.LoginViewModel
-<div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
-        <div class="text-center mb-8">
-            @* <img src="{{ asset('logos-etc/logo.png') }}" alt="TMCWD" class="h-16 w-16 mx-auto mb-3 object-contain"> *@
-            <img src="~/images/logo.png" alt="TMCWD" class="h-32 w-32 mx-auto mb-3 object-contain">
-            <h1 class="text-2xl font-bold text-blue-900">Staff Portal</h1>
-            <p class="text-gray-500 text-sm mt-1">Authorized personnel only</p>
-        </div>
 
-    <form asp-controller="Home" asp-action="Login" method="Post" >
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="email">Email Address</label>
-            <input type="email" name="email" id="email"
-                   value="@Model.Email" asp-for="Email"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                   required autofocus autocomplete="username">
-        </div>
+<div class="card">
 
-        <div class="mb-6">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="password">Password</label>
-            <input type="password" name="password" id="password" value="@Model.Password" asp-for="Password"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                   required autocomplete="current-password">
-        </div>
-
-        <button type="submit"
-                class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
-            Sign In
-        </button>
-    </form>
-
-    <div class="mt-6 text-center">
-        <a href="@Url.Action("Index", "Home")" class="text-sm text-gray-400 hover:text-gray-600">
-            ← Back to Website
-        </a>
+  <!-- Brand -->
+  <div class="brand">
+    <div class="seal">
+      <img id="logo-img" class="logo-img" src="~/images/logo.png" alt="TMCWD Logo" />
+      <div id="logo-fallback" class="logo-fallback" style="display:none;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2L2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5"
+                stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+        <span>TMCWD</span>
+      </div>
     </div>
+    <h1>Staff Portal</h1>
+    <div class="accent-line"></div>
+    <p>Authorized personnel only</p>
+  </div>
+
+  <!-- Login form -->
+  <form id="login-form" asp-controller="Home" asp-action="Login" method="post" novalidate>
+
+    <div class="field" id="field-email">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" name="email" asp-for="Email"
+             value="@Model.Email"
+             placeholder="you@tmcwd.gov.ph"
+             autocomplete="username"
+             autofocus />
+      <span class="error-msg" id="email-error" aria-live="polite"></span>
+    </div>
+
+    <div class="field" id="field-password">
+      <label for="password">Password</label>
+      <div class="password-wrap">
+        <input type="password" id="password" name="password" asp-for="Password"
+               placeholder="••••••••"
+               autocomplete="current-password" />
+        <button type="button" class="toggle-pw" id="toggle-pw" aria-label="Show password">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" id="eye-icon">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"
+                  stroke="currentColor" stroke-width="1.6"/>
+            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+      <span class="error-msg" id="password-error" aria-live="polite"></span>
+    </div>
+
+    <div class="row-between">
+      <label class="remember">
+        <input type="checkbox" id="remember" />
+        Remember me
+      </label>
+      <a href="#">Forgot password?</a>
+    </div>
+
+    <button type="submit" class="signin" id="signin-btn">
+      <span class="spinner" id="spinner" hidden></span>
+      <span class="btn-label">Sign In</span>
+    </button>
+
+  </form>
+
+  <p class="footnote">Trece Martires City Water District &copy; @DateTime.Now.Year</p>
+
 </div>

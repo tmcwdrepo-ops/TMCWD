@@ -1,0 +1,116 @@
+/* index.css — master page / background scene styles */
+
+:root {
+  --bg:           #f0f4fb;
+  --panel:        #ffffff;
+  --panel-alt:    #f5f7fb;
+  --border:       #dde3ef;
+  --text:         #0f1623;
+  --text-dim:     #4e5a73;
+  --text-faint:   #9aa3b8;
+  --accent:       #3d6bfa;
+  --accent-soft:  rgba(61, 107, 250, 0.12);
+  --danger:       #d93025;
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Sora', 'Inter', system-ui, sans-serif;
+  --radius-md:    10px;
+  --radius-lg:    14px;
+  --radius-xl:    20px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg);
+}
+
+/* Background scene */
+.scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.scene::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(61, 107, 250, 0.10) 0%, transparent 70%);
+}
+
+.scene::after {
+  content: '';
+  position: absolute;
+  bottom: -15%;
+  right: -10%;
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(61, 107, 250, 0.07) 0%, transparent 65%);
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(61, 107, 250, 0.18), transparent),
+    radial-gradient(1.5px 1.5px at 85% 12%, rgba(61, 107, 250, 0.14), transparent),
+    radial-gradient(1px 1px at 60% 40%, rgba(61, 107, 250, 0.12), transparent),
+    radial-gradient(1.5px 1.5px at 30% 70%, rgba(61, 107, 250, 0.10), transparent),
+    radial-gradient(1px 1px at 92% 65%, rgba(61, 107, 250, 0.10), transparent),
+    radial-gradient(1px 1px at 50% 88%, rgba(61, 107, 250, 0.08), transparent);
+}
+
+.ripple {
+  position: absolute;
+  left: 50%;
+  bottom: -80px;
+  transform: translateX(-50%);
+  width: 1400px;
+  max-width: 220vw;
+  opacity: 0.4;
+}
+
+.ripple path {
+  animation: wave 14s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.ripple.r2 path { animation-duration: 18s; animation-delay: -5s; }
+.ripple.r3 path { animation-duration: 22s; animation-delay: -10s; }
+
+@keyframes wave {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50%       { transform: translateY(-5px) scaleY(1.02); }
+}
+
+.content-slot {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
