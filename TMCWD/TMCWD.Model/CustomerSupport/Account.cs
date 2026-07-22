@@ -48,6 +48,9 @@ namespace TMCWD.Model.CustomerSupport
         [DisplayName("Current")]
         public bool IsCurrentAddress { get; set; }
 
+        [DisplayName("Sequence")]
+        public int Sequence { get; set; }
+
         [DisplayName("Date Enrolled")]
         public DateTime DateCreated { get; set; }
 

@@ -32,7 +32,9 @@ namespace TMCWD.Model.CustomerSupport.Interfaces
         public string Barangay { get; set; }
 
         public bool IsCurrentAddress { get; set; }
-        
+
+        public int Sequence { get; set; }
+
         public DateTime DateCreated { get; set; }
 
         public DateTime DateUpdated { get; set; }

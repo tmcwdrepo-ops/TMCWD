@@ -15,7 +15,6 @@ namespace TMCWD.Data.Controllers
     {
 
         private readonly IAccountService _accountService;
-
         public AccountController(IAccountService service)
         {
             _accountService = service;
@@ -82,6 +81,16 @@ namespace TMCWD.Data.Controllers
             if (accounts == null || !accounts.Any()) return NotFound($"No accounts were found.");
             return Ok(accounts);
 
+        }
+
+        [HttpGet("GetByZoneBookId/{zoneBookId}")]
+        public async Task<IActionResult> GetByZoneBookId(int zoneBookId)
+        {
+            var accounts = await _accountService.GetAccountsByZoneBookId(zoneBookId);
+            if (accounts == null || !accounts.Any()) return NotFound();
+            return Ok(accounts);
+        }
+
     }
-}
+
 }

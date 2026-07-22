@@ -55,6 +55,9 @@ namespace TMCWD.Data.Entities
         [Required, Column("IsCurrentAddress")]
         public bool IsCurrentAddress { get; set; }
 
+        [Column("Sequence")]
+        public int Sequence { get; set; }
+
         [Required, Column("Status")]
         public int Status { get; set; }
 

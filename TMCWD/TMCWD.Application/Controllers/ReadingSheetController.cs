@@ -15,6 +15,7 @@ namespace TMCWD.Application.Controllers
         private readonly ReadingSheetTransaction _readingSheetTrans;
         private readonly ZoneBookTransaction _zoneBookTrans;
         private readonly UserTransaction _userTrans;
+        private readonly ReadingTransaction _readingTransaction;
 
         #endregion
 
@@ -23,12 +24,14 @@ namespace TMCWD.Application.Controllers
         public ReadingSheetController(AuthenticatedUserService user,
             ReadingSheetTransaction readingSheetTrans,
             UserTransaction userTrans,
-            ZoneBookTransaction zoneBookTrans)
+            ZoneBookTransaction zoneBookTrans,
+            ReadingTransaction readingTransaction)
         {
             _user = user;
             _readingSheetTrans = readingSheetTrans;
             _userTrans = userTrans;
             _zoneBookTrans = zoneBookTrans;
+            _readingTransaction = readingTransaction;
         }
 
         #endregion
@@ -89,26 +92,11 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetZones()
+        public async Task<IActionResult> GetAllReadingSheet()
         {
-
-            List<ZoneBook> zones = new();
-            try
-            {
-                zones = await _zoneBookTrans.GetAll();
-                if (zones == null) return BadRequest();
-
-            }
-            catch { }
-
-            return Ok(zones);
-        }
-
-        public async Task<IActionResult> GetBooksByZone(int zone)
-        {
-            var books = await _zoneBookTrans.GetBooksByZone(zone);
-            if(books == null) return NotFound();
-            return Ok(books);
+            var readingSheets = await _readingSheetTrans.GetAll();
+            if(readingSheets == null || !readingSheets.Any()) return NotFound();
+            return Ok(readingSheets);
         }
 
         #endregion

@@ -114,6 +114,22 @@ namespace TMCWD.Application.Controllers
             return Ok(updatedAccount);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAccountsByZoneBookId(int zoneBookId)
+        {
+            var accounts = await _accountTransaction.GetByZoneBookId(zoneBookId);
+            if(accounts == null) return NotFound();
+            return Ok(accounts);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAccountsByZoneAndBook(int zone, int book)
+        {
+            var accounts = await _accountTransaction.GetByZoneAndBook(zone, book);
+            if (accounts == null) return NotFound();
+            return Ok(accounts);
+        }
+
     }
 
 }

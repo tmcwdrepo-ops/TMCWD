@@ -75,5 +75,12 @@ namespace TMCWD.Data.Services
                         select accounts;
             return await accts.ToListAsync();
         }
+
+        public async Task<List<Account>> GetAccountsByZoneBookId(int zoneBookId)
+        {
+            var accounts = await _dbContext.Accounts.Where(x => x.ZoneBookId == zoneBookId).ToListAsync();
+            return accounts;
+        }
+
     }
 }

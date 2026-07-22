@@ -30,10 +30,35 @@ var readingSheetState = {
   statusFilter:  'in-progress'  // 'in-progress' | 'completed'
 };
 
-
 /* ============================================================
    UTILITY
    ============================================================ */
+
+
+/* ============================================================
+   Load data from .net controller
+   ============================================================ */
+
+async function loadDataAsync(url) {
+    let returnResult = null;
+    await fetch(this.url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(this.data)
+    }).then(response => {
+        if (!response.ok || response.status == 204)
+            return null;
+        return response.json();
+    }).then(result => {
+        returnResult = result;
+    });
+    readingSheetState.rows = returnResult;
+    return returnResult;
+}
+
+/* End data load */
 
 /**
  * Returns a debounced version of fn — delays invocation by
