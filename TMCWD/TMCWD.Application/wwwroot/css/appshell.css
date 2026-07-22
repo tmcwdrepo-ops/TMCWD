@@ -165,18 +165,17 @@ svg {
 }
 
 .sidebar__logo-mark {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   color: var(--color-blue);
   flex-shrink: 0;
 }
 
 .sidebar__logo-img {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
   flex-shrink: 0;
-  display: block;
 }
 
 .sidebar__wordmark {
