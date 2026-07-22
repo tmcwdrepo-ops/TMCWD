@@ -20,5 +20,7 @@ namespace TMCWD.Data.Services
 
         public Task<Reading> SaveUpdate(int userId, Reading reading);
 
+        public Task<List<Reading>> SaveRange(List<Reading> readings);
+
     }
 }

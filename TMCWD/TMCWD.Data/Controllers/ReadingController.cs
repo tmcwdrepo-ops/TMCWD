@@ -90,6 +90,14 @@ namespace TMCWD.Data.Controllers
             return Ok(reading);
         }
 
+        [HttpPost("SaveRange")]
+        public async Task<IActionResult> SaveRange(List<Reading> readings)
+        {
+            var savedReadings = await _service.SaveRange(readings);
+            if(savedReadings == null || !savedReadings.Any()) return NotFound();
+            return Ok(savedReadings);
+        }
+
         #endregion
 
     }

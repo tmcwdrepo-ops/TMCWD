@@ -34,6 +34,9 @@ namespace TMCWD.Data.Entities
         [Column("BillingPeriod")]
         public DateTime BillingPeriod { get; set; }
 
+        [Column("Status")]
+        public bool IsCompleted { get; set; }
+
         [Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }
 

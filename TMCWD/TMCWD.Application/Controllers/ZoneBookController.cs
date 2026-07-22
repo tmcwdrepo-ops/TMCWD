@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TMCWD.Billing;
+using TMCWD.Model.Billing;
 using TMCWD.Services;
 
 namespace TMCWD.Application.Controllers
@@ -45,6 +46,32 @@ namespace TMCWD.Application.Controllers
             var books = await _zoneBookTrans.GetBooksByZone(zone);
             if(books == null) return NotFound();
             return Ok(books);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetZoneBookIdByZoneAndBook(int zone, int book)
+        {
+            var zoneBook = await _zoneBookTrans.GetByZoneAndBook(zone, book);
+
+            if (zoneBook == null) return NotFound();
+
+            return Ok(zoneBook);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetZones()
+        {
+
+            List<ZoneBook> zones = new();
+            try
+            {
+                zones = await _zoneBookTrans.GetAll();
+                if (zones == null) return BadRequest();
+
+            }
+            catch { }
+
+            return Ok(zones);
         }
 
         #endregion

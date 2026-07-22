@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Billing\TMCWD.Billing.csproj" />
+    <ProjectReference Include="..\TMCWD.Billing\TMCWD.Billing.csproj" />
     <ProjectReference Include="..\TMCWD.Administration\TMCWD.Administration.csproj" />
     <ProjectReference Include="..\TMCWD.CustomerSupport\TMCWD.CustomerSupport.csproj" />
     <ProjectReference Include="..\TMCWD.Engineering\TMCWD.Engineering.csproj" />

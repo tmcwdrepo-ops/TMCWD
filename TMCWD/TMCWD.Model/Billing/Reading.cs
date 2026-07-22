@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text;
 using TMCWD.Model.Billing.Interfaces;
 
@@ -34,6 +35,9 @@ namespace TMCWD.Model.Billing
 
         [DisplayName("Billing Period")]
         public DateTime BillingPeriod { get; set; }
+
+        [DisplayName("Completed")]
+        public bool IsCompleted { get; set; }
 
         [DisplayName("Created By")]
         public int CreatedBy { get; set; }
