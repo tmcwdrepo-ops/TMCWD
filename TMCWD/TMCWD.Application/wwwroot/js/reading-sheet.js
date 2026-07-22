@@ -44,7 +44,6 @@ var readingSheetState = {
  * @returns {Function}
  */
 
-initReadingSheetPage();
 function debounce(fn, delay) {
   var timer;
   return function() {
@@ -386,11 +385,88 @@ function handleStatusToggle(event) {
    ============================================================ */
 
 /**
- * Open the delete confirmation modal and store the pending id.
- * Confirmation is handled by #deleteModalConfirm click.
+ * Open the edit modal and populate all fields from the row data.
  *
- * @param {number} id - Row id to delete on confirm.
+ * @param {number} id - Row id to edit.
  */
+function openEditModal(id) {
+  var row = readingSheetState.rows.find(function(r) { return r.id === id; });
+  if (!row) return;
+
+  var backdrop = document.getElementById('editModalBackdrop');
+  if (!backdrop) return;
+
+  // Populate fields
+  document.getElementById('editRowId').value        = row.id;
+  document.getElementById('editMeterReader').value  = row.meterReader;
+  document.getElementById('editBillingDate').value  = row.billingDate;
+  document.getElementById('editZone').value         = row.zone;
+  document.getElementById('editForPosting').value   = row.forPosting;
+  document.getElementById('editStatus').value       = row.status;
+
+  backdrop.hidden = false;
+  backdrop.setAttribute('aria-hidden', 'false');
+
+  // Focus first field
+  var firstInput = document.getElementById('editMeterReader');
+  if (firstInput) firstInput.focus();
+}
+
+/**
+ * Close the edit modal.
+ */
+function closeEditModal() {
+  var backdrop = document.getElementById('editModalBackdrop');
+  if (!backdrop) return;
+  backdrop.hidden = true;
+  backdrop.setAttribute('aria-hidden', 'true');
+}
+
+/**
+ * Save the edited values back into readingSheetState.rows and re-render.
+ */
+function handleEditSave() {
+  var id = parseInt(document.getElementById('editRowId').value, 10);
+  if (!id) return;
+
+  var meterReader = document.getElementById('editMeterReader').value.trim();
+  var billingDate = document.getElementById('editBillingDate').value.trim();
+  var zone        = document.getElementById('editZone').value.trim();
+  var forPosting  = parseInt(document.getElementById('editForPosting').value, 10) || 0;
+  var status      = document.getElementById('editStatus').value;
+
+  if (!meterReader || !billingDate || !zone) return;
+
+  // Update the matching row in state
+  readingSheetState.rows = readingSheetState.rows.map(function(row) {
+    if (row.id !== id) return row;
+    return {
+      id:          row.id,
+      meterReader: meterReader,
+      billingDate: billingDate,
+      zone:        zone,
+      forPosting:  forPosting,
+      status:      status
+    };
+  });
+
+  closeEditModal();
+  applyAllFilters();
+  applyAndRender();
+}
+
+/**
+ * Delegated click handler for Edit buttons on the table body.
+ *
+ * @param {MouseEvent} event
+ */
+function handleEditClick(event) {
+  var btn = event.target.closest('.action-btn--edit');
+  if (!btn) return;
+
+  var id = parseInt(btn.dataset.id, 10);
+  openEditModal(id);
+}
 function openDeleteModal(id) {
   var backdrop = document.getElementById('deleteModalBackdrop');
   if (!backdrop) return;
@@ -414,22 +490,6 @@ function closeDeleteModal() {
   backdrop.hidden = true;
   backdrop.setAttribute('aria-hidden', 'true');
   delete backdrop.dataset.pendingId;
-}
-
-/**
- * Delegated click handler for Edit buttons on the table body.
- * Dispatches a custom "readingSheet:edit" event with the row id.
- * Modal/form logic is wired externally in a later phase.
- *
- * @param {MouseEvent} event
- */
-function handleEditClick(event) {
-  var btn = event.target.closest('.action-btn--edit');
-  if (!btn) return;
-
-  var id = parseInt(btn.dataset.id, 10);
-  document.dispatchEvent(new CustomEvent('readingSheet:edit', { detail: { id: id } }));
-  console.log('[ReadingSheet] Edit dispatched for id:', id);
 }
 
 /**
@@ -828,6 +888,19 @@ function initReadingSheetPage() {
   if (bulkDelete) bulkDelete.addEventListener('click', handleBulkDelete);
   if (bulkClear)  bulkClear.addEventListener('click', handleBulkClear);
 
+  // Edit modal
+  var editSave    = document.getElementById('editModalSave');
+  var editCancel  = document.getElementById('editModalCancel');
+  var editBackdrop = document.getElementById('editModalBackdrop');
+
+  if (editSave)    editSave.addEventListener('click', handleEditSave);
+  if (editCancel)  editCancel.addEventListener('click', closeEditModal);
+  if (editBackdrop) {
+    editBackdrop.addEventListener('click', function(event) {
+      if (event.target === editBackdrop) closeEditModal();
+    });
+  }
+
   // Delete modal (single row)
   var deleteConfirm  = document.getElementById('deleteModalConfirm');
   var deleteCancel   = document.getElementById('deleteModalCancel');
@@ -859,6 +932,7 @@ function initReadingSheetPage() {
   // Escape closes whichever modal is open
   document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
+      closeEditModal();
       closeDeleteModal();
       closeBulkDeleteModal();
     }
