@@ -1,0 +1,974 @@
+/* ============================================================
+   create_reading.css — Phase 1
+   Uses var(--color-*) tokens from appshell.css.
+   Dark / light theme is automatic via [data-theme] on <html>.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Dev Harness
+   ------------------------------------------------------------ */
+
+.dev-harness {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg);
+  padding: var(--space-lg);
+  transition: background-color 160ms ease;
+}
+
+.dev-harness__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.dev-harness__label {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-faint);
+}
+
+.dev-btn {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-panel);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.dev-btn:hover {
+  background-color: var(--color-blue-hover);
+  color: var(--color-blue);
+  border-color: var(--color-blue);
+}
+
+/* ------------------------------------------------------------
+   Backdrop
+   ------------------------------------------------------------ */
+
+.cr-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  z-index: 500;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-lg);
+  overflow-y: auto;
+}
+
+.cr-backdrop[hidden] {
+  display: none;
+}
+
+/* ------------------------------------------------------------
+   Modal Card
+   ------------------------------------------------------------ */
+
+.cr-modal {
+  background-color: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 660px;
+  /* Keep the modal within the viewport so header/footer are always reachable */
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.04),
+    0 16px 48px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+/* ------------------------------------------------------------
+   Header Row
+   ------------------------------------------------------------ */
+
+.cr-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 12px var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  transition: border-color 160ms ease;
+}
+
+/* Favourite star */
+.cr-header__fav {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-faint);
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.cr-header__fav:hover {
+  color: #f5a623;
+  background-color: rgba(245, 166, 35, 0.10);
+}
+
+.cr-header__fav svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Template dropdown wrapper */
+.cr-header__template-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.cr-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cr-select {
+  width: 100%;
+  height: 36px;
+  padding: 0 32px 0 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-border);
+  background-color: var(--color-panel-alt);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.cr-select:focus {
+  border-color: var(--color-blue);
+  background-color: var(--color-panel);
+  box-shadow: 0 0 0 3px var(--color-blue-soft);
+}
+
+.cr-select__chevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--color-text-faint);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* Green Templates button */
+.cr-header__templates-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 7px;
+  border: none;
+  background-color: #22a559;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: filter 150ms ease;
+}
+
+.cr-header__templates-btn:hover {
+  filter: brightness(1.08);
+}
+
+.cr-header__templates-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Close button */
+.cr-header__close {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-faint);
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.cr-header__close:hover {
+  color: var(--color-red);
+  background-color: rgba(255, 69, 58, 0.08);
+}
+
+[data-theme="light"] .cr-header__close:hover {
+  background-color: rgba(217, 48, 37, 0.08);
+}
+
+.cr-header__close svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ------------------------------------------------------------
+   Body placeholder (phases 2+ will replace this)
+   ------------------------------------------------------------ */
+
+.cr-body {
+  padding: var(--space-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+}
+
+.cr-body__placeholder {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-faint);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------
+   Phase 2 — Form body, date fields, override checkbox
+   ------------------------------------------------------------ */
+
+/* Body resets placeholder padding to form padding */
+.cr-body {
+  padding: var(--space-lg) var(--space-lg) var(--space-md);
+  min-height: unset;
+  display: block;
+  overflow-y: auto;
+  flex-shrink: 1;
+}
+
+.cr-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* Row layouts */
+.cr-row {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.cr-row--2col {
+  grid-template-columns: 1fr 1fr;
+}
+
+.cr-row--1col {
+  grid-template-columns: 1fr;
+}
+
+/* Vertically centre items in mixed-content rows */
+.cr-row--valign {
+  align-items: end;
+}
+
+/* Field */
+.cr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cr-field__label {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-dim);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Input wrapper — positions the trailing calendar icon */
+.cr-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cr-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 36px 0 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-border);
+  background-color: var(--color-panel-alt);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  outline: none;
+  transition: border-color 150ms ease, background-color 150ms ease,
+              box-shadow 150ms ease, opacity 150ms ease;
+  /* keep browser date picker arrow but overlay our icon */
+  appearance: auto;
+}
+
+.cr-input:focus {
+  border-color: var(--color-blue);
+  background-color: var(--color-panel);
+  box-shadow: 0 0 0 3px var(--color-blue-soft);
+}
+
+/* Disabled state — greyed out when override is unchecked */
+.cr-input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background-color: var(--color-panel-alt);
+}
+
+/* Calendar / trailing icon */
+.cr-input__icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--color-text-faint);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* Dim icon when input is disabled */
+.cr-input:disabled ~ .cr-input__icon {
+  opacity: 0.35;
+}
+
+/* Checkbox-only field — vertically centres label in its cell */
+.cr-field--checkbox-only {
+  justify-content: flex-end;
+  padding-bottom: 8px;  /* align with input baseline */
+}
+
+/* Custom checkbox label */
+.cr-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Hide native checkbox */
+.cr-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Custom checkbox box */
+.cr-checkbox__box {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--color-border);
+  background-color: var(--color-panel-alt);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.cr-checkbox:checked ~ .cr-checkbox__box,
+.cr-checkbox-label:has(.cr-checkbox:checked) .cr-checkbox__box {
+  background-color: var(--color-blue);
+  border-color: var(--color-blue);
+}
+
+/* Checkmark drawn with CSS */
+.cr-checkbox__box::after {
+  content: '';
+  display: none;
+  width: 4px;
+  height: 7px;
+  border: 2px solid #ffffff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translateY(-1px);
+}
+
+.cr-checkbox:checked ~ .cr-checkbox__box::after,
+.cr-checkbox-label:has(.cr-checkbox:checked) .cr-checkbox__box::after {
+  display: block;
+}
+
+.cr-checkbox:focus-visible ~ .cr-checkbox__box {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 2px;
+}
+
+/* Responsive: collapse to 1 column on narrow screens */
+@media (max-width: 520px) {
+  .cr-row--2col {
+    grid-template-columns: 1fr;
+  }
+
+  .cr-field--checkbox-only {
+    padding-bottom: 0;
+    justify-content: flex-start;
+  }
+}
+
+/* ------------------------------------------------------------
+   Phase 3 — Meter Reader searchable combobox
+   ------------------------------------------------------------ */
+
+.cr-combobox {
+  position: relative;
+}
+
+.cr-input--search {
+  padding-right: 36px;
+}
+
+/* Dropdown list panel */
+.cr-combobox__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 600;
+  background-color: var(--color-panel);
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  /* Show exactly 5 items then scroll */
+  max-height: calc(5 * 38px + 8px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.cr-combobox__list::-webkit-scrollbar { width: 4px; }
+.cr-combobox__list::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.cr-combobox__list[hidden] { display: none; }
+
+/* Each option */
+.cr-combobox__option {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cr-combobox__option:hover,
+.cr-combobox__option[aria-selected="true"] {
+  background-color: var(--color-blue-hover);
+  color: var(--color-blue);
+}
+
+.cr-combobox__option--empty {
+  color: var(--color-text-faint);
+  cursor: default;
+  font-style: italic;
+}
+
+.cr-combobox__option--empty:hover {
+  background-color: transparent;
+  color: var(--color-text-faint);
+}
+
+/* ------------------------------------------------------------
+   Phase 4 — Zone / Book / Scope dropdowns + sequence range
+   ------------------------------------------------------------ */
+
+/* Suppress the browser's native dropdown arrow on all select inputs
+   so only our custom SVG chevron shows — prevents the double-arrow */
+.cr-input--select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 36px;
+}
+
+/* Hide our custom icon on date inputs — the browser's native calendar is enough */
+.cr-input[type="date"] ~ .cr-input__icon {
+  display: none;
+}
+
+/* Keep padding tight on date inputs since no custom icon */
+.cr-input[type="date"] {
+  padding-right: 8px;
+}
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 36px;
+}
+
+/* Sequence range row — hidden by default, shown via JS */
+.cr-scope-range[hidden] {
+  display: none;
+}
+
+/* Animate in when revealed */
+.cr-scope-range {
+  animation: cr-fadein 150ms ease;
+}
+
+@keyframes cr-fadein {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------
+   Phase 5 — Footer buttons + toast
+   ------------------------------------------------------------ */
+
+.cr-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  transition: border-color 160ms ease;
+}
+
+.cr-footer__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.cr-footer__left[hidden] {
+  display: none;
+}
+
+.cr-footer__spacer {
+  flex: 1;
+}
+
+.cr-footer__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/* Base button */
+.cr-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 7px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease,
+              border-color 150ms ease, box-shadow 150ms ease,
+              filter 150ms ease;
+}
+
+.cr-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Outlined / secondary */
+.cr-btn--outline {
+  background-color: var(--color-panel);
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-dim);
+}
+
+.cr-btn--outline:hover {
+  border-color: var(--color-blue);
+  color: var(--color-blue);
+  background-color: var(--color-blue-hover);
+}
+
+/* Primary — solid green */
+.cr-btn--primary {
+  background-color: #22a559;
+  border: 1.5px solid #22a559;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(34, 165, 89, 0.30);
+}
+
+.cr-btn--primary:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 4px 14px rgba(34, 165, 89, 0.38);
+}
+
+/* Danger — red outline */
+.cr-btn--danger {
+  background-color: var(--color-panel);
+  border: 1.5px solid var(--color-red);
+  color: var(--color-red);
+}
+
+.cr-btn--danger:hover {
+  background-color: rgba(255, 69, 58, 0.08);
+}
+
+[data-theme="light"] .cr-btn--danger:hover {
+  background-color: rgba(217, 48, 37, 0.08);
+}
+
+/* Toast / snackbar */
+.cr-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 700;
+  background-color: #1a9e46;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: cr-toast-in 200ms ease;
+}
+
+.cr-toast[hidden] {
+  display: none;
+}
+
+@keyframes cr-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+  .cr-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cr-footer__spacer { display: none; }
+
+  .cr-footer__left,
+  .cr-footer__right {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .cr-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* ------------------------------------------------------------
+   Phase 6 — Accounts table
+   ------------------------------------------------------------ */
+
+.cr-table-panel {
+  border-top: 1px solid var(--color-border);
+  margin-bottom: var(--space-md);
+  transition: border-color 160ms ease;
+}
+
+.cr-table-panel[hidden] { display: none; }
+
+.cr-table-wrap {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+  /* Cap height so modal stays manageable; table scrolls vertically too */
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.cr-table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+.cr-table-wrap::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.cr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-sans);
+}
+
+/* Sticky header so labels stay visible when scrolling rows */
+.cr-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.cr-th {
+  padding: 9px var(--space-md);
+  text-align: left;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+  background-color: var(--color-panel-alt);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.cr-th--num  { width: 40px; text-align: center; }
+.cr-th--seq  { width: 90px; text-align: center; }
+
+/* Body rows — zebra stripe */
+.cr-table tbody tr:nth-child(odd) {
+  background-color: var(--color-panel);
+}
+
+.cr-table tbody tr:nth-child(even) {
+  background-color: var(--color-panel-alt);
+}
+
+.cr-table tbody tr:hover {
+  background-color: var(--color-blue-hover);
+}
+
+.cr-td {
+  padding: 10px var(--space-md);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.cr-td--num {
+  text-align: center;
+  color: var(--color-text-faint);
+  font-size: var(--font-size-xs);
+}
+
+.cr-td--seq {
+  text-align: center;
+  font-weight: 600;
+  color: var(--color-text-dim);
+}
+
+/* Two-line cells (account no. + name, address + barangay) */
+.cr-cell-main {
+  display: block;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.cr-cell-sub {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+  margin-top: 1px;
+}
+
+/* Account type badge */
+.cr-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  background-color: rgba(61, 107, 250, 0.10);
+  color: var(--color-blue);
+}
+
+/* Empty state */
+.cr-table-empty {
+  padding: var(--space-lg);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-faint);
+  font-family: var(--font-sans);
+}
+
+.cr-table-empty[hidden] { display: none; }
+
+/* ------------------------------------------------------------
+   Phase 7 — Pagination
+   ------------------------------------------------------------ */
+
+.cr-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 10px var(--space-md);
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  transition: border-color 160ms ease;
+}
+
+.cr-pagination[hidden] { display: none; }
+
+.cr-pagination__summary {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+  white-space: nowrap;
+}
+
+.cr-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Prev / Next + page number buttons share the same base */
+.cr-pag-btn,
+.cr-pag-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-dim);
+  background: none;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+  white-space: nowrap;
+}
+
+.cr-pag-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.cr-pag-btn:hover:not(:disabled),
+.cr-pag-page:hover:not(.is-current) {
+  background-color: var(--color-blue-hover);
+  color: var(--color-blue);
+  border-color: var(--color-blue);
+}
+
+.cr-pag-page.is-current {
+  background-color: var(--color-blue);
+  border-color: var(--color-blue);
+  color: #ffffff;
+  cursor: default;
+}
+
+.cr-pag-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------
+   Templates button quick-picker dropdown
+   ------------------------------------------------------------ */
+
+.cr-header__templates-wrap {
+  position: relative;
+}
+
+.cr-templates-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 700;
+  min-width: 200px;
+  background-color: var(--color-panel);
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 4px 0;
+  list-style: none;
+}
+
+.cr-templates-dropdown[hidden] { display: none; }
+
+.cr-templates-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.cr-templates-dropdown__item:hover {
+  background-color: var(--color-blue-hover);
+  color: var(--color-blue);
+}
+
+.cr-templates-dropdown__item svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--color-text-faint);
+}
+
+.cr-templates-dropdown__divider {
+  height: 1px;
+  background-color: var(--color-border);
+  margin: 4px 0;
+}
+
+/* Load Accounts button — active/toggled state */
+.cr-btn--outline.is-active {
+  background-color: var(--color-blue-soft);
+  border-color: var(--color-blue);
+  color: var(--color-blue);
+}

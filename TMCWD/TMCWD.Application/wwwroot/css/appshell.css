@@ -171,6 +171,14 @@ svg {
   flex-shrink: 0;
 }
 
+.sidebar__logo-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+}
+
 .sidebar__wordmark {
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -347,7 +355,7 @@ svg {
 
 .topbar {
   height: var(--topbar-height);
-  background-color: var(--color-topbar);
+  background: linear-gradient(160deg, #e8f2ff 0%, #c9e0ff 25%, #5a9ff5 60%, #3d6bfa 100%);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -357,13 +365,41 @@ svg {
   top: 0;
   z-index: 100;
   gap: var(--space-md);
-  transition: background-color 160ms ease;
+  transition: background 160ms ease;
+  overflow: hidden;
+}
+
+/* Add decorative elements to topbar */
+.topbar::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: -5%;
+  width: 50%;
+  height: 180%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.40) 0%, rgba(255, 255, 255, 0.20) 35%, transparent 70%);
+  pointer-events: none;
+}
+
+.topbar::after {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: -8%;
+  width: 45%;
+  height: 160%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.10) 40%, transparent 70%);
+  pointer-events: none;
 }
 
 .topbar__left {
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  position: relative;
+  z-index: 1;
 }
 
 .topbar__hamburger {
@@ -399,6 +435,8 @@ svg {
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  position: relative;
+  z-index: 1;
 }
 
 /* Theme toggle */

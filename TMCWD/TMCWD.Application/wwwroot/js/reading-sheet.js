@@ -118,12 +118,23 @@ function renderReadingSheetTable(rows, emptyMessage) {
     var labelNum = isCompleted ? zoneStat.total : zoneStat.done;
     var barLabel = labelNum + '/' + zoneStat.total;
 
+    // Determine color class based on percentage
+    // 1-30% = red, 31-79% = yellow, 80-100% = green
+    var colorClass = '';
+    if (zonePct >= 80) {
+      colorClass = 'zone-mini-bar__fill--green';
+    } else if (zonePct >= 31) {
+      colorClass = 'zone-mini-bar__fill--yellow';
+    } else if (zonePct >= 1) {
+      colorClass = 'zone-mini-bar__fill--red';
+    }
+
     var zoneCell =
       '<div class="zone-cell">' +
         '<span class="zone-cell__label">' + row.zone + '</span>' +
         '<div class="zone-mini-bar" title="' + barLabel + '">' +
           '<div class="zone-mini-bar__track">' +
-            '<div class="zone-mini-bar__fill" style="width:' + zonePct + '%"></div>' +
+            '<div class="zone-mini-bar__fill ' + colorClass + '" style="width:' + zonePct + '%"></div>' +
           '</div>' +
           '<span class="zone-mini-bar__text">' + barLabel + '</span>' +
         '</div>' +
@@ -390,22 +401,50 @@ function handleStatusToggle(event) {
  * @param {number} id - Row id to edit.
  */
 function openEditModal(id) {
+  console.log('[ReadingSheet] openEditModal called with id:', id);
+  
   var row = readingSheetState.rows.find(function(r) { return r.id === id; });
-  if (!row) return;
+  if (!row) {
+    console.error('[ReadingSheet] Row not found for id:', id);
+    return;
+  }
+
+  console.log('[ReadingSheet] Found row:', row);
 
   var backdrop = document.getElementById('editModalBackdrop');
-  if (!backdrop) return;
+  if (!backdrop) {
+    console.error('[ReadingSheet] editModalBackdrop element not found in DOM');
+    return;
+  }
+
+  console.log('[ReadingSheet] Backdrop element found, opening modal');
+
+  // Convert display date format "Jul 01, 2025" to input format "yyyy-MM-dd"
+  var isoDate = '';
+  try {
+    var d = new Date(row.billingDate);
+    if (!isNaN(d)) {
+      var year = d.getFullYear();
+      var month = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      isoDate = year + '-' + month + '-' + day;
+    }
+  } catch (e) {
+    console.error('Date conversion error:', e);
+  }
 
   // Populate fields
   document.getElementById('editRowId').value        = row.id;
   document.getElementById('editMeterReader').value  = row.meterReader;
-  document.getElementById('editBillingDate').value  = row.billingDate;
+  document.getElementById('editBillingDate').value  = isoDate;
   document.getElementById('editZone').value         = row.zone;
   document.getElementById('editForPosting').value   = row.forPosting;
   document.getElementById('editStatus').value       = row.status;
 
   backdrop.hidden = false;
   backdrop.setAttribute('aria-hidden', 'false');
+
+  console.log('[ReadingSheet] Modal opened successfully');
 
   // Focus first field
   var firstInput = document.getElementById('editMeterReader');
@@ -430,12 +469,23 @@ function handleEditSave() {
   if (!id) return;
 
   var meterReader = document.getElementById('editMeterReader').value.trim();
-  var billingDate = document.getElementById('editBillingDate').value.trim();
+  var billingDateRaw = document.getElementById('editBillingDate').value.trim();
   var zone        = document.getElementById('editZone').value.trim();
   var forPosting  = parseInt(document.getElementById('editForPosting').value, 10) || 0;
   var status      = document.getElementById('editStatus').value;
 
-  if (!meterReader || !billingDate || !zone) return;
+  if (!meterReader || !billingDateRaw || !zone) return;
+
+  // Convert date from "yyyy-MM-dd" to display format "Jul 01, 2025"
+  var displayDate = billingDateRaw;
+  try {
+    var d = new Date(billingDateRaw);
+    if (!isNaN(d)) {
+      displayDate = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    }
+  } catch (e) {
+    console.error('Date formatting error:', e);
+  }
 
   // Update the matching row in state
   readingSheetState.rows = readingSheetState.rows.map(function(row) {
@@ -443,7 +493,7 @@ function handleEditSave() {
     return {
       id:          row.id,
       meterReader: meterReader,
-      billingDate: billingDate,
+      billingDate: displayDate,
       zone:        zone,
       forPosting:  forPosting,
       status:      status
@@ -461,10 +511,26 @@ function handleEditSave() {
  * @param {MouseEvent} event
  */
 function handleEditClick(event) {
+  console.log('[ReadingSheet] handleEditClick called');
+  
+  // Check if the click is on an edit button or its children (SVG)
   var btn = event.target.closest('.action-btn--edit');
-  if (!btn) return;
+  if (!btn) {
+    console.log('[ReadingSheet] No edit button found');
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
 
   var id = parseInt(btn.dataset.id, 10);
+  console.log('[ReadingSheet] Edit button clicked, id:', id, 'dataset.id:', btn.dataset.id);
+  
+  if (!id || isNaN(id)) {
+    console.error('[ReadingSheet] Invalid row ID for edit:', btn.dataset.id);
+    return;
+  }
+
   openEditModal(id);
 }
 function openDeleteModal(id) {
@@ -842,6 +908,50 @@ function initReadingSheetPage() {
   readingSheetState.sortDirection = 'asc';
   readingSheetState.statusFilter  = 'in-progress';
 
+  // Inject edit modal if it doesn't exist (fallback for SPA navigation)
+  if (!document.getElementById('editModalBackdrop')) {
+    var modalHTML = 
+      '<div class="modal-backdrop" id="editModalBackdrop" hidden aria-hidden="true">' +
+        '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" style="max-width: 500px;">' +
+          '<h2 class="modal__title" id="editModalTitle">Edit Reading Sheet</h2>' +
+          '<div class="modal__body" style="width: 100%; max-width: 100%; text-align: left;">' +
+            '<input type="hidden" id="editRowId" />' +
+            '<div style="display: flex; flex-direction: column; gap: 14px;">' +
+              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+                '<label for="editMeterReader" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Meter Reader</label>' +
+                '<input type="text" id="editMeterReader" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
+              '</div>' +
+              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+                '<label for="editBillingDate" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Billing Date</label>' +
+                '<input type="date" id="editBillingDate" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
+              '</div>' +
+              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+                '<label for="editZone" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Zone</label>' +
+                '<input type="text" id="editZone" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
+              '</div>' +
+              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+                '<label for="editForPosting" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">For Posting</label>' +
+                '<input type="number" id="editForPosting" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
+              '</div>' +
+              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+                '<label for="editStatus" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Status</label>' +
+                '<select id="editStatus" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);">' +
+                  '<option value="In-Progress">In Progress</option>' +
+                  '<option value="Completed">Completed</option>' +
+                '</select>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="modal__actions">' +
+            '<button class="btn btn--ghost" type="button" id="editModalCancel">Cancel</button>' +
+            '<button class="btn btn--green" type="button" id="editModalSave">Save Changes</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    console.log('[ReadingSheet] Edit modal injected via JavaScript');
+  }
+
   if (typeof READING_SHEET_SAMPLE_DATA !== 'undefined') {
     readingSheetState.rows = READING_SHEET_SAMPLE_DATA.slice();
   }
@@ -879,11 +989,31 @@ function initReadingSheetPage() {
   var bulkDelete = document.getElementById('bulkDeleteBtn');
   var bulkClear  = document.getElementById('bulkClearBtn');
 
+  console.log('[ReadingSheet] Init: tbody found?', !!tbody, '| editModalBackdrop found?', !!document.getElementById('editModalBackdrop'));
+
   if (selectAll)  selectAll.addEventListener('change', handleSelectAll);
   if (tbody) {
     tbody.addEventListener('change', handleRowSelect);
-    tbody.addEventListener('click',  handleEditClick);
-    tbody.addEventListener('click',  handleDeleteClick);
+    // Single delegated click handler for both edit and delete buttons
+    tbody.addEventListener('click', function(event) {
+      console.log('[ReadingSheet] tbody click detected', event.target);
+      
+      // Check for edit button first
+      var editBtn = event.target.closest('.action-btn--edit');
+      if (editBtn) {
+        console.log('[ReadingSheet] Edit button found in delegation');
+        handleEditClick(event);
+        return;
+      }
+      
+      // Check for delete button
+      var deleteBtn = event.target.closest('.action-btn--delete');
+      if (deleteBtn) {
+        console.log('[ReadingSheet] Delete button found in delegation');
+        handleDeleteClick(event);
+        return;
+      }
+    });
   }
   if (bulkDelete) bulkDelete.addEventListener('click', handleBulkDelete);
   if (bulkClear)  bulkClear.addEventListener('click', handleBulkClear);
@@ -947,4 +1077,64 @@ function initReadingSheetPage() {
   }
 
   console.log('[ReadingSheet] Page initialized. Rows loaded:', readingSheetState.rows.length);
+}
+
+
+/* ============================================================
+   Phase 9 — Create Reading Sheet callback
+   Called by the inline script in Index.cshtml after Save.
+   ============================================================ */
+
+/**
+ * Receive a newly created reading sheet from the modal,
+ * add it to the table, and re-render.
+ *
+ * @param {{billingDate:string, meterReader:string, zone:string}} data
+ */
+function onReadingSheetCreated(data) {
+  if (!data || !data.meterReader) return;
+
+  /* Generate a new id one higher than the current max */
+  var maxId = readingSheetState.rows.reduce(function (m, r) {
+    return Math.max(m, r.id);
+  }, 0);
+
+  /* Map zone value (e.g. "zone1") to display label (e.g. "ZN-01") */
+  var zoneMap = { zone1: 'ZN-01', zone2: 'ZN-02', zone3: 'ZN-03', zone4: 'ZN-04' };
+  var zoneLabel = zoneMap[data.zone] || data.zone || 'ZN-01';
+
+  /* Format billing date from yyyy-MM-dd to "Jul 01, 2025" */
+  var displayDate = data.billingDate;
+  try {
+    var d = new Date(data.billingDate);
+    if (!isNaN(d)) {
+      displayDate = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    }
+  } catch (e) { /* keep raw value */ }
+
+  var newRow = {
+    id:          maxId + 1,
+    meterReader: data.meterReader,
+    billingDate: displayDate,
+    zone:        zoneLabel,
+    forPosting:  0,
+    status:      'In-Progress'
+  };
+
+  readingSheetState.rows.unshift(newRow);
+
+  /* Switch to In-Progress view so the new row is visible */
+  readingSheetState.statusFilter = 'in-progress';
+  readingSheetState.currentPage  = 1;
+
+  var statusToggleInput = document.querySelector('.status-toggle__input');
+  if (statusToggleInput) {
+    statusToggleInput.checked = false;
+    statusToggleInput.setAttribute('aria-checked', 'false');
+  }
+
+  applyAllFilters();
+  applyAndRender();
+
+  console.log('[ReadingSheet] New row added from modal:', newRow);
 }
