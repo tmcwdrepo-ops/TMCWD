@@ -1,21 +1,38 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TMCWD.Application</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/TMCWD.Application.styles.css" asp-append-version="true" />
-    <meta name="robots" content="noindex, nofollow">
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ViewData["Title"]</title>
+  <link rel="icon" type="image/png" href="~/images/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="~/css/index.css" />
+  <link rel="stylesheet" href="~/css/login.css" />
+  <meta name="robots" content="noindex, nofollow" />
 </head>
-<body class="bg-gradient-to-br from-blue-900 to-blue-700 min-h-screen flex items-center justify-center">
+<body>
+
+  <!-- Background scene -->
+  <div class="scene">
+    <div class="stars"></div>
+    <svg class="ripple r1" viewBox="0 0 1400 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,100 C 150,140 350,60 700,100 C 1050,140 1250,60 1400,100 L1400,200 L0,200 Z" fill="rgba(61,107,250,0.06)"/>
+    </svg>
+    <svg class="ripple r2" viewBox="0 0 1400 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,120 C 200,80 400,150 700,110 C 1000,70 1200,140 1400,110 L1400,200 L0,200 Z" fill="rgba(61,107,250,0.05)"/>
+    </svg>
+    <svg class="ripple r3" viewBox="0 0 1400 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,140 C 250,100 450,170 700,130 C 950,90 1150,160 1400,130 L1400,200 L0,200 Z" fill="rgba(221,227,239,0.70)"/>
+    </svg>
+  </div>
+
+  <!-- Page content -->
+  <main class="content-slot" style="position:relative;z-index:2;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;">
     @RenderBody()
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+  </main>
+
+  <script src="~/js/login.js"></script>
+  @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
