@@ -4,10 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Water District System</title>
+  <link rel="icon" type="image/png" href="~/images/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="~/css/appshell.css" />
+  @RenderSection("Styles", required: false)
   <script src="~/js/appshell.js" defer></script>
 </head>
 <body>
@@ -17,20 +19,16 @@
 
     <div class="sidebar__header">
       <div class="sidebar__logo" aria-hidden="true">
-        <svg class="sidebar__logo-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
-          <path d="M10 20c0-4 3-8 6-10 3 2 6 6 6 10a6 6 0 0 1-12 0z" fill="currentColor" opacity="0.8"/>
-          <circle cx="16" cy="20" r="2.5" fill="var(--color-bg)"/>
-        </svg>
+        <img src="~/images/logo.png" alt="TMCWD Logo" class="sidebar__logo-img" />
       </div>
-      <span class="sidebar__wordmark">Water District<br>System</span>
+      <span class="sidebar__wordmark">Trece Martires City<br>Water District</span>
     </div>
 
     <nav class="sidebar__nav" aria-label="Site sections">
       <ul class="nav-list" role="list">
 
         <li class="nav-item">
-          <a href="#dashboard" class="nav-link" data-page="dashboard">
+          <a href="@Url.Action("Index", "Admin")" class="nav-link" data-page="dashboard">
             <span class="nav-link__icon" aria-hidden="true">
               <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5"/><rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5"/><rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5"/></svg>
             </span>
@@ -59,7 +57,7 @@
           </button>
           <ul class="nav-submenu" id="submenu-billing" role="list">
             <li class="nav-item">
-              <a href="@Url.Action("Index", "Billing")" class="nav-link" data-nav="reading-sheet" data-page="reading-sheet">
+              <a href="@Url.Action("Index", "Billing")" class="nav-link" data-page="reading-sheet">
                 <span class="nav-link__label">Reading Sheet</span>
               </a>
             </li>
@@ -189,7 +187,7 @@
     <!-- ===== CONTENT AREA ===== -->
     <main class="content" id="mainContent" role="main">
       <div class="content__header">
-        <h1 class="content__title" id="pageTitle">Dashboard</h1>
+        <h1 class="content__title" id="pageTitle">@(ViewData["PageTitle"] ?? "Dashboard")</h1>
       </div>
       <div class="content__body" id="pageContent">
         @RenderBody()
@@ -198,5 +196,26 @@
 
   </div>
 
+  @if (ViewData["ActivePage"] != null)
+  {
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var activePage = '@ViewData["ActivePage"]';
+        var activeLink = document.querySelector('.nav-link[data-page="' + activePage + '"]');
+        if (activeLink) {
+          activeLink.classList.add('is-active');
+          var submenu = activeLink.closest('.nav-submenu');
+          if (submenu) {
+            var trigger = document.querySelector('[aria-controls="' + submenu.id + '"]');
+            if (trigger) {
+              trigger.setAttribute('aria-expanded', 'true');
+              submenu.classList.add('is-open');
+            }
+          }
+        }
+      });
+    </script>
+  }
+  @RenderSection("Scripts", required: false)
 </body>
 </html>

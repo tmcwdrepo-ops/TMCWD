@@ -36,7 +36,7 @@ body {
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background-color: var(--bg);
+  background: linear-gradient(160deg, #e8f2ff 0%, #c9e0ff 25%, #5a9ff5 60%, #3d6bfa 100%);
 }
 
 /* Background scene */
@@ -48,40 +48,46 @@ body {
   overflow: hidden;
 }
 
+/* Bright white radial light in the top-left */
 .scene::before {
   content: '';
   position: absolute;
   top: -20%;
   left: -10%;
-  width: 70%;
-  height: 70%;
+  width: 80%;
+  height: 80%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(61, 107, 250, 0.10) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.60) 0%, rgba(255, 255, 255, 0.30) 35%, transparent 70%);
 }
 
+/* Bright white glow in the center-right */
 .scene::after {
   content: '';
   position: absolute;
-  bottom: -15%;
-  right: -10%;
-  width: 60%;
-  height: 60%;
+  top: 30%;
+  right: -15%;
+  width: 70%;
+  height: 70%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(61, 107, 250, 0.07) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.15) 40%, transparent 70%);
 }
 
+/* Sparkle dots */
 .stars {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(1.5px 1.5px at 10% 20%, rgba(61, 107, 250, 0.18), transparent),
-    radial-gradient(1.5px 1.5px at 85% 12%, rgba(61, 107, 250, 0.14), transparent),
-    radial-gradient(1px 1px at 60% 40%, rgba(61, 107, 250, 0.12), transparent),
-    radial-gradient(1.5px 1.5px at 30% 70%, rgba(61, 107, 250, 0.10), transparent),
-    radial-gradient(1px 1px at 92% 65%, rgba(61, 107, 250, 0.10), transparent),
-    radial-gradient(1px 1px at 50% 88%, rgba(61, 107, 250, 0.08), transparent);
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(255, 255, 255, 0.30), transparent),
+    radial-gradient(1.5px 1.5px at 85% 12%, rgba(255, 255, 255, 0.22), transparent),
+    radial-gradient(1px   1px   at 60% 40%, rgba(255, 255, 255, 0.18), transparent),
+    radial-gradient(1.5px 1.5px at 30% 70%, rgba(255, 255, 255, 0.16), transparent),
+    radial-gradient(1px   1px   at 92% 65%, rgba(255, 255, 255, 0.14), transparent),
+    radial-gradient(1px   1px   at 50% 88%, rgba(255, 255, 255, 0.12), transparent),
+    radial-gradient(1px   1px   at 20% 50%, rgba(255, 255, 255, 0.10), transparent),
+    radial-gradient(1.5px 1.5px at 74% 80%, rgba(255, 255, 255, 0.12), transparent);
 }
 
+/* White ripple waves */
 .ripple {
   position: absolute;
   left: 50%;
@@ -89,7 +95,7 @@ body {
   transform: translateX(-50%);
   width: 1400px;
   max-width: 220vw;
-  opacity: 0.4;
+  opacity: 1;
 }
 
 .ripple path {
@@ -102,7 +108,7 @@ body {
 
 @keyframes wave {
   0%, 100% { transform: translateY(0) scaleY(1); }
-  50%       { transform: translateY(-5px) scaleY(1.02); }
+  50%       { transform: translateY(-8px) scaleY(1.03); }
 }
 
 .content-slot {
