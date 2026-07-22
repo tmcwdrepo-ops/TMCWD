@@ -39,5 +39,13 @@ namespace TMCWD.Model.Billing
         [DisplayName("Date Updated")]
         public DateTime DateUpdated { get; set; }
 
+        [DisplayName("Due Date")]
+        public DateTime DueDate { get; set; }
+
+        [DisplayName("Disconnection Date")]
+        public DateTime DisconnectionDate { get; set; }
+
+        [DisplayName("Billing Period Start")]
+        public DateTime BillingPeriodStart { get; set; }
     }
 }
