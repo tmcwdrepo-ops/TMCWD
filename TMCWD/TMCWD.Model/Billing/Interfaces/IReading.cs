@@ -11,13 +11,11 @@ namespace TMCWD.Model.Billing.Interfaces
 
         public int AccountId { get; set; }
 
-        public int ZoneBookId { get; set; }
+        public int ReadingSheetId { get; set; }
 
         public decimal CurrentReading { get; set; }
 
-        public int ReaderId { get; set; }
-
-        public DateTime BillingPeriod { get; set; }
+        public bool IsCompleted { get; set; }
 
         public int CreatedBy { get; set; }
 

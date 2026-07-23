@@ -5,7 +5,7 @@ using TMCWD.Data.Services;
 namespace TMCWD.Data.Controllers
 {
     [ApiController]
-    [Route("api/[controll]")]
+    [Route("api/[controller]")]
     public class WebHookController : Controller
     {
 
@@ -48,7 +48,7 @@ namespace TMCWD.Data.Controllers
             return Ok(webHooks);
         }
 
-        [HttpGet("SaveUpdate")]
+        [HttpPost("SaveUpdate")]
         public async Task<IActionResult> SaveUpdate(WebHook webHook)
         {
             var savedWebHook = await _service.SaveUpdate(webHook);

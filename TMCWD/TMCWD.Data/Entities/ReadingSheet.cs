@@ -32,6 +32,9 @@ namespace TMCWD.Data.Entities
         [Required, Column("AssignedTo")]
         public System.Int64 AssignedTo { get; set; }
 
+        [Column("IsCompleted")]
+        public bool IsCompleted { get; set; }
+
         [Required, Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }
 

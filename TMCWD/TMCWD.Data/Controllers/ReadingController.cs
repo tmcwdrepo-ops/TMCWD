@@ -35,30 +35,6 @@ namespace TMCWD.Data.Controllers
             return Ok(reading);
         }
 
-        [HttpGet("GetByAccount/{accountId}")]
-        public async Task<IActionResult> GetByAccount(int accountId)
-        {
-            var readings = await _service.GetByAccount(accountId);
-            if (readings == null || !readings.Any()) return NotFound();
-            return Ok(readings);
-        }
-
-        [HttpGet("GetByAccountAndBillingPeriod/{accountId}/{billingPeriod}")]
-        public async Task<IActionResult> GetByAccountAndBillingPeriod(int accountId, DateTime billingPeriod)
-        {
-            var reading = await _service.GetByAccountAndBillingPeriod(accountId, billingPeriod);
-            if (reading == null) return NotFound();
-            return Ok(reading);
-        }
-
-        [HttpGet("GetByReader/{readerId}")]
-        public async Task<IActionResult> GetByReader(int readerId)
-        {
-            var readings = await _service.GetByReader(readerId);
-            if (readings == null) return NotFound();
-            return Ok(readings);
-        }
-
         [HttpGet("GetByZoneAndBook/{zone}/{book}")]
         public async Task<IActionResult> GetByZoneAndBook(int zone, int book)
         {
@@ -67,18 +43,35 @@ namespace TMCWD.Data.Controllers
             return Ok(readings);
         }
 
-        [HttpPost("SaveUpdate/{userId}/{reading}")]
-        public async Task<IActionResult> SaveUpdate(int userId, Reading reading)
+        [HttpGet("GetByAccount/{accountId}")]
+        public async Task<IActionResult> GetByAccount(int accountId)
         {
-            var savedReading = await _service.SaveUpdate(userId, reading);
-            return Ok(savedReading);
+            var readings = await _service.GetByAccount(accountId);
+            if (readings == null || !readings.Any()) return NotFound();
+            return Ok(readings);
+        }
+
+        [HttpGet("GetCurrentByAccountZoneBook/{zone}/{book}/{accountId}")]
+        public async Task<IActionResult> GetCurrentByAccountZoneBook(int zone, int book, int accountId)
+        {
+            var reading = await _service.GetCurrentByAccountZoneBook(zone, book, accountId);
+            if (reading == null) return NotFound();
+            return Ok(reading);
+        }
+
+        [HttpGet("GetByReadingSheetId/{readingSheetId}")]
+        public async Task<IActionResult> GetByReadingSheetId(int readingSheetId)
+        {
+            var readings = await _service.GetByReadingSheetId(readingSheetId);
+            if (readings == null || !readings.Any()) return NotFound();
+            return Ok(readings);
         }
 
         [HttpGet("GetAccountPreviousReading/{accountId}")]
         public async Task<IActionResult> GetAccountPreviousReading(int accountId)
         {
             var reading = await _service.GetAccountPreviousReading(accountId);
-            if(reading == null) return NotFound();
+            if (reading == null) return NotFound();
             return Ok(reading);
         }
 
@@ -86,8 +79,38 @@ namespace TMCWD.Data.Controllers
         public async Task<IActionResult> GetAccountCurrentReading(int accountId)
         {
             var reading = await _service.GetAccountCurrentReading(accountId);
-            if (reading == null) return NotFound();
+            if(reading == null) return NotFound();
             return Ok(reading);
+        }
+
+        [HttpGet("GetByReader/{readerId}")]
+        public async Task<IActionResult> GetByReader(int readerId)
+        {
+            var readings = await _service.GetByReader(readerId);
+            if (readings == null || !readings.Any()) return NotFound();
+            return Ok(readings);
+        }
+
+        [HttpPost("SaveUpdate/{userId}")]
+        public async Task<IActionResult> SaveUpdate(int userId, Reading reading)
+        {
+            var savedReading = await _service.SaveUpdate(userId, reading);
+            return Ok(savedReading);
+        }
+
+        [HttpPost("SaveMultiple")]
+        public async Task<IActionResult> SaveMultiple(List<Reading> readings)
+        {
+            var savedReadings = await _service.SaveMultiple(readings);
+            return Ok(savedReadings);
+        }
+
+        [HttpGet("GetReadingByBillingPeriod/{zone}/{book}/{billingPeriod}")]
+        public async Task<IActionResult> GetReadingByBillingPeriod(int zone, int book, DateTime billingPeriod)
+        {
+            var readings = await _service.GetReadingsByBillingPeriod(zone, book, billingPeriod);
+            if (readings == null || !readings.Any()) return NotFound();
+            return Ok(readings);
         }
 
         #endregion

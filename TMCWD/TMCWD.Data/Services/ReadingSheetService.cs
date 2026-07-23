@@ -8,12 +8,22 @@ namespace TMCWD.Data.Services
     public class ReadingSheetService : IReadingSheetService
     {
 
+        #region fields
+
         private readonly UserDbContext _context;
+
+        #endregion
+
+        #region ctor
 
         public ReadingSheetService(UserDbContext context)
         {
             _context = context;
         }
+
+        #endregion
+
+        #region methods
 
         public async Task<ReadingSheet> Get(int id)
         {
@@ -91,10 +101,31 @@ namespace TMCWD.Data.Services
             return readingSheet;
         }
 
-        public async Task<ReadingSheet> GetCurrentByAssignedTo(int assignedTo)
+        public async Task<List<ReadingSheet>> GetByZoneBookId(int zoneBookId)
         {
-            var readingSheet = await _context.ReadingSheets.Where(x => x.AssignedTo == assignedTo).OrderByDescending(x => x.BillingDate).FirstOrDefaultAsync();
-            return readingSheet;
+            var readingSheets = await _context.ReadingSheets.Where(x => x.ZoneBookId == zoneBookId).ToListAsync();
+            return readingSheets;
         }
+
+        public async Task<ReadingSheet> GetByBillingPeriodStart(int zone, int book, DateTime billingPeriodStart)
+        {
+            var data = from readingSheets in _context.ReadingSheets
+                       join zoneBooks in _context.ZoneBooks on readingSheets.ZoneBookId equals zoneBooks.Id
+                       where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.BillingPeriodStart == billingPeriodStart
+                       select readingSheets;
+            return await data.FirstOrDefaultAsync();
+        }
+
+        public async Task<ReadingSheet> GetCurrentByAssignedTo(int zone, int book, int assignedTo)
+        {
+            var data = await (from readingSheets in _context.ReadingSheets
+                              join zoneBooks in _context.ZoneBooks on readingSheets.ZoneBookId equals zoneBooks.Id
+                              where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.AssignedTo == assignedTo
+                              select readingSheets).OrderByDescending(x => x.BillingDate).FirstOrDefaultAsync();
+            return data;
+        }
+
+        #endregion
+
     }
 }

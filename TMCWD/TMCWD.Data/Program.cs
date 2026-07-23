@@ -38,6 +38,8 @@ builder.Services.AddScoped<IBillingAdjustmentService, BillingAdjustmentService>(
 builder.Services.AddScoped<IAdvancePaymentService, AdvancePaymentService>();
 builder.Services.AddScoped<IPaymentCheckService, PaymentCheckService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IReadingService, ReadingService>();
+builder.Services.AddScoped<IReadingSheetService, ReadingSheetService>();
 
 builder.Services.AddEndpointsApiExplorer();
 var app = builder.Build();

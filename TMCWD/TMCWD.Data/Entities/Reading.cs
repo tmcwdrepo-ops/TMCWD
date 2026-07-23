@@ -22,17 +22,14 @@ namespace TMCWD.Data.Entities
         [Required, Column("AccountId")]
         public System.Int64 AccountId { get; set; }
 
-        [Required, Column("ZoneBookId")]
-        public int ZoneBookId { get; set; }
+        [Required, Column("ReadingSheetId")]
+        public int ReadingSheetId { get; set; }
 
         [Required, Column("Reading")]
         public decimal CurrentReading { get; set; }
 
-        [Required, Column("ReaderId")]
-        public System.Int64 ReaderId { get; set; }
-
-        [Column("BillingPeriod")]
-        public DateTime BillingPeriod { get; set; }
+        [Column("IsCompleted")]
+        public bool IsCompleted { get; set; }
 
         [Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }

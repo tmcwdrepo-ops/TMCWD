@@ -11,6 +11,7 @@ using TMCWD.Utility.Generic;
 
 namespace TMCWD.CustomerSupport
 {
+
     public class AccountTransaction
     {
 
@@ -118,7 +119,24 @@ namespace TMCWD.CustomerSupport
             return ConvertJsonToAccount(data);
         }
 
+        public async Task<List<Account>> GetByZoneAndBook(int zone, int book)
+        {
+            var response = await _webService.Client.GetAsync($"api/Account/GetByZoneAndBook/{zone}/{book}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToAccounts(data);
+        }
+
+        public async Task<List<Account>> GetByZoneBookId(int zoneBookId)
+        {
+            var response = await _webService.Client.GetAsync($"api/GetByZoneBookId/{zoneBookId}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToAccounts(data);
+        }
+
         #endregion
 
     }
+
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TMCWD.Administration;
 using TMCWD.Billing;
+using TMCWD.CustomerSupport;
 using TMCWD.Model.Administrator;
 using TMCWD.Model.Billing;
 using TMCWD.Services;
@@ -15,6 +16,8 @@ namespace TMCWD.Application.Controllers
         private readonly ReadingSheetTransaction _readingSheetTrans;
         private readonly ZoneBookTransaction _zoneBookTrans;
         private readonly UserTransaction _userTrans;
+        private readonly AccountTransaction _accountTransaction;
+        private readonly ReadingTransaction _readingTransaction;
 
         #endregion
 
@@ -23,12 +26,16 @@ namespace TMCWD.Application.Controllers
         public ReadingSheetController(AuthenticatedUserService user,
             ReadingSheetTransaction readingSheetTrans,
             UserTransaction userTrans,
-            ZoneBookTransaction zoneBookTrans)
+            ZoneBookTransaction zoneBookTrans,
+            AccountTransaction accountTransaction,
+            ReadingTransaction readingTransaction)
         {
             _user = user;
             _readingSheetTrans = readingSheetTrans;
             _userTrans = userTrans;
             _zoneBookTrans = zoneBookTrans;
+            _accountTransaction = accountTransaction;
+            _readingTransaction = readingTransaction;
         }
 
         #endregion
@@ -40,7 +47,7 @@ namespace TMCWD.Application.Controllers
             return View();
         }
 
-        [HttpGet]
+        [HttpPost]
         public async Task<IActionResult> CreateReadingSheet(int zone, int book, int assignedTo, DateTime billingPeriod)
         {
 
@@ -68,6 +75,25 @@ namespace TMCWD.Application.Controllers
                 };
 
                 savedSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, sheet);
+
+                if(savedSheet != null)
+                {
+                    var accounts = await _accountTransaction.GetByZoneBookId(savedSheet.ZoneBookId);
+                    var readings = from accts in accounts
+                                   select new Reading
+                                   {
+                                       AccountId = accts.Id,
+                                       CreatedBy = _user.User.Id,
+                                       CurrentReading = 0,
+                                       DateCreated = DateTime.Now,
+                                       DateUpdated = DateTime.Now,
+                                       IsCompleted = false,
+                                       ReadingSheetId = savedSheet.Id,
+                                       UpdatedBy = _user.User.Id,
+                                   };
+                    var savedReadings = await _readingTransaction.SaveMultiple([..readings]);
+                }
+
             }
             catch { }
 
@@ -75,9 +101,9 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCurrentByAssignedTo(int assignedTo)
+        public async Task<IActionResult> GetCurrentByAssignedTo(int zone, int book, int assignedTo)
         {
-            var sheet = await _readingSheetTrans.GetCurrentByAssignedTo(assignedTo);
+            var sheet = await _readingSheetTrans.GetCurrentByAssignedTo(zone, book, assignedTo);
             return Ok(sheet);
         }
 

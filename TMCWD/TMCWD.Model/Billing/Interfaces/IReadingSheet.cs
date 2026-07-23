@@ -22,6 +22,8 @@ namespace TMCWD.Model.Billing.Interfaces
 
         public int AssignedTo { get; set; }
 
+        public bool IsCompleted { get; set; }
+
         public int CreatedBy { get; set; }
 
         public DateTime DateCreated { get; set; }

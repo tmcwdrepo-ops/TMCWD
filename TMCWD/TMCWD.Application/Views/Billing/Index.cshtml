@@ -15,7 +15,23 @@
   <script src="~/js/create_reading.js"></script>
   <script>
     // Wait for DOM to be fully ready before initializing
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
+      
+      // const meterReaders = await fetch('@Url.Action("GetUsersByRole", "Admin")' + '?role=4', {
+      //     method: 'GET',
+      //     headers: {
+      //         'Content-Type': 'application/json'
+      //     }
+      // }).then(response => {
+      //     if(!response.ok || response.status == 204)
+      //       return null;
+      //     return response.json();
+      // }).then(result => {
+      //     return result;
+      // });
+
+      // console.log('Meter Readers:', meterReaders);
+
       // Initialize the reading sheet page
       if (typeof initReadingSheetPage === 'function') {
         initReadingSheetPage();
@@ -26,6 +42,55 @@
         createNewBtn.addEventListener('click', function () {
           if (typeof openCreateModal === 'function') openCreateModal();
         });
+      }
+
+      const crBillingDate = document.getElementById('crBillingDate');
+      console.log('crBillingDate:', crBillingDate);
+      if (crBillingDate){
+          var dateToday = new Date();
+          crBillingDate.min = dateToday.toISOString().split("T")[0];
+          crBillingDate.value = dateToday.toISOString().split("T")[0];
+          crBillingDate.addEventListener('change', (evt) => {
+              console.log('Billing Date was changed');
+              const crDueDate = document.getElementById('crDueDate');
+              const billingDate = new Date(evt.target.value);
+              console.log('New Billing Date:', billingDate);
+              if(crDueDate){
+                var minDueDate = new Date();
+                minDueDate.setDate(billingDate.getDate() + 1);
+                crDueDate.min = minDueDate.toISOString().split("T")[0];
+                crDueDate.addEventListener('change', (evt) => {
+                    const crDisconnectionDate = document.getElementById('crDisconnectionDate');
+                    if (crDisconnectionDate){
+                        const dueDate = new Date(evt.target.value);
+                        var minDisconnectionDate = new Date();
+                        minDisconnectionDate.setDate(dueDate.getDate() + 1);
+                        crDisconnectionDate.min = minDisconnectionDate.toISOString().split("T")[0];
+                    }
+                });
+              }
+              const crBillingPeriodStart = document.getElementById('crBillingPeriodStart');
+              if (crBillingPeriodStart){
+                  crBillingPeriodStart.value = crBillingDate.value;
+                  crBillingPeriodStart.min = crBillingDate.min;
+              }
+          });
+      }
+
+      const crScope = document.getElementById('crScope');
+      if(crScope){
+          crScope.addEventListener('change', (evt) => {
+              const selectedValue = evt.target.value;
+              const crScopeRange = document.getElementById('crScopeRange');
+              if(crScopeRange){
+                if(selectedValue === 'ranged'){  
+                    crScopeRange.style.display = 'grid';
+                }
+                else{
+                    crScopeRange.style.display = 'none';
+                }
+              }
+          });
       }
 
       var crSaveBtnEl = document.getElementById('crSaveBtn');
@@ -46,6 +111,7 @@
         });
       }
     });
+
   </script>
 }
 
@@ -430,7 +496,7 @@
             </div>
           </div>
 
-          <div class="cr-row cr-row--2col cr-scope-range" id="crScopeRange" hidden>
+          <div style="display: none" class="cr-row cr-row--2col cr-scope-range" id="crScopeRange" hidden>
             <div class="cr-field">
               <label class="cr-field__label" for="crFromSeq">From Sequence</label>
               <div class="cr-input-wrap">
