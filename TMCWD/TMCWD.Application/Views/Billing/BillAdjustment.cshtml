@@ -1,0 +1,211 @@
+@model TMCWD.Application.Models.BillAdjustmentViewModel
+@{
+    Layout = "_InsideLayout";
+    ViewData["PageTitle"] = "Bill Adjustment";
+    ViewData["ActivePage"] = "bill-adjustment";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/reading-sheet.css" />
+    <link rel="stylesheet" href="~/css/bill_adjustment.css" />
+}
+
+<section class="page-section" aria-label="Bill Adjustment">
+
+    <div class="panel ba-page-card">
+
+        <!-- Card header -->
+        <div class="ba-card-header">
+            <div class="ba-card-header__left">
+                <button type="button" class="ba-icon-btn" id="baFavoriteBtn" aria-label="Favorite">
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="M10 2l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 14.27l-4.77 2.44.91-5.32L2.27 7.62l5.34-.78L10 2z"
+                              stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <h2 class="ba-card-title">Billing Adjustment</h2>
+            </div>
+            <div class="ba-card-header__right"></div>
+        </div>
+
+        <!-- Form -->
+        <form id="billAdjustmentForm" asp-controller="Billing" asp-action="SubmitAdjustment" method="post" novalidate>
+            @Html.AntiForgeryToken()
+
+            <!-- Top two-column grid -->
+            <div class="ba-top-grid">
+                <div class="ba-col-left">
+                    <div class="ba-field">
+                        <input type="text"
+                               id="accountNumber"
+                               name="AccountNumber"
+                               class="ba-input"
+                               placeholder="Account Number"
+                               value="@Model?.AccountNumber"
+                               autocomplete="off" />
+                        <span class="ba-error-msg" id="accountNumberError">Account number is required</span>
+                    </div>
+
+                    <div class="ba-field">
+                        <label class="ba-label" for="meterReader">Meter Reader</label>
+                        <div class="ba-select" id="meterReaderSelect" data-name="MeterReader" data-value="@Model?.MeterReader">
+                            <button type="button" class="ba-select__btn" aria-haspopup="listbox" aria-expanded="false">
+                                <span class="ba-select__text">Select meter reader...</span>
+                                <svg class="ba-select__chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <ul class="ba-select__list" role="listbox" aria-label="Meter Reader" hidden>
+                                <li class="ba-select__option" role="option" data-value="">Select meter reader...</li>
+                                @if (Model?.MeterReaders != null)
+                                {
+                                    foreach (var item in Model.MeterReaders)
+                                    {
+                                        <li class="ba-select__option" role="option" data-value="@item.Value">@item.Text</li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                        <input type="hidden" id="meterReader" name="MeterReader" value="@Model?.MeterReader" />
+                    </div>
+
+                    <div class="ba-field">
+                        <label class="ba-label" for="remarks">Remarks</label>
+                        <div class="ba-select" id="remarksSelect" data-name="Remarks" data-value="@Model?.Remarks">
+                            <button type="button" class="ba-select__btn" aria-haspopup="listbox" aria-expanded="false">
+                                <span class="ba-select__text">Select remarks...</span>
+                                <svg class="ba-select__chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <ul class="ba-select__list" role="listbox" aria-label="Remarks" hidden>
+                                <li class="ba-select__option" role="option" data-value="">Select remarks...</li>
+                                @if (Model?.RemarksOptions != null)
+                                {
+                                    foreach (var item in Model.RemarksOptions)
+                                    {
+                                        <li class="ba-select__option" role="option" data-value="@item.Value">@item.Text</li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                        <input type="hidden" id="remarks" name="Remarks" value="@Model?.Remarks" />
+                    </div>
+
+                    <div class="ba-field">
+                        <label class="ba-label sr-only" for="explanation">Explanation</label>
+                        <textarea id="explanation"
+                                  name="Explanation"
+                                  class="ba-input"
+                                  rows="4"
+                                  placeholder="Explanation">@Model?.Explanation</textarea>
+                    </div>
+                </div>
+
+                <div class="ba-col-right">
+                    <div class="ba-field">
+                        <label class="ba-label" for="bamDate">BAM Date</label>
+                        <input type="date"
+                               id="bamDate"
+                               name="BamDate"
+                               class="ba-input"
+                               value="@(Model?.BamDate?.ToString("yyyy-MM-dd"))" />
+                    </div>
+
+                    <div class="ba-field">
+                        <label class="ba-label" for="billingDate">Billing Date</label>
+                        <input type="date"
+                               id="billingDate"
+                               name="BillingDate"
+                               class="ba-input"
+                               value="@(Model?.BillingDate?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Adjustment grid -->
+            <div class="ba-grid-section">
+                <div class="ba-grid-header">
+                    <span class="ba-grid-header-label"></span>
+                    <span class="ba-grid-header-col">As Billed</span>
+                    <span class="ba-grid-header-col">Should Be</span>
+                    <span class="ba-grid-header-col">Adjustment</span>
+                </div>
+
+                @if (Model?.AdjustmentLines != null)
+                {
+                    for (int i = 0; i < Model.AdjustmentLines.Count; i++)
+                    {
+                        var line = Model.AdjustmentLines[i];
+                        <div class="ba-grid-row"
+                             data-line-key="@line.Key"
+                             data-has-adjustment="@line.HasAdjustmentColumn.ToString().ToLower()">
+                            <label class="ba-row-label">
+                                <input type="checkbox"
+                                       class="line-checkbox"
+                                       name="AdjustmentLines[@i].IsChecked"
+                                       data-key="@line.Key"
+                                       @(line.IsChecked ? "checked" : "") />
+                                <input type="hidden" name="AdjustmentLines[@i].Key" value="@line.Key" />
+                                <input type="hidden" name="AdjustmentLines[@i].Label" value="@line.Label" />
+                                <input type="hidden" name="AdjustmentLines[@i].HasAdjustmentColumn" value="@line.HasAdjustmentColumn.ToString().ToLower()" />
+                                <span>@line.Label.ToUpper()</span>
+                            </label>
+
+                            <input type="number"
+                                   class="ba-input grid-input as-billed-input"
+                                   name="AdjustmentLines[@i].AsBilled"
+                                   step="0.01"
+                                   placeholder="0.00"
+                                   value="@line.AsBilled"
+                                   @(!line.IsChecked ? "disabled" : "") />
+
+                            <input type="number"
+                                   class="ba-input grid-input should-be-input"
+                                   name="AdjustmentLines[@i].ShouldBe"
+                                   step="0.01"
+                                   placeholder="0.00"
+                                   value="@line.ShouldBe"
+                                   @(!line.IsChecked ? "disabled" : "") />
+
+                            @if (line.HasAdjustmentColumn)
+                            {
+                                <input type="number"
+                                       class="ba-input grid-input adjustment-input"
+                                       name="AdjustmentLines[@i].Adjustment"
+                                       step="0.01"
+                                       placeholder="0.00"
+                                       value="@line.Adjustment"
+                                       readonly
+                                       tabindex="-1" />
+                            }
+                            else
+                            {
+                                <span class="ba-grid-placeholder"></span>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+
+            <!-- Footer actions -->
+            <div class="ba-form-footer">
+                <button type="submit" class="btn btn--green" id="baSubmitBtn">
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M2 8.5l4 4 8-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Submit
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Toast -->
+    <div class="ba-toast" id="baToast" hidden aria-live="polite"></div>
+
+</section>
+
+@section Scripts {
+    <script src="~/js/bill_adjustment.js"></script>
+}

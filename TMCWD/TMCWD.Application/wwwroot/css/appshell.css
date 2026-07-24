@@ -8,6 +8,7 @@
 
 /* Dark theme (default) */
 :root {
+  color-scheme: dark;
   --color-bg:           #10151f;
   --color-sidebar:      #0d1119;
   --color-panel:        #171d2b;
@@ -53,6 +54,7 @@
 
 /* Light theme override */
 [data-theme="light"] {
+  color-scheme: light;
   --color-bg:           #f0f4fb;
   --color-sidebar:      #ffffff;
   --color-panel:        #ffffff;
