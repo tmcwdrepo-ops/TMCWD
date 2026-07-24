@@ -7,6 +7,7 @@
 @section Styles {
   <link rel="stylesheet" href="~/css/reading-sheet.css"/>
   <link rel="stylesheet" href="~/css/create_reading.css"/>
+  <link rel="stylesheet" href="~/css/reading_sheet_details.css"/>
 }
 
 @section Scripts {
@@ -14,9 +15,10 @@
   <script src="~/js/reading-sheet.js"></script>
   <script src="~/js/create_reading.js"></script>
   <script>
-    // Wait for DOM to be fully ready before initializing
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize the reading sheet page
+    // Scripts are at the bottom of </body> — DOM is fully parsed.
+    // Use DOMContentLoaded with a readyState fallback to handle both
+    // cases: fired already, or not yet fired.
+    function initBillingPage() {
       if (typeof initReadingSheetPage === 'function') {
         initReadingSheetPage();
       }
@@ -45,7 +47,13 @@
           document.dispatchEvent(new CustomEvent('readingSheet:created', { detail: data }));
         });
       }
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initBillingPage);
+    } else {
+      initBillingPage();
+    }
   </script>
 }
 

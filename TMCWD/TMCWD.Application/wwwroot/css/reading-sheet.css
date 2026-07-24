@@ -418,6 +418,18 @@
   background-color: var(--color-blue-soft);
 }
 
+.action-btn--view {
+  color: var(--color-green);
+}
+
+.action-btn--view:hover {
+  background-color: rgba(48, 209, 88, 0.12);
+}
+
+[data-theme="light"] .action-btn--view:hover {
+  background-color: rgba(30, 150, 60, 0.1);
+}
+
 .action-btn--delete {
   color: var(--color-red);
 }
