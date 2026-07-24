@@ -12,5 +12,7 @@ namespace TMCWD.Data.Services
         Task<IEnumerable<Customer>?> GetCustomers();
 
         Task<IEnumerable<Customer>?> Search(string searchString);
+
+        Task<IEnumerable<Customer>> GetCustomersFromIds(List<int> customerIds);
     }
 }

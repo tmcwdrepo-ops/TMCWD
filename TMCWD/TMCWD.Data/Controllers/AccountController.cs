@@ -82,6 +82,14 @@ namespace TMCWD.Data.Controllers
             if (accounts == null || !accounts.Any()) return NotFound($"No accounts were found.");
             return Ok(accounts);
 
+        }
+
+        [HttpGet("GetByZoneBookAndSequence/{zone}/{book}/{seqFrom}/{seqTo}")]
+        public async Task<IActionResult> GetByZoneBookAndSequence(int zone, int book, int seqFrom, int seqTo)
+        {
+            var accounts = await _accountService.GetByZoneBookAndSequence(zone, book, seqFrom, seqTo);
+            if (accounts == null || !accounts.Any()) return NotFound();
+            return Ok(accounts);
+        }
     }
-}
 }

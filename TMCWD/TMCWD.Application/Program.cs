@@ -25,6 +25,7 @@ builder.Services.AddTransient<ApprovalHistoryTransaction>();
 builder.Services.AddTransient<RequestFileTransaction>();
 builder.Services.AddTransient<ReadingTransaction>();
 builder.Services.AddTransient<ReadingSheetTransaction>();
+builder.Services.AddTransient<ZoneBookTransaction>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddDistributedMemoryCache();
 

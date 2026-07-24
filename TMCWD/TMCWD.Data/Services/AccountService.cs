@@ -92,6 +92,17 @@ namespace TMCWD.Data.Services
             return accounts;
         }
 
+        public async Task<IEnumerable<Account>> GetByZoneBookAndSequence(int zone, int book, int seqFrom, int seqTo)
+        {
+            var data = from zoneBooks in _dbContext.ZoneBooks
+                       join accounts in _dbContext.Accounts on zoneBooks.Id equals accounts.ZoneBookId
+                       where zoneBooks.Zone == zone && zoneBooks.Book == book && 
+                       (accounts.Sequence >= seqFrom || seqFrom == 0) &&
+                       (accounts.Sequence <= seqTo || seqTo == 0)
+                       select accounts;
+            return await data.ToListAsync();
+        }
+
         #endregion
     }
 }

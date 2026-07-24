@@ -40,6 +40,7 @@ builder.Services.AddScoped<IPaymentCheckService, PaymentCheckService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IReadingService, ReadingService>();
 builder.Services.AddScoped<IReadingSheetService, ReadingSheetService>();
+builder.Services.AddScoped<IZoneBookService, ZoneBookService>();
 
 builder.Services.AddEndpointsApiExplorer();
 var app = builder.Build();

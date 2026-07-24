@@ -114,6 +114,38 @@ namespace TMCWD.Application.Controllers
             return Ok(updatedAccount);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetByZoneBookAndSequence(int zone, int book, int seqFrom, int seqTo)
+        {
+            var accounts = await _accountTransaction.GetByZoneBookAndSequence(zone, book, seqFrom, seqTo);
+
+            if (accounts == null) return NotFound();
+
+            var customerIds = accounts.Select(x => x.CustomerId).ToList();
+
+            var customers = await _customerTransaction.GetCustomersFromIds(customerIds);
+
+            var returnValue = from accts in accounts
+                              join custs in customers on accts.CustomerId equals custs.Id
+                              select new
+                              {
+                                  CustomerId = custs.Id,
+                                  AccountId = accts.Id,
+                                  AcctNo = accts.AccountNumber,
+                                  Name = $"{custs.Lastname}, {custs.Firstname} {custs.Middlename}",
+                                  Address = $"{accts.FullAddress}",
+                                  Barangay = accts.Barangay,
+                                  type = accts.Classification.ToString(),
+                                  Zone = zone,
+                                  Book = book,
+                                  Billed = false,
+                                  Sequence = accts.Sequence
+                              };
+
+            if (returnValue == null) return NotFound();
+            return Ok(returnValue);
+        }
+
     }
 
 }

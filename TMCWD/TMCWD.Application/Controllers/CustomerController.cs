@@ -11,7 +11,7 @@ namespace TMCWD.Application.Controllers
         private readonly AuthenticatedUserService _authenticatedUserService;
         private readonly CustomerTransaction _customerTransaction;
 
-        public CustomerController(AuthenticatedUserService authenticatedUserService, CustomerTransaction customerTransaction)
+        public CustomerController(AuthenticatedUserService authenticatedUserService, CustomerTransaction customerTransaction, AccountTransaction accountTransaction)
         {
             _authenticatedUserService = authenticatedUserService;
             _customerTransaction = customerTransaction;
@@ -24,5 +24,6 @@ namespace TMCWD.Application.Controllers
             if (customer == null) return BadRequest();
             return Ok(updateCustomer);
         }
+
     }
 }

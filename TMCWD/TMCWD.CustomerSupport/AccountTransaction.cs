@@ -127,6 +127,14 @@ namespace TMCWD.CustomerSupport
             return ConvertJsonToAccounts(data);
         }
 
+        public async Task<List<Account>> GetByZoneBookAndSequence(int zone, int book, int seqFrom, int seqTo)
+        {
+            var response = await _webService.Client.GetAsync($"api/Account/GetByZoneBookAndSequence/{zone}/{book}/{seqFrom}/{seqTo}");
+            var data = await response.Content.ReadAsStringAsync();
+            if(!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToAccounts(data);
+        }
+
         public async Task<List<Account>> GetByZoneBookId(int zoneBookId)
         {
             var response = await _webService.Client.GetAsync($"api/GetByZoneBookId/{zoneBookId}");
