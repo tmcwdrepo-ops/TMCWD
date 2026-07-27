@@ -436,21 +436,15 @@ async function filterAccounts(zone, book, scope, fromSeq, toSeq) {
         return result;
     });
     console.log('Customers:', customers);
-    console.log('Zone:', zone);
-    console.log('Book:', book);
-    console.log('Scope:', scope);
-    console.log('From:', fromSeq);
-    console.log('To:', toSeq);
     return customers.filter(function (a) {
-    if (zone && a.zone !== zone) return false;
-    if (book && a.book !== book) return false;
-    if (scope === 'unbilled' && a.billed) return false;
-    if (scope === 'ranged') {
-      if (fromSeq && a.seq < fromSeq) return false;
-      if (toSeq   && a.seq > toSeq)   return false;
-    }
-    return true;
-  });
+        if (zone && a.zone == zone) return true;
+        //if (book && a.book !== book) return false;
+        //if (scope === 'all') return true;
+        //if (scope === 'unbilled' && a.billed) return false;
+        //if (scope === 'ranged') {
+        //  if (fromSeq && a.seq < fromSeq) return false;
+        //  if (toSeq   && a.seq > toSeq)   return false;
+    });
 }
 
 /**
@@ -556,8 +550,8 @@ if (crLoadAccountsBtn) {
       var from  = parseInt((document.getElementById('crFromSeq') || {}).value, 10) || 0;
       var to    = parseInt((document.getElementById('crToSeq') || {}).value, 10) || 0;
 
-        var accts = await filterAccounts(zone, book, scope, from, to);
-        console.log('ACCTS:', accts);
+      var accts = await filterAccounts(zone, book, scope, from, to);
+      console.log('ACCTS:', accts);
       renderAccountsTable(accts);
       crAccountsLoaded = true;
       crLoadAccountsBtn.classList.add('is-active');
