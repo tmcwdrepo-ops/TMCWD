@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Billing;
 using TMCWD.Services;
 
@@ -33,6 +33,16 @@ namespace TMCWD.Application.Controllers
         #region methods
 
         public IActionResult Index()
+        {
+            return View();
+        }
+
+        public IActionResult OtherCharges()
+        {
+            return View();
+        }
+
+        public IActionResult Reading()
         {
             return View();
         }
