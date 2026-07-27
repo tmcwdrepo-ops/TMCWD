@@ -62,14 +62,24 @@ namespace TMCWD.Data.Services
             return await sheets.ToListAsync();
         }
 
-        public async Task<ReadingSheet> GetByBillingDate(int zone, int book, DateTime billingDate)
+        public async Task<List<ReadingSheet>> GetByBillingDate(int zone, int book, DateTime billingDate)
         {
             //var readingSheet = await _context.ReadingSheets.Where(x => x.Zone == zone && x.Book == book && x.BillingDate == billingDate).FirstOrDefaultAsync();
-            var sheet = await (from zoneBooks in _context.ZoneBooks
-                          join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
-                          where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.BillingDate == billingDate
-                          select readingSheets).FirstOrDefaultAsync();
-            return sheet;
+            var sheets = await (from zoneBooks in _context.ZoneBooks
+                                join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
+                                where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.BillingDate == billingDate
+                                select readingSheets).ToListAsync();
+            return sheets;
+        }
+
+        public async Task<ReadingSheet> GetByBillingDateAndAssignedTo(int zone, int book, DateTime billingDate, int assignedTo)
+        {
+            var sheets = await (from zoneBooks in _context.ZoneBooks
+                                join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
+                                where zoneBooks.Zone == zone && zoneBooks.Book == book && DateOnly.FromDateTime(readingSheets.BillingDate) == DateOnly.FromDateTime(billingDate)
+                                && readingSheets.AssignedTo == assignedTo
+                                select readingSheets).FirstOrDefaultAsync();
+            return sheets;
         }
 
         public async Task<ReadingSheet> SaveUpdate(int userId, ReadingSheet readingSheet)

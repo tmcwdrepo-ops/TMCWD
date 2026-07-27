@@ -2,8 +2,10 @@
 using System.Net;
 using System.Text.Json;
 using TMCWD.Application.Models;
+using TMCWD.Billing;
 using TMCWD.CustomerSupport;
 using TMCWD.Model.Administrator;
+using TMCWD.Model.Billing;
 using TMCWD.Model.CustomerSupport;
 using TMCWD.Services;
 
@@ -15,12 +17,23 @@ namespace TMCWD.Application.Controllers
         private readonly AuthenticatedUserService _authenticatedUserService;
         private readonly CustomerTransaction _customerTransaction;
         private readonly AccountTransaction _accountTransaction;
+        private readonly BillingTransaction _billingTransaction;
+        private readonly ReadingSheetTransaction _readingSheetTransaction;
+        private readonly ReadingTransaction _readingTransaction;
 
-        public AccountController(AuthenticatedUserService authenticatedUserService, CustomerTransaction customerTransaction, AccountTransaction accountTransaction)
+        public AccountController(AuthenticatedUserService authenticatedUserService, 
+            CustomerTransaction customerTransaction, 
+            AccountTransaction accountTransaction,
+            BillingTransaction billingTransaction,
+            ReadingSheetTransaction readingSheetTransaction,
+            ReadingTransaction readingTransaction)
         {
             _authenticatedUserService = authenticatedUserService;
             _customerTransaction = customerTransaction;
             _accountTransaction = accountTransaction;
+            _billingTransaction = billingTransaction;
+            _readingSheetTransaction = readingSheetTransaction;
+            _readingTransaction = readingTransaction;
         }
 
         public async Task<IActionResult> Index(int customerId, int accountId = 0)
@@ -115,18 +128,29 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetByZoneBookAndSequence(int zone, int book, int seqFrom, int seqTo)
+        public async Task<IActionResult> GetByZoneBookAndSequence(DateTime billingDate, int zone, int book, int seqFrom, int seqTo, int assignedTo)
         {
             var accounts = await _accountTransaction.GetByZoneBookAndSequence(zone, book, seqFrom, seqTo);
 
             if (accounts == null) return NotFound();
 
             var customerIds = accounts.Select(x => x.CustomerId).ToList();
+            var accountIds = accounts.Select(x => x.Id).ToList();
 
-            var customers = await _customerTransaction.GetCustomersFromIds(customerIds);
+            Task<List<Customer>> getCustomersTask = _customerTransaction.GetCustomersFromIds(customerIds);
+            Task<ReadingSheet> getReadingSheets = _readingSheetTransaction.GetByBillingDateAndAssignedTo(zone, book, billingDate, assignedTo);
+
+            await Task.WhenAll(getCustomersTask, getReadingSheets);
+
+            var customers = getCustomersTask.Result;
+            var readingSheet = (getReadingSheets.Result) ?? new ReadingSheet();
+
+            var readings = await _readingTransaction.GetByReadingSheetId(readingSheet.Id) ?? new List<Reading>();
 
             var returnValue = from accts in accounts
                               join custs in customers on accts.CustomerId equals custs.Id
+                              join rdngs in readings on accts.Id equals rdngs.AccountId into acctRdngs
+                              from rdngs in acctRdngs.DefaultIfEmpty()
                               select new
                               {
                                   CustomerId = custs.Id,
@@ -138,7 +162,7 @@ namespace TMCWD.Application.Controllers
                                   type = accts.Classification.ToString(),
                                   Zone = zone,
                                   Book = book,
-                                  Billed = false,
+                                  Billed = rdngs?.IsCompleted ?? false,
                                   Sequence = accts.Sequence
                               };
 

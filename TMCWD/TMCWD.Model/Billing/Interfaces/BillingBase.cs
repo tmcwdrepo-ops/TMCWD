@@ -47,6 +47,9 @@ namespace TMCWD.Model.Billing.Interfaces
         [DisplayName("Payment Transaction Id")]
         public string PaymentTransactionId { get; set; } = string.Empty;
 
+        [DisplayName("ReadingId")]
+        public int ReadingId { get; set; }
+
         [DisplayName("MaterialsAmount")]
         public decimal MaterialsAmount { get; set; }
 

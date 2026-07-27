@@ -33,6 +33,12 @@ namespace TMCWD.Model.Billing
         [DisplayName("Zone Book Id")]
         public int ZoneBookId { get; set; }
 
+        [DisplayName("Sequence From")]
+        public int SequenceFrom { get; set; }
+
+        [DisplayName("Sequence To")]
+        public int SequenceTo { get; set; }
+
         [DisplayName("Assigned To")]
         public int AssignedTo { get; set; }
 

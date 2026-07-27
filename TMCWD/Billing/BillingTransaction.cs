@@ -56,6 +56,25 @@ namespace TMCWD.Billing
             return ConvertJsonToBilling(data);
         }
 
+        public async Task<List<BillingBase>> GetByReadingId(int readingId)
+        {
+            if (readingId == 0) throw new Exception("Reading id is not provided");
+
+            var response = await _service.Client.GetAsync($"api/Billing/GetByReadingId/{readingId}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConverJsonToBillings(data);
+        }
+
+        public async Task<List<BillingBase>> GetByReadings(List<int> readingIds)
+        {
+            var queryParam = string.Join("&", readingIds.Select(x => $"ids={x}"));
+            var response = await _service.Client.GetAsync($"api/Billing/GetByReadings?{queryParam}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConverJsonToBillings(data);
+        }
+
         public async Task<BillingBase> SaveUpdate(int userId, BillingBase billing)
         {
             var content = JsonContent.Create(billing);

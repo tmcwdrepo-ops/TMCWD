@@ -1091,6 +1091,40 @@ function initReadingSheetPage() {
  *
  * @param {{billingDate:string, meterReader:string, zone:string}} data
  */
+
+
+async function onReadingSheetCreate(data) {
+    var isValid = false;
+    const form = document.getElementById('frmReadingSheet');
+    const readaingSheet = {
+        id: 0,
+        name: '',
+        billingDate: data.billingDate,
+        dueDate: data.dueData,
+        disconnectionDate: data.disconnectionDate,
+        billingPeriodStart: data.billingPeriodStart,
+        zoneBookId: 0,
+        sequenceFrom: data.seqFrom,
+        sequenceTo: data.seqTo,
+        assignedTo: data.meterReader
+    };
+    console.log('Validity:', form.reportValidity());
+    if (!form.reportValidity()) return false;
+
+    var readingSheet = await fetch('/readingsheet/createreadingsheet?zone=' + data.zone + '&book=' + data.book, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(readaingSheet)
+    }).then(response => {
+        if (!reponse.ok || response.status == 204) return null;
+        return response.json();
+    }).then(result => {
+        return result;
+    });
+}
+
 function onReadingSheetCreated(data) {
   if (!data || !data.meterReader) return;
 

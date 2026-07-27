@@ -48,7 +48,7 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateReadingSheet(int zone, int book, int assignedTo, DateTime billingPeriod)
+        public async Task<IActionResult> CreateReadingSheet(int zone, int book, [FromBody] ReadingSheet readingSheet)
         {
 
             ReadingSheet savedSheet = new();
@@ -56,29 +56,36 @@ namespace TMCWD.Application.Controllers
             try
             {
 
-                var assignedToUser = await _userTrans.Get(assignedTo);
+                var assignedToUser = await _userTrans.Get(readingSheet.AssignedTo);
 
-                string name = $"{DateTime.Now.ToString("MM - dd - yyyy")} - {assignedToUser.Name}";
+                string name = $"{readingSheet.BillingDate.ToString("MM-dd-yyyy")} {assignedToUser.Name}";
 
                 var zoneBook = await _zoneBookTrans.GetByZoneAndBook(zone, book);
 
                 if (zoneBook == null) return BadRequest();
 
-                ReadingSheet sheet = new ReadingSheet
-                {
-                    AssignedTo = assignedTo,
-                    BillingDate = billingPeriod,
-                    Name = name,
-                    CreatedBy = _user.User.Id,
-                    ZoneBookId = zoneBook.Id,
-                    DateCreated = DateTime.Now
-                };
+                readingSheet.DateCreated = DateTime.Now;
+                readingSheet.CreatedBy = _user.User.Id;
 
-                savedSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, sheet);
+                var savedReadingSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, readingSheet);
 
-                if(savedSheet != null)
+                return Ok(savedReadingSheet);
+
+                //ReadingSheet sheet = new ReadingSheet
+                //{
+                //    AssignedTo = readingSheet.AssignedTo,
+                //    BillingDate = billingPeriod,
+                //    Name = name,
+                //    CreatedBy = _user.User.Id,
+                //    ZoneBookId = zoneBook.Id,
+                //    DateCreated = DateTime.Now
+                //};
+
+                //savedSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, sheet);
+
+                if(savedReadingSheet != null)
                 {
-                    var accounts = await _accountTransaction.GetByZoneBookId(savedSheet.ZoneBookId);
+                    var accounts = await _accountTransaction.GetByZoneBookId(savedReadingSheet.ZoneBookId);
                     var readings = from accts in accounts
                                    select new Reading
                                    {

@@ -21,6 +21,9 @@ namespace TMCWD.Data.Entities
         [Column("PaymentTransactionId")]
         public string PaymentTransactionId { get; set; } = string.Empty;
 
+        [Column("ReadingId")]
+        public System.Int64 ReadingId { get; set; }
+
         [Column("BillingPeriodf")]
         public DateTime BillingPeriod { get; set; }
 

@@ -112,6 +112,11 @@ loadMeterReaders();
 var crMeterReaderInput    = document.getElementById('crMeterReaderInput');
 var crMeterReaderList     = document.getElementById('crMeterReaderList');
 var crMeterReaderCombobox = document.getElementById('crMeterReaderCombobox');
+var selectedZone = 0;
+var selectedBook = 0;
+var selectedScope = 0;
+var currentFromSeq = 0;
+var currentToSeq = 0;
 
 /* Currently selected value */
 var crMeterReaderValue = '';
@@ -240,8 +245,11 @@ const crBook     = document.getElementById('crBook');
 
 if (crZone) {
     crZone.addEventListener('change', async (evt) => {
-        const selectedZone = evt.target.value;
-        
+        const newZone = evt.target.value;
+        if (selectedZone == newZone) return;
+        selectedZone = newZone;
+        crAccountsLoaded = false;
+        setLoadAccountsBtnState('load');
         if (crBook) {
             const books = await loadBooks(selectedZone);
             if (books) {
@@ -263,8 +271,31 @@ if (crZone) {
 
 if (crBook) {
     crBook.addEventListener('change', (evt) => {
-        var selectedBook = evt.target.value;
-        
+        const newBook = evt.target.value;
+        if (selectedBook == newBook) return;
+        selectedBook = newBook;
+        setLoadAccountsBtnState('load');
+        crAccountsLoaded = false;
+    });
+}
+
+if (crFromSeq) {
+    crFromSeq.addEventListener('input', (evt) => {
+        const newFrom = evt.target.value;
+        if (currentFromSeq == newFrom) return;
+        currentFromSeq = newFrom;
+        setLoadAccountsBtnState('load');
+        crAccountsLoaded = false;
+    });
+}
+
+if (crToSeq) {
+    crToSeq.addEventListener('input', (evt) => {
+        const newTo = evt.target.value;
+        if (currentToSeq == newTo) return;
+        currentToSeq = newTo;
+        setLoadAccountsBtnState('load');
+        crAccountsLoaded = false;
     });
 }
 
@@ -281,7 +312,6 @@ async function loadBooks(zone) {
         if (!response.ok || response.status == 204) return null;
         return response.json();
     }).then(result => {
-        console.log('Result:', result);
         return result;
     });
 }
@@ -309,9 +339,12 @@ async function loadAccounts(zone, book, seqFrom, seqTo) {
  */
 function syncScopeRange() {
   if (!crScope || !crScopeRange) return;
+  if (selectedScope == crScope.value) return;
   var isRanged = crScope.value === 'ranged';
+  selectedScope = crScope.value;
   crScopeRange.hidden = !isRanged;
-
+  setLoadAccountsBtnState('load');
+  crAccountsLoaded = false;
   // Clear values when hidden so they don't accidentally submit
   if (!isRanged) {
     if (crFromSeq) crFromSeq.value = '';
@@ -437,10 +470,10 @@ async function filterAccounts(zone, book, scope, fromSeq, toSeq) {
     });
     console.log('Customers:', customers);
     return customers.filter(function (a) {
-        if (zone && a.zone == zone) return true;
-        //if (book && a.book !== book) return false;
-        //if (scope === 'all') return true;
-        //if (scope === 'unbilled' && a.billed) return false;
+        if ((zone && a.zone == zone) && (book && a.book == book)) return true;
+        if (scope === 'unbilled' && !a.billed) return true;
+        if (scope === 'ranged')
+            if ((fromSeq && a.sequence >= fromSeq) && (toSeq && a.sequence <= toSeq)) return true;
         //if (scope === 'ranged') {
         //  if (fromSeq && a.seq < fromSeq) return false;
         //  if (toSeq   && a.seq > toSeq)   return false;
@@ -467,7 +500,7 @@ function renderAccountsTable(accounts) {
 
   accounts.forEach(function (a, idx) {
     var tr = document.createElement('tr');
-
+      console.log('A:', a);
     tr.innerHTML =
       '<td class="cr-td cr-td--num">' + (idx + 1) + '</td>' +
       '<td class="cr-td">' +
@@ -481,7 +514,7 @@ function renderAccountsTable(accounts) {
       '<td class="cr-td">' +
         '<span class="cr-type-badge">' + a.type + '</span>' +
       '</td>' +
-      '<td class="cr-td cr-td--seq">' + a.seq + '</td>';
+      '<td class="cr-td cr-td--seq">' + a.sequence ?? 0 + '</td>';
 
     crAccountsTbody.appendChild(tr);
   });
@@ -551,7 +584,6 @@ if (crLoadAccountsBtn) {
       var to    = parseInt((document.getElementById('crToSeq') || {}).value, 10) || 0;
 
       var accts = await filterAccounts(zone, book, scope, from, to);
-      console.log('ACCTS:', accts);
       renderAccountsTable(accts);
       crAccountsLoaded = true;
       crLoadAccountsBtn.classList.add('is-active');
@@ -585,10 +617,7 @@ var crCurrentPage      = 1;
  * @returns {Array}
  */
 function crPageSlice(page) {
-    console.log('crFiltered:', crFilteredAccounts);
-    console.log('Page:', page);
-    var start = (page - 1) * CR_PAGE_SIZE;
-    console.log('Page Size:', start);
+  var start = (page - 1) * CR_PAGE_SIZE;
   return crFilteredAccounts.slice(start, start + CR_PAGE_SIZE);
 }
 
@@ -658,7 +687,7 @@ function renderCrTableRows(rows) {
       '<td class="cr-td">' +
         '<span class="cr-type-badge">' + a.type + '</span>' +
       '</td>' +
-      '<td class="cr-td cr-td--seq">' + a.seq + '</td>';
+      '<td class="cr-td cr-td--seq">' + a.sequence + '</td>';
     crAccountsTbody.appendChild(tr);
   });
 }

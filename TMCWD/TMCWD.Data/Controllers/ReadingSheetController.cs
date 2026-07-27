@@ -100,6 +100,14 @@ namespace TMCWD.Data.Controllers
 
         }
 
+        [HttpGet("GetByBillingDateAndAssignedTo/{zone}/{book}/{billingDate}/{assignedTo}")]
+        public async Task<IActionResult> GetByBillingDateAndAssignedTo(int zone, int book, DateTime billingDate, int assignedTo)
+        {
+            var sheet = await _readingSheetService.GetByBillingDateAndAssignedTo(zone, book, billingDate, assignedTo);
+            if (sheet == null) return NotFound();
+            return Ok(sheet);
+        }
+
         [HttpGet("SaveUpdate/{userId}")]
         public async Task<IActionResult> SaveUpdate(int userId, ReadingSheet readingSheet)
         {

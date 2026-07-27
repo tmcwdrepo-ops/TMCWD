@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography.X509Certificates;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 
@@ -50,6 +52,19 @@ namespace TMCWD.Data.Services
             return billing;
         }
 
+        public async Task<List<Billing>> GetByReadingId(int readingId)
+        {
+            var billings = await _dbContext.Billings.Where(x => x.ReadingId == readingId).ToListAsync();
+            return billings;
+        }
+
+        public async Task<List<Billing>> GetByReadings(int[] readingIds)
+        {
+            var readingList = readingIds.ToList();
+            var billings = await _dbContext.Billings.Where(x => readingList.Contains((int)x.Id)).ToListAsync();
+            return billings;
+        }
+
         public async Task<Billing> SaveUpdate(int userId, Billing billing)
         {
             if (billing.Id > 0)
@@ -68,6 +83,11 @@ namespace TMCWD.Data.Services
 
             await _dbContext.SaveChangesAsync();
             return billing;
+        }
+
+        Task<Billing> IBillingService.GetByReadingId(int readingId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -17,7 +17,9 @@ namespace TMCWD.Data.Services
 
         public Task<List<ReadingSheet>> GetByZoneBookId(int zoneBookId);
 
-        public Task<ReadingSheet> GetByBillingDate(int zone, int book, DateTime billingDate);
+        public Task<List<ReadingSheet>> GetByBillingDate(int zone, int book, DateTime billingDate);
+
+        public Task<ReadingSheet> GetByBillingDateAndAssignedTo(int zone, int book, DateTime billingDate, int assignedTo);
 
         public Task<ReadingSheet> GetByBillingPeriodStart(int zone, int book, DateTime billingPeriodStart);
 
