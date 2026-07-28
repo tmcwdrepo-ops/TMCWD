@@ -8,7 +8,6 @@ using TMCWD.Utility.Generic;
 using TMCWD.Utility.Encryption;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text;
-using System.Net.WebSockets;
 using TMCWD.Services;
 
 namespace TMCWD.Administration
