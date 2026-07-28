@@ -10,6 +10,6 @@ namespace TMCWD.Data.Services
         Task<IEnumerable<User>?> GetUsers();
         Task<IEnumerable<User>?> SearchUser(string searchString);
         Task<IEnumerable<User>> GetUsersByRole(int roleId);
-        Task<IEnumerable<User>> GetUsersByIds(int[] ids);
+        Task<IEnumerable<User>> GetUsersByIds(IEnumerable<int> ids);
     }
 }

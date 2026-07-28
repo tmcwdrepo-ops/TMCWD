@@ -68,7 +68,7 @@ namespace TMCWD.Data.Services
             return users;
         }
 
-        public async Task<IEnumerable<User>> GetUsersByIds(int[] ids)
+        public async Task<IEnumerable<User>> GetUsersByIds(IEnumerable<int> ids)
         {
             var users = await _dbContext.Users.Where(x => ids.Contains((int)x.Id)).ToListAsync();
             return users;

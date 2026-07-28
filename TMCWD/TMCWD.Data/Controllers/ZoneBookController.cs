@@ -83,7 +83,7 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpGet("GetByIds")]
-        public async Task<IActionResult> GetByIds([FromQuery(Name = "ids")] int[] ids)
+        public async Task<IActionResult> GetByIds([FromQuery] int[] ids)
         {
             var readings = await _service.GetByIds(ids);
             if (readings == null || !readings.Any()) return NotFound();

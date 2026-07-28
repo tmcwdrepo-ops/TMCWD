@@ -135,9 +135,9 @@ namespace TMCWD.Data.Services
             return await data.ToListAsync();
         }
 
-        public async Task<List<Reading>> GetRangeByReadingSheetIds(int[] ids)
+        public async Task<List<Reading>> GetRangeByReadingSheetIds(IEnumerable<int> ids)
         {
-            var readings = await _context.Readings.Where(x => ids.Contains(x.ReadingSheetId)).ToListAsync();
+            var readings = await _context.Readings.Where(x => ids.Contains((int)x.ReadingSheetId)).ToListAsync();
             return readings;
         }
 
