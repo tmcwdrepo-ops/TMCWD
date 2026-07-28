@@ -38,7 +38,7 @@ namespace TMCWD.Data.Controllers
         public async Task<IActionResult> GetAll()
         {
             var templates = await _service.GetAll();
-            if(templates == null || !templates.Any()) return NotFound();
+            if (templates == null || !templates.Any()) return NotFound();
             return Ok(templates);
         }
 

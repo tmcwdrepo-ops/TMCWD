@@ -50,16 +50,16 @@ namespace TMCWD.Data.Services
 
         public async Task<List<ZoneBook>> GetZones()
         {
-            var zones = await (from zoneData in _context.ZoneBooks
-                               select new ZoneBook
-                               {
-                                   Id = 0,
-                                   Area = string.Empty,
-                                   Book = 0,
-                                   Week = 0,
-                                   Zone = zoneData.Zone
-                               }).Distinct().ToListAsync();
-            return zones;
+            var zones = await _context.ZoneBooks
+                .Select(z => z.Zone)
+                .Distinct()
+                .OrderBy(z => z)
+                .ToListAsync();
+
+            return zones.Select(z => new ZoneBook
+            {
+                Zone = z
+            }).ToList();
         }
 
         public async Task<List<ZoneBook>> GetBooksByZone(int zone)
