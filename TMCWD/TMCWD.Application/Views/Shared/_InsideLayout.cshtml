@@ -61,6 +61,34 @@
                 <span class="nav-link__label">Reading Sheet</span>
               </a>
             </li>
+            <li class="nav-item">
+              <a href="@Url.Action("OtherCharges", "Billing")" class="nav-link" data-page="other-charges">
+                <span class="nav-link__label">Other Charges</span>
+              </a>
+            </li>
+            <li class="nav-item nav-item--nested">
+              <a href="@Url.Action("Reading", "Billing")" class="nav-link" data-page="reading">
+                <span class="nav-link__icon" aria-hidden="true" style="padding-left: var(--space-sm); display: inline-flex; align-items: center;">
+                  <svg viewBox="0 0 20 20" fill="none" style="width: 14px; height: 14px; color: currentColor;">
+                    <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M10 10l3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    <circle cx="10" cy="10" r="1" fill="currentColor" />
+                  </svg>
+                </span>
+                <span class="nav-link__label" style="padding-left: 8px;">Reading</span>
+              </a>
+            </li>
+            <li class="nav-item nav-item--nested">
+              <a href="@Url.Action("Penalty", "Billing")" class="nav-link" data-page="penalty">
+                <span class="nav-link__icon" aria-hidden="true" style="padding-left: var(--space-sm); display: inline-flex; align-items: center;">
+                  <svg viewBox="0 0 20 20" fill="none" style="width: 14px; height: 14px; color: currentColor;">
+                    <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M10 6v5M10 14h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span class="nav-link__label" style="padding-left: 8px;">Penalties</span>
+              </a>
+            </li>
           </ul>
         </li>
 
