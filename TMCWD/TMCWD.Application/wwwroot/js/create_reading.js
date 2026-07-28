@@ -18,8 +18,9 @@ var toggleThemeBtn = document.getElementById('toggleThemeBtn'); // dev harness
    ============================================================ */
 
 function openCreateModal() {
-  crBackdrop.hidden = false;
-  crBackdrop.setAttribute('aria-hidden', 'false');
+   crBackdrop.hidden = false;
+   crBackdrop.setAttribute('aria-hidden', 'false');
+   loadCrTemplatesOnce();
 }
 
 function closeCreateModal() {
@@ -271,10 +272,15 @@ var crAccountsLoaded = false;
 
 /* Save — show toast then close modal */
 if (crSaveBtn) {
-  crSaveBtn.addEventListener('click', function () {
-    showToast('Reading sheet saved successfully');
-    setTimeout(closeCreateModal, 1000);
-  });
+    crSaveBtn.addEventListener('click', function () {
+        if (!validateCrDates()) {
+            if (crDueDate && !crDueDate.checkValidity()) crDueDate.reportValidity();
+            else if (crDisconnectionDate) crDisconnectionDate.reportValidity();
+            return;
+        }
+        showToast('Reading sheet saved successfully');
+        setTimeout(closeCreateModal, 1000);
+    });
 }
 
 /* Delete Template — stub */
@@ -301,48 +307,56 @@ if (crTemplateSelect) {
 }
 
 /* ============================================================
-   Phase 6 — Accounts mock data + table rendering
+   Phase 6 — Real Data
    ============================================================ */
 
-var MOCK_ACCOUNTS = [
-  { acctNo: '2024-0001', name: 'Maria Santos',       address: 'Purok 3',  barangay: 'Brgy. De Ocampo',   type: 'Residential', zone: 'zone1', book: 'book1', billed: true,  seq: 1  },
-  { acctNo: '2024-0002', name: 'Roberto Reyes',      address: 'Purok 7',  barangay: 'Brgy. Hugo Perez',  type: 'Residential', zone: 'zone1', book: 'book1', billed: false, seq: 2  },
-  { acctNo: '2024-0003', name: 'Carlo Mendoza',      address: 'Purok 1',  barangay: 'Brgy. Lapidario',   type: 'Commercial',  zone: 'zone1', book: 'book2', billed: true,  seq: 3  },
-  { acctNo: '2024-0004', name: 'Dante Villanueva',   address: 'Purok 5',  barangay: 'Brgy. Conchu',      type: 'Residential', zone: 'zone2', book: 'book2', billed: false, seq: 4  },
-  { acctNo: '2024-0005', name: 'Noel Castillo',      address: 'Purok 2',  barangay: 'Brgy. Gregorio',    type: 'Residential', zone: 'zone2', book: 'book3', billed: true,  seq: 5  },
-  { acctNo: '2024-0006', name: 'Rachel Domingo',     address: 'Purok 9',  barangay: 'Brgy. Aguado',      type: 'Industrial',  zone: 'zone2', book: 'book3', billed: false, seq: 6  },
-  { acctNo: '2024-0007', name: 'Samuel Ong',         address: 'Purok 4',  barangay: 'Brgy. Cabezas',     type: 'Residential', zone: 'zone3', book: 'book4', billed: true,  seq: 7  },
-  { acctNo: '2024-0008', name: 'Teresa Padilla',     address: 'Purok 6',  barangay: 'Brgy. Luciano',     type: 'Residential', zone: 'zone3', book: 'book4', billed: false, seq: 8  },
-  { acctNo: '2024-0009', name: 'Ulysses Tan',        address: 'Purok 11', barangay: 'Brgy. Sanchez',     type: 'Commercial',  zone: 'zone3', book: 'book5', billed: true,  seq: 9  },
-  { acctNo: '2024-0010', name: 'Vera Lim',           address: 'Purok 8',  barangay: 'Brgy. Osorio',      type: 'Residential', zone: 'zone4', book: 'book5', billed: false, seq: 10 },
-  { acctNo: '2024-0011', name: 'Walter Gomez',       address: 'Purok 10', barangay: 'Brgy. Santiago',    type: 'Residential', zone: 'zone4', book: 'book6', billed: true,  seq: 11 },
-  { acctNo: '2024-0012', name: 'Xena Fuentes',       address: 'Purok 13', barangay: 'Brgy. Imelda',      type: 'Commercial',  zone: 'zone4', book: 'book6', billed: false, seq: 12 }
-];
+function loadCrAccounts() {
+    var zone = (document.getElementById('crZone') || {}).value || '';
+    var book = (document.getElementById('crBook') || {}).value || '';
+    var scope = (document.getElementById('crScope') || {}).value || 'all';
+    var from = parseInt((document.getElementById('crFromSeq') || {}).value, 10) || 0;
+    var to = parseInt((document.getElementById('crToSeq') || {}).value, 10) || 0;
 
-var crTablePanel  = document.getElementById('crTablePanel');
-var crAccountsTbody = document.getElementById('crAccountsTbody');
-var crTableEmpty  = document.getElementById('crTableEmpty');
+    if (!zone || !book) return;
 
-/**
- * Filter MOCK_ACCOUNTS by zone, book, and scope.
- * @param {string} zone  e.g. 'zone1' or '' for all
- * @param {string} book  e.g. 'book2' or '' for all
- * @param {string} scope 'all' | 'unbilled' | 'ranged'
- * @param {number} fromSeq
- * @param {number} toSeq
- * @returns {Array}
- */
-function filterAccounts(zone, book, scope, fromSeq, toSeq) {
-  return MOCK_ACCOUNTS.filter(function (a) {
-    if (zone && a.zone !== zone) return false;
-    if (book && a.book !== book) return false;
-    if (scope === 'unbilled' && a.billed) return false;
-    if (scope === 'ranged') {
-      if (fromSeq && a.seq < fromSeq) return false;
-      if (toSeq   && a.seq > toSeq)   return false;
-    }
-    return true;
-  });
+    return fetch('/ReadingSheet/GetAccountsByZoneAndBook?zone=' + encodeURIComponent(zone) + '&book=' + encodeURIComponent(book))
+        .then(function (res) { return res.ok ? res.json() : []; })
+        .then(function (accounts) {
+            if (scope === 'ranged') {
+                accounts = accounts.filter(function (a) {
+                    if (from && a.sequence < from) return false;
+                    if (to && a.sequence > to) return false;
+                    return true;
+                });
+            }
+            renderAccountsTable(accounts);
+            crAccountsLoaded = true;
+            if (crLoadAccountsBtn) crLoadAccountsBtn.classList.add('is-active');
+            setLoadAccountsBtnState('hide');
+            var panel = document.getElementById('crTablePanel');
+            if (panel) panel.hidden = false;
+        });
+}
+
+if (crLoadAccountsBtn) {
+    crLoadAccountsBtn.addEventListener('click', function () {
+        var panel = document.getElementById('crTablePanel');
+        if (!panel) return;
+
+        if (!crAccountsLoaded) {
+            var zone = (document.getElementById('crZone') || {}).value || '';
+            var book = (document.getElementById('crBook') || {}).value || '';
+            if (!zone || !book) {
+                alert('Select a Zone and Book first.');
+                return;
+            }
+            loadCrAccounts();
+        } else {
+            panel.hidden = !panel.hidden;
+            crLoadAccountsBtn.classList.toggle('is-active', !panel.hidden);
+            setLoadAccountsBtnState(panel.hidden ? 'show' : 'hide');
+        }
+    });
 }
 
 /**
@@ -360,29 +374,6 @@ function renderAccountsTable(accounts) {
     return;
   }
 
-  crTableEmpty.hidden = true;
-  crTablePanel.hidden = false;
-
-  accounts.forEach(function (a, idx) {
-    var tr = document.createElement('tr');
-
-    tr.innerHTML =
-      '<td class="cr-td cr-td--num">' + (idx + 1) + '</td>' +
-      '<td class="cr-td">' +
-        '<span class="cr-cell-main">' + a.acctNo + '</span>' +
-        '<span class="cr-cell-sub">'  + a.name   + '</span>' +
-      '</td>' +
-      '<td class="cr-td">' +
-        '<span class="cr-cell-main">' + a.address   + '</span>' +
-        '<span class="cr-cell-sub">'  + a.barangay  + '</span>' +
-      '</td>' +
-      '<td class="cr-td">' +
-        '<span class="cr-type-badge">' + a.type + '</span>' +
-      '</td>' +
-      '<td class="cr-td cr-td--seq">' + a.seq + '</td>';
-
-    crAccountsTbody.appendChild(tr);
-  });
 }
 
 /* Re-wire Load Accounts button to use the table */
@@ -435,31 +426,8 @@ function setLoadAccountsBtnState(state) {
   crLoadAccountsBtn.innerHTML = icon + label;
 }
 
-if (crLoadAccountsBtn) {
-  crLoadAccountsBtn.addEventListener('click', function () {
-    var panel = document.getElementById('crTablePanel');
-    if (!panel) return;
 
-    if (!crAccountsLoaded) {
-      /* First click — filter and render */
-      var zone  = (document.getElementById('crZone')  || {}).value || '';
-      var book  = (document.getElementById('crBook')  || {}).value || '';
-      var scope = (document.getElementById('crScope') || {}).value || 'all';
-      var from  = parseInt((document.getElementById('crFromSeq') || {}).value, 10) || 0;
-      var to    = parseInt((document.getElementById('crToSeq')   || {}).value, 10) || 0;
-
-      renderAccountsTable(filterAccounts(zone, book, scope, from, to));
-      crAccountsLoaded = true;
-      crLoadAccountsBtn.classList.add('is-active');
-      setLoadAccountsBtnState('hide');
-    } else {
-      /* Subsequent clicks — toggle panel visibility */
-      panel.hidden = !panel.hidden;
-      crLoadAccountsBtn.classList.toggle('is-active', !panel.hidden);
-      setLoadAccountsBtnState(panel.hidden ? 'show' : 'hide');
-    }
-  });
-}/* ============================================================
+/* ============================================================
    Phase 7 — Pagination
    ============================================================ */
 
@@ -532,28 +500,20 @@ function renderCrPagination() {
  * @param {Array} rows
  */
 function renderCrTableRows(rows) {
-  if (!crAccountsTbody) return;
-  crAccountsTbody.innerHTML = '';
+    if (!crAccountsTbody) return;
+    crAccountsTbody.innerHTML = '';
 
-  rows.forEach(function (a, idx) {
-    var globalIdx = (crCurrentPage - 1) * CR_PAGE_SIZE + idx + 1;
-    var tr = document.createElement('tr');
-    tr.innerHTML =
-      '<td class="cr-td cr-td--num">' + globalIdx + '</td>' +
-      '<td class="cr-td">' +
-        '<span class="cr-cell-main">' + a.acctNo + '</span>' +
-        '<span class="cr-cell-sub">'  + a.name   + '</span>' +
-      '</td>' +
-      '<td class="cr-td">' +
-        '<span class="cr-cell-main">' + a.address  + '</span>' +
-        '<span class="cr-cell-sub">'  + a.barangay + '</span>' +
-      '</td>' +
-      '<td class="cr-td">' +
-        '<span class="cr-type-badge">' + a.type + '</span>' +
-      '</td>' +
-      '<td class="cr-td cr-td--seq">' + a.seq + '</td>';
-    crAccountsTbody.appendChild(tr);
-  });
+    rows.forEach(function (a, idx) {
+        var globalIdx = (crCurrentPage - 1) * CR_PAGE_SIZE + idx + 1;
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td class="cr-td cr-td--num">' + globalIdx + '</td>' +
+            '<td class="cr-td"><span class="cr-cell-main">' + a.accountNumber + '</span></td>' +
+            '<td class="cr-td"><span class="cr-cell-main">' + a.address + '</span></td>' +
+            '<td class="cr-td"><span class="cr-type-badge">' + a.classification + '</span></td>' +
+            '<td class="cr-td cr-td--seq">' + a.sequence + '</td>';
+        crAccountsTbody.appendChild(tr);
+    });
 }
 
 /* Override Phase 6's renderAccountsTable to use pagination */
@@ -605,143 +565,260 @@ if (crPagControls) {
 }
 
 /* ============================================================
-   Phase 8 — Template selection logic
+   Phase 8 — Template selection logic (real data)
    ============================================================ */
 
-/**
- * Mock template data.
- * Keys must match the <option value="..."> in the header dropdown.
- * Dates are in yyyy-MM-dd format to match <input type="date">.
- */
-var MOCK_TEMPLATES = {
-  'tpl_monthly': {
-    label:              'Monthly Standard',
-    billingDate:        '2025-07-01',
-    dueDate:            '2025-07-15',
-    disconnectionDate:  '2025-08-01',
-    billingPeriodStart: '2025-07-01'
-  },
-  'tpl_quarterly': {
-    label:              'Quarterly Round',
-    billingDate:        '2025-07-01',
-    dueDate:            '2025-07-31',
-    disconnectionDate:  '2025-09-01',
-    billingPeriodStart: '2025-04-01'
-  },
-  'tpl_special': {
-    label:              'Special Reading',
-    billingDate:        '2025-07-10',
-    dueDate:            '2025-07-20',
-    disconnectionDate:  '2025-08-10',
-    billingPeriodStart: '2025-07-10'
-  }
-};
+var crRealTemplates = []; // populated via 'templates:updated' event from create_temp.js
+var crRealZones = [];
 
-/* Re-grab elements (they were declared in Phase 5 but we need them here) */
-var crBillingDate       = document.getElementById('crBillingDate');
-var crDueDate           = document.getElementById('crDueDate');
-var crDisconnectionDate = document.getElementById('crDisconnectionDate');
+var crTemplatesLoaded = false;
 
-/**
- * Apply a template's values to the date fields, then
- * re-run the override-start sync so the lock state is correct.
- *
- * @param {string} tplKey  — key into MOCK_TEMPLATES, or '' to clear
- */
-function applyTemplate(tplKey) {
-  var tpl = MOCK_TEMPLATES[tplKey] || null;
-
-  /* Fill or clear the four date fields */
-  if (crBillingDate)       crBillingDate.value       = tpl ? tpl.billingDate        : '';
-  if (crDueDate)           crDueDate.value           = tpl ? tpl.dueDate            : '';
-  if (crDisconnectionDate) crDisconnectionDate.value = tpl ? tpl.disconnectionDate  : '';
-  if (crBillingPeriodStart) crBillingPeriodStart.value = tpl ? tpl.billingPeriodStart : '';
-
-  /* Re-apply the override checkbox state so the field is correctly
-     enabled/disabled regardless of what the template filled in.      */
-  syncOverrideStart();
-
-  /* Show or hide the Delete / Edit template buttons */
-  if (crTemplateActions) crTemplateActions.hidden = !tpl;
+function loadCrTemplatesOnce() {
+    return fetch('/ReadingSheet/GetReadingSheetTemplates')
+        .then(function (res) { return res.ok ? res.json() : []; })
+        .then(function (data) {
+            crRealTemplates = data || [];
+            renderCrTemplateOptions();
+            crTemplatesLoaded = true;
+        });
 }
 
-/* Re-wire the template dropdown (was partially wired in Phase 5
-   only for the button visibility — now replace with full logic)   */
-if (crTemplateSelect) {
-  /* Clone to drop the Phase 5 change listener */
-  var freshTemplateSelect = crTemplateSelect.cloneNode(true);
-  crTemplateSelect.parentNode.replaceChild(freshTemplateSelect, crTemplateSelect);
-  crTemplateSelect = freshTemplateSelect;
+/* Re-grab elements (they were declared in Phase 5 but we need them here) */
+var crBillingDate = document.getElementById('crBillingDate');
+var crDueDate = document.getElementById('crDueDate');
+var crDisconnectionDate = document.getElementById('crDisconnectionDate');
 
-  crTemplateSelect.addEventListener('change', function () {
-    applyTemplate(crTemplateSelect.value);
-  });
+/* ============================================================
+   Date validation — Due >= Billing, Disconnection >= Due
+   ============================================================ */
+
+function syncCrDateMins() {
+    if (crDueDate) {
+        crDueDate.min = crBillingDate && crBillingDate.value ? crBillingDate.value : '';
+    }
+    if (crDisconnectionDate) {
+        crDisconnectionDate.min = crDueDate && crDueDate.value ? crDueDate.value : '';
+    }
+}
+
+function validateCrDates() {
+    var valid = true;
+
+    if (crDueDate) crDueDate.setCustomValidity('');
+    if (crDisconnectionDate) crDisconnectionDate.setCustomValidity('');
+
+    if (crBillingDate && crDueDate && crBillingDate.value && crDueDate.value) {
+        if (crDueDate.value < crBillingDate.value) {
+            crDueDate.setCustomValidity('Due date cannot be before the billing date.');
+            valid = false;
+        }
+    }
+
+    if (crDueDate && crDisconnectionDate && crDueDate.value && crDisconnectionDate.value) {
+        if (crDisconnectionDate.value < crDueDate.value) {
+            crDisconnectionDate.setCustomValidity('Disconnection date cannot be before the due date.');
+            valid = false;
+        }
+    }
+
+    return valid;
+}
+
+if (crBillingDate) {
+    crBillingDate.addEventListener('change', function () {
+        syncCrDateMins();
+        validateCrDates();
+        if (crDueDate) crDueDate.reportValidity();
+    });
+}
+
+if (crDueDate) {
+    crDueDate.addEventListener('change', function () {
+        syncCrDateMins();
+        validateCrDates();
+        crDueDate.reportValidity();
+    });
+}
+
+if (crDisconnectionDate) {
+    crDisconnectionDate.addEventListener('change', function () {
+        validateCrDates();
+        crDisconnectionDate.reportValidity();
+    });
+}
+
+/* Set initial min values in case fields already have preset values on load */
+syncCrDateMins();
+
+function loadCrZonesOnce() {
+    if (crRealZones.length) return Promise.resolve();
+    return fetch('/ReadingSheet/GetZones')
+        .then(function (res) { return res.ok ? res.json() : []; })
+        .then(function (data) {
+            crRealZones = data || [];
+            var zoneSelect = document.getElementById('crZone');
+            if (zoneSelect) {
+                zoneSelect.innerHTML = '<option value="">Select Zone...</option>';
+                crRealZones.forEach(function (z) {
+                    var opt = document.createElement('option');
+                    opt.value = z.value;
+                    opt.textContent = z.label;
+                    zoneSelect.appendChild(opt);
+                });
+            }
+        });
+}
+
+function loadCrBooksForZone(zoneValue) {
+    var bookSelect = document.getElementById('crBook');
+    if (!bookSelect) return Promise.resolve();
+    bookSelect.innerHTML = '<option value="">Select Book...</option>';
+    if (!zoneValue) return Promise.resolve();
+    return fetch('/ReadingSheet/GetBooksByZone?zone=' + encodeURIComponent(zoneValue))
+        .then(function (res) { return res.ok ? res.json() : []; })
+        .then(function (data) {
+            (data || []).forEach(function (b) {
+                var opt = document.createElement('option');
+                opt.value = b.value;
+                opt.textContent = b.label;
+                bookSelect.appendChild(opt);
+            });
+        });
+}
+
+/* Real Zone select now drives real Book select for the main form too */
+(function () {
+    var zoneSelect = document.getElementById('crZone');
+    if (zoneSelect) {
+        zoneSelect.addEventListener('change', function () {
+            loadCrBooksForZone(zoneSelect.value);
+        });
+    }
+    loadCrZonesOnce();
+})();
+
+/**
+ * Populate the header <select> and the quick-picker <ul> from
+ * whatever templates create_temp.js currently has loaded.
+ */
+function renderCrTemplateOptions() {
+    if (!crTemplateSelect) return;
+
+    crTemplateSelect.innerHTML = '<option value="">Select Reading...</option>';
+    crRealTemplates.forEach(function (t) {
+        var opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name;
+        crTemplateSelect.appendChild(opt);
+    });
+
+    if (crTemplatesDropdown) {
+        crTemplatesDropdown.innerHTML = '';
+        crRealTemplates.forEach(function (t) {
+            var li = document.createElement('li');
+            li.className = 'cr-templates-dropdown__item';
+            li.dataset.tpl = t.id;
+            li.textContent = t.name;
+            crTemplatesDropdown.appendChild(li);
+        });
+    }
+}
+
+document.addEventListener('templates:updated', function (e) {
+    crRealTemplates = (e.detail && e.detail.templates) || [];
+    renderCrTemplateOptions();
+});
+
+/**
+ * Apply a template's values to the form.
+ * Billing/Due/Disconnection dates are NOT part of the real template
+ * yet (backend has no columns for them), so they are left untouched.
+ *
+ * @param {string} tplId  — matches a real template's id, or '' to clear
+ */
+function applyTemplate(tplId) {
+    var tpl = crRealTemplates.find(function (t) { return String(t.id) === String(tplId); }) || null;
+
+    if (tpl) {
+        if (crMeterReaderInput) {
+            crMeterReaderInput.value = tpl.readerName;
+            crMeterReaderValue = tpl.readerName;
+        }
+        var zoneSelect = document.getElementById('crZone');
+        if (zoneSelect) {
+            zoneSelect.value = tpl.zone;
+            loadCrBooksForZone(tpl.zone).then(function () {
+                var bookSelect = document.getElementById('crBook');
+                if (bookSelect) bookSelect.value = tpl.book;
+                crAccountsLoaded = false; // force a fresh fetch for the new zone/book
+                loadCrAccounts();
+            });
+        }
+    }
+
+    syncOverrideStart();
+
+    if (crTemplateActions) crTemplateActions.hidden = !tpl;
+}
+
+if (crTemplateSelect) {
+    var freshTemplateSelect = crTemplateSelect.cloneNode(true);
+    crTemplateSelect.parentNode.replaceChild(freshTemplateSelect, crTemplateSelect);
+    crTemplateSelect = freshTemplateSelect;
+
+    crTemplateSelect.addEventListener('change', function () {
+        applyTemplate(crTemplateSelect.value);
+    });
 }
 
 /* ============================================================
    Templates quick-picker dropdown
    ============================================================ */
 
-var crTemplatesMenuBtn   = document.getElementById('crTemplatesMenuBtn');
-var crTemplatesDropdown  = document.getElementById('crTemplatesDropdown');
+var crTemplatesMenuBtn = document.getElementById('crTemplatesMenuBtn');
+var crTemplatesDropdown = document.getElementById('crTemplatesDropdown');
 
-/**
- * Toggle the Templates dropdown open/closed.
- */
 function toggleTemplatesDropdown() {
-  if (!crTemplatesDropdown) return;
-  crTemplatesDropdown.hidden = !crTemplatesDropdown.hidden;
+    if (!crTemplatesDropdown) return;
+    crTemplatesDropdown.hidden = !crTemplatesDropdown.hidden;
 }
 
-/**
- * Close the Templates dropdown.
- */
 function closeTemplatesDropdown() {
-  if (crTemplatesDropdown) crTemplatesDropdown.hidden = true;
+    if (crTemplatesDropdown) crTemplatesDropdown.hidden = true;
 }
 
 if (crTemplatesMenuBtn) {
-  crTemplatesMenuBtn.addEventListener('click', function (e) {
-    e.stopPropagation();
-    toggleTemplatesDropdown();
-  });
+    crTemplatesMenuBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggleTemplatesDropdown();
+    });
 }
 
-/* Clicking an item applies the template and syncs the header select */
 if (crTemplatesDropdown) {
-  crTemplatesDropdown.addEventListener('click', function (e) {
-    var item = e.target.closest('.cr-templates-dropdown__item');
-    if (!item) return;
+    crTemplatesDropdown.addEventListener('click', function (e) {
+        var item = e.target.closest('.cr-templates-dropdown__item');
+        if (!item) return;
 
-    var tplKey = item.dataset.tpl;
-    closeTemplatesDropdown();
-
-    /* Apply the template dates */
-    applyTemplate(tplKey);
-
-    /* Sync the header <select> to match */
-    if (crTemplateSelect) {
-      crTemplateSelect.value = tplKey;
-    }
-  });
+        var tplId = item.dataset.tpl;
+        closeTemplatesDropdown();
+        applyTemplate(tplId);
+        if (crTemplateSelect) crTemplateSelect.value = tplId;
+    });
 }
 
-/* Close dropdown when clicking anywhere outside */
 document.addEventListener('click', function (e) {
-  if (crTemplatesMenuBtn && !crTemplatesMenuBtn.closest('.cr-header__templates-wrap').contains(e.target)) {
-    closeTemplatesDropdown();
-  }
+    if (crTemplatesMenuBtn && !crTemplatesMenuBtn.closest('.cr-header__templates-wrap').contains(e.target)) {
+        closeTemplatesDropdown();
+    }
 });
 
-/* Close dropdown when modal closes */
 var _origClose = closeCreateModal;
 closeCreateModal = function () {
-  closeTemplatesDropdown();
-  /* Reset Load Accounts state */
-  crAccountsLoaded = false;
-  var panel = document.getElementById('crTablePanel');
-  if (panel) panel.hidden = true;
-  if (crLoadAccountsBtn) crLoadAccountsBtn.classList.remove('is-active');
-  setLoadAccountsBtnState('load');
-  _origClose();
+    closeTemplatesDropdown();
+    crAccountsLoaded = false;
+    var panel = document.getElementById('crTablePanel');
+    if (panel) panel.hidden = true;
+    if (crLoadAccountsBtn) crLoadAccountsBtn.classList.remove('is-active');
+    setLoadAccountsBtnState('load');
+    _origClose();
 };
