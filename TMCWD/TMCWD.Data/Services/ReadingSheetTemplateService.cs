@@ -44,7 +44,7 @@ namespace TMCWD.Data.Services
 
         public async Task<ReadingSheetTemplate> SaveUpdate(int userId, ReadingSheetTemplate template)
         {
-            if(template.Id == 0)
+            if (template.Id == 0)
             {
                 template.CreatedBy = userId;
                 template.DateCreated = DateTime.Now;
@@ -54,14 +54,15 @@ namespace TMCWD.Data.Services
             {
                 var forUpdate = await _context.ReadingSheetTemplates.Where(x => x.Id == template.Id).FirstOrDefaultAsync();
                 if (forUpdate == null) return null;
-                else
-                {
-                    forUpdate = template;
-                    forUpdate.UpdatedBy = userId;
-                    forUpdate.DateUpdated = DateTime.Now;
-                    _context.ReadingSheetTemplates.Update(forUpdate);
-                    template = forUpdate;
-                }
+
+                forUpdate.Name = template.Name;
+                forUpdate.ReaderId = template.ReaderId;
+                forUpdate.ZoneBookId = template.ZoneBookId;
+                forUpdate.IsActive = template.IsActive;
+                forUpdate.UpdatedBy = userId;
+                forUpdate.DateUpdated = DateTime.Now;
+
+                template = forUpdate;
             }
 
             await _context.SaveChangesAsync();

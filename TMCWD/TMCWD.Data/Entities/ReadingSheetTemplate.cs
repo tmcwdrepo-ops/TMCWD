@@ -33,6 +33,9 @@ namespace TMCWD.Data.Entities
         [Column("DateUpdated")]
         public DateTime DateUpdated { get; set; }
 
+        [Column("IsActive")]
+        public bool IsActive { get; set; } = true;
+
         #endregion
 
     }

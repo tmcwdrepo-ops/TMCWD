@@ -106,4 +106,4 @@ public enum PaymentMethod
 public enum GatewayType
 {
     GCash = 1
-}
+}   
