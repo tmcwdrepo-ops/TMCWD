@@ -27,7 +27,9 @@ var readingSheetState = {
   currentPage:   1,
   sortColumn:    null,
   sortDirection: 'asc',
-  statusFilter:  'in-progress'  // 'in-progress' | 'completed'
+  statusFilter:  'in-progress',  // 'in-progress' | 'completed'
+  manualProgress: false,
+  zoneProgressOverrides: {}  // { 'ZN-01': { done: 5, total: 10 }, ... }
 };
 
 /* ============================================================
@@ -137,11 +139,16 @@ function renderReadingSheetTable(rows, emptyMessage) {
     var zoneStat    = zoneStats[row.zone] || { total: 0, done: 0 };
     var isCompleted = readingSheetState.statusFilter === 'completed';
 
+    // Check for manual progress override
+    var override = readingSheetState.manualProgress && readingSheetState.zoneProgressOverrides[row.zone];
+    var actualDone = override ? override.done : zoneStat.done;
+    var actualTotal = override ? override.total : zoneStat.total;
+
     // In-Progress view: done / total (bar fills as work completes)
     // Completed view:   bar always 100% full
-    var zonePct  = isCompleted ? 100 : (zoneStat.total > 0 ? Math.round((zoneStat.done / zoneStat.total) * 100) : 0);
-    var labelNum = isCompleted ? zoneStat.total : zoneStat.done;
-    var barLabel = labelNum + '/' + zoneStat.total;
+    var zonePct  = isCompleted ? 100 : (actualTotal > 0 ? Math.round((actualDone / actualTotal) * 100) : 0);
+    var labelNum = isCompleted ? actualTotal : actualDone;
+    var barLabel = labelNum + '/' + actualTotal;
 
     // Determine color class based on percentage
     // 1-30% = red, 31-79% = yellow, 80-100% = green
@@ -947,7 +954,7 @@ function initReadingSheetPage() {
                 '<input type="text" id="editMeterReader" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
               '</div>' +
               '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<label for="editBillingDate" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Billing Date</label>' +
+                '<label for="editBillingDate" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Due Date</label>' +
                 '<input type="date" id="editBillingDate" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
               '</div>' +
               '<div style="display: flex; flex-direction: column; gap: 6px;">' +
@@ -983,6 +990,9 @@ function initReadingSheetPage() {
 
   applyAllFilters();
   applyAndRender();
+
+  // Initialize zone progress input controls
+  generateZoneProgressInputs();
 
   // Search — capture value immediately, pass string into debounced handler
   var searchInput = document.querySelector('.search-input');
@@ -1162,4 +1172,180 @@ function onReadingSheetCreated(data) {
   applyAndRender();
 
   console.log('[ReadingSheet] New row added from modal:', newRow);
+}
+
+/* ============================================================
+   ZONE PROGRESS INPUT CONTROLS
+   ============================================================ */
+
+/**
+ * Generate zone progress input controls based on available zones
+ */
+function generateZoneProgressInputs() {
+  var zoneInputsContainer = document.getElementById('zoneProgressInputs');
+  if (!zoneInputsContainer) return;
+
+  // Get unique zones from data
+  var zones = {};
+  readingSheetState.rows.forEach(function(row) {
+    if (!zones[row.zone]) {
+      zones[row.zone] = { total: 0, done: 0 };
+    }
+    zones[row.zone].total += 1;
+    if (row.status === 'Completed') {
+      zones[row.zone].done += 1;
+    }
+  });
+
+  var html = Object.keys(zones).sort().map(function(zone) {
+    var stats = zones[zone];
+    var override = readingSheetState.zoneProgressOverrides[zone];
+    var currentDone = override ? override.done : stats.done;
+    var currentTotal = override ? override.total : stats.total;
+    var percentage = currentTotal > 0 ? Math.round((currentDone / currentTotal) * 100) : 0;
+
+    return (
+      '<div class="zone-input-card" data-zone="' + zone + '">' +
+        '<div class="zone-input-header">' +
+          '<span class="zone-input-label">' + zone + '</span>' +
+          '<span class="zone-input-current">Current: ' + currentDone + '/' + currentTotal + ' (' + percentage + '%)</span>' +
+        '</div>' +
+        '<div class="zone-input-controls">' +
+          '<div class="zone-input-field">' +
+            '<input type="number" class="zone-input-number zone-done-input" ' +
+              'min="0" max="' + currentTotal + '" value="' + currentDone + '" ' +
+              'data-zone="' + zone + '" data-type="done" />' +
+            '<span>/</span>' +
+            '<input type="number" class="zone-input-number zone-total-input" ' +
+              'min="1" value="' + currentTotal + '" ' +
+              'data-zone="' + zone + '" data-type="total" />' +
+          '</div>' +
+          '<input type="range" class="zone-input-slider" ' +
+            'min="0" max="' + currentTotal + '" value="' + currentDone + '" ' +
+            'data-zone="' + zone + '" />' +
+          '<button type="button" class="zone-input-apply" data-zone="' + zone + '">Apply</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+
+  zoneInputsContainer.innerHTML = html;
+
+  // Add event listeners
+  bindZoneInputEvents();
+}
+
+/**
+ * Bind events to zone input controls
+ */
+function bindZoneInputEvents() {
+  var manualToggle = document.getElementById('manualProgressToggle');
+  var zoneInputsContainer = document.getElementById('zoneProgressInputs');
+
+  // Toggle manual progress mode
+  if (manualToggle) {
+    manualToggle.addEventListener('change', function() {
+      readingSheetState.manualProgress = this.checked;
+      zoneInputsContainer.classList.toggle('is-active', this.checked);
+      if (!this.checked) {
+        // Reset overrides when disabling manual mode
+        readingSheetState.zoneProgressOverrides = {};
+        generateZoneProgressInputs(); // Regenerate with original values
+      }
+      applyAndRender(); // Re-render table to update progress bars
+    });
+  }
+
+  // Zone input changes
+  document.addEventListener('input', function(e) {
+    if (!e.target.classList.contains('zone-input-number') && 
+        !e.target.classList.contains('zone-input-slider')) return;
+
+    var zone = e.target.dataset.zone;
+    var card = document.querySelector('[data-zone="' + zone + '"]');
+    if (!card) return;
+
+    var doneInput = card.querySelector('.zone-done-input');
+    var totalInput = card.querySelector('.zone-total-input');
+    var slider = card.querySelector('.zone-input-slider');
+
+    if (e.target.classList.contains('zone-input-slider')) {
+      // Slider changed, update done input
+      doneInput.value = e.target.value;
+    } else if (e.target.dataset.type === 'done') {
+      // Done input changed, update slider
+      slider.value = e.target.value;
+      slider.max = totalInput.value;
+    } else if (e.target.dataset.type === 'total') {
+      // Total input changed, update slider max and adjust done if needed
+      var newTotal = parseInt(e.target.value) || 1;
+      var currentDone = parseInt(doneInput.value) || 0;
+      
+      if (currentDone > newTotal) {
+        doneInput.value = newTotal;
+        slider.value = newTotal;
+      }
+      slider.max = newTotal;
+    }
+
+    // Update current display
+    updateZoneCurrentDisplay(zone, card);
+  });
+
+  // Apply button clicks
+  document.addEventListener('click', function(e) {
+    if (!e.target.classList.contains('zone-input-apply')) return;
+
+    var zone = e.target.dataset.zone;
+    var card = document.querySelector('[data-zone="' + zone + '"]');
+    if (!card) return;
+
+    var doneInput = card.querySelector('.zone-done-input');
+    var totalInput = card.querySelector('.zone-total-input');
+    var done = parseInt(doneInput.value) || 0;
+    var total = parseInt(totalInput.value) || 1;
+
+    // Validate inputs
+    if (done > total) {
+      done = total;
+      doneInput.value = done;
+    }
+
+    // Store override
+    readingSheetState.zoneProgressOverrides[zone] = { done: done, total: total };
+
+    // Update display and re-render table
+    updateZoneCurrentDisplay(zone, card);
+    applyAndRender();
+
+    // Visual feedback
+    e.target.textContent = 'Applied!';
+    e.target.disabled = true;
+    setTimeout(function() {
+      e.target.textContent = 'Apply';
+      e.target.disabled = false;
+    }, 1000);
+  });
+}
+
+/**
+ * Update the current display for a zone input card
+ */
+function updateZoneCurrentDisplay(zone, card) {
+  var doneInput = card.querySelector('.zone-done-input');
+  var totalInput = card.querySelector('.zone-total-input');
+  var currentDisplay = card.querySelector('.zone-input-current');
+  
+  var done = parseInt(doneInput.value) || 0;
+  var total = parseInt(totalInput.value) || 1;
+  var percentage = Math.round((done / total) * 100);
+  
+  currentDisplay.textContent = 'Preview: ' + done + '/' + total + ' (' + percentage + '%)';
+}
+
+/**
+ * Enhanced render function that uses manual overrides when available
+ */
+function renderFilteredTable() {
+  applyAndRender();
 }

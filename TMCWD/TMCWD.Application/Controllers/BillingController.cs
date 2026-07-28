@@ -37,17 +37,7 @@ namespace TMCWD.Application.Controllers
             return View();
         }
 
-        public IActionResult OtherCharges()
-        {
-            return View();
-        }
-
-        public IActionResult Reading()
-        {
-            return View();
-        }
-
-        public IActionResult Penalty()
+        public IActionResult PenaltyCharging()
         {
             return View();
         }
