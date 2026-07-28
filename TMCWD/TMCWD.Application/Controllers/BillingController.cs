@@ -37,6 +37,11 @@ namespace TMCWD.Application.Controllers
             return View();
         }
 
+        public IActionResult PenaltyCharging()
+        {
+            return View();
+        }
+
         public async Task<IActionResult> GetBillById(int id)
         {
             
