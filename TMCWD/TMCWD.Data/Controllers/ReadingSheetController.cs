@@ -108,7 +108,7 @@ namespace TMCWD.Data.Controllers
             return Ok(sheet);
         }
 
-        [HttpGet("SaveUpdate/{userId}")]
+        [HttpPost("SaveUpdate/{userId}")]
         public async Task<IActionResult> SaveUpdate(int userId, ReadingSheet readingSheet)
         {
             var savedReadingSheet = await _readingSheetService.SaveUpdate(userId, readingSheet);

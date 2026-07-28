@@ -132,5 +132,13 @@ namespace TMCWD.Data.Controllers
             return Ok(users);
         }
 
+        [HttpGet("GetUsersById/{ids}")]
+        public async Task<IActionResult> GetUsersById(int[] ids)
+        {
+            var users = await _userService.GetUsersByIds(ids);
+            if (users == null || !users.Any()) return NotFound();
+            return Ok(users);
+        }
+
     }
 }

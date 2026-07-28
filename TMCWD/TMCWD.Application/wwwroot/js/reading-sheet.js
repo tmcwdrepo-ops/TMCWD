@@ -97,9 +97,9 @@ function renderReadingSheetTable(rows, emptyMessage) {
   // Build zone stats from FULL dataset so the bar is always accurate
   var zoneStats = {};
   readingSheetState.rows.forEach(function(r) {
-    if (!zoneStats[r.zone]) zoneStats[r.zone] = { total: 0, done: 0 };
-    zoneStats[r.zone].total += 1;
-    if (r.status === 'Completed') zoneStats[r.zone].done += 1;
+    if (!zoneStats[r.zone]) zoneStats[r.zone] = { total: r.totalAccounts, done: r.totalCompleted };
+    //zoneStats[r.zone].total += 1;
+    //if (r.status === 'Completed') zoneStats[r.zone].done += 1;
   });
 
   var html = rows.map(function(row) {
@@ -950,10 +950,14 @@ function initReadingSheetPage() {
       '</div>';
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     console.log('[ReadingSheet] Edit modal injected via JavaScript');
-  }
+  } 
 
-  if (typeof READING_SHEET_SAMPLE_DATA !== 'undefined') {
-    readingSheetState.rows = READING_SHEET_SAMPLE_DATA.slice();
+  // if (typeof READING_SHEET_SAMPLE_DATA !== 'undefined') {
+  //   readingSheetState.rows = READING_SHEET_SAMPLE_DATA.slice();
+  //   }
+
+  if (typeof READING_SHEETS !== 'undefined') {
+      readingSheetState.rows = READING_SHEETS.slice();
   }
 
   applyAllFilters();
@@ -1096,11 +1100,11 @@ function initReadingSheetPage() {
 async function onReadingSheetCreate(data) {
     var isValid = false;
     const form = document.getElementById('frmReadingSheet');
-    const readaingSheet = {
+    const readingSheetData = {
         id: 0,
         name: '',
         billingDate: data.billingDate,
-        dueDate: data.dueData,
+        dueDate: data.dueDate,
         disconnectionDate: data.disconnectionDate,
         billingPeriodStart: data.billingPeriodStart,
         zoneBookId: 0,
@@ -1108,7 +1112,7 @@ async function onReadingSheetCreate(data) {
         sequenceTo: data.seqTo,
         assignedTo: data.meterReader
     };
-    console.log('Validity:', form.reportValidity());
+
     if (!form.reportValidity()) return false;
 
     var readingSheet = await fetch('/readingsheet/createreadingsheet?zone=' + data.zone + '&book=' + data.book, {
@@ -1116,7 +1120,7 @@ async function onReadingSheetCreate(data) {
         headers: {
             'Content-Type': 'application/json'
         },
-        data: JSON.stringify(readaingSheet)
+        body: JSON.stringify(readingSheetData)
     }).then(response => {
         if (!reponse.ok || response.status == 204) return null;
         return response.json();

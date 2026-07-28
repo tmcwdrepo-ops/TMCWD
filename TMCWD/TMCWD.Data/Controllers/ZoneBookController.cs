@@ -82,6 +82,14 @@ namespace TMCWD.Data.Controllers
             return Ok(zoneBooks);
         }
 
+        [HttpGet("GetByIds")]
+        public async Task<IActionResult> GetByIds([FromQuery(Name = "ids")] int[] ids)
+        {
+            var readings = await _service.GetByIds(ids);
+            if (readings == null || !readings.Any()) return NotFound();
+            return Ok(readings);
+        }
+
         #endregion
 
     }

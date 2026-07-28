@@ -131,6 +131,15 @@ namespace TMCWD.Billing
             return ConvertJsonToReadings(data);
         }
 
+        public async Task<List<Reading>> GetRangeByReadingSheetIds(List<int> ids)
+        {
+            string queryParam = string.Join("&", ids.Select(x => $"ids={x}"));
+            var response = await _service.Client.GetAsync($"api/Reading/GetRangeByReadingSheetIds?{queryParam}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadings(data);
+        }
+
         #endregion
 
     }

@@ -113,6 +113,14 @@ namespace TMCWD.Data.Controllers
             return Ok(readings);
         }
 
+        [HttpGet("GetRangeByReadingSheetIds")]
+        public async Task<IActionResult> GetRangeByReadingSheetIds([FromQuery(Name = "ids")] int[] ids)
+        {
+            var readings = await _service.GetRangeByReadingSheetIds(ids);
+            if (readings == null || !readings.Any()) return NotFound();
+            return Ok(readings);
+        }
+
         #endregion
 
     }

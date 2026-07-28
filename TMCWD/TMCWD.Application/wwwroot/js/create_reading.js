@@ -160,6 +160,7 @@ function renderMeterReaderOptions(query) {
     var li = document.createElement('li');
     li.className = 'cr-combobox__option';
     li.textContent = data.name;
+    li.data = data.id;
     li.setAttribute('role', 'option');
     li.setAttribute('aria-selected', data.name === crMeterReaderValue ? 'true' : 'false');
 
@@ -195,7 +196,9 @@ function closeMeterReaderList() {
  * @param {string} name
  */
 function selectMeterReader(data) {
+  console.log('Meter Reader Data:', data);
   crMeterReaderValue = data.id;
+  crMeterReaderInput.dataset.id = data.id;
   crMeterReaderInput.value = data.name;
   closeMeterReaderList();
 }

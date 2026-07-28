@@ -59,6 +59,7 @@ namespace TMCWD.Application.Controllers
                 var assignedToUser = await _userTrans.Get(readingSheet.AssignedTo);
 
                 string name = $"{readingSheet.BillingDate.ToString("MM-dd-yyyy")} {assignedToUser.Name}";
+                readingSheet.Name = name ;
 
                 var zoneBook = await _zoneBookTrans.GetByZoneAndBook(zone, book);
 
@@ -67,25 +68,11 @@ namespace TMCWD.Application.Controllers
                 readingSheet.DateCreated = DateTime.Now;
                 readingSheet.CreatedBy = _user.User.Id;
 
-                var savedReadingSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, readingSheet);
+                savedSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, readingSheet);
 
-                return Ok(savedReadingSheet);
-
-                //ReadingSheet sheet = new ReadingSheet
-                //{
-                //    AssignedTo = readingSheet.AssignedTo,
-                //    BillingDate = billingPeriod,
-                //    Name = name,
-                //    CreatedBy = _user.User.Id,
-                //    ZoneBookId = zoneBook.Id,
-                //    DateCreated = DateTime.Now
-                //};
-
-                //savedSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, sheet);
-
-                if(savedReadingSheet != null)
+                if(savedSheet != null)
                 {
-                    var accounts = await _accountTransaction.GetByZoneBookId(savedReadingSheet.ZoneBookId);
+                    var accounts = await _accountTransaction.GetByZoneBookAndSequence(zone, book, readingSheet.SequenceFrom, readingSheet.SequenceTo);
                     var readings = from accts in accounts
                                    select new Reading
                                    {
@@ -96,10 +83,12 @@ namespace TMCWD.Application.Controllers
                                        DateUpdated = DateTime.Now,
                                        IsCompleted = false,
                                        ReadingSheetId = savedSheet.Id,
-                                       UpdatedBy = _user.User.Id,
+                                       UpdatedBy = _user.User.Id
                                    };
                     var savedReadings = await _readingTransaction.SaveMultiple([..readings]);
                 }
+
+                return Ok(savedSheet);
 
             }
             catch { }
@@ -142,6 +131,58 @@ namespace TMCWD.Application.Controllers
             var books = await _zoneBookTrans.GetBooksByZone(zone);
             if(books == null) return NotFound();
             return Ok(books);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllReadingSheets()
+        {
+            var readingSheets = await _readingSheetTrans.GetAll();
+            var userIds = readingSheets.Select(x => x.AssignedTo).ToList();
+            var readingSheetIds = readingSheets.Select(x => x.Id).ToList();
+            var zoneBookIds = readingSheets.Select(x => x.ZoneBookId).ToList();
+            Task<List<User>> getUsersTask = _userTrans.GetUsersById(userIds);
+            Task<List<Reading>> getReadingsTask = _readingTransaction.GetRangeByReadingSheetIds(readingSheetIds);
+            Task<List<ZoneBook>> getZoneBooksTask = _zoneBookTrans.GetByIds(zoneBookIds);
+
+            await Task.WhenAll(getUsersTask, getReadingsTask, getZoneBooksTask);
+            var users = getUsersTask.Result;
+            var readings = getReadingsTask.Result;
+            var zoneBooks = getZoneBooksTask.Result;
+
+            var readingSheetData = from rs in readingSheets
+                                   join usrs in users on rs.AssignedTo equals usrs.Id
+                                   join zb in zoneBooks on rs.ZoneBookId equals zb.Id
+                                   select new
+                                   {
+                                       Id = rs.Id,
+                                       MeterReader = usrs.Name,
+                                       BillingData = rs.BillingDate,
+                                       Zone = $"ZN-{zb.Zone.ToString().PadLeft(2, '0')}",
+                                       ForPosting = GetTotalCompletedReadings(readings, rs.Id),
+                                       TotalInProgress = GetTotalInProgressReadings(readings, rs.Id),
+                                       TotalAccounts = GetTotalReadings(readings, rs.Id),
+                                       TotalCompleted = GetTotalCompletedReadings(readings, rs.Id),
+                                       Status = rs.IsCompleted ? "Completed" : "In-Progress"
+                                   };
+
+
+            if (readingSheetData == null) return NotFound();
+            return Ok(readingSheetData);
+        }
+
+        private int GetTotalInProgressReadings(List<Reading> readings, int readingSheetId)
+        {
+            return readings.Where(x => !x.IsCompleted && x.ReadingSheetId == readingSheetId).Count();
+        }
+
+        private int GetTotalCompletedReadings(List<Reading> readings, int readingSheetId)
+        {
+            return readings.Where(x => x.IsCompleted && x.ReadingSheetId == readingSheetId).Count();
+        }
+
+        private int GetTotalReadings(List<Reading> readings, int readingSheetId)
+        {
+            return readings.Where(x => x.ReadingSheetId == readingSheetId).Count();
         }
 
         #endregion

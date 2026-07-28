@@ -16,21 +16,20 @@
   <script>
     // Wait for DOM to be fully ready before initializing
     document.addEventListener('DOMContentLoaded', async function() {
-      
-      // const meterReaders = await fetch('@Url.Action("GetUsersByRole", "Admin")' + '?role=4', {
-      //     method: 'GET',
-      //     headers: {
-      //         'Content-Type': 'application/json'
-      //     }
-      // }).then(response => {
-      //     if(!response.ok || response.status == 204)
-      //       return null;
-      //     return response.json();
-      // }).then(result => {
-      //     return result;
-      // });
+       
+      const READING_SHEETS = await fetch('/readingsheet/GetAllReadingSheets', {
+          method: 'GET',
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      }).then(response => {
+          if(!response.ok || response.status == 204) return null;
+          return response.json();
+      }).then(result => {
+          return result;
+      });
 
-      // console.log('Meter Readers:', meterReaders);
+      console.log('Reading Sheets:', READING_SHEETS);
 
       // Initialize the reading sheet page
       if (typeof initReadingSheetPage === 'function') {
@@ -45,35 +44,49 @@
       }
 
       const crBillingDate = document.getElementById('crBillingDate');
+      const crDueDate = document.getElementById('crDueDate');
+      const crDisconnectionDate = document.getElementById('crDisconnectionDate');
+      const crBillingPeriodStart = document.getElementById('crBillingPeriodStart');
       if (crBillingDate){
           var dateToday = new Date();
-          //crBillingDate.min = dateToday.toISOString().split("T")[0];
           crBillingDate.value = dateToday.toISOString().split("T")[0];
           crBillingDate.addEventListener('change', (evt) => {
-              console.log('Billing Date was changed');
-              const crDueDate = document.getElementById('crDueDate');
               const billingDate = new Date(evt.target.value);
-              console.log('New Billing Date:', billingDate);
               if(crDueDate){
                 var minDueDate = new Date();
                 minDueDate.setDate(billingDate.getDate() + 1);
                 crDueDate.min = minDueDate.toISOString().split("T")[0];
-                crDueDate.addEventListener('change', (evt) => {
-                    const crDisconnectionDate = document.getElementById('crDisconnectionDate');
+                crDueDate.addEventListener('change', (event) => {
                     if (crDisconnectionDate){
-                        const dueDate = new Date(evt.target.value);
+                        const dueDate = new Date(event.target.value);
                         var minDisconnectionDate = new Date();
                         minDisconnectionDate.setDate(dueDate.getDate() + 1);
                         crDisconnectionDate.min = minDisconnectionDate.toISOString().split("T")[0];
                     }
                 });
               }
-              const crBillingPeriodStart = document.getElementById('crBillingPeriodStart');
-              if (crBillingPeriodStart){
-                  crBillingPeriodStart.value = crBillingDate.value;
-                  crBillingPeriodStart.min = crBillingDate.min;
-              }
           });
+      }
+
+      if(crDueDate){
+          var dueDate = new Date(crBillingDate.value);
+          dueDate.setDate(dueDate.getDate() + 1);
+          crDueDate.value = dueDate.toISOString().split("T")[0];
+          crDueDate.min = dueDate.toISOString().split("T")[0];
+      }
+
+      if(crDisconnectionDate){
+          var disconnectionDate = new Date(crDueDate.value);
+          disconnectionDate.setDate(disconnectionDate.getDate() + 1);
+          crDisconnectionDate.value = disconnectionDate.toISOString().split("T")[0];
+          crDisconnectionDate.min = disconnectionDate.toISOString().split("T")[0];
+      }
+
+      if (crBillingPeriodStart) {
+        var billingPeriodStart = new Date(crBillingDate.value);
+        billingPeriodStart.setMonth(billingPeriodStart.getMonth() - 1);
+        crBillingPeriodStart.value = billingPeriodStart.toISOString().split("T")[0];
+        crBillingPeriodStart.min = billingPeriodStart.toISOString().split("T")[0];
       }
 
       const crScope = document.getElementById('crScope');
@@ -102,7 +115,7 @@
             dueDate:            (document.getElementById('crDueDate')            || {}).value || '',
             disconnectionDate:  (document.getElementById('crDisconnectionDate') || {}).value || '',
             billingPeriodStart: (document.getElementById('crBillingPeriodStart') || {}).value || '',
-            meterReader:        (document.getElementById('crMeterReaderInput')  || {}).value || '',
+            meterReader:        (document.getElementById('crMeterReaderInput')  || {}).dataset.id || '',
             zone:               (document.getElementById('crZone')              || {}).value || '',
             book:               (document.getElementById('crBook')              || {}).value || '',
             scope:              (document.getElementById('crScope')             || {}).value || '',
