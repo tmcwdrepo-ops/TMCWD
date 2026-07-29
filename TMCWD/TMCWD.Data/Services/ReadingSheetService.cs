@@ -86,18 +86,9 @@ namespace TMCWD.Data.Services
         {
             if (readingSheet.Id > 0)
             {
-                var forUpdate = await _context.ReadingSheets.Where(x => x.ZoneBookId == readingSheet.ZoneBookId && x.BillingDate == readingSheet.BillingDate).FirstOrDefaultAsync();
-                if (forUpdate != null)
-                {
-                    forUpdate.Name = readingSheet.Name;
-                    forUpdate.BillingDate = readingSheet.BillingDate;
-                    forUpdate.AssignedTo = readingSheet.AssignedTo;
-                    forUpdate.ZoneBookId = readingSheet.ZoneBookId;
-                    forUpdate.UpdatedBy = userId;
-                    forUpdate.DateUpdated = DateTime.Now;
-                    readingSheet = forUpdate;
-                    _context.ReadingSheets.Update(readingSheet);
-                }
+                readingSheet.DateUpdated = DateTime.Now;
+                readingSheet.UpdatedBy = userId;
+                _context.ReadingSheets.Update(readingSheet);
             }
             else
             {

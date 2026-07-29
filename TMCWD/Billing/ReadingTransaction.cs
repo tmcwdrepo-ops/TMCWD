@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using TMCWD.Model.Billing;
@@ -135,6 +136,14 @@ namespace TMCWD.Billing
         {
             string queryParam = string.Join("&", ids.Select(x => $"ids={x}"));
             var response = await _service.Client.GetAsync($"api/Reading/GetRangeByReadingSheetIds?{queryParam}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadings(data);
+        }
+
+        public async Task<List<Reading>> UpdateStatusByReadingSheetId(int readingSheetId, ReadingStatus status, int userId)
+        {
+            var response = await _service.Client.PatchAsync($"api/Reading/UpdateStatusByReadingSheetId/{readingSheetId}/{(int)status}/{userId}", null);
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToReadings(data);

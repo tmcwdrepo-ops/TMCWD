@@ -42,8 +42,8 @@ namespace TMCWD.Model.Billing
         [DisplayName("Assigned To")]
         public int AssignedTo { get; set; }
 
-        [DisplayName("Is Completed")]
-        public bool IsCompleted { get; set; }
+        [DisplayName("Status")]
+        public ReadingStatus Status { get; set; }
 
         [DisplayName("Created By")]
         public int CreatedBy { get; set; }

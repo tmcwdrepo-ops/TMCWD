@@ -23,13 +23,13 @@ namespace TMCWD.Data.Entities
         public System.Int64 AccountId { get; set; }
 
         [Required, Column("ReadingSheetId")]
-        public int ReadingSheetId { get; set; }
+        public System.Int64 ReadingSheetId { get; set; }
 
         [Required, Column("Reading")]
         public decimal CurrentReading { get; set; }
 
-        [Column("IsCompleted")]
-        public bool IsCompleted { get; set; }
+        [Column("Status")]
+        public int Status { get; set; }
 
         [Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }

@@ -16,24 +16,10 @@
   <script>
     // Wait for DOM to be fully ready before initializing
     document.addEventListener('DOMContentLoaded', async function() {
-       
-      const READING_SHEETS = await fetch('/readingsheet/GetAllReadingSheets', {
-          method: 'GET',
-          headers: {
-              'Content-Type': 'application/json'
-          }
-      }).then(response => {
-          if(!response.ok || response.status == 204) return null;
-          return response.json();
-      }).then(result => {
-          return result;
-      });
-
-      console.log('Reading Sheets:', READING_SHEETS);
 
       // Initialize the reading sheet page
       if (typeof initReadingSheetPage === 'function') {
-        initReadingSheetPage();
+        await initReadingSheetPage();
       }
 
       var createNewBtn = document.getElementById('createNewBtn');
@@ -49,7 +35,6 @@
       const crBillingPeriodStart = document.getElementById('crBillingPeriodStart');
       if (crBillingDate){
           var dateToday = new Date();
-          crBillingDate.value = dateToday.toISOString().split("T")[0];
           crBillingDate.addEventListener('change', (evt) => {
               const billingDate = new Date(evt.target.value);
               if(crDueDate){

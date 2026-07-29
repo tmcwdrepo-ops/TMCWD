@@ -141,6 +141,23 @@ namespace TMCWD.Data.Services
             return readings;
         }
 
+        public async Task<List<Reading>> UpdateStatusByReadingSheetId(int readingSheetId, int status, int userId)
+        {
+            var readings = await _context.Readings.Where(x => x.ReadingSheetId == readingSheetId).ToListAsync();
+            if (readings == null || !readings.Any()) return new List<Reading>();
+
+            foreach (var reading in readings)
+            {
+                reading.Status = status;
+                reading.UpdatedBy = userId;
+                reading.DateUpdated = DateTime.Now;
+            }
+
+            _context.Readings.UpdateRange(readings);
+            await _context.SaveChangesAsync();
+            return (readings);
+        }
+
         #endregion
 
     }

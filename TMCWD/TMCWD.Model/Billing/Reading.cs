@@ -29,8 +29,8 @@ namespace TMCWD.Model.Billing
         [DisplayName("Current Reading")]
         public decimal CurrentReading { get; set; }
 
-        [DisplayName("Is Completed")]
-        public bool IsCompleted { get; set; }
+        [DisplayName("Status")]
+        public ReadingStatus Status { get; set; }
 
         [DisplayName("Created By")]
         public int CreatedBy { get; set; }

@@ -146,7 +146,7 @@ function renderReadingSheetTable(rows, emptyMessage) {
           '<input class="tbl-checkbox" type="checkbox" aria-label="Select row"' + chkChecked + ' />' +
         '</td>' +
         '<td>' + row.meterReader + '</td>' +
-        '<td>' + row.billingDate + '</td>' +
+        '<td>' + new Date(row.billingDate).toISOString().split("T")[0] + '</td>' +
         '<td>' + zoneCell + '</td>' +
         '<td>' + row.forPosting + '</td>' +
         '<td><span class="badge ' + badgeClass + '">' + row.status + '</span></td>' +
@@ -533,6 +533,7 @@ function handleEditClick(event) {
 
   openEditModal(id);
 }
+
 function openDeleteModal(id) {
   var backdrop = document.getElementById('deleteModalBackdrop');
   if (!backdrop) return;
@@ -575,12 +576,29 @@ function handleDeleteClick(event) {
 /**
  * Confirm deletion: remove the row, clean up, re-render.
  */
-function handleDeleteConfirm() {
+async function handleDeleteConfirm() {
   var backdrop = document.getElementById('deleteModalBackdrop');
   if (!backdrop || !backdrop.dataset.pendingId) return;
 
   var id = parseInt(backdrop.dataset.pendingId, 10);
+
+  const result = await fetch('/readingsheet/DeleteReadingSheet?id=' + id, {
+      method: 'DELETE',
+      headers: {
+          'Content-Type': 'application/json'
+      }
+  }).then(response => {
+      if (response.ok || response.status == 204) return null;
+      return response.json();
+  }).then(result => {
+      return result;
+  });
+
   closeDeleteModal();
+
+  initReadingSheetPage();
+
+  if (result !== 'true') return false;
 
   readingSheetState.rows = readingSheetState.rows.filter(function(row) {
     return row.id !== id;
@@ -897,7 +915,7 @@ function handleNextClick() {
  * Initialize the Reading Sheet page.
  * Called by appshell.js loadPage() after all assets are loaded.
  */
-function initReadingSheetPage() {
+async function initReadingSheetPage() {
   // Reset all runtime state on every init — prevents stale data
   // from a previous page load bleeding through.
   readingSheetState.rows          = [];
@@ -954,10 +972,12 @@ function initReadingSheetPage() {
 
   // if (typeof READING_SHEET_SAMPLE_DATA !== 'undefined') {
   //   readingSheetState.rows = READING_SHEET_SAMPLE_DATA.slice();
-  //   }
+    //   }
+
+  const READING_SHEETS = await loadReadingSheets();
 
   if (typeof READING_SHEETS !== 'undefined') {
-      readingSheetState.rows = READING_SHEETS.slice();
+        readingSheetState.rows = READING_SHEETS;
   }
 
   applyAllFilters();
@@ -1083,6 +1103,26 @@ function initReadingSheetPage() {
   console.log('[ReadingSheet] Page initialized. Rows loaded:', readingSheetState.rows.length);
 }
 
+/**
+ * ==========================================================
+ * Load Reading Sheet Data From Database
+ * ==========================================================
+ */
+
+async function loadReadingSheets() {
+    return await fetch('/readingsheet/GetAllReadingSheets', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        if (!response.ok || response.status == 204) return null;
+        return response.json();
+    }).then(result => {
+        return result;
+    });
+}
+
 
 /* ============================================================
    Phase 9 — Create Reading Sheet callback
@@ -1095,7 +1135,6 @@ function initReadingSheetPage() {
  *
  * @param {{billingDate:string, meterReader:string, zone:string}} data
  */
-
 
 async function onReadingSheetCreate(data) {
     var isValid = false;
@@ -1143,6 +1182,7 @@ function onReadingSheetCreated(data) {
 
   /* Format billing date from yyyy-MM-dd to "Jul 01, 2025" */
   var displayDate = data.billingDate;
+  console.log('Display Date:', displayDate);
   try {
     var d = new Date(data.billingDate);
     if (!isNaN(d)) {

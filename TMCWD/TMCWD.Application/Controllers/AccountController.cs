@@ -162,7 +162,7 @@ namespace TMCWD.Application.Controllers
                                   type = accts.Classification.ToString(),
                                   Zone = zone,
                                   Book = book,
-                                  Billed = rdngs?.IsCompleted ?? false,
+                                  Billed = rdngs?.Status == ReadingStatus.Completed ? true : false,
                                   Sequence = accts.Sequence
                               };
 

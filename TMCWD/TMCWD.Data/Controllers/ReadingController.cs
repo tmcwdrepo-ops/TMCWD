@@ -114,9 +114,18 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpGet("GetRangeByReadingSheetIds")]
-        public async Task<IActionResult> GetRangeByReadingSheetIds([FromQuery(Name = "ids")] int[] ids)
+        public async Task<IActionResult> GetRangeByReadingSheetIds([FromQuery] int[] ids)
         {
-            var readings = await _service.GetRangeByReadingSheetIds(ids);
+            var listIds = ids.AsEnumerable();
+            var readings = await _service.GetRangeByReadingSheetIds(listIds);
+            if (readings == null || !readings.Any()) return NotFound();
+            return Ok(readings);
+        }
+
+        [HttpPatch("UpdateStatusByReadingSheetId/{readingSheetId}/{status}/{userId}")]
+        public async Task<IActionResult> UpdateStatusByReadingSheetId(int readingSheetId, int status, int userId)
+        {
+            var readings = await _service.UpdateStatusByReadingSheetId(readingSheetId, status, userId);
             if (readings == null || !readings.Any()) return NotFound();
             return Ok(readings);
         }

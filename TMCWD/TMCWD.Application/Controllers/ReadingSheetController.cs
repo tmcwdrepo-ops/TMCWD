@@ -67,6 +67,8 @@ namespace TMCWD.Application.Controllers
 
                 readingSheet.DateCreated = DateTime.Now;
                 readingSheet.CreatedBy = _user.User.Id;
+                readingSheet.ZoneBookId = zoneBook.Id;
+                readingSheet.Status = ReadingStatus.InProgress;
 
                 savedSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, readingSheet);
 
@@ -81,7 +83,7 @@ namespace TMCWD.Application.Controllers
                                        CurrentReading = 0,
                                        DateCreated = DateTime.Now,
                                        DateUpdated = DateTime.Now,
-                                       IsCompleted = false,
+                                       Status = ReadingStatus.InProgress,
                                        ReadingSheetId = savedSheet.Id,
                                        UpdatedBy = _user.User.Id
                                    };
@@ -137,6 +139,7 @@ namespace TMCWD.Application.Controllers
         public async Task<IActionResult> GetAllReadingSheets()
         {
             var readingSheets = await _readingSheetTrans.GetAll();
+            if(readingSheets == null) return NotFound();
             var userIds = readingSheets.Select(x => x.AssignedTo).ToList();
             var readingSheetIds = readingSheets.Select(x => x.Id).ToList();
             var zoneBookIds = readingSheets.Select(x => x.ZoneBookId).ToList();
@@ -156,13 +159,13 @@ namespace TMCWD.Application.Controllers
                                    {
                                        Id = rs.Id,
                                        MeterReader = usrs.Name,
-                                       BillingData = rs.BillingDate,
+                                       BillingDate = rs.BillingDate,
                                        Zone = $"ZN-{zb.Zone.ToString().PadLeft(2, '0')}",
                                        ForPosting = GetTotalCompletedReadings(readings, rs.Id),
                                        TotalInProgress = GetTotalInProgressReadings(readings, rs.Id),
                                        TotalAccounts = GetTotalReadings(readings, rs.Id),
                                        TotalCompleted = GetTotalCompletedReadings(readings, rs.Id),
-                                       Status = rs.IsCompleted ? "Completed" : "In-Progress"
+                                       Status = rs.Status.Description()
                                    };
 
 
@@ -170,14 +173,36 @@ namespace TMCWD.Application.Controllers
             return Ok(readingSheetData);
         }
 
+        [HttpDelete]
+        public async Task<IActionResult> DeleteReadingSheet(int id)
+        {
+            var readingSheet = await _readingSheetTrans.Get(id);
+            if (readingSheet == null) return NotFound();
+            readingSheet.Status = ReadingStatus.Deleted;
+            readingSheet.UpdatedBy = _user.User.Id;
+            readingSheet.DateUpdated = DateTime.Now;
+
+            Task<ReadingSheet> updateReadingSheetTask = _readingSheetTrans.SaveUpdate(_user.User.Id, readingSheet);
+            Task<List<Reading>> updateStatusByReadingSheetIdTask = _readingTransaction.UpdateStatusByReadingSheetId(id, ReadingStatus.Deleted, _user.User.Id);
+
+            await Task.WhenAll(updateStatusByReadingSheetIdTask, updateStatusByReadingSheetIdTask);
+
+            var updatedReadingSheet = updateReadingSheetTask.Result;
+            var updatedReadings = updateStatusByReadingSheetIdTask.Result;
+
+            if (updatedReadingSheet == null || updatedReadings == null) return Ok("Problems occurred while deleting reading sheet");
+
+            return Ok(true);
+        }
+
         private int GetTotalInProgressReadings(List<Reading> readings, int readingSheetId)
         {
-            return readings.Where(x => !x.IsCompleted && x.ReadingSheetId == readingSheetId).Count();
+            return readings.Where(x => x.Status == ReadingStatus.InProgress && x.ReadingSheetId == readingSheetId).Count();
         }
 
         private int GetTotalCompletedReadings(List<Reading> readings, int readingSheetId)
         {
-            return readings.Where(x => x.IsCompleted && x.ReadingSheetId == readingSheetId).Count();
+            return readings.Where(x => x.Status == ReadingStatus.Completed && x.ReadingSheetId == readingSheetId).Count();
         }
 
         private int GetTotalReadings(List<Reading> readings, int readingSheetId)
