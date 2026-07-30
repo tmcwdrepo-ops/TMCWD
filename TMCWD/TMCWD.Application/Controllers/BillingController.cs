@@ -48,6 +48,11 @@ namespace TMCWD.Application.Controllers
             return Ok();
         }
 
+        public IActionResult DebitCreditMemo()
+        {
+            return View();
+        }
+
         #endregion
 
     }
