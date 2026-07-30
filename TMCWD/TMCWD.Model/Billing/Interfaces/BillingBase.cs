@@ -77,6 +77,9 @@ namespace TMCWD.Model.Billing.Interfaces
         [DisplayName("Date Updated")]
         public DateTime DateUpdated { get; set; }
 
+        [DisplayName("Billing Period")]
+        public DateTime BillingPeriod { get; set; }
+
         #endregion
 
         #region methods

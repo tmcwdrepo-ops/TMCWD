@@ -93,7 +93,8 @@ public enum PaymentStatus
 {
     Unpaid = 1,
     Paid = 2,
-    Overdue = 3
+    Overdue = 3,
+    Waived = 4
 }
 
 public enum PaymentMethod

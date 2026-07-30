@@ -50,7 +50,7 @@ namespace TMCWD.Billing
 
         public async Task<Penalty> Get(int id)
         {
-            var response = await _service.Client.GetAsync($"api/Penalties/Get/{id}");
+            var response = await _service.Client.GetAsync($"api/Penalty/Get/{id}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToPenalty(data);
@@ -58,15 +58,15 @@ namespace TMCWD.Billing
 
         public async Task<List<Penalty>> GetAll()
         {
-            var response = await _service.Client.GetAsync($"api/Penalties/GetAll");
+            var response = await _service.Client.GetAsync($"api/Penalty/GetAll");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToPenalties(data);
         }
 
-        public async Task<List<Penalty>> GetByClassificationId(int classificationId)
+        public async Task<List<Penalty>> GetByReference(string reference)
         {
-            var response = await _service.Client.GetAsync($"api/Penalties/GetByClassificationId/{classificationId}");
+            var response = await _service.Client.GetAsync($"api/Penalty/GetByReference/{reference}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToPenalties(data);
@@ -75,7 +75,7 @@ namespace TMCWD.Billing
         public async Task<Penalty> SaveUpdate(int userId, Penalty penalty)
         {
             var content = JsonContent.Create(penalty);
-            var response = await _service.Client.PostAsync($"api/Penalties/SaveUpdate/{userId}", content);
+            var response = await _service.Client.PostAsync($"api/Penalty/SaveUpdate/{userId}", content);
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToPenalty(data);
