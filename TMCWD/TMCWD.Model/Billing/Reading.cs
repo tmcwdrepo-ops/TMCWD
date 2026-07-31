@@ -13,7 +13,7 @@ namespace TMCWD.Model.Billing
 
         public Reading() { }
 
-        #endregion
+        #endregion 
 
         #region members
 
