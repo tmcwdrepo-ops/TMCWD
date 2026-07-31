@@ -10,53 +10,52 @@
   <link rel="stylesheet" href="~/css/reading_sheet_details.css"/>
 }
 
-@section Scripts {
-  <script src="~/js/reading-sheet-sample.js"></script>
-  <script src="~/js/reading-sheet.js"></script>
-  <script src="~/js/create_reading.js"></script>
-  <script src="~/js/create_temp.js"></script>
-  <script>
-    // Scripts are at the bottom of </body> — DOM is fully parsed.
-    // Use DOMContentLoaded with a readyState fallback to handle both
-    // cases: fired already, or not yet fired.
-    function initBillingPage() {
-      if (typeof initReadingSheetPage === 'function') {
-        initReadingSheetPage();
-      }
 
-      var createNewBtn = document.getElementById('createNewBtn');
-      if (createNewBtn) {
-        createNewBtn.addEventListener('click', function () {
-          if (typeof openCreateModal === 'function') openCreateModal();
-        });
-      }
-
-      var crSaveBtnEl = document.getElementById('crSaveBtn');
-      if (crSaveBtnEl) {
-        crSaveBtnEl.addEventListener('click', function () {
-          var data = {
-            billingDate:        (document.getElementById('crBillingDate')        || {}).value || '',
-            dueDate:            (document.getElementById('crDueDate')            || {}).value || '',
-            disconnectionDate:  (document.getElementById('crDisconnectionDate') || {}).value || '',
-            billingPeriodStart: (document.getElementById('crBillingPeriodStart') || {}).value || '',
-            meterReader:        (document.getElementById('crMeterReaderInput')  || {}).value || '',
-            zone:               (document.getElementById('crZone')              || {}).value || '',
-            book:               (document.getElementById('crBook')              || {}).value || '',
-            scope:              (document.getElementById('crScope')             || {}).value || ''
-          };
-          if (typeof onReadingSheetCreated === 'function') onReadingSheetCreated(data);
-          document.dispatchEvent(new CustomEvent('readingSheet:created', { detail: data }));
-        });
-      }
+<script src="~/js/reading-sheet-sample.js"></script>
+<script src="~/js/reading-sheet.js"></script>
+<script src="~/js/create_reading.js"></script>
+<script src="~/js/create_temp.js"></script>
+<script type="text/javascript" lang="en-us">
+// Scripts are at the bottom of </body> — DOM is fully parsed.
+// Use DOMContentLoaded with a readyState fallback to handle both
+// cases: fired already, or not yet fired.
+function initBillingPage() {
+    if (typeof initReadingSheetPage === 'function') {
+    initReadingSheetPage();
     }
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initBillingPage);
-    } else {
-      initBillingPage();
+    var createNewBtn = document.getElementById('createNewBtn');
+    if (createNewBtn) {
+    createNewBtn.addEventListener('click', function () {
+        if (typeof openCreateModal === 'function') openCreateModal();
+    });
     }
-  </script>
+
+    var crSaveBtnEl = document.getElementById('crSaveBtn');
+    if (crSaveBtnEl) {
+    crSaveBtnEl.addEventListener('click', function () {
+        var data = {
+        billingDate:        (document.getElementById('crBillingDate')        || {}).value || '',
+        dueDate:            (document.getElementById('crDueDate')            || {}).value || '',
+        disconnectionDate:  (document.getElementById('crDisconnectionDate') || {}).value || '',
+        billingPeriodStart: (document.getElementById('crBillingPeriodStart') || {}).value || '',
+        meterReader:        (document.getElementById('crMeterReaderInput')  || {}).value || '',
+        zone:               (document.getElementById('crZone')              || {}).value || '',
+        book:               (document.getElementById('crBook')              || {}).value || '',
+        scope:              (document.getElementById('crScope')             || {}).value || ''
+        };
+        if (typeof onReadingSheetCreated === 'function') onReadingSheetCreated(data);
+        document.dispatchEvent(new CustomEvent('readingSheet:created', { detail: data }));
+    });
+    }
 }
+
+// if (document.readyState === 'loading') {
+//   document.addEventListener('DOMContentLoaded', initBillingPage);
+// } else {
+//   initBillingPage();
+// }
+</script>
 
 <section class="page-section" aria-label="View Reading Sheet Created">
 
@@ -286,7 +285,8 @@
         </button>
       </div>
     </div>
-  </div>  <!-- ══════════════════════════════════════════
+  </div>  
+  <!-- ══════════════════════════════════════════
        CREATE READING SHEET — MODAL (Phase 1-8)
   ══════════════════════════════════════════ -->
   <div class="cr-backdrop" id="crBackdrop" hidden aria-hidden="true">
@@ -510,6 +510,7 @@
       </div>
 
     </div>
+    </div>
   </div>
   <!-- /cr-backdrop -->
 
@@ -654,6 +655,3 @@
   </div>
 
 </section>
-<script type="text/javascript">
-    loadData('@Url.Action("", "")')
-</script>

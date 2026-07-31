@@ -78,35 +78,36 @@ namespace TMCWD.Application.Controllers
         {
             return Ok();
         }
-        public async Task<IActionResult> ReadingSheet(DateTime billPeriod)
+        public IActionResult ReadingSheet(DateTime billPeriod)
         {
-            var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
-            var matching = allBillings.Where(b => b.BillingPeriod.Date == billPeriod.Date).ToList();
+            //var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
+            //var matching = allBillings.Where(b => b.BillingPeriod.Date == billPeriod.Date).ToList();
 
-            var result = new List<object>();
+            //var result = new List<object>();
 
-            foreach (var billing in matching)
-            {
-                var penalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.Penalty>();
-                var activePenalties = penalties.Where(p => p.PaymentStatus != PaymentStatus.Waived).ToList();
+            //foreach (var billing in matching)
+            //{
+            //    var penalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.Penalty>();
+            //    var activePenalties = penalties.Where(p => p.PaymentStatus != PaymentStatus.Waived).ToList();
 
-                if (!activePenalties.Any()) continue; // only accounts with active penalty records
+            //    if (!activePenalties.Any()) continue; // only accounts with active penalty records
 
-                if(billing.AccountId <= 0) continue;
-                var account = await _accountTrans.Get((int)billing.AccountId);
+            //    if(billing.AccountId <= 0) continue;
+            //    var account = await _accountTrans.Get((int)billing.AccountId);
 
-                result.Add(new
-                {
-                    billingReferenceId = billing.BillingReferenceId,
-                    accountNumber = account?.AccountNumber ?? "—",
-                    usage = 0,          // not yet tracked — see note
-                    billAmount = billing.TotalBillAmount,
-                    discount = 0,       // not yet tracked — see note
-                    penalty = activePenalties.Sum(p => p.Amount)
-                });
-            }
+            //    result.Add(new
+            //    {
+            //        billingReferenceId = billing.BillingReferenceId,
+            //        accountNumber = account?.AccountNumber ?? "—",
+            //        usage = 0,          // not yet tracked — see note
+            //        billAmount = billing.TotalBillAmount,
+            //        discount = 0,       // not yet tracked — see note
+            //        penalty = activePenalties.Sum(p => p.Amount)
+            //    });
+            //}
 
-            return Ok(result);
+            //return Ok(result);
+            return View("ReadingSheet");
         }
 
         [HttpPost]
