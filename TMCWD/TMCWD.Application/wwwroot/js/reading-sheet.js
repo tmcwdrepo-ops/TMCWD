@@ -1235,60 +1235,60 @@ function handleNextClick() {
  * Initialize the Reading Sheet page.
  * Called by appshell.js loadPage() after all assets are loaded.
  */
-async function initReadingSheetPage() {
-  // Reset all runtime state on every init — prevents stale data
-  // from a previous page load bleeding through.
-  readingSheetState.rows          = [];
-  readingSheetState.filteredRows  = [];
-  readingSheetState.selectedIds   = new Set();
-  readingSheetState.currentPage   = 1;
-  readingSheetState.sortColumn    = null;
-  readingSheetState.sortDirection = 'asc';
-  readingSheetState.statusFilter  = 'in-progress';
+function initReadingSheetPage() {
+    // Reset all runtime state on every init — prevents stale data
+    // from a previous page load bleeding through.
+    readingSheetState.rows = [];
+    readingSheetState.filteredRows = [];
+    readingSheetState.selectedIds = new Set();
+    readingSheetState.currentPage = 1;
+    readingSheetState.sortColumn = null;
+    readingSheetState.sortDirection = 'asc';
+    readingSheetState.statusFilter = 'in-progress';
 
-  // Inject edit modal if it doesn't exist (fallback for SPA navigation)
-  if (!document.getElementById('editModalBackdrop')) {
-    var modalHTML = 
-      '<div class="modal-backdrop" id="editModalBackdrop" hidden aria-hidden="true">' +
-        '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" style="max-width: 500px;">' +
-          '<h2 class="modal__title" id="editModalTitle">Edit Reading Sheet</h2>' +
-          '<div class="modal__body" style="width: 100%; max-width: 100%; text-align: left;">' +
+    // Inject edit modal if it doesn't exist (fallback for SPA navigation)
+    if (!document.getElementById('editModalBackdrop')) {
+        var modalHTML =
+            '<div class="modal-backdrop" id="editModalBackdrop" hidden aria-hidden="true">' +
+            '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" style="max-width: 500px;">' +
+            '<h2 class="modal__title" id="editModalTitle">Edit Reading Sheet</h2>' +
+            '<div class="modal__body" style="width: 100%; max-width: 100%; text-align: left;">' +
             '<input type="hidden" id="editRowId" />' +
             '<div style="display: flex; flex-direction: column; gap: 14px;">' +
-              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<label for="editMeterReader" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Meter Reader</label>' +
-                '<input type="text" id="editMeterReader" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-              '</div>' +
-              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<label for="editBillingDate" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Due Date</label>' +
-                '<input type="date" id="editBillingDate" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-              '</div>' +
-              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<label for="editZone" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Zone</label>' +
-                '<input type="text" id="editZone" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-              '</div>' +
-              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<label for="editForPosting" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">For Posting</label>' +
-                '<input type="number" id="editForPosting" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-              '</div>' +
-              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<label for="editStatus" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Status</label>' +
-                '<select id="editStatus" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);">' +
-                  '<option value="In-Progress">In Progress</option>' +
-                  '<option value="Completed">Completed</option>' +
-                '</select>' +
-              '</div>' +
+            '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+            '<label for="editMeterReader" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Meter Reader</label>' +
+            '<input type="text" id="editMeterReader" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
             '</div>' +
-          '</div>' +
-          '<div class="modal__actions">' +
+            '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+            '<label for="editBillingDate" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Billing Date</label>' +
+            '<input type="date" id="editBillingDate" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
+            '</div>' +
+            '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+            '<label for="editZone" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Zone</label>' +
+            '<input type="text" id="editZone" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
+            '</div>' +
+            '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+            '<label for="editForPosting" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">For Posting</label>' +
+            '<input type="number" id="editForPosting" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
+            '</div>' +
+            '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+            '<label for="editStatus" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Status</label>' +
+            '<select id="editStatus" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);">' +
+            '<option value="In-Progress">In Progress</option>' +
+            '<option value="Completed">Completed</option>' +
+            '</select>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '<div class="modal__actions">' +
             '<button class="btn btn--ghost" type="button" id="editModalCancel">Cancel</button>' +
             '<button class="btn btn--green" type="button" id="editModalSave">Save Changes</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    console.log('[ReadingSheet] Edit modal injected via JavaScript');
-  } 
+            '</div>' +
+            '</div>' +
+            '</div>';
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        console.log('[ReadingSheet] Edit modal injected via JavaScript');
+    }
 
   // if (typeof READING_SHEET_SAMPLE_DATA !== 'undefined') {
   //   readingSheetState.rows = READING_SHEET_SAMPLE_DATA.slice();
@@ -1300,8 +1300,8 @@ async function initReadingSheetPage() {
         readingSheetState.rows = READING_SHEETS;
   }
 
-  applyAllFilters();
-  applyAndRender();
+    applyAllFilters();
+    applyAndRender();
 
   // Initialize zone progress input controls
   generateZoneProgressInputs();
@@ -1315,124 +1315,115 @@ async function initReadingSheetPage() {
     });
   }
 
-  // Sort
-  var thead = document.querySelector('#readingSheetTable thead');
-  if (thead) {
-    thead.addEventListener('click', handleHeaderClick);
-  }
-
-  // Pagination
-  var prevBtn  = document.getElementById('prevPageBtn');
-  var nextBtn  = document.getElementById('nextPageBtn');
-  var controls = document.getElementById('paginationControls');
-
-  if (prevBtn)  prevBtn.addEventListener('click', handlePrevClick);
-  if (nextBtn)  nextBtn.addEventListener('click', handleNextClick);
-  if (controls) controls.addEventListener('click', handlePageClick);
-
-  // Selection & bulk actions
-  var selectAll  = document.getElementById('selectAllRows');
-  var tbody      = document.getElementById('readingSheetBody');
-  var bulkDelete = document.getElementById('bulkDeleteBtn');
-  var bulkClear  = document.getElementById('bulkClearBtn');
-
-  console.log('[ReadingSheet] Init: tbody found?', !!tbody, '| editModalBackdrop found?', !!document.getElementById('editModalBackdrop'));
-
-  if (selectAll)  selectAll.addEventListener('change', handleSelectAll);
-  if (tbody) {
-    tbody.addEventListener('change', handleRowSelect);
-    // Single delegated click handler for view, edit, and delete buttons
-    tbody.addEventListener('click', function(event) {
-      console.log('[ReadingSheet] tbody click detected', event.target);
-
-      // Check for view button first
-      var viewBtn = event.target.closest('.action-btn--view');
-      if (viewBtn) {
-        console.log('[ReadingSheet] View button found in delegation');
-        handleViewClick(event);
-        return;
-      }
-
-      // Check for edit button
-      var editBtn = event.target.closest('.action-btn--edit');
-      if (editBtn) {
-        console.log('[ReadingSheet] Edit button found in delegation');
-        handleEditClick(event);
-        return;
-      }
-      
-      // Check for delete button
-      var deleteBtn = event.target.closest('.action-btn--delete');
-      if (deleteBtn) {
-        console.log('[ReadingSheet] Delete button found in delegation');
-        handleDeleteClick(event);
-        return;
-      }
-    });
-  }
-  if (bulkDelete) bulkDelete.addEventListener('click', handleBulkDelete);
-  if (bulkClear)  bulkClear.addEventListener('click', handleBulkClear);
-
-  // Edit modal
-  var editSave    = document.getElementById('editModalSave');
-  var editCancel  = document.getElementById('editModalCancel');
-  var editBackdrop = document.getElementById('editModalBackdrop');
-
-  if (editSave)    editSave.addEventListener('click', handleEditSave);
-  if (editCancel)  editCancel.addEventListener('click', closeEditModal);
-  if (editBackdrop) {
-    editBackdrop.addEventListener('click', function(event) {
-      if (event.target === editBackdrop) closeEditModal();
-    });
-  }
-
-  // Delete modal (single row)
-  var deleteConfirm  = document.getElementById('deleteModalConfirm');
-  var deleteCancel   = document.getElementById('deleteModalCancel');
-  var deleteBackdrop = document.getElementById('deleteModalBackdrop');
-
-  if (deleteConfirm)  deleteConfirm.addEventListener('click', handleDeleteConfirm);
-  if (deleteCancel)   deleteCancel.addEventListener('click', closeDeleteModal);
-  if (deleteBackdrop) {
-    deleteBackdrop.addEventListener('click', function(event) {
-      if (event.target === deleteBackdrop) closeDeleteModal();
-    });
-  }
-
-  // Bulk delete modal
-  var bulkDeleteConfirm  = document.getElementById('bulkDeleteModalConfirm');
-  var bulkDeleteCancel   = document.getElementById('bulkDeleteModalCancel');
-  var bulkDeleteBackdrop = document.getElementById('bulkDeleteModalBackdrop');
-  //var bulkDeleteInput    = document.getElementById('bulkDeleteConfirmInput');
-
-  if (bulkDeleteConfirm)  bulkDeleteConfirm.addEventListener('click', handleBulkDeleteConfirm);
-  if (bulkDeleteCancel)   bulkDeleteCancel.addEventListener('click', closeBulkDeleteModal);
-  //if (bulkDeleteInput)    bulkDeleteInput.addEventListener('input', handleBulkDeleteInput);
-  if (bulkDeleteBackdrop) {
-    bulkDeleteBackdrop.addEventListener('click', function(event) {
-      if (event.target === bulkDeleteBackdrop) closeBulkDeleteModal();
-    });
-  }
-
-  // Escape closes whichever modal is open
-  document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-      closeViewPanel();
-      closeEditModal();
-      closeDeleteModal();
-      closeBulkDeleteModal();
+    // Sort
+    var thead = document.querySelector('#readingSheetTable thead');
+    if (thead) {
+        thead.addEventListener('click', handleHeaderClick);
     }
-  });
 
-  // Status toggle
-  var statusToggleInput = document.querySelector('.status-toggle__input');
-  if (statusToggleInput) {
-    statusToggleInput.checked = false;
-    statusToggleInput.setAttribute('aria-checked', 'false');
-    statusToggleInput.addEventListener('change', handleStatusToggle);
-  }
+    // Pagination
+    var prevBtn = document.getElementById('prevPageBtn');
+    var nextBtn = document.getElementById('nextPageBtn');
+    var controls = document.getElementById('paginationControls');
 
-  console.log('[ReadingSheet] Page initialized. Rows loaded:', readingSheetState.rows.length);
+    if (prevBtn) prevBtn.addEventListener('click', handlePrevClick);
+    if (nextBtn) nextBtn.addEventListener('click', handleNextClick);
+    if (controls) controls.addEventListener('click', handlePageClick);
+
+    // Selection & bulk actions
+    var selectAll = document.getElementById('selectAllRows');
+    var tbody = document.getElementById('readingSheetBody');
+    var bulkDelete = document.getElementById('bulkDeleteBtn');
+    var bulkClear = document.getElementById('bulkClearBtn');
+
+    console.log('[ReadingSheet] Init: tbody found?', !!tbody, '| editModalBackdrop found?', !!document.getElementById('editModalBackdrop'));
+
+    if (selectAll) selectAll.addEventListener('change', handleSelectAll);
+    if (tbody) {
+        tbody.addEventListener('change', handleRowSelect);
+        // Single delegated click handler for both edit and delete buttons
+        tbody.addEventListener('click', function (event) {
+            console.log('[ReadingSheet] tbody click detected', event.target);
+
+            // Check for edit button first
+            var editBtn = event.target.closest('.action-btn--edit');
+            if (editBtn) {
+                console.log('[ReadingSheet] Edit button found in delegation');
+                handleEditClick(event);
+                return;
+            }
+
+            // Check for delete button
+            var deleteBtn = event.target.closest('.action-btn--delete');
+            if (deleteBtn) {
+                console.log('[ReadingSheet] Delete button found in delegation');
+                handleDeleteClick(event);
+                return;
+            }
+        });
+    }
+    if (bulkDelete) bulkDelete.addEventListener('click', handleBulkDelete);
+    if (bulkClear) bulkClear.addEventListener('click', handleBulkClear);
+
+    // Edit modal
+    var editSave = document.getElementById('editModalSave');
+    var editCancel = document.getElementById('editModalCancel');
+    var editBackdrop = document.getElementById('editModalBackdrop');
+
+    if (editSave) editSave.addEventListener('click', handleEditSave);
+    if (editCancel) editCancel.addEventListener('click', closeEditModal);
+    if (editBackdrop) {
+        editBackdrop.addEventListener('click', function (event) {
+            if (event.target === editBackdrop) closeEditModal();
+        });
+    }
+
+    // Delete modal (single row)
+    var deleteConfirm = document.getElementById('deleteModalConfirm');
+    var deleteCancel = document.getElementById('deleteModalCancel');
+    var deleteBackdrop = document.getElementById('deleteModalBackdrop');
+
+    if (deleteConfirm) deleteConfirm.addEventListener('click', handleDeleteConfirm);
+    if (deleteCancel) deleteCancel.addEventListener('click', closeDeleteModal);
+    if (deleteBackdrop) {
+        deleteBackdrop.addEventListener('click', function (event) {
+            if (event.target === deleteBackdrop) closeDeleteModal();
+        });
+    }
+
+    // Bulk delete modal
+    var bulkDeleteConfirm = document.getElementById('bulkDeleteModalConfirm');
+    var bulkDeleteCancel = document.getElementById('bulkDeleteModalCancel');
+    var bulkDeleteBackdrop = document.getElementById('bulkDeleteModalBackdrop');
+    var bulkDeleteInput = document.getElementById('bulkDeleteConfirmInput');
+
+    if (bulkDeleteConfirm) bulkDeleteConfirm.addEventListener('click', handleBulkDeleteConfirm);
+    if (bulkDeleteCancel) bulkDeleteCancel.addEventListener('click', closeBulkDeleteModal);
+    if (bulkDeleteInput) bulkDeleteInput.addEventListener('input', handleBulkDeleteInput);
+    if (bulkDeleteBackdrop) {
+        bulkDeleteBackdrop.addEventListener('click', function (event) {
+            if (event.target === bulkDeleteBackdrop) closeBulkDeleteModal();
+        });
+    }
+
+    // Escape closes whichever modal is open
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeEditModal();
+            closeDeleteModal();
+            closeBulkDeleteModal();
+        }
+    });
+
+    // Status toggle
+    var statusToggleInput = document.querySelector('.status-toggle__input');
+    if (statusToggleInput) {
+        statusToggleInput.checked = false;
+        statusToggleInput.setAttribute('aria-checked', 'false');
+        statusToggleInput.addEventListener('change', handleStatusToggle);
+    }
+
+    console.log('[ReadingSheet] Page initialized. Rows loaded:', readingSheetState.rows.length);
 }
 
 /**
