@@ -2,6 +2,7 @@
 using System.Text.Json;
 using TMCWD.Services;
 using TMCWD.Model.Billing.Interfaces;
+using BillingModel = TMCWD.Model.Billing.Billing;
 
 namespace TMCWD.Billing
 {
@@ -25,13 +26,14 @@ namespace TMCWD.Billing
         public BillingBase ConvertJsonToBilling(string json)
         {
             var serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
-            return JsonSerializer.Deserialize<BillingBase>(json, serializerOptions);
+            return JsonSerializer.Deserialize<BillingModel>(json, serializerOptions);
         }
 
         public List<BillingBase> ConverJsonToBillings(string json)
         {
-            var serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };  
-            return JsonSerializer.Deserialize<List<BillingBase>>(json, serializerOptions) ?? new();
+            var serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+            var billings = JsonSerializer.Deserialize<List<BillingModel>>(json, serializerOptions) ?? new();
+            return billings.Cast<BillingBase>().ToList();
         }
 
         public async Task<BillingBase> Get(int id)
@@ -46,6 +48,7 @@ namespace TMCWD.Billing
         {
             var response = await _service.Client.GetAsync($"api/Billing/GetAll");
             var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
             return ConverJsonToBillings(data);
         }
 
