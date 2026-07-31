@@ -24,6 +24,9 @@ builder.Services.AddTransient<JobOrderTransaction>();
 builder.Services.AddTransient<ApprovalHistoryTransaction>();
 builder.Services.AddTransient<RequestFileTransaction>();
 
+builder.Services.AddTransient<BillingTransaction>();
+builder.Services.AddTransient<PenaltyTransaction>();
+
 builder.Services.AddTransient<ReadingSheetTransaction>();
 builder.Services.AddTransient<ZoneBookTransaction>();
 builder.Services.AddTransient<ReadingTransaction>();

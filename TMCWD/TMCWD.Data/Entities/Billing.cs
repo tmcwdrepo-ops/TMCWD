@@ -21,7 +21,7 @@ namespace TMCWD.Data.Entities
         [Column("PaymentTransactionId")]
         public string PaymentTransactionId { get; set; } = string.Empty;
 
-        [Column("BillingPeriodf")]
+        [Column("BillingPeriod")]
         public DateTime BillingPeriod { get; set; }
 
         [Column("MaterialsAmount")]
@@ -39,7 +39,7 @@ namespace TMCWD.Data.Entities
         [Required, Column("TotalBillAmount")]
         public decimal TotalBillAmount { get; set; }
 
-        [Required, Column("PaymentStatus")]
+        [Required, Column("Status")]
         public int PaymentStatus { get; set; }
 
         [Column("CreatedBy")]
