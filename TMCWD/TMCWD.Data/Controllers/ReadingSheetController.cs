@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using System.Security.Cryptography.X509Certificates;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
@@ -114,6 +115,24 @@ namespace TMCWD.Data.Controllers
             var savedReadingSheet = await _readingSheetService.SaveUpdate(userId, readingSheet);
             return Ok(readingSheet);
         }
+
+        [HttpGet("GetRangeReadingSheets")]
+        public async Task<IActionResult> GetRangeReadingSheets([FromQuery] int[] ids)
+        {
+            var listIds = ids.AsEnumerable();
+            var readingSheets = await _readingSheetService.GetRangeReadingSheets(listIds);
+            if(readingSheets == null || !readingSheets.Any()) return NotFound();
+            return Ok(listIds);
+        }
+
+        [HttpPatch("UpdateReadingSheetsStatus/{userId}/{status}")]
+        public async Task<IActionResult> UpdateReadingSheetsStatus([FromQuery] int[] ids, int userId, int status)
+        {
+            var listIds = ids.AsEnumerable();
+            var readingSheets = await _readingSheetService.UpdateReadingSheetsStatus(listIds, userId, status);
+            if (readingSheets == null || !readingSheets.Any()) return NotFound();
+            return Ok(readingSheets);
+        } 
 
         #endregion
 

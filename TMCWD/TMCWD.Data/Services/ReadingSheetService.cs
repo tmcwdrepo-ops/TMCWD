@@ -126,6 +126,29 @@ namespace TMCWD.Data.Services
             return data;
         }
 
+        public async Task<IEnumerable<ReadingSheet>> GetRangeReadingSheets(IEnumerable<int> ids)
+        {
+            var readingSheets = await _context.ReadingSheets.Where(x => ids.Contains((int)x.Id)).ToListAsync();
+            return readingSheets;
+        }
+
+        public async Task<IEnumerable<ReadingSheet>> UpdateReadingSheetsStatus(IEnumerable<int> ids, int userId, int status)
+        {
+            var readingSheets = await this.GetRangeReadingSheets(ids);
+
+            foreach (var readingSheet in readingSheets)
+            {
+                readingSheet.UpdatedBy = userId;
+                readingSheet.DateUpdated = DateTime.Now;
+                readingSheet.Status = status;
+            }
+
+            _context.ReadingSheets.UpdateRange(readingSheets);
+            await _context.SaveChangesAsync();
+
+            return readingSheets;
+        }
+
         #endregion
 
     }

@@ -151,6 +151,24 @@ namespace TMCWD.Billing
             return ConvertJsonToReadingSheet(data);
         }
 
+        public async Task<List<ReadingSheet>> GetRangeReadingSheets(List<int> ids)
+        {
+            string queryParam = string.Join("&", ids.Select(x => $"ids={x}"));
+            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetRangeReadingSheets?{queryParam}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadingSheets(data);
+        }
+
+        public async Task<List<ReadingSheet>> UpdateReadingSheetsStatus(List<int> ids, int userId, ReadingStatus status)
+        {
+            string queryParam = string.Join("&", ids.Select(x => $"ids={x}"));
+            var response = await _webService.Client.PatchAsync($"api/ReadingSheet/UpdateReadingSheetsStatus/{userId}/{(int)status}?{queryParam}", null);
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadingSheets(data);
+        }
+
         #endregion
 
     }

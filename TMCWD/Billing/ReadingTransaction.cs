@@ -141,9 +141,10 @@ namespace TMCWD.Billing
             return ConvertJsonToReadings(data);
         }
 
-        public async Task<List<Reading>> UpdateStatusByReadingSheetId(int readingSheetId, ReadingStatus status, int userId)
+        public async Task<List<Reading>> UpdateStatusByReadingSheetIds(List<int> readingSheetIds, ReadingStatus status, int userId)
         {
-            var response = await _service.Client.PatchAsync($"api/Reading/UpdateStatusByReadingSheetId/{readingSheetId}/{(int)status}/{userId}", null);
+            string queryParam = string.Join("&", readingSheetIds.Select(x => $"ids={x}"));
+            var response = await _service.Client.PatchAsync($"api/Reading/UpdateStatusByReadingSheetIds/{(int)status}/{userId}?{queryParam}", null);
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToReadings(data);

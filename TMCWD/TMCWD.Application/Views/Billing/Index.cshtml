@@ -239,7 +239,7 @@
       </div>
       <h2 class="modal__title" id="bulkDeleteModalTitle">Delete Selected Records</h2>
       <p class="modal__body" id="bulkDeleteModalBody">You are about to delete <strong id="bulkDeleteCount">0</strong> record(s). This cannot be undone.</p>
-      <p class="modal__body">Type <strong>delete all</strong> to confirm.</p>
+      @* <p class="modal__body">Type <strong>delete all</strong> to confirm.</p>
       <input
         class="modal__confirm-input"
         type="text"
@@ -248,10 +248,10 @@
         aria-label="Type delete all to confirm"
         autocomplete="off"
         spellcheck="false"
-      />
+      /> *@
       <div class="modal__actions">
         <button class="btn btn--ghost" type="button" id="bulkDeleteModalCancel">Cancel</button>
-        <button class="btn btn--danger" type="button" id="bulkDeleteModalConfirm" disabled>Delete All</button>
+        <button class="btn btn--danger" type="button" id="bulkDeleteModalConfirm">Delete All</button>
       </div>
     </div>
   </div>

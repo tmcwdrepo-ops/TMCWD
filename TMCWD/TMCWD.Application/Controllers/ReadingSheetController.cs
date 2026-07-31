@@ -177,13 +177,15 @@ namespace TMCWD.Application.Controllers
         public async Task<IActionResult> DeleteReadingSheet(int id)
         {
             var readingSheet = await _readingSheetTrans.Get(id);
+            List<int> listIds = new();
+            listIds.Add(readingSheet.Id);
             if (readingSheet == null) return NotFound();
             readingSheet.Status = ReadingStatus.Deleted;
             readingSheet.UpdatedBy = _user.User.Id;
             readingSheet.DateUpdated = DateTime.Now;
 
             Task<ReadingSheet> updateReadingSheetTask = _readingSheetTrans.SaveUpdate(_user.User.Id, readingSheet);
-            Task<List<Reading>> updateStatusByReadingSheetIdTask = _readingTransaction.UpdateStatusByReadingSheetId(id, ReadingStatus.Deleted, _user.User.Id);
+            Task<List<Reading>> updateStatusByReadingSheetIdTask = _readingTransaction.UpdateStatusByReadingSheetIds(listIds, ReadingStatus.Deleted, _user.User.Id);
 
             await Task.WhenAll(updateStatusByReadingSheetIdTask, updateStatusByReadingSheetIdTask);
 
@@ -191,6 +193,23 @@ namespace TMCWD.Application.Controllers
             var updatedReadings = updateStatusByReadingSheetIdTask.Result;
 
             if (updatedReadingSheet == null || updatedReadings == null) return Ok("Problems occurred while deleting reading sheet");
+
+            return Ok(true);
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> BulkDeleteReadingSheet(int[] ids, int status)
+        {
+
+            Task<List<ReadingSheet>> updateReadingSheetTask = _readingSheetTrans.UpdateReadingSheetsStatus(ids.ToList(), _user.User.Id, (ReadingStatus)status);
+            Task<List<Reading>> updateReadingTask = _readingTransaction.UpdateStatusByReadingSheetIds(ids.ToList(), (ReadingStatus)status, _user.User.Id);
+
+            await Task.WhenAll(updateReadingSheetTask, updateReadingTask);
+
+            var readingSheets = updateReadingSheetTask.Result;
+            var readings = updateReadingTask.Result;
+
+            if (readingSheets == null || readings == null) return Ok("Problems encountered while processing bulk delete");
 
             return Ok(true);
         }

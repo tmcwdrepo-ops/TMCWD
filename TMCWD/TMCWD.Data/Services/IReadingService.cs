@@ -24,7 +24,7 @@ namespace TMCWD.Data.Services
 
         public Task<List<Reading>> SaveMultiple(List<Reading> readings);
 
-        public Task<List<Reading>> UpdateStatusByReadingSheetId(int readingSheetId, int status, int userId);
+        public Task<List<Reading>> UpdateStatusByReadingSheetIds(IEnumerable<int> readingSheetIds, int status, int userId);
 
         public Task<List<Reading>> GetReadingsByBillingPeriod(int zone, int book, DateTime billingPeriod);
 

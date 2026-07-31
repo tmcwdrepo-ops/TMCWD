@@ -723,7 +723,7 @@ function openBulkDeleteModal() {
 
   if (countEl)   countEl.textContent = readingSheetState.selectedIds.size;
   if (input)     { input.value = ''; input.classList.remove('is-valid'); }
-  if (confirmBtn) confirmBtn.disabled = true;
+  //if (confirmBtn) confirmBtn.disabled = true;
 
   backdrop.hidden = false;
   backdrop.setAttribute('aria-hidden', 'false');
@@ -750,31 +750,52 @@ function closeBulkDeleteModal() {
  *
  * @param {Event} event
  */
-function handleBulkDeleteInput(event) {
-  var val        = event.target.value.trim().toLowerCase();
-  var confirmBtn = document.getElementById('bulkDeleteModalConfirm');
-  var isValid    = val === 'delete all';
+// function handleBulkDeleteInput(event) {
+//   var val        = event.target.value.trim().toLowerCase();
+//   var confirmBtn = document.getElementById('bulkDeleteModalConfirm');
+//   var isValid    = val === 'delete all';
 
-  if (confirmBtn) confirmBtn.disabled = !isValid;
-  event.target.classList.toggle('is-valid', isValid);
-}
+//   if (confirmBtn) confirmBtn.disabled = !isValid;
+//   event.target.classList.toggle('is-valid', isValid);
+// }
 
 /**
  * Execute the bulk deletion after modal confirmation.
  */
-function handleBulkDeleteConfirm() {
+async function handleBulkDeleteConfirm() {
   closeBulkDeleteModal();
 
   readingSheetState.rows = readingSheetState.rows.filter(function(row) {
     return !readingSheetState.selectedIds.has(row.id);
   });
 
-  readingSheetState.selectedIds.clear();
-  readingSheetState.currentPage = 1;
+    var queryParam = '';
+    readingSheetState.selectedIds.forEach((value, index) => {
+        if (index == 1) queryParam += 'ids=' + value;
+        else queryParam += '&ids=' + value;
+    });
+    queryParam += '&status=3';
+    var result = await fetch('/ReadingSheet/BulkDeleteReadingSheet?' + queryParam, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: null
+    }).then(response => {
+        if (!response.ok || response.status == 204) return null;
+        return response.json();
+    }).then(result => {
+        return result;
+    });
 
-  applyAllFilters();
-  updateBulkActionsBar();
-  applyAndRender();
+    if (result) {
+        readingSheetState.selectedIds.clear();
+        readingSheetState.currentPage = 1;
+
+        applyAllFilters();
+        updateBulkActionsBar();
+        applyAndRender();
+    }
 }
 
 /**
@@ -1072,11 +1093,11 @@ async function initReadingSheetPage() {
   var bulkDeleteConfirm  = document.getElementById('bulkDeleteModalConfirm');
   var bulkDeleteCancel   = document.getElementById('bulkDeleteModalCancel');
   var bulkDeleteBackdrop = document.getElementById('bulkDeleteModalBackdrop');
-  var bulkDeleteInput    = document.getElementById('bulkDeleteConfirmInput');
+  //var bulkDeleteInput    = document.getElementById('bulkDeleteConfirmInput');
 
   if (bulkDeleteConfirm)  bulkDeleteConfirm.addEventListener('click', handleBulkDeleteConfirm);
   if (bulkDeleteCancel)   bulkDeleteCancel.addEventListener('click', closeBulkDeleteModal);
-  if (bulkDeleteInput)    bulkDeleteInput.addEventListener('input', handleBulkDeleteInput);
+  //if (bulkDeleteInput)    bulkDeleteInput.addEventListener('input', handleBulkDeleteInput);
   if (bulkDeleteBackdrop) {
     bulkDeleteBackdrop.addEventListener('click', function(event) {
       if (event.target === bulkDeleteBackdrop) closeBulkDeleteModal();
@@ -1182,7 +1203,6 @@ function onReadingSheetCreated(data) {
 
   /* Format billing date from yyyy-MM-dd to "Jul 01, 2025" */
   var displayDate = data.billingDate;
-  console.log('Display Date:', displayDate);
   try {
     var d = new Date(data.billingDate);
     if (!isNaN(d)) {

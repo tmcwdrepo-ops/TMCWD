@@ -122,10 +122,11 @@ namespace TMCWD.Data.Controllers
             return Ok(readings);
         }
 
-        [HttpPatch("UpdateStatusByReadingSheetId/{readingSheetId}/{status}/{userId}")]
-        public async Task<IActionResult> UpdateStatusByReadingSheetId(int readingSheetId, int status, int userId)
+        [HttpPatch("UpdateStatusByReadingSheetIds/{status}/{userId}")]
+        public async Task<IActionResult> UpdateStatusByReadingSheetIds([FromQuery] int[] ids, int status, int userId)
         {
-            var readings = await _service.UpdateStatusByReadingSheetId(readingSheetId, status, userId);
+            var listIds = ids.AsEnumerable();
+            var readings = await _service.UpdateStatusByReadingSheetIds(listIds, status, userId);
             if (readings == null || !readings.Any()) return NotFound();
             return Ok(readings);
         }

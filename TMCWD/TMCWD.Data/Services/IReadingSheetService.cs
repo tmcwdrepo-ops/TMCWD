@@ -25,7 +25,11 @@ namespace TMCWD.Data.Services
 
         public Task<ReadingSheet> GetCurrentByAssignedTo(int zone, int book, int assignedTo);
 
+        public Task<IEnumerable<ReadingSheet>> GetRangeReadingSheets(IEnumerable<int> ids);
+
         public Task<ReadingSheet> SaveUpdate(int userId, ReadingSheet readingSheet);
+
+        public Task<IEnumerable<ReadingSheet>> UpdateReadingSheetsStatus(IEnumerable<int> ids, int userId, int status);
 
     }
 }

@@ -141,9 +141,9 @@ namespace TMCWD.Data.Services
             return readings;
         }
 
-        public async Task<List<Reading>> UpdateStatusByReadingSheetId(int readingSheetId, int status, int userId)
+        public async Task<List<Reading>> UpdateStatusByReadingSheetIds(IEnumerable<int> readingSheetIds, int status, int userId)
         {
-            var readings = await _context.Readings.Where(x => x.ReadingSheetId == readingSheetId).ToListAsync();
+            var readings = await this.GetRangeByReadingSheetIds(readingSheetIds);
             if (readings == null || !readings.Any()) return new List<Reading>();
 
             foreach (var reading in readings)
@@ -155,7 +155,7 @@ namespace TMCWD.Data.Services
 
             _context.Readings.UpdateRange(readings);
             await _context.SaveChangesAsync();
-            return (readings);
+            return readings.ToList();
         }
 
         #endregion
