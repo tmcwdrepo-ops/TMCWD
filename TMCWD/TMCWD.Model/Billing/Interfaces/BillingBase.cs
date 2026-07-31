@@ -80,6 +80,9 @@ namespace TMCWD.Model.Billing.Interfaces
         [DisplayName("Billing Period")]
         public DateTime BillingPeriod { get; set; }
 
+        [DisplayName("Remaining Amount")]
+        public decimal RemainingAmount { get; set; }
+
         #endregion
 
         #region methods

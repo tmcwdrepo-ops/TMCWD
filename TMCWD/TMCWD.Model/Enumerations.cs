@@ -107,4 +107,13 @@ public enum PaymentMethod
 public enum GatewayType
 {
     GCash = 1
-}   
+}
+
+public enum AdjustmentLineType
+{
+    Usage = 1,
+    CurrentBill = 2,
+    Penalty = 3,
+    Present = 4,
+    Previous = 5
+}

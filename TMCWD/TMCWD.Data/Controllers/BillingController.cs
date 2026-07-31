@@ -76,7 +76,7 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
-        public async Task<IActionResult> SaveUpdate(int userId, Billing billing)
+        public async Task<IActionResult> SaveUpdate(int userId, [FromBody]Billing billing)
         {
             var savedBilling = await _billingService.SaveUpdate(userId, billing);
             return Ok(savedBilling);

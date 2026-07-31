@@ -134,6 +134,14 @@ namespace TMCWD.CustomerSupport
             return ConvertJsonToAccounts(data);
         }
 
+        public async Task<List<Account>> GetAccounts()
+        {
+            var response = await _webService.Client.GetAsync("api/Account/GetAll");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToAccounts(data);
+        }
+
         #endregion
 
     }

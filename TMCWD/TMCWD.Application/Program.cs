@@ -23,7 +23,7 @@ builder.Services.AddTransient<ApplicationLoginTransaction>();
 builder.Services.AddTransient<JobOrderTransaction>();
 builder.Services.AddTransient<ApprovalHistoryTransaction>();
 builder.Services.AddTransient<RequestFileTransaction>();
-
+builder.Services.AddTransient<BillingAdjustmentTransaction>();
 builder.Services.AddTransient<BillingTransaction>();
 builder.Services.AddTransient<PenaltyTransaction>();
 
