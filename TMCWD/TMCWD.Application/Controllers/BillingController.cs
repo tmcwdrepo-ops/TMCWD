@@ -85,19 +85,21 @@ namespace TMCWD.Application.Controllers
                 };
                 return View("BillAdjustment", model);
             }
+            return View("BillAdjustment");
+        }
 
         public IActionResult Index() => View();
         public IActionResult PenaltyCharging() => View();
         public IActionResult Penalty() => View();
 
         [HttpGet]
-        public async Task<IActionResult> GetBillByBillPeriod(DateTime billPeriod)
+        public async Task<IActionResult> GetBillByBillPeriod(DateTime billPeriod) { 
             // TODO: save to database
             TempData["SuccessMessage"] = "Bill adjustment submitted successfully.";
             return RedirectToAction(nameof(BillAdjustment));
         }
 
-        public IActionResult OtherCharges()
+        public async  Task<IActionResult> OtherCharges(DateTime billPeriod)
         {
             var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
             var matching = allBillings.Where(b => b.BillingPeriod.Date == billPeriod.Date).ToList();
@@ -130,7 +132,6 @@ namespace TMCWD.Application.Controllers
 
         public class WaivePenaltiesRequest
         {
-            return Ok();
             public List<string> BillingReferenceIds { get; set; } = new();
         }
 
