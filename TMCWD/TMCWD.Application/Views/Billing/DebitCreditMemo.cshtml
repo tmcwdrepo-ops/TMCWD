@@ -1,0 +1,134 @@
+@{
+    Layout = "_insideLayout";
+    ViewData["PageTitle"] = "Debit/Credit Memo";
+    ViewData["ActivePage"] = "debit-credit-memo";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/debit-credit-memo.css"/>
+}
+
+@section Scripts {
+    <script src="~/js/dcm-sample-data.js"></script>
+    <script src="~/js/debit-credit-memo.js"></script>
+}
+
+<div class="dcm-container">
+    <div class="dcm-card">
+        <div class="dcm-header">
+            <h3 class="dcm-title">Debit/Credit Transaction Module</h3>
+        </div>
+        
+        <form class="dcm-form" id="dcmForm">
+            <!-- Row 1: Account Number | Account Name -->
+            <div class="dcm-row">
+                <div class="dcm-field">
+                    <label class="dcm-label">Account Number</label>
+                    <div class="dcm-input-with-icon dcm-search-container">
+                        <input type="text" class="dcm-input" id="dcmAccountNumber" placeholder="Enter account number or name" autocomplete="off">
+                        <svg class="dcm-input-icon" viewBox="0 0 16 16" fill="none">
+                            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.4"/>
+                            <path d="M11 11l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                        <div class="dcm-search-dropdown" id="dcmSearchDropdown"></div>
+                    </div>
+                </div>
+                <div class="dcm-field">
+                    <label class="dcm-label">Account Name</label>
+                    <input type="text" class="dcm-input dcm-input-readonly" id="dcmAccountName" placeholder="Account name will appear here" readonly>
+                </div>
+            </div>
+
+            <!-- Divider Line -->
+            <div class="dcm-divider"></div>
+
+            <!-- Section Header: Adjustment Details -->
+            <div class="dcm-section-header">
+                <h4 class="dcm-section-title">Adjustment Details</h4>
+            </div>
+
+            <!-- Row 2: DCM Type | Memo Type -->
+            <div class="dcm-row">
+                <div class="dcm-field">
+                    <label class="dcm-label">DCM Type</label>
+                    <div class="dcm-input-with-icon dcm-search-container">
+                        <input type="text" class="dcm-input" id="dcmType" placeholder="Select or search DCM type" autocomplete="off">
+                        <svg class="dcm-input-icon" viewBox="0 0 16 16" fill="none">
+                            <path d="M6 9l4-4 4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <div class="dcm-search-dropdown" id="dcmTypeDropdown"></div>
+                    </div>
+                </div>
+                <div class="dcm-field">
+                    <label class="dcm-label">Memo Type</label>
+                    <div class="dcm-toggle-group">
+                        <label class="dcm-toggle-option">
+                            <input type="radio" name="dcmMemoType" value="debit" checked>
+                            <span class="dcm-toggle-button">Debit Memo</span>
+                        </label>
+                        <label class="dcm-toggle-option">
+                            <input type="radio" name="dcmMemoType" value="credit">
+                            <span class="dcm-toggle-button">Credit Memo</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: DCM Date | Bill Month Basis -->
+            <div class="dcm-row">
+                <div class="dcm-field">
+                    <label class="dcm-label">DCM Date</label>
+                    <div class="dcm-input-with-icon">
+                        <input type="date" class="dcm-input" id="dcmDate">
+                        <svg class="dcm-input-icon" viewBox="0 0 16 16" fill="none">
+                            <rect x="2" y="3" width="12" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/>
+                            <path d="M6 1v4M10 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="dcm-field">
+                    <label class="dcm-label">Bill Month Basis</label>
+                    <div class="dcm-input-with-icon">
+                        <input type="date" class="dcm-input" id="dcmBillMonthBasis">
+                        <svg class="dcm-input-icon" viewBox="0 0 16 16" fill="none">
+                            <rect x="2" y="3" width="12" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/>
+                            <path d="M6 1v4M10 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 4: Amount | (empty) -->
+            <div class="dcm-row">
+                <div class="dcm-field">
+                    <label class="dcm-label">Amount</label>
+                    <input type="number" class="dcm-input" id="dcmAmount" placeholder="0.00" min="0" step="0.01">
+                </div>
+                <div class="dcm-field">
+                    <!-- Reserved for future field -->
+                </div>
+            </div>
+
+            <!-- Row 5: Explanation | Remarks -->
+            <div class="dcm-row">
+                <div class="dcm-field">
+                    <label class="dcm-label">Explanation</label>
+                    <textarea class="dcm-input dcm-textarea" id="dcmExplanation" rows="3" placeholder="Enter explanation"></textarea>
+                </div>
+                <div class="dcm-field">
+                    <label class="dcm-label">Remarks</label>
+                    <textarea class="dcm-input dcm-textarea" id="dcmRemarks" rows="3" placeholder="Enter remarks (optional)"></textarea>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="dcm-actions">
+                <button type="button" class="dcm-btn dcm-btn-secondary" id="dcmResetBtn">Reset</button>
+                <button type="submit" class="dcm-btn dcm-btn-primary" id="dcmSubmitBtn">Submit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast Notification Container -->
+<div class="toast-container" id="toastContainer"></div>
