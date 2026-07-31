@@ -53,7 +53,7 @@ namespace TMCWD.Application.Controllers
         public async Task<IActionResult> CreateReadingSheet(int zone, int book, [FromBody] ReadingSheet readingSheet)
         {
 
-            ReadingSheet savedSheet = new();
+            ReadingSheet savedSheet = new(); 
 
             try
             {
