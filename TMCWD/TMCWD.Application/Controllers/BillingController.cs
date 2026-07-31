@@ -67,6 +67,8 @@ namespace TMCWD.Application.Controllers
         public IActionResult PenaltyCharging() => View();
         public IActionResult Penalty() => View();
 
+        public IActionResult Reading() => View("Reading");
+
         [HttpGet]
         public async Task<IActionResult> GetBillByBillPeriod(DateTime billPeriod) { 
             // TODO: save to database
@@ -74,9 +76,9 @@ namespace TMCWD.Application.Controllers
             return RedirectToAction(nameof(BillAdjustment));
         }
 
-        public async  Task<IActionResult> OtherCharges(DateTime billPeriod)
+        public IActionResult OtherCharges()
         {
-            return Ok();
+            return View("OtherCharges");
         }
         public IActionResult ReadingSheet(DateTime billPeriod)
         {
@@ -167,7 +169,7 @@ namespace TMCWD.Application.Controllers
 
         public IActionResult DebitCreditMemo()
         {
-            return View();
+            return View("DebitCreditMemo");
         }
 
         #endregion
