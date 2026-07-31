@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Net;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 
@@ -92,6 +93,12 @@ namespace TMCWD.Data.Services
         {
             var reading = await _context.Readings.Where(x => x.AccountId == accountId).OrderByDescending(x => x.BillingPeriod).Skip(1).Take(1).FirstOrDefaultAsync();
             return reading;
+        }
+
+        public async Task<List<Reading>> SaveRange(List<Reading> readings)
+        {
+            _context.Readings.AddRange([.. readings]);
+            return readings;
         }
 
         #endregion

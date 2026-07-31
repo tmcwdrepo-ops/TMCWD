@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -9,9 +9,9 @@ namespace TMCWD.Model.Billing.Interfaces
 
         public int Id { get; set; }
 
-        public int Name { get; set; }
+        public string Name { get; set; }
 
-        public int UserId { get; set; }
+        public int ReaderId { get; set; }
 
         public int ZoneBookId { get; set; }
 
@@ -22,6 +22,8 @@ namespace TMCWD.Model.Billing.Interfaces
         public int UpdatedBy { get; set; }
 
         public DateTime DateUpdated { get; set; }
+
+        public bool IsActive { get; set; }
 
     }
 }

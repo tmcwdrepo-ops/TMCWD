@@ -8,7 +8,6 @@ using TMCWD.Utility.Generic;
 using TMCWD.Utility.Encryption;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text;
-using System.Net.WebSockets;
 using TMCWD.Services;
 
 namespace TMCWD.Administration
@@ -135,7 +134,7 @@ namespace TMCWD.Administration
 
         public async Task<List<User>> GetUsersByRole(UserRole role)
         {
-            var response = await _webService.Client.GetAsync($"api/User/GetUsersByClient/{(int)role}");
+            var response = await _webService.Client.GetAsync($"api/Users/GetUsersByRole/{(int)role}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonStringToUsers(data);

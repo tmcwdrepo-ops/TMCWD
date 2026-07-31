@@ -19,6 +19,8 @@ namespace TMCWD.Model.Billing.Interfaces
 
         public DateTime BillingPeriod { get; set; }
 
+        public bool IsCompleted { get; set; }
+
         public int CreatedBy { get; set; }
 
         public DateTime DateCreated { get; set; }

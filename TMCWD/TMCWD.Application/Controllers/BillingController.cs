@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using TMCWD.Application.Models;
 using TMCWD.Billing;
+using TMCWD.CustomerSupport;
+using TMCWD.Model.Administrator;
 using TMCWD.Services;
 
 namespace TMCWD.Application.Controllers
@@ -9,34 +11,26 @@ namespace TMCWD.Application.Controllers
     public class BillingController : Controller
     {
 
-        #region fields
-
-        //private readonly AuthenticatedUserService _user;
-        //private readonly BillingTransaction _billTransaction;
-
-        #endregion
-
         #region constructors
 
-        //public BillingController(AuthenticatedUserService user, BillingTransaction billTransaction)
-        //{
-        //    _user = user;
-        //    _billTransaction = billTransaction;
-        //}
-
-        public BillingController()
-        {
-            //_user = user;
-            //_billTransaction = billTransaction;
-        }
+        private readonly AuthenticatedUserService _user;
+        private readonly BillingTransaction _billingTrans;
+        private readonly PenaltyTransaction _penaltyTrans;
+        private readonly AccountTransaction _accountTrans;
 
         #endregion
 
         #region methods
 
-        public IActionResult ReadingSheet()
+        public BillingController(AuthenticatedUserService user,
+            BillingTransaction billingTrans,
+            PenaltyTransaction penaltyTrans,
+            AccountTransaction accountTrans)
         {
-            return View();
+            _user = user;
+            _billingTrans = billingTrans;
+            _penaltyTrans = penaltyTrans;
+            _accountTrans = accountTrans;
         }
 
         public IActionResult BillAdjustment()
@@ -52,31 +46,30 @@ namespace TMCWD.Application.Controllers
                 },
                 RemarksOptions = new List<SelectListItem>
                 {
-                    new SelectListItem { Value = "Meter Error", Text = "Meter Error" },
+                    new SelectListItem { Value = "Meter Error",   Text = "Meter Error" },
                     new SelectListItem { Value = "Reading Error", Text = "Reading Error" },
-                    new SelectListItem { Value = "System Error", Text = "System Error" },
-                    new SelectListItem { Value = "Other", Text = "Other" }
+                    new SelectListItem { Value = "System Error",  Text = "System Error" },
+                    new SelectListItem { Value = "Other",         Text = "Other" }
                 },
                 AdjustmentLines = new List<AdjustmentLineItem>
                 {
-                    new AdjustmentLineItem { Key = "usage", Label = "Usage", HasAdjustmentColumn = true, IsChecked = false },
-                    new AdjustmentLineItem { Key = "currentBill", Label = "Current Bill", HasAdjustmentColumn = true, IsChecked = false },
-                    new AdjustmentLineItem { Key = "penalty", Label = "Penalty", HasAdjustmentColumn = true, IsChecked = false },
-                    new AdjustmentLineItem { Key = "present", Label = "Present", HasAdjustmentColumn = false, IsChecked = false },
-                    new AdjustmentLineItem { Key = "previous", Label = "Previous", HasAdjustmentColumn = false, IsChecked = false }
+                    new AdjustmentLineItem { Key = "usage",       Label = "Usage",        HasAdjustmentColumn = true,  IsChecked = false },
+                    new AdjustmentLineItem { Key = "currentBill", Label = "Current Bill", HasAdjustmentColumn = true,  IsChecked = false },
+                    new AdjustmentLineItem { Key = "penalty",     Label = "Penalty",      HasAdjustmentColumn = true,  IsChecked = false },
+                    new AdjustmentLineItem { Key = "present",     Label = "Present",      HasAdjustmentColumn = false, IsChecked = false },
+                    new AdjustmentLineItem { Key = "previous",    Label = "Previous",     HasAdjustmentColumn = false, IsChecked = false }
                 }
             };
-
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SubmitAdjustment(BillAdjustmentViewModel model)
+        public IActionResult SubmitAdjustment(BillAdjustmentViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                // Repopulate dropdowns
+                model.BamDate ??= DateTime.Today;
                 model.MeterReaders = new List<SelectListItem>
                 {
                     new SelectListItem { Value = "MR001", Text = "Juan Dela Cruz" },
@@ -85,33 +78,79 @@ namespace TMCWD.Application.Controllers
                 };
                 model.RemarksOptions = new List<SelectListItem>
                 {
-                    new SelectListItem { Value = "Meter Error", Text = "Meter Error" },
+                    new SelectListItem { Value = "Meter Error",   Text = "Meter Error" },
                     new SelectListItem { Value = "Reading Error", Text = "Reading Error" },
-                    new SelectListItem { Value = "System Error", Text = "System Error" },
-                    new SelectListItem { Value = "Other", Text = "Other" }
+                    new SelectListItem { Value = "System Error",  Text = "System Error" },
+                    new SelectListItem { Value = "Other",         Text = "Other" }
                 };
                 return View("BillAdjustment", model);
             }
+            return View("BillAdjustment");
+        }
 
-            // TODO: Process the adjustment data
-            // Save to database, etc.
+        public IActionResult Index() => View();
+        public IActionResult PenaltyCharging() => View();
+        public IActionResult Penalty() => View();
 
+        [HttpGet]
+        public async Task<IActionResult> GetBillByBillPeriod(DateTime billPeriod) { 
+            // TODO: save to database
             TempData["SuccessMessage"] = "Bill adjustment submitted successfully.";
             return RedirectToAction(nameof(BillAdjustment));
         }
 
-        public async Task<IActionResult> GetBillById(int id)
+        public async  Task<IActionResult> OtherCharges(DateTime billPeriod)
         {
-            
-            return Ok();
+            var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
+            var matching = allBillings.Where(b => b.BillingPeriod.Date == billPeriod.Date).ToList();
+
+            var result = new List<object>();
+
+            foreach (var billing in matching)
+            {
+                var penalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.Penalty>();
+                var activePenalties = penalties.Where(p => p.PaymentStatus != PaymentStatus.Waived).ToList();
+
+                if (!activePenalties.Any()) continue; // only accounts with active penalty records
+
+                if(billing.AccountId <= 0) continue;
+                var account = await _accountTrans.Get((int)billing.AccountId);
+
+                result.Add(new
+                {
+                    billingReferenceId = billing.BillingReferenceId,
+                    accountNumber = account?.AccountNumber ?? "—",
+                    usage = 0,          // not yet tracked — see note
+                    billAmount = billing.TotalBillAmount,
+                    discount = 0,       // not yet tracked — see note
+                    penalty = activePenalties.Sum(p => p.Amount)
+                });
+            }
+
+            return Ok(result);
         }
 
-        public async Task<IActionResult> GetBillByBillPeriod(DateTime billPeriod)
+        public class WaivePenaltiesRequest
         {
+            public List<string> BillingReferenceIds { get; set; } = new();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> WaivePenalties([FromBody] WaivePenaltiesRequest request)
+        {
+            foreach (var refId in request.BillingReferenceIds)
+            {
+                var penalties = await _penaltyTrans.GetByReference(refId) ?? new List<Model.Billing.Penalty>();
+                foreach (var penalty in penalties.Where(p => p.PaymentStatus != PaymentStatus.Waived))
+                {
+                    penalty.PaymentStatus = PaymentStatus.Waived;
+                    await _penaltyTrans.SaveUpdate(_user.User.Id, penalty);
+                }
+            }
+
             return Ok();
         }
 
         #endregion
-
     }
 }

@@ -1,0 +1,332 @@
+/* ============================================================
+   Other Charges — page styles
+   Extends reading-sheet.css. No variable redefinitions.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Shared field primitive
+   ------------------------------------------------------------ */
+
+.oc-label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-faint);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    white-space: nowrap;
+}
+
+.oc-input {
+    display: block;
+    width: 100%;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-panel-alt);
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-sans);
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color var(--transition-fast),
+                background-color 160ms ease,
+                box-shadow var(--transition-fast);
+}
+
+.oc-input::placeholder { color: var(--color-text-faint); }
+
+.oc-input:focus {
+    border-color: var(--color-blue);
+    background-color: var(--color-panel);
+    box-shadow: 0 0 0 3px var(--color-blue-soft);
+}
+
+.oc-input[readonly] {
+    background-color: var(--color-panel-alt);
+    color: var(--color-text-faint);
+    cursor: default;
+}
+
+.oc-input.oc-input-error { border-color: var(--color-red); }
+
+.oc-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23888' stroke-width='1.6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+    cursor: pointer;
+}
+
+.oc-input--amount { text-align: right; }
+
+/* "Other..." text input — hidden until selected */
+.oc-payable-other {
+    display: none;
+    margin-top: 5px;
+}
+
+.oc-payable-other.is-visible {
+    display: block;
+}
+
+.oc-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* ------------------------------------------------------------
+   Account bar — top section of the panel
+   ------------------------------------------------------------ */
+
+.oc-account-bar {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Fixed widths so both fields are the same size */
+.oc-account-bar .oc-field:nth-child(1),
+.oc-account-bar .oc-field:nth-child(2) {
+    width: 200px;
+    flex-shrink: 0;
+}
+
+/* Error sits below the input without pushing siblings */
+.oc-field-error {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: var(--color-red);
+    min-height: 16px;
+    margin-top: 3px;
+}
+
+.oc-total-due {
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+}
+
+.oc-total-due .oc-label { margin-bottom: 0; }
+
+.oc-total-due strong {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------
+   Entry bar — charge form row
+   ------------------------------------------------------------ */
+
+.oc-entry-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Section label at the top */
+.oc-entry-section-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: var(--color-text-dim);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: var(--space-sm);
+}
+
+.oc-entry-section-label svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    color: var(--color-blue);
+}
+
+/* Fields row */
+.oc-entry-fields {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+}
+
+/* Let charge type and particulars grow more */
+.oc-entry-fields .oc-field:nth-child(1) { flex: 1.4; }   /* charge type */
+.oc-entry-fields .oc-field:nth-child(2) { flex: 1; }      /* payable in  */
+.oc-entry-fields .oc-field:nth-child(3) { flex: 1.5; }    /* particulars */
+.oc-entry-fields .oc-field:nth-child(4) { flex: 0.8; }    /* amount      */
+
+/* Add button field — no grow, tight */
+.oc-field--btn {
+    flex: 0 0 auto;
+}
+
+.oc-field--btn .btn {
+    height: 34px;
+    border-radius: var(--radius-sm);
+    padding: 0 var(--space-md);
+    white-space: nowrap;
+}
+
+.oc-entry-error {
+    font-size: var(--font-size-xs);
+    color: var(--color-red);
+    min-height: 16px;
+    padding: 0 var(--space-md) var(--space-xs);
+}
+
+/* ------------------------------------------------------------
+   Table tweaks — JS-injected cell classes
+   ------------------------------------------------------------ */
+
+.oc-col-amount {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.oc-col-actions {
+    text-align: center;
+    width: 48px;
+}
+
+/* ------------------------------------------------------------
+   Sortable headers — matches reading-sheet.css sort icon style
+   ------------------------------------------------------------ */
+
+.oc-sortable { cursor: pointer; user-select: none; }
+
+.th-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.sort-icon {
+    width: 10px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--color-text-faint);
+    opacity: 0.5;
+    transition: opacity var(--transition-fast), color var(--transition-fast);
+}
+
+.sort-icon--active {
+    color: var(--color-blue);
+    opacity: 1;
+}
+
+.oc-sortable:hover .sort-icon {
+    opacity: 0.8;
+}
+
+/* ------------------------------------------------------------
+   Delete row button
+   ------------------------------------------------------------ */
+
+.oc-row-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-faint);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.oc-row-delete-btn:hover {
+    background: rgba(255, 69, 58, 0.10);
+    color: var(--color-red);
+}
+
+/* ------------------------------------------------------------
+   Empty state
+   ------------------------------------------------------------ */
+
+.oc-empty {
+    padding: var(--space-xl) var(--space-md);
+    text-align: center;
+    color: var(--color-text-faint);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-sans);
+}
+
+/* ------------------------------------------------------------
+   Pagination extras
+   ------------------------------------------------------------ */
+
+.oc-page-size {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.oc-page-size-select {
+    height: 28px;
+    padding: 0 var(--space-sm);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-panel-alt);
+    color: var(--color-text);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-sans);
+    cursor: pointer;
+    outline: none;
+}
+
+.oc-page-current {
+    min-width: 24px;
+    text-align: center;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-dim);
+    padding: 0 var(--space-xs);
+}
+
+/* ------------------------------------------------------------
+   Responsive
+   ------------------------------------------------------------ */
+
+@media (max-width: 860px) {
+    .oc-entry-fields {
+        flex-wrap: wrap;
+    }
+
+    .oc-entry-fields .oc-field { flex: 1 1 calc(50% - var(--space-sm)); }
+
+    .oc-field--btn {
+        flex: 1 1 100%;
+    }
+
+    .oc-field--btn .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 560px) {
+    .oc-account-bar { flex-wrap: wrap; }
+    .oc-account-bar .oc-field:nth-child(1),
+    .oc-account-bar .oc-field:nth-child(2) { width: 100%; }
+    .oc-total-due { margin-left: 0; align-items: flex-start; }
+
+    .oc-entry-fields .oc-field { flex: 1 1 100%; }
+}

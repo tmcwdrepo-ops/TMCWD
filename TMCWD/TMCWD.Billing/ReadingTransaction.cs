@@ -106,6 +106,24 @@ namespace TMCWD.Billing
             return ConvertJsonToReading(data);
         }
 
+        public async Task<Reading> SaveUpdate(int userId, Reading reading)
+        {
+            var content = JsonContent.Create(reading);
+            var response = await _service.Client.PostAsync($"api/Reading/SaveUpdate/{userId}", content);
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReading(data);
+        }
+
+        public async Task<List<Reading>> SaveRange(List<Reading> readings)
+        {
+            var content = JsonContent.Create(readings);
+            var response = await _service.Client.PostAsync("api/Reading/SaveRange", content);
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadings(data);
+        }
+
         #endregion
 
     }

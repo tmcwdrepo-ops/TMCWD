@@ -1,0 +1,517 @@
+/* ============================================================
+   present_reading.css — Present Reading Page Styles
+   Integrates with appshell.css variables and light/dark themes
+   ============================================================ */
+
+.pr-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--space-xs);
+}
+
+/* Header & Top Bar */
+.pr-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xs);
+}
+
+.pr-page-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.pr-btn-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #22a559;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 28px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(34, 165, 89, 0.25);
+  transition: background-color 150ms ease, transform 100ms ease, box-shadow 150ms ease;
+}
+
+.pr-btn-save:hover {
+  background-color: #1c8c4a;
+  box-shadow: 0 4px 10px rgba(34, 165, 89, 0.35);
+}
+
+.pr-btn-save:active {
+  transform: translateY(1px);
+}
+
+/* Form Panel Card */
+.pr-card {
+  background-color: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--space-lg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.pr-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: var(--space-md);
+}
+
+/* Grid Layout for Form Fields */
+.pr-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-md);
+  align-items: end;
+}
+
+/* Column Spans 1 through 12 */
+.pr-col-1  { grid-column: span 1; }
+.pr-col-2  { grid-column: span 2; }
+.pr-col-3  { grid-column: span 3; }
+.pr-col-4  { grid-column: span 4; }
+.pr-col-5  { grid-column: span 5; }
+.pr-col-6  { grid-column: span 6; }
+.pr-col-7  { grid-column: span 7; }
+.pr-col-8  { grid-column: span 8; }
+.pr-col-9  { grid-column: span 9; }
+.pr-col-10 { grid-column: span 10; }
+.pr-col-11 { grid-column: span 11; }
+.pr-col-12 { grid-column: span 12; }
+
+@media (max-width: 992px) {
+  .pr-col-1, .pr-col-2, .pr-col-3, .pr-col-4, 
+  .pr-col-5, .pr-col-6, .pr-col-7, .pr-col-8, 
+  .pr-col-9, .pr-col-10, .pr-col-11, .pr-col-12 {
+    grid-column: span 12;
+  }
+}
+
+/* Form Control Fields */
+.pr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.pr-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pr-input-wrap,
+.pr-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.pr-input,
+.pr-select {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--color-text);
+  background-color: var(--color-panel);
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.pr-input::placeholder {
+  color: var(--color-text-faint);
+  font-size: 13px;
+}
+
+.pr-input:focus,
+.pr-select:focus {
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 3px var(--color-blue-soft);
+}
+
+.pr-input[readonly] {
+  background-color: var(--color-panel-alt);
+  color: var(--color-text-dim);
+  cursor: not-allowed;
+}
+
+/* Date Input Custom Styling with Icon */
+.pr-input--date {
+  padding-right: 40px;
+  position: relative;
+}
+
+/* Hide native browser calendar icon while keeping the whole input box clickable for the datepicker */
+.pr-input--date::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.pr-icon-date {
+  position: absolute;
+  right: 12px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-dim);
+  pointer-events: none;
+}
+
+/* Select Dropdown Styling */
+.pr-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.pr-select-chevron {
+  position: absolute;
+  right: 12px;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-dim);
+  pointer-events: none;
+}
+
+/* Table Section */
+.pr-table-container {
+  margin-top: var(--space-sm);
+  background-color: var(--color-panel);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.pr-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.pr-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+/* Deep Navy Blue Header matching Inspiration UI */
+.pr-table thead tr {
+  background-color: #274c9e;
+  color: #ffffff;
+}
+
+.pr-table th {
+  padding: 14px 16px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.pr-table th:first-child {
+  border-top-left-radius: 8px;
+}
+
+.pr-table th:last-child {
+  border-top-right-radius: 8px;
+}
+
+.pr-table td {
+  padding: 12px 16px;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.pr-table tbody tr:hover {
+  background-color: var(--color-blue-hover);
+}
+
+.pr-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Empty State */
+.pr-table-empty {
+  padding: 40px var(--space-md);
+  text-align: center;
+  color: var(--color-text-dim);
+  font-size: 14px;
+}
+
+/* Pagination Footer */
+.pr-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  padding: 12px 16px;
+  background-color: var(--color-panel);
+  border-top: 1px solid var(--color-border);
+  font-size: 13px;
+  color: var(--color-text-dim);
+}
+
+.pr-pagination-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pr-select-sm {
+  height: 30px;
+  padding: 0 24px 0 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-panel);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.pr-pagination-info {
+  font-variant-numeric: tabular-nums;
+}
+
+.pr-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pr-btn-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.pr-btn-page:hover:not(:disabled) {
+  background-color: var(--color-blue-hover);
+  color: var(--color-text);
+}
+
+.pr-btn-page:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Badge tags for Rate Class */
+.pr-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: var(--color-blue-soft);
+  color: var(--color-blue);
+}
+
+/* ============================================================
+   Popup Modal Component for Notifications & Alerts
+   ============================================================ */
+.pr-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 200ms ease, visibility 200ms ease;
+}
+
+.pr-modal-backdrop.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.pr-modal-card {
+  background-color: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25), 0 10px 15px -5px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transform: scale(0.92) translateY(10px);
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pr-modal-backdrop.is-visible .pr-modal-card {
+  transform: scale(1) translateY(0);
+}
+
+.pr-modal-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.pr-modal-icon-wrap--success {
+  background-color: rgba(34, 165, 89, 0.15);
+  color: #22a559;
+}
+
+.pr-modal-icon-wrap--warning {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.pr-modal-icon-wrap--error {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.pr-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 8px 0;
+}
+
+.pr-modal-message {
+  font-size: 14px;
+  color: var(--color-text-dim);
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+}
+
+.pr-modal-btn-confirm {
+  width: 100%;
+  height: 42px;
+  background-color: #274c9e;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(39, 76, 158, 0.3);
+  transition: background-color 150ms ease, transform 100ms ease;
+}
+
+.pr-modal-btn-confirm:hover {
+  background-color: #1e3c7e;
+}
+
+.pr-modal-btn-confirm:active {
+  transform: translateY(1px);
+}
+
+/* ============================================================
+   Emphasize Writable Input Fields (Account Number & Present Reading)
+   ============================================================ */
+#accountNumber,
+#presentReading {
+  border: 2px solid var(--color-blue);
+  background-color: var(--color-panel);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(39, 76, 158, 0.05);
+}
+
+#accountNumber:focus,
+#presentReading:focus {
+  border-color: #1a3675;
+  box-shadow: 0 0 0 4px var(--color-blue-soft);
+}
+
+/* Make their labels bold and primary blue to stand out */
+.pr-field:has(#accountNumber) .pr-label,
+.pr-field:has(#presentReading) .pr-label {
+  color: var(--color-blue);
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Add a red asterisk or indicator dot to make it obvious they require manual input */
+.pr-field:has(#accountNumber) .pr-label::after,
+.pr-field:has(#presentReading) .pr-label::after {
+  content: "*";
+  color: #ef4444;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Enhance read-only input backgrounds so they recede more */
+.pr-input[readonly] {
+  background-color: var(--color-panel-alt);
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-dim);
+  opacity: 0.85;
+}
+
+/* clickable account links in table */
+.pr-table-acc-link {
+  color: var(--color-blue);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px dashed var(--color-blue-soft);
+  transition: color 150ms ease, border-color 150ms ease;
+  cursor: pointer;
+}
+
+.pr-table-acc-link:hover {
+  color: #1e3c7e;
+  border-bottom-color: #1e3c7e;
+}
+
+
+

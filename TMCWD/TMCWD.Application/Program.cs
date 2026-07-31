@@ -2,6 +2,7 @@ using TMCWD.Administration;
 using TMCWD.CustomerSupport;
 using TMCWD.Engineering;
 using TMCWD.Services;
+using TMCWD.Billing;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,8 +23,18 @@ builder.Services.AddTransient<ApplicationLoginTransaction>();
 builder.Services.AddTransient<JobOrderTransaction>();
 builder.Services.AddTransient<ApprovalHistoryTransaction>();
 builder.Services.AddTransient<RequestFileTransaction>();
+
+builder.Services.AddTransient<BillingTransaction>();
+builder.Services.AddTransient<PenaltyTransaction>();
+
+builder.Services.AddTransient<ReadingSheetTransaction>();
+builder.Services.AddTransient<ZoneBookTransaction>();
+builder.Services.AddTransient<ReadingTransaction>();
+builder.Services.AddTransient<ReadingSheetTemplateTransaction>();
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddDistributedMemoryCache();
+
 
 builder.Services.AddHttpClient("TmcWdApi", client =>
 {
