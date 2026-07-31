@@ -28,9 +28,10 @@ builder.Services.AddTransient<ReadingTransaction>();
 builder.Services.AddTransient<ReadingSheetTransaction>();
 builder.Services.AddTransient<ZoneBookTransaction>();
 builder.Services.AddTransient<BillingTransaction>();
+builder.Services.AddTransient<PenaltyTransaction>();
+builder.Services.AddTransient<ReadingSheetTemplateTransaction>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddDistributedMemoryCache();
-
 
 builder.Services.AddHttpClient("TmcWdApi", client =>
 {

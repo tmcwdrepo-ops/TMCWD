@@ -1,16 +1,16 @@
-    using Microsoft.EntityFrameworkCore;
-    using MySqlConnector;
-    using TMCWD.Data.Context;
-    using TMCWD.Data.Services;
-    using TMCWD.Model.Billing.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
+using TMCWD.Data.Context;
+using TMCWD.Data.Services;
+using TMCWD.Model.Billing.Interfaces;
 
-    var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
-    // Add services to the container.
+// Add services to the container.
 
-    builder.Services.AddControllers();
-    // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-    builder.Services.AddOpenApi();
+builder.Services.AddControllers();
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<UserDbContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
@@ -41,16 +41,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IReadingService, ReadingService>();
 builder.Services.AddScoped<IReadingSheetService, ReadingSheetService>();
 builder.Services.AddScoped<IZoneBookService, ZoneBookService>();
-
-    builder.Services.AddScoped<IZoneBookService, ZoneBookService>();
-    builder.Services.AddScoped<IReadingSheetTemplateService, ReadingSheetTemplateService>();
-    builder.Services.AddScoped<IChargeTypeService, ChargeTypeService>();
-    builder.Services.AddScoped<IPenaltyService, PenaltyService>();
-    builder.Services.AddScoped<IOtherChargeService, OtherChargeService>();
-    builder.Services.AddScoped<IBillingAdjustmentService, BillingAdjustmentService>();
-    builder.Services.AddScoped<IAdvancePaymentService, AdvancePaymentService>();
-    builder.Services.AddScoped<IPaymentCheckService, PaymentCheckService>();
-    builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IReadingSheetTemplateService, ReadingSheetTemplateService>();
 
     builder.Services.AddEndpointsApiExplorer();
     var app = builder.Build();

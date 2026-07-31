@@ -366,13 +366,13 @@ if (crScope) {
    Phase 5 — Action buttons + toast
    ============================================================ */
 
-var crLoadAccountsBtn  = document.getElementById('crLoadAccountsBtn');
+var crLoadAccountsBtn   = document.getElementById('crLoadAccountsBtn');
 var crCreateTemplateBtn = document.getElementById('crCreateTemplateBtn');
-var crSaveBtn          = document.getElementById('crSaveBtn');
+var crSaveBtn           = document.getElementById('crSaveBtn');
 var crDeleteTemplateBtn = document.getElementById('crDeleteTemplateBtn');
-var crEditTemplateBtn  = document.getElementById('crEditTemplateBtn');
-var crTemplateActions  = document.getElementById('crTemplateActions');
-var crToast            = document.getElementById('crToast');
+var crEditTemplateBtn   = document.getElementById('crEditTemplateBtn');
+var crTemplateActions   = document.getElementById('crTemplateActions');
+var crToast             = document.getElementById('crToast');
 
 var crToastTimer = null;
 
@@ -432,7 +432,7 @@ if (crTemplateSelect) {
 
 /* ============================================================
    Phase 6 — Real Data
-   ============================================================ */
+=============================================================== */
 
 function loadCrAccounts() {
     var zone = (document.getElementById('crZone') || {}).value || '';
@@ -441,11 +441,12 @@ function loadCrAccounts() {
     var from = parseInt((document.getElementById('crFromSeq') || {}).value, 10) || 0;
     var to = parseInt((document.getElementById('crToSeq') || {}).value, 10) || 0;
 
-var ACCOUNTS = [];
+    var ACCOUNTS = [];
 
-var crTablePanel  = document.getElementById('crTablePanel');
-var crAccountsTbody = document.getElementById('crAccountsTbody');
-var crTableEmpty  = document.getElementById('crTableEmpty');
+    var crTablePanel = document.getElementById('crTablePanel');
+    var crAccountsTbody = document.getElementById('crAccountsTbody');
+    var crTableEmpty = document.getElementById('crTableEmpty');
+}
 
 /**
  * Filter MOCK_ACCOUNTS by zone, book, and scope.
@@ -469,7 +470,7 @@ async function filterAccounts(zone, book, scope, fromSeq, toSeq) {
     }).then(result => {
         return result;
     });
-    console.log('Customers:', customers);
+    
     return customers.filter(function (a) {
         if ((zone && a.zone == zone) && (book && a.book == book)) return true;
         if (scope === 'unbilled' && !a.billed) return true;
@@ -617,9 +618,11 @@ if (crLoadAccountsBtn) {
       setLoadAccountsBtnState(panel.hidden ? 'show' : 'hide');
     }
   });
-}/* ============================================================
+}
+
+/* ============================================================
    Phase 7 — Pagination
-   ============================================================ */
+============================================================ */
 
 var CR_PAGE_SIZE = 4;
 
@@ -716,7 +719,6 @@ function renderCrTableRows(rows) {
 
 /* Override Phase 6's renderAccountsTable to use pagination */
 renderAccountsTable = function (accounts) {
-    console.log('Accounts:', accounts);
   crFilteredAccounts = accounts;
   crCurrentPage      = 1;
 
@@ -1013,7 +1015,8 @@ document.addEventListener('click', async function (e) {
 });
 
 var _origClose = closeCreateModal;
-closeCreateModal = function () {
+
+var closeCreateModal = function () {
     closeTemplatesDropdown();
     crAccountsLoaded = false;
     var panel = document.getElementById('crTablePanel');

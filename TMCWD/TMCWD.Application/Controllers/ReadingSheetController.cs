@@ -20,6 +20,7 @@ namespace TMCWD.Application.Controllers
         private readonly UserTransaction _userTrans;
         private readonly AccountTransaction _accountTransaction;
         private readonly ReadingTransaction _readingTransaction;
+        private readonly ReadingSheetTemplateTransaction _readingSheetTemplateTrans;
 
         #endregion
 
@@ -30,7 +31,8 @@ namespace TMCWD.Application.Controllers
             UserTransaction userTrans,
             ZoneBookTransaction zoneBookTrans,
             AccountTransaction accountTransaction,
-            ReadingTransaction readingTransaction)
+            ReadingTransaction readingTransaction,
+            ReadingSheetTemplateTransaction readingSheetTemplateTrans)
         {
             _user = user;
             _readingSheetTrans = readingSheetTrans;
@@ -38,6 +40,7 @@ namespace TMCWD.Application.Controllers
             _zoneBookTrans = zoneBookTrans;
             _accountTransaction = accountTransaction;
             _readingTransaction = readingTransaction;
+            _readingSheetTemplateTrans = readingSheetTemplateTrans;
         }
 
         #endregion

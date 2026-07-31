@@ -1292,7 +1292,7 @@ async function initReadingSheetPage() {
 
   // if (typeof READING_SHEET_SAMPLE_DATA !== 'undefined') {
   //   readingSheetState.rows = READING_SHEET_SAMPLE_DATA.slice();
-    //   }
+  // }
 
   const READING_SHEETS = await loadReadingSheets();
 
