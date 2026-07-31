@@ -75,6 +75,24 @@ namespace TMCWD.Data.Controllers
 
         }
 
+        [HttpGet("GetByReadingId/{readingId}")]
+        public async Task<IActionResult> GetByReadingId(int readingId)
+        {
+            var billings = await _billingService.GetByReadingId(readingId);
+            if (billings == null) return NotFound();
+            return Ok(billings);
+        }
+
+        [HttpGet("GetByReadings")]
+        public async Task<IActionResult> GetByReadings([FromRoute] int[] ids)
+        {
+            var billings = await _billingService.GetByReadings(ids);
+            if (billings == null || !billings.Any()) return NotFound();
+            return Ok(billings);
+        }
+
+
+
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<IActionResult> SaveUpdate(int userId, Billing billing)
         {

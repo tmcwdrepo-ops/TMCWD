@@ -17,6 +17,10 @@ namespace TMCWD.Data.Services
 
         public Task<Billing> GetByPaymentTransactionId(string paymentTransactionId);
 
+        public Task<Billing> GetByReadingId(int readingId);
+
+        public Task<List<Billing>> GetByReadings(int[] readingIds);
+
         public Task<Billing> SaveUpdate(int userId, Billing billing);
 
     }

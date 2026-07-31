@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Principal;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
@@ -8,12 +8,22 @@ namespace TMCWD.Data.Services
     public class AccountService : IAccountService
     {
 
+        #region fields
+
         private readonly UserDbContext _dbContext;
+
+        #endregion
+
+        #region ctor
 
         public AccountService(UserDbContext context)
         {
             _dbContext = context;
         }
+
+        #endregion
+
+        #region methods
 
         public async Task<Account?> Get(int id)
         {
@@ -66,7 +76,7 @@ namespace TMCWD.Data.Services
             return await accounts.ToListAsync();
         }
 
-        public async Task<List<Account>> GetByZoneAndBook(int zone, int book)
+        public async Task<IEnumerable<Account>> GetByZoneAndBook(int zone, int book)
         {
             //var accounts = _dbContext.Accounts.Where(x => x.Zone == zone && x.Book == book);
             var accts = from zoneBooks in _dbContext.ZoneBooks
@@ -76,11 +86,23 @@ namespace TMCWD.Data.Services
             return await accts.ToListAsync();
         }
 
-        public async Task<List<Account>> GetAccountsByZoneBookId(int zoneBookId)
+        public async Task<IEnumerable<Account>> GetByZoneBookId(int zoneBookId)
         {
             var accounts = await _dbContext.Accounts.Where(x => x.ZoneBookId == zoneBookId).ToListAsync();
             return accounts;
         }
 
+        public async Task<IEnumerable<Account>> GetByZoneBookAndSequence(int zone, int book, int seqFrom, int seqTo)
+        {
+            var data = from zoneBooks in _dbContext.ZoneBooks
+                       join accounts in _dbContext.Accounts on zoneBooks.Id equals accounts.ZoneBookId
+                       where zoneBooks.Zone == zone && zoneBooks.Book == book && 
+                       (accounts.Sequence >= seqFrom || seqFrom == 0) &&
+                       (accounts.Sequence <= seqTo || seqTo == 0)
+                       select accounts;
+            return await data.ToListAsync();
+        }
+
+        #endregion
     }
 }

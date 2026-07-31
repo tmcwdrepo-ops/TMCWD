@@ -1,4 +1,4 @@
-﻿public enum UserRole
+public enum UserRole
 {
     SuperAdmin = 1,
     CustomerRepresentative = 2,
@@ -107,4 +107,11 @@ public enum PaymentMethod
 public enum GatewayType
 {
     GCash = 1
-}   
+}
+
+public enum ReadingStatus
+{
+    InProgress = 1,
+    Completed = 2,
+    Deleted = 3
+}

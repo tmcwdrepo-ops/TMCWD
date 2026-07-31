@@ -21,11 +21,29 @@ namespace TMCWD.Model.Billing
         [DisplayName("Billing Date")]
         public DateTime BillingDate { get; set; }
 
+        [DisplayName("Due Date")]
+        public DateTime DueDate { get; set; }
+
+        [DisplayName("Disconnection Date")]
+        public DateTime DisconnectionDate { get; set; }
+
+        [DisplayName("Billing Period Start")]
+        public DateTime BillingPeriodStart { get; set; }
+
         [DisplayName("Zone Book Id")]
         public int ZoneBookId { get; set; }
 
+        [DisplayName("Sequence From")]
+        public int SequenceFrom { get; set; }
+
+        [DisplayName("Sequence To")]
+        public int SequenceTo { get; set; }
+
         [DisplayName("Assigned To")]
         public int AssignedTo { get; set; }
+
+        [DisplayName("Status")]
+        public ReadingStatus Status { get; set; }
 
         [DisplayName("Created By")]
         public int CreatedBy { get; set; }

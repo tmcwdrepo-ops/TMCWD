@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using System.Security.Cryptography.X509Certificates;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
@@ -10,18 +11,28 @@ namespace TMCWD.Data.Controllers
     public class ReadingSheetController : Controller
     {
 
+        #region fields
+
         private readonly IReadingSheetService _readingSheetService;
+
+        #endregion
+
+        #region ctor
 
         public ReadingSheetController(IReadingSheetService readingSheetService)
         {
             _readingSheetService = readingSheetService;
         }
 
+        #endregion
+
+        #region methods
+
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
             var readingSheet = await _readingSheetService.Get(id);
-            if(readingSheet == null) return NotFound();
+            if (readingSheet == null) return NotFound();
             return Ok(readingSheet);
         }
 
@@ -29,7 +40,7 @@ namespace TMCWD.Data.Controllers
         public async Task<IActionResult> GetAll()
         {
             var readingSheets = await _readingSheetService.GetAll();
-            if (readingSheets == null || !readingSheets.Any()) return NotFound();
+            if(readingSheets == null || !readingSheets.Any()) return NotFound();
             return Ok(readingSheets);
         }
 
@@ -57,6 +68,14 @@ namespace TMCWD.Data.Controllers
             return Ok(readingSheets);
         }
 
+        [HttpGet("GetByZoneBookId/{zoneBookId}")]
+        public async Task<IActionResult> GetByZoneBookId(int zoneBookId)
+        {
+            var readingSheets = await _readingSheetService.GetByZoneBookId(zoneBookId);
+            if (readingSheets == null || !readingSheets.Any()) return NotFound();
+            return Ok(readingSheets);
+        }
+
         [HttpGet("GetByBillingDate/{zone}/{book}/{billingDate}")]
         public async Task<IActionResult> GetByBillingDate(int zone, int book, DateTime billingDate)
         {
@@ -65,20 +84,57 @@ namespace TMCWD.Data.Controllers
             return Ok(readingSheet);
         }
 
-        [HttpGet("SaveUpdate/{userId}")]
+        [HttpGet("GetByBillingPeriodStart/{zone}/{book}/{billingPeriodStart}")]
+        public async Task<IActionResult> GetByBillingPeriodStart(int zone, int book, DateTime billingPeriodStart)
+        {
+            var readingSheet = await _readingSheetService.GetByBillingPeriodStart(zone, book, billingPeriodStart);
+            if (readingSheet == null) return NotFound();
+            return Ok(readingSheet);
+        }
+
+        [HttpGet("GetCurrentByAssignedTo/{zone}/{book}/{assignedTo}")]
+        public async Task<IActionResult> GetCurrentByAssignedTo(int zone, int book, int assignedTo)
+        {
+            var readingSheet = await _readingSheetService.GetCurrentByAssignedTo(zone, book, assignedTo);
+            if (readingSheet == null) return NotFound();
+            return Ok(readingSheet);
+
+        }
+
+        [HttpGet("GetByBillingDateAndAssignedTo/{zone}/{book}/{billingDate}/{assignedTo}")]
+        public async Task<IActionResult> GetByBillingDateAndAssignedTo(int zone, int book, DateTime billingDate, int assignedTo)
+        {
+            var sheet = await _readingSheetService.GetByBillingDateAndAssignedTo(zone, book, billingDate, assignedTo);
+            if (sheet == null) return NotFound();
+            return Ok(sheet);
+        }
+
+        [HttpPost("SaveUpdate/{userId}")]
         public async Task<IActionResult> SaveUpdate(int userId, ReadingSheet readingSheet)
         {
             var savedReadingSheet = await _readingSheetService.SaveUpdate(userId, readingSheet);
-            return Ok(savedReadingSheet);
-        }
-
-        [HttpGet("GetCurrentByAssignedTo/{assignedTo}")]
-        public async Task<IActionResult> GetCurrentByAssignedTo(int assignedTo)
-        {
-            var readingSheet = await _readingSheetService.GetCurrentByAssignedTo(assignedTo);
-            if(readingSheet == null) return NotFound();
             return Ok(readingSheet);
         }
+
+        [HttpGet("GetRangeReadingSheets")]
+        public async Task<IActionResult> GetRangeReadingSheets([FromQuery] int[] ids)
+        {
+            var listIds = ids.AsEnumerable();
+            var readingSheets = await _readingSheetService.GetRangeReadingSheets(listIds);
+            if(readingSheets == null || !readingSheets.Any()) return NotFound();
+            return Ok(listIds);
+        }
+
+        [HttpPatch("UpdateReadingSheetsStatus/{userId}/{status}")]
+        public async Task<IActionResult> UpdateReadingSheetsStatus([FromQuery] int[] ids, int userId, int status)
+        {
+            var listIds = ids.AsEnumerable();
+            var readingSheets = await _readingSheetService.UpdateReadingSheetsStatus(listIds, userId, status);
+            if (readingSheets == null || !readingSheets.Any()) return NotFound();
+            return Ok(readingSheets);
+        } 
+
+        #endregion
 
     }
 }

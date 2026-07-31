@@ -12,9 +12,17 @@ namespace TMCWD.Model.Billing.Interfaces
 
         public DateTime BillingDate { get; set; }
 
+        public DateTime DueDate { get; set; }
+
+        public DateTime DisconnectionDate { get; set; }
+
+        public DateTime BillingPeriodStart { get; set; }
+
         public int ZoneBookId { get; set; }
 
         public int AssignedTo { get; set; }
+
+        public ReadingStatus Status { get; set; }
 
         public int CreatedBy { get; set; }
 

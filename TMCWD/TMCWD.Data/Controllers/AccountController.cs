@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Text;
@@ -83,14 +83,13 @@ namespace TMCWD.Data.Controllers
 
         }
 
-        [HttpGet("GetByZoneBookId/{zoneBookId}")]
-        public async Task<IActionResult> GetByZoneBookId(int zoneBookId)
+        [HttpGet("GetByZoneBookAndSequence/{zone}/{book}/{seqFrom}/{seqTo}")]
+        public async Task<IActionResult> GetByZoneBookAndSequence(int zone, int book, int seqFrom, int seqTo)
         {
-            var accounts = await _accountService.GetAccountsByZoneBookId(zoneBookId);
+            var accounts = await _accountService.GetByZoneBookAndSequence(zone, book, seqFrom, seqTo);
             if (accounts == null || !accounts.Any()) return NotFound();
             return Ok(accounts);
         }
-
     }
 
 }

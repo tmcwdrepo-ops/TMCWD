@@ -17,11 +17,29 @@ namespace TMCWD.Data.Entities
         [Column("BillingDate")]
         public DateTime BillingDate { get; set; }
 
+        [Column("DueDate")]
+        public DateTime DueDate { get; set; }
+
+        [Column("DisconnectionDate")]
+        public DateTime DisconnectionDate { get; set; }
+
+        [Column("BillingPeriodStart")]
+        public DateTime BillingPeriodStart { get; set; }
+
         [Required, Column("ZoneBookId")]
         public int ZoneBookId { get; set; }
 
+        [Column("SeqFrom")]
+        public int SequenceFrom { get; set; }
+
+        [Column("SeqTo")]
+        public int SequenceTo { get; set; }
+
         [Required, Column("AssignedTo")]
         public System.Int64 AssignedTo { get; set; }
+
+        [Column("Status")]
+        public int Status { get; set; }
 
         [Required, Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }

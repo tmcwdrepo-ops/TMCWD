@@ -24,17 +24,14 @@ namespace TMCWD.Model.Billing
         [DisplayName("Account Id")]
         public int AccountId { get; set; }
 
-        [DisplayName("Zone Book Id")]
-        public int ZoneBookId { get; set; }
-
-        [DisplayName("Render Id")]
-        public int ReaderId { get; set; }
+        [DisplayName("Reading Sheet Id")]
+        public int ReadingSheetId { get; set; }
 
         [DisplayName("Current Reading")]
         public decimal CurrentReading { get; set; }
 
-        [DisplayName("Billing Period")]
-        public DateTime BillingPeriod { get; set; }
+        [DisplayName("Status")]
+        public ReadingStatus Status { get; set; }
 
         [DisplayName("Completed")]
         public bool IsCompleted { get; set; }

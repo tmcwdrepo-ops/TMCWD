@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using TMCWD.Administration;
 using TMCWD.Billing;
@@ -18,9 +18,9 @@ namespace TMCWD.Application.Controllers
         private readonly ReadingSheetTransaction _readingSheetTrans;
         private readonly ZoneBookTransaction _zoneBookTrans;
         private readonly UserTransaction _userTrans;
+        private readonly AccountTransaction _accountTransaction;
         private readonly ReadingTransaction _readingTransaction;
-        private readonly ReadingSheetTemplateTransaction _readingSheetTemplateTrans;
-        private readonly AccountTransaction _accountTrans;
+
         #endregion
 
         #region constructors
@@ -29,17 +29,15 @@ namespace TMCWD.Application.Controllers
             ReadingSheetTransaction readingSheetTrans,
             UserTransaction userTrans,
             ZoneBookTransaction zoneBookTrans,
-            ReadingTransaction readingTransaction,
-            ReadingSheetTemplateTransaction readingSheetTemplateTrans,
-            AccountTransaction accountTrans)
+            AccountTransaction accountTransaction,
+            ReadingTransaction readingTransaction)
         {
             _user = user;
             _readingSheetTrans = readingSheetTrans;
             _userTrans = userTrans;
             _zoneBookTrans = zoneBookTrans;
+            _accountTransaction = accountTransaction;
             _readingTransaction = readingTransaction;
-            _readingSheetTemplateTrans = readingSheetTemplateTrans;
-            _accountTrans = accountTrans;
         }
 
         #endregion
@@ -51,8 +49,8 @@ namespace TMCWD.Application.Controllers
             return View();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> CreateReadingSheet(int zone, int book, int assignedTo, DateTime billingPeriod)
+        [HttpPost]
+        public async Task<IActionResult> CreateReadingSheet(int zone, int book, [FromBody] ReadingSheet readingSheet)
         {
 
             ReadingSheet savedSheet = new();
@@ -60,25 +58,42 @@ namespace TMCWD.Application.Controllers
             try
             {
 
-                var assignedToUser = await _userTrans.Get(assignedTo);
+                var assignedToUser = await _userTrans.Get(readingSheet.AssignedTo);
 
-                string name = $"{DateTime.Now.ToString("MM - dd - yyyy")} - {assignedToUser.Name}";
+                string name = $"{readingSheet.BillingDate.ToString("MM-dd-yyyy")} {assignedToUser.Name}";
+                readingSheet.Name = name ;
 
                 var zoneBook = await _zoneBookTrans.GetByZoneAndBook(zone, book);
 
                 if (zoneBook == null) return BadRequest();
 
-                ReadingSheet sheet = new ReadingSheet
-                {
-                    AssignedTo = assignedTo,
-                    BillingDate = billingPeriod,
-                    Name = name,
-                    CreatedBy = _user.User.Id,
-                    ZoneBookId = zoneBook.Id,
-                    DateCreated = DateTime.Now
-                };
+                readingSheet.DateCreated = DateTime.Now;
+                readingSheet.CreatedBy = _user.User.Id;
+                readingSheet.ZoneBookId = zoneBook.Id;
+                readingSheet.Status = ReadingStatus.InProgress;
 
-                savedSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, sheet);
+                savedSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, readingSheet);
+
+                if(savedSheet != null)
+                {
+                    var accounts = await _accountTransaction.GetByZoneBookAndSequence(zone, book, readingSheet.SequenceFrom, readingSheet.SequenceTo);
+                    var readings = from accts in accounts
+                                   select new Reading
+                                   {
+                                       AccountId = accts.Id,
+                                       CreatedBy = _user.User.Id,
+                                       CurrentReading = 0,
+                                       DateCreated = DateTime.Now,
+                                       DateUpdated = DateTime.Now,
+                                       Status = ReadingStatus.InProgress,
+                                       ReadingSheetId = savedSheet.Id,
+                                       UpdatedBy = _user.User.Id
+                                   };
+                    var savedReadings = await _readingTransaction.SaveMultiple([..readings]);
+                }
+
+                return Ok(savedSheet);
+
             }
             catch { }
 
@@ -86,9 +101,9 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCurrentByAssignedTo(int assignedTo)
+        public async Task<IActionResult> GetCurrentByAssignedTo(int zone, int book, int assignedTo)
         {
-            var sheet = await _readingSheetTrans.GetCurrentByAssignedTo(assignedTo);
+            var sheet = await _readingSheetTrans.GetCurrentByAssignedTo(zone, book, assignedTo);
             return Ok(sheet);
         }
 
@@ -158,54 +173,98 @@ namespace TMCWD.Application.Controllers
             return Ok(zoneBooks.Select(b => new { value = b.Book, label = "Book " + b.Book }));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> DeactivateReadingSheetTemplate(int id)
-        {
-            var existing = await _readingSheetTemplateTrans.Get(id);
-            if (existing == null) return NotFound();
-
-            existing.IsActive = false;
-
-            var saved = await _readingSheetTemplateTrans.SaveUpdate(_user.User.Id, existing);
-            return Ok(saved);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> SaveReadingSheetTemplate([FromBody] SaveTemplateRequest request)
-        {
-            var zoneBook = await _zoneBookTrans.GetByZoneAndBook(request.Zone, request.Book);
-            if (zoneBook == null) return BadRequest("Zone/Book combination not found.");
-
-            var template = new ReadingSheetTemplate
-            {
-                Id = request.Id,
-                Name = request.Name,
-                ReaderId = request.ReaderId,
-                ZoneBookId = zoneBook.Id,
-                CreatedBy = _user.User.Id
-            };
-
-            var saved = await _readingSheetTemplateTrans.SaveUpdate(_user.User.Id, template);
-            return Ok(saved);
-        }
-
         [HttpGet]
-        public async Task<IActionResult> GetAccountsByZoneAndBook(int zone, int book)
+        public async Task<IActionResult> GetAllReadingSheets()
         {
-            // NOTE: "Unbilled" scope isn't filterable yet — Account has no billed-status
-            // field. All accounts for this zone/book are returned regardless of scope;
-            // Ranged (sequence) filtering happens client-side in JS.
-            var accounts = await _accountTrans.GetByZoneAndBook(zone, book) ?? new List<Account>();
+            var readingSheets = await _readingSheetTrans.GetAll();
+            if(readingSheets == null) return NotFound();
+            var userIds = readingSheets.Select(x => x.AssignedTo).ToList();
+            var readingSheetIds = readingSheets.Select(x => x.Id).ToList();
+            var zoneBookIds = readingSheets.Select(x => x.ZoneBookId).ToList();
+            Task<List<User>> getUsersTask = _userTrans.GetUsersById(userIds);
+            Task<List<Reading>> getReadingsTask = _readingTransaction.GetRangeByReadingSheetIds(readingSheetIds);
+            Task<List<ZoneBook>> getZoneBooksTask = _zoneBookTrans.GetByIds(zoneBookIds);
 
-            var result = accounts.Select(a => new
-            {
-                accountNumber = a.AccountNumber,
-                address = a.FullAddress,
-                classification = a.Classification.ToString(),
-                sequence = a.Sequence
-            });
+            await Task.WhenAll(getUsersTask, getReadingsTask, getZoneBooksTask);
+            var users = getUsersTask.Result;
+            var readings = getReadingsTask.Result;
+            var zoneBooks = getZoneBooksTask.Result;
 
-            return Ok(result);
+            var readingSheetData = from rs in readingSheets
+                                   join usrs in users on rs.AssignedTo equals usrs.Id
+                                   join zb in zoneBooks on rs.ZoneBookId equals zb.Id
+                                   select new
+                                   {
+                                       Id = rs.Id,
+                                       MeterReader = usrs.Name,
+                                       BillingDate = rs.BillingDate,
+                                       Zone = $"ZN-{zb.Zone.ToString().PadLeft(2, '0')}",
+                                       ForPosting = GetTotalCompletedReadings(readings, rs.Id),
+                                       TotalInProgress = GetTotalInProgressReadings(readings, rs.Id),
+                                       TotalAccounts = GetTotalReadings(readings, rs.Id),
+                                       TotalCompleted = GetTotalCompletedReadings(readings, rs.Id),
+                                       Status = rs.Status.Description()
+                                   };
+
+
+            if (readingSheetData == null) return NotFound();
+            return Ok(readingSheetData);
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteReadingSheet(int id)
+        {
+            var readingSheet = await _readingSheetTrans.Get(id);
+            List<int> listIds = new();
+            listIds.Add(readingSheet.Id);
+            if (readingSheet == null) return NotFound();
+            readingSheet.Status = ReadingStatus.Deleted;
+            readingSheet.UpdatedBy = _user.User.Id;
+            readingSheet.DateUpdated = DateTime.Now;
+
+            Task<ReadingSheet> updateReadingSheetTask = _readingSheetTrans.SaveUpdate(_user.User.Id, readingSheet);
+            Task<List<Reading>> updateStatusByReadingSheetIdTask = _readingTransaction.UpdateStatusByReadingSheetIds(listIds, ReadingStatus.Deleted, _user.User.Id);
+
+            await Task.WhenAll(updateStatusByReadingSheetIdTask, updateStatusByReadingSheetIdTask);
+
+            var updatedReadingSheet = updateReadingSheetTask.Result;
+            var updatedReadings = updateStatusByReadingSheetIdTask.Result;
+
+            if (updatedReadingSheet == null || updatedReadings == null) return Ok("Problems occurred while deleting reading sheet");
+
+            return Ok(true);
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> BulkDeleteReadingSheet(int[] ids, int status)
+        {
+
+            Task<List<ReadingSheet>> updateReadingSheetTask = _readingSheetTrans.UpdateReadingSheetsStatus(ids.ToList(), _user.User.Id, (ReadingStatus)status);
+            Task<List<Reading>> updateReadingTask = _readingTransaction.UpdateStatusByReadingSheetIds(ids.ToList(), (ReadingStatus)status, _user.User.Id);
+
+            await Task.WhenAll(updateReadingSheetTask, updateReadingTask);
+
+            var readingSheets = updateReadingSheetTask.Result;
+            var readings = updateReadingTask.Result;
+
+            if (readingSheets == null || readings == null) return Ok("Problems encountered while processing bulk delete");
+
+            return Ok(true);
+        }
+
+        private int GetTotalInProgressReadings(List<Reading> readings, int readingSheetId)
+        {
+            return readings.Where(x => x.Status == ReadingStatus.InProgress && x.ReadingSheetId == readingSheetId).Count();
+        }
+
+        private int GetTotalCompletedReadings(List<Reading> readings, int readingSheetId)
+        {
+            return readings.Where(x => x.Status == ReadingStatus.Completed && x.ReadingSheetId == readingSheetId).Count();
+        }
+
+        private int GetTotalReadings(List<Reading> readings, int readingSheetId)
+        {
+            return readings.Where(x => x.ReadingSheetId == readingSheetId).Count();
         }
 
         #endregion

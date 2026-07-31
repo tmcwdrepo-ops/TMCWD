@@ -32,6 +32,12 @@ namespace TMCWD.Data.Services
             return await customers.ToListAsync();
         }
 
+        public async Task<IEnumerable<Customer>> GetCustomersFromIds(List<int> customerIds)
+        {
+            var customers = await _dbContext.Customers.Where(x => customerIds.Contains((int)x.Id)).ToListAsync();
+            return customers;
+        }
+
         public async Task<Customer> SaveUpdate(int userId, Customer customer)
         {
             if (customer.Id > 0)

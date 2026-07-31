@@ -1,4 +1,4 @@
-﻿using TMCWD.Data.Entities;
+using TMCWD.Data.Entities;
 
 namespace TMCWD.Data.Services
 {
@@ -10,7 +10,9 @@ namespace TMCWD.Data.Services
 
         public Task<List<Reading>> GetByAccount(int accountId);
 
-        public Task<Reading> GetByAccountAndBillingPeriod(int accountId, DateTime billingPeriod);
+        public Task<Reading> GetCurrentByAccountZoneBook(int zone, int book, int accountId);
+
+        public Task<List<Reading>> GetByReadingSheetId(int readingSheetId);
 
         public Task<Reading> GetAccountPreviousReading(int accountId);
 
@@ -20,7 +22,13 @@ namespace TMCWD.Data.Services
 
         public Task<Reading> SaveUpdate(int userId, Reading reading);
 
-        public Task<List<Reading>> SaveRange(List<Reading> readings);
+        public Task<List<Reading>> SaveMultiple(List<Reading> readings);
+
+        public Task<List<Reading>> UpdateStatusByReadingSheetIds(IEnumerable<int> readingSheetIds, int status, int userId);
+
+        public Task<List<Reading>> GetReadingsByBillingPeriod(int zone, int book, DateTime billingPeriod);
+
+        public Task<List<Reading>> GetRangeByReadingSheetIds(IEnumerable<int> ids);
 
     }
 }

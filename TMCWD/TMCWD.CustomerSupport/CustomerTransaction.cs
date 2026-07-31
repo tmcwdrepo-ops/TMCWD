@@ -79,6 +79,15 @@ namespace TMCWD.CustomerSupport
             return this.ConvertJsonToCustomers(data);
         }
 
+        public async Task<List<Customer>> GetCustomersFromIds(List<int> customerIds)
+        {
+            string queryParams = string.Join("&", customerIds.Select(x => $"ids={x}"));
+            var response = await _webService.Client.GetAsync($"api/Customer/GetCustomersFromIds?{queryParams}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToCustomers(data);
+        }
+
         #endregion
 
     }

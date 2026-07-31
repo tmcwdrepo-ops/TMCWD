@@ -85,31 +85,56 @@ if (crOverrideStart) {
    ============================================================ */
 
 /* Mock data — 15 meter readers */
-var METER_READERS = [
-  'Juan dela Cruz',
-  'Ana Lim',
-  'Liza Torres',
-  'Grace Aquino',
-  'Ben Ramos',
-  'Clara Bautista',
-  'Dennis Pascual',
-  'Elena Varga',
-  'Felix Soriano',
-  'Gloria Navarro',
-  'Hector Flores',
-  'Iris Magtanggol',
-  'Joel Manalo',
-  'Karen Dela Rosa',
-  'Leo Cabrera'
-];
+//WALLY WORK HERE
+// var METER_READERS = [
+//   'Juan dela Cruz',
+//   'Ana Lim',
+//   'Liza Torres',
+//   'Grace Aquino',
+//   'Ben Ramos',
+//   'Clara Bautista',
+//   'Dennis Pascual',
+//   'Elena Varga',
+//   'Felix Soriano',
+//   'Gloria Navarro',
+//   'Hector Flores',
+//   'Iris Magtanggol',
+//   'Joel Manalo',
+//   'Karen Dela Rosa',
+//   'Leo Cabrera'
+// ];
+
+// const METER_READERS = loadMeterReaders();
+// console.log('Meter Readers:', METER_READERS);
+var METER_READERS = [];
+loadMeterReaders();
 
 /* Elements */
 var crMeterReaderInput    = document.getElementById('crMeterReaderInput');
 var crMeterReaderList     = document.getElementById('crMeterReaderList');
 var crMeterReaderCombobox = document.getElementById('crMeterReaderCombobox');
+var selectedZone = 0;
+var selectedBook = 0;
+var selectedScope = 0;
+var currentFromSeq = 0;
+var currentToSeq = 0;
 
 /* Currently selected value */
 var crMeterReaderValue = '';
+
+async function loadMeterReaders() {
+    METER_READERS = await fetch('/Admin/GetUsersByRole' + '?role=4', {
+        method: 'GET',
+        headers: { 
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        if (!response.ok || response.status == 204) return null;
+            return response.json();
+    }).then(result => {
+        return result;
+    });
+}
 
 /**
  * Render filtered options into the dropdown list.
@@ -117,8 +142,8 @@ var crMeterReaderValue = '';
  */
 function renderMeterReaderOptions(query) {
   var term = query.trim().toLowerCase();
-  var filtered = METER_READERS.filter(function (name) {
-    return name.toLowerCase().indexOf(term) !== -1;
+  var filtered = METER_READERS.filter(function (data) {
+    return data.name.toLowerCase().indexOf(term) !== -1;
   });
 
   crMeterReaderList.innerHTML = '';
@@ -132,17 +157,18 @@ function renderMeterReaderOptions(query) {
     return;
   }
 
-  filtered.forEach(function (name) {
+  filtered.forEach(function (data) {
     var li = document.createElement('li');
     li.className = 'cr-combobox__option';
-    li.textContent = name;
+    li.textContent = data.name;
+    li.data = data.id;
     li.setAttribute('role', 'option');
-    li.setAttribute('aria-selected', name === crMeterReaderValue ? 'true' : 'false');
+    li.setAttribute('aria-selected', data.name === crMeterReaderValue ? 'true' : 'false');
 
     li.addEventListener('mousedown', function (e) {
       // mousedown fires before input blur — prevent blur closing list first
       e.preventDefault();
-      selectMeterReader(name);
+      selectMeterReader(data);
     });
 
     crMeterReaderList.appendChild(li);
@@ -170,9 +196,11 @@ function closeMeterReaderList() {
  * Select a meter reader, update input value, close list.
  * @param {string} name
  */
-function selectMeterReader(name) {
-  crMeterReaderValue = name;
-  crMeterReaderInput.value = name;
+function selectMeterReader(data) {
+  console.log('Meter Reader Data:', data);
+  crMeterReaderValue = data.id;
+  crMeterReaderInput.dataset.id = data.id;
+  crMeterReaderInput.value = data.name;
   closeMeterReaderList();
 }
 
@@ -216,15 +244,111 @@ var crScope      = document.getElementById('crScope');
 var crScopeRange = document.getElementById('crScopeRange');
 var crFromSeq    = document.getElementById('crFromSeq');
 var crToSeq      = document.getElementById('crToSeq');
+var crZone       = document.getElementById('crZone');
+const crBook     = document.getElementById('crBook');
+
+if (crZone) {
+    crZone.addEventListener('change', async (evt) => {
+        const newZone = evt.target.value;
+        if (selectedZone == newZone) return;
+        selectedZone = newZone;
+        crAccountsLoaded = false;
+        setLoadAccountsBtnState('load');
+        if (crBook) {
+            const books = await loadBooks(selectedZone);
+            if (books) {
+                crBook.replaceChildren();
+                const noValOption = document.createElement('option');
+                noValOption.value = 0;
+                noValOption.textContent = 'Select Book...';
+                crBook.appendChild(noValOption);
+                [...books].forEach((book) => {
+                    const option = document.createElement('option');
+                    option.value = book.book;
+                    option.textContent = 'Book ' + book.book;
+                    crBook.appendChild(option);
+                });
+            }
+        }
+    });
+}
+
+if (crBook) {
+    crBook.addEventListener('change', (evt) => {
+        const newBook = evt.target.value;
+        if (selectedBook == newBook) return;
+        selectedBook = newBook;
+        setLoadAccountsBtnState('load');
+        crAccountsLoaded = false;
+    });
+}
+
+if (crFromSeq) {
+    crFromSeq.addEventListener('input', (evt) => {
+        const newFrom = evt.target.value;
+        if (currentFromSeq == newFrom) return;
+        currentFromSeq = newFrom;
+        setLoadAccountsBtnState('load');
+        crAccountsLoaded = false;
+    });
+}
+
+if (crToSeq) {
+    crToSeq.addEventListener('input', (evt) => {
+        const newTo = evt.target.value;
+        if (currentToSeq == newTo) return;
+        currentToSeq = newTo;
+        setLoadAccountsBtnState('load');
+        crAccountsLoaded = false;
+    });
+}
+
+/**
+ * load book based on selected zone
+ */
+async function loadBooks(zone) {
+    return await fetch('/ZoneBook/GetBooksByZone?zone=' + zone, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        if (!response.ok || response.status == 204) return null;
+        return response.json();
+    }).then(result => {
+        return result;
+    });
+}
+
+/**
+ * load accounts based on selected zone, book, scope
+ */
+
+async function loadAccounts(zone, book, seqFrom, seqTo) {
+    return await fetch('/account/GetByZoneBookAndSequence/?zone=' + zone + '&book=' + book + '&seqFrom=' + seqFrom + '&seqTo=' + seqTo, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        if (!response.ok || response.status == 204) return null
+        return response.json();
+    }).then(result => {
+        return result;
+    });;
+}
 
 /**
  * Show or hide the sequence range inputs based on Scope value.
  */
 function syncScopeRange() {
   if (!crScope || !crScopeRange) return;
+  if (selectedScope == crScope.value) return;
   var isRanged = crScope.value === 'ranged';
+  selectedScope = crScope.value;
   crScopeRange.hidden = !isRanged;
-
+  setLoadAccountsBtnState('load');
+  crAccountsLoaded = false;
   // Clear values when hidden so they don't accidentally submit
   if (!isRanged) {
     if (crFromSeq) crFromSeq.value = '';
@@ -317,25 +441,44 @@ function loadCrAccounts() {
     var from = parseInt((document.getElementById('crFromSeq') || {}).value, 10) || 0;
     var to = parseInt((document.getElementById('crToSeq') || {}).value, 10) || 0;
 
-    if (!zone || !book) return;
+var ACCOUNTS = [];
 
-    return fetch('/ReadingSheet/GetAccountsByZoneAndBook?zone=' + encodeURIComponent(zone) + '&book=' + encodeURIComponent(book))
-        .then(function (res) { return res.ok ? res.json() : []; })
-        .then(function (accounts) {
-            if (scope === 'ranged') {
-                accounts = accounts.filter(function (a) {
-                    if (from && a.sequence < from) return false;
-                    if (to && a.sequence > to) return false;
-                    return true;
-                });
-            }
-            renderAccountsTable(accounts);
-            crAccountsLoaded = true;
-            if (crLoadAccountsBtn) crLoadAccountsBtn.classList.add('is-active');
-            setLoadAccountsBtnState('hide');
-            var panel = document.getElementById('crTablePanel');
-            if (panel) panel.hidden = false;
-        });
+var crTablePanel  = document.getElementById('crTablePanel');
+var crAccountsTbody = document.getElementById('crAccountsTbody');
+var crTableEmpty  = document.getElementById('crTableEmpty');
+
+/**
+ * Filter MOCK_ACCOUNTS by zone, book, and scope.
+ * @param {string} zone  e.g. 'zone1' or '' for all
+ * @param {string} book  e.g. 'book2' or '' for all
+ * @param {string} scope 'all' | 'unbilled' | 'ranged'
+ * @param {number} fromSeq
+ * @param {number} toSeq
+ * @returns {Array}
+ */
+async function filterAccounts(zone, book, scope, fromSeq, toSeq) {
+
+    var customers = await fetch('/account/GetByZoneBookAndSequence?zone=' + zone + '&book=' + book + '&seqFrom=' + fromSeq + '&seqTo=' + toSeq, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        if (!response.ok || response.status == null) return null;
+        return response.json();
+    }).then(result => {
+        return result;
+    });
+    console.log('Customers:', customers);
+    return customers.filter(function (a) {
+        if ((zone && a.zone == zone) && (book && a.book == book)) return true;
+        if (scope === 'unbilled' && !a.billed) return true;
+        if (scope === 'ranged')
+            if ((fromSeq && a.sequence >= fromSeq) && (toSeq && a.sequence <= toSeq)) return true;
+        //if (scope === 'ranged') {
+        //  if (fromSeq && a.seq < fromSeq) return false;
+        //  if (toSeq   && a.seq > toSeq)   return false;
+    });
 }
 
 if (crLoadAccountsBtn) {
@@ -374,6 +517,29 @@ function renderAccountsTable(accounts) {
     return;
   }
 
+  crTableEmpty.hidden = true;
+  crTablePanel.hidden = false;
+
+  accounts.forEach(function (a, idx) {
+    var tr = document.createElement('tr');
+      console.log('A:', a);
+    tr.innerHTML =
+      '<td class="cr-td cr-td--num">' + (idx + 1) + '</td>' +
+      '<td class="cr-td">' +
+        '<span class="cr-cell-main">' + a.acctNo + '</span>' +
+        '<span class="cr-cell-sub">'  + a.name   + '</span>' +
+      '</td>' +
+      '<td class="cr-td">' +
+        '<span class="cr-cell-main">' + a.address   + '</span>' +
+        '<span class="cr-cell-sub">'  + a.barangay  + '</span>' +
+      '</td>' +
+      '<td class="cr-td">' +
+        '<span class="cr-type-badge">' + a.type + '</span>' +
+      '</td>' +
+      '<td class="cr-td cr-td--seq">' + a.sequence ?? 0 + '</td>';
+
+    crAccountsTbody.appendChild(tr);
+  });
 }
 
 /* Re-wire Load Accounts button to use the table */
@@ -426,8 +592,32 @@ function setLoadAccountsBtnState(state) {
   crLoadAccountsBtn.innerHTML = icon + label;
 }
 
+if (crLoadAccountsBtn) {
+  crLoadAccountsBtn.addEventListener('click', async function () {
+    var panel = document.getElementById('crTablePanel');
+    if (!panel) return;
 
-/* ============================================================
+    if (!crAccountsLoaded) {
+      /* First click — filter and render */
+      var zone  = (document.getElementById('crZone')  || {}).value || '';
+      var book  = (document.getElementById('crBook')  || {}).value || '';
+      var scope = (document.getElementById('crScope') || {}).value || 'all';
+      var from  = parseInt((document.getElementById('crFromSeq') || {}).value, 10) || 0;
+      var to    = parseInt((document.getElementById('crToSeq') || {}).value, 10) || 0;
+
+      var accts = await filterAccounts(zone, book, scope, from, to);
+      renderAccountsTable(accts);
+      crAccountsLoaded = true;
+      crLoadAccountsBtn.classList.add('is-active');
+      setLoadAccountsBtnState('hide');
+    } else {
+      /* Subsequent clicks — toggle panel visibility */
+      panel.hidden = !panel.hidden;
+      crLoadAccountsBtn.classList.toggle('is-active', !panel.hidden);
+      setLoadAccountsBtnState(panel.hidden ? 'show' : 'hide');
+    }
+  });
+}/* ============================================================
    Phase 7 — Pagination
    ============================================================ */
 
@@ -503,21 +693,30 @@ function renderCrTableRows(rows) {
     if (!crAccountsTbody) return;
     crAccountsTbody.innerHTML = '';
 
-    rows.forEach(function (a, idx) {
-        var globalIdx = (crCurrentPage - 1) * CR_PAGE_SIZE + idx + 1;
-        var tr = document.createElement('tr');
-        tr.innerHTML =
-            '<td class="cr-td cr-td--num">' + globalIdx + '</td>' +
-            '<td class="cr-td"><span class="cr-cell-main">' + a.accountNumber + '</span></td>' +
-            '<td class="cr-td"><span class="cr-cell-main">' + a.address + '</span></td>' +
-            '<td class="cr-td"><span class="cr-type-badge">' + a.classification + '</span></td>' +
-            '<td class="cr-td cr-td--seq">' + a.sequence + '</td>';
-        crAccountsTbody.appendChild(tr);
-    });
+  rows.forEach(function (a, idx) {
+    var globalIdx = (crCurrentPage - 1) * CR_PAGE_SIZE + idx + 1;
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="cr-td cr-td--num">' + globalIdx + '</td>' +
+      '<td class="cr-td">' +
+        '<span class="cr-cell-main">' + a.acctNo + '</span>' +
+        '<span class="cr-cell-sub">'  + a.name   + '</span>' +
+      '</td>' +
+      '<td class="cr-td">' +
+        '<span class="cr-cell-main">' + a.address  + '</span>' +
+        '<span class="cr-cell-sub">'  + a.barangay + '</span>' +
+      '</td>' +
+      '<td class="cr-td">' +
+        '<span class="cr-type-badge">' + a.type + '</span>' +
+      '</td>' +
+      '<td class="cr-td cr-td--seq">' + a.sequence + '</td>';
+    crAccountsTbody.appendChild(tr);
+  });
 }
 
 /* Override Phase 6's renderAccountsTable to use pagination */
 renderAccountsTable = function (accounts) {
+    console.log('Accounts:', accounts);
   crFilteredAccounts = accounts;
   crCurrentPage      = 1;
 
@@ -806,10 +1005,11 @@ if (crTemplatesDropdown) {
     });
 }
 
-document.addEventListener('click', function (e) {
-    if (crTemplatesMenuBtn && !crTemplatesMenuBtn.closest('.cr-header__templates-wrap').contains(e.target)) {
-        closeTemplatesDropdown();
-    }
+/* Close dropdown when clicking anywhere outside */
+document.addEventListener('click', async function (e) {
+  if (crTemplatesMenuBtn && !crTemplatesMenuBtn.closest('.cr-header__templates-wrap').contains(e.target)) {
+    closeTemplatesDropdown();
+  }
 });
 
 var _origClose = closeCreateModal;

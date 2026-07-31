@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TMCWD.Data.Entities
@@ -21,7 +21,10 @@ namespace TMCWD.Data.Entities
         [Column("PaymentTransactionId")]
         public string PaymentTransactionId { get; set; } = string.Empty;
 
-        [Column("BillingPeriod")]
+        [Column("ReadingId")]
+        public System.Int64 ReadingId { get; set; }
+
+        [Column("BillingPeriodf")]
         public DateTime BillingPeriod { get; set; }
 
         [Column("MaterialsAmount")]

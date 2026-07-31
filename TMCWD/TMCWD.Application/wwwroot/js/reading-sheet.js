@@ -133,9 +133,9 @@ function renderReadingSheetTable(rows, emptyMessage) {
   // Build zone stats from FULL dataset so the bar is always accurate
   var zoneStats = {};
   readingSheetState.rows.forEach(function(r) {
-    if (!zoneStats[r.zone]) zoneStats[r.zone] = { total: 0, done: 0 };
-    zoneStats[r.zone].total += 1;
-    if (r.status === 'Completed') zoneStats[r.zone].done += 1;
+    if (!zoneStats[r.zone]) zoneStats[r.zone] = { total: r.totalAccounts, done: r.totalCompleted };
+    //zoneStats[r.zone].total += 1;
+    //if (r.status === 'Completed') zoneStats[r.zone].done += 1;
   });
 
   var html = rows.map(function(row) {
@@ -187,7 +187,7 @@ function renderReadingSheetTable(rows, emptyMessage) {
           '<input class="tbl-checkbox" type="checkbox" aria-label="Select row"' + chkChecked + ' />' +
         '</td>' +
         '<td>' + row.meterReader + '</td>' +
-        '<td>' + row.billingDate + '</td>' +
+        '<td>' + new Date(row.billingDate).toISOString().split("T")[0] + '</td>' +
         '<td>' + zoneCell + '</td>' +
         '<td>' + row.forPosting + '</td>' +
         '<td><span class="badge ' + badgeClass + '">' + row.status + '</span></td>' +
@@ -832,6 +832,7 @@ function handleEditClick(event) {
 
   openEditModal(id);
 }
+
 function openDeleteModal(id) {
   var backdrop = document.getElementById('deleteModalBackdrop');
   if (!backdrop) return;
@@ -874,12 +875,29 @@ function handleDeleteClick(event) {
 /**
  * Confirm deletion: remove the row, clean up, re-render.
  */
-function handleDeleteConfirm() {
+async function handleDeleteConfirm() {
   var backdrop = document.getElementById('deleteModalBackdrop');
   if (!backdrop || !backdrop.dataset.pendingId) return;
 
   var id = parseInt(backdrop.dataset.pendingId, 10);
+
+  const result = await fetch('/readingsheet/DeleteReadingSheet?id=' + id, {
+      method: 'DELETE',
+      headers: {
+          'Content-Type': 'application/json'
+      }
+  }).then(response => {
+      if (response.ok || response.status == 204) return null;
+      return response.json();
+  }).then(result => {
+      return result;
+  });
+
   closeDeleteModal();
+
+  initReadingSheetPage();
+
+  if (result !== 'true') return false;
 
   readingSheetState.rows = readingSheetState.rows.filter(function(row) {
     return row.id !== id;
@@ -1004,7 +1022,7 @@ function openBulkDeleteModal() {
 
   if (countEl)   countEl.textContent = readingSheetState.selectedIds.size;
   if (input)     { input.value = ''; input.classList.remove('is-valid'); }
-  if (confirmBtn) confirmBtn.disabled = true;
+  //if (confirmBtn) confirmBtn.disabled = true;
 
   backdrop.hidden = false;
   backdrop.setAttribute('aria-hidden', 'false');
@@ -1031,31 +1049,52 @@ function closeBulkDeleteModal() {
  *
  * @param {Event} event
  */
-function handleBulkDeleteInput(event) {
-  var val        = event.target.value.trim().toLowerCase();
-  var confirmBtn = document.getElementById('bulkDeleteModalConfirm');
-  var isValid    = val === 'delete all';
+// function handleBulkDeleteInput(event) {
+//   var val        = event.target.value.trim().toLowerCase();
+//   var confirmBtn = document.getElementById('bulkDeleteModalConfirm');
+//   var isValid    = val === 'delete all';
 
-  if (confirmBtn) confirmBtn.disabled = !isValid;
-  event.target.classList.toggle('is-valid', isValid);
-}
+//   if (confirmBtn) confirmBtn.disabled = !isValid;
+//   event.target.classList.toggle('is-valid', isValid);
+// }
 
 /**
  * Execute the bulk deletion after modal confirmation.
  */
-function handleBulkDeleteConfirm() {
+async function handleBulkDeleteConfirm() {
   closeBulkDeleteModal();
 
   readingSheetState.rows = readingSheetState.rows.filter(function(row) {
     return !readingSheetState.selectedIds.has(row.id);
   });
 
-  readingSheetState.selectedIds.clear();
-  readingSheetState.currentPage = 1;
+    var queryParam = '';
+    readingSheetState.selectedIds.forEach((value, index) => {
+        if (index == 1) queryParam += 'ids=' + value;
+        else queryParam += '&ids=' + value;
+    });
+    queryParam += '&status=3';
+    var result = await fetch('/ReadingSheet/BulkDeleteReadingSheet?' + queryParam, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: null
+    }).then(response => {
+        if (!response.ok || response.status == 204) return null;
+        return response.json();
+    }).then(result => {
+        return result;
+    });
 
-  applyAllFilters();
-  updateBulkActionsBar();
-  applyAndRender();
+    if (result) {
+        readingSheetState.selectedIds.clear();
+        readingSheetState.currentPage = 1;
+
+        applyAllFilters();
+        updateBulkActionsBar();
+        applyAndRender();
+    }
 }
 
 /**
@@ -1196,7 +1235,7 @@ function handleNextClick() {
  * Initialize the Reading Sheet page.
  * Called by appshell.js loadPage() after all assets are loaded.
  */
-function initReadingSheetPage() {
+async function initReadingSheetPage() {
   // Reset all runtime state on every init — prevents stale data
   // from a previous page load bleeding through.
   readingSheetState.rows          = [];
@@ -1249,10 +1288,16 @@ function initReadingSheetPage() {
       '</div>';
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     console.log('[ReadingSheet] Edit modal injected via JavaScript');
-  }
+  } 
 
-  if (typeof READING_SHEET_SAMPLE_DATA !== 'undefined') {
-    readingSheetState.rows = READING_SHEET_SAMPLE_DATA.slice();
+  // if (typeof READING_SHEET_SAMPLE_DATA !== 'undefined') {
+  //   readingSheetState.rows = READING_SHEET_SAMPLE_DATA.slice();
+    //   }
+
+  const READING_SHEETS = await loadReadingSheets();
+
+  if (typeof READING_SHEETS !== 'undefined') {
+        readingSheetState.rows = READING_SHEETS;
   }
 
   applyAllFilters();
@@ -1358,11 +1403,11 @@ function initReadingSheetPage() {
   var bulkDeleteConfirm  = document.getElementById('bulkDeleteModalConfirm');
   var bulkDeleteCancel   = document.getElementById('bulkDeleteModalCancel');
   var bulkDeleteBackdrop = document.getElementById('bulkDeleteModalBackdrop');
-  var bulkDeleteInput    = document.getElementById('bulkDeleteConfirmInput');
+  //var bulkDeleteInput    = document.getElementById('bulkDeleteConfirmInput');
 
   if (bulkDeleteConfirm)  bulkDeleteConfirm.addEventListener('click', handleBulkDeleteConfirm);
   if (bulkDeleteCancel)   bulkDeleteCancel.addEventListener('click', closeBulkDeleteModal);
-  if (bulkDeleteInput)    bulkDeleteInput.addEventListener('input', handleBulkDeleteInput);
+  //if (bulkDeleteInput)    bulkDeleteInput.addEventListener('input', handleBulkDeleteInput);
   if (bulkDeleteBackdrop) {
     bulkDeleteBackdrop.addEventListener('click', function(event) {
       if (event.target === bulkDeleteBackdrop) closeBulkDeleteModal();
@@ -1390,6 +1435,26 @@ function initReadingSheetPage() {
   console.log('[ReadingSheet] Page initialized. Rows loaded:', readingSheetState.rows.length);
 }
 
+/**
+ * ==========================================================
+ * Load Reading Sheet Data From Database
+ * ==========================================================
+ */
+
+async function loadReadingSheets() {
+    return await fetch('/readingsheet/GetAllReadingSheets', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        if (!response.ok || response.status == 204) return null;
+        return response.json();
+    }).then(result => {
+        return result;
+    });
+}
+
 
 /* ============================================================
    Phase 9 — Create Reading Sheet callback
@@ -1402,6 +1467,39 @@ function initReadingSheetPage() {
  *
  * @param {{billingDate:string, meterReader:string, zone:string}} data
  */
+
+async function onReadingSheetCreate(data) {
+    var isValid = false;
+    const form = document.getElementById('frmReadingSheet');
+    const readingSheetData = {
+        id: 0,
+        name: '',
+        billingDate: data.billingDate,
+        dueDate: data.dueDate,
+        disconnectionDate: data.disconnectionDate,
+        billingPeriodStart: data.billingPeriodStart,
+        zoneBookId: 0,
+        sequenceFrom: data.seqFrom,
+        sequenceTo: data.seqTo,
+        assignedTo: data.meterReader
+    };
+
+    if (!form.reportValidity()) return false;
+
+    var readingSheet = await fetch('/readingsheet/createreadingsheet?zone=' + data.zone + '&book=' + data.book, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(readingSheetData)
+    }).then(response => {
+        if (!reponse.ok || response.status == 204) return null;
+        return response.json();
+    }).then(result => {
+        return result;
+    });
+}
+
 function onReadingSheetCreated(data) {
   if (!data || !data.meterReader) return;
 

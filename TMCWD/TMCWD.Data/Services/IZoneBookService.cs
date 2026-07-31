@@ -19,5 +19,7 @@ namespace TMCWD.Data.Services
 
         public Task<List<ZoneBook>> GetByWeek(int week);
 
+        public Task<List<ZoneBook>> GetByIds(IEnumerable<int> ids);
+
     }
 }
