@@ -169,7 +169,7 @@ namespace TMCWD.Application.Controllers
 
         public IActionResult DebitCreditMemo()
         {
-            return View("DebitCreditMemo");
+            return View();
         }
 
         #endregion
