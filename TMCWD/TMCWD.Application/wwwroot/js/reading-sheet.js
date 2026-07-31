@@ -1493,7 +1493,7 @@ async function onReadingSheetCreate(data) {
         },
         body: JSON.stringify(readingSheetData)
     }).then(response => {
-        if (!reponse.ok || response.status == 204) return null;
+        if (!response.ok || response.status == 204) return null;
         return response.json();
     }).then(result => {
         return result;
