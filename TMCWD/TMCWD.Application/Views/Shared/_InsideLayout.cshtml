@@ -1,3 +1,6 @@
+@{
+    Layout = null;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +14,7 @@
   <link rel="stylesheet" href="~/css/appshell.css?v=2" />
   @await RenderSectionAsync("Styles", required: false)
   <script src="~/js/appshell.js" defer></script>
+  @RenderSection("Styles", required: false)
 </head>
 <body>
 
@@ -57,18 +61,54 @@
           </button>
           <ul class="nav-submenu" id="submenu-billing" role="list">
             <li class="nav-item">
-              <a href="@Url.Action("Index", "Billing")" class="nav-link" data-page="reading-sheet">
+              <a href="@Url.Action("ReadingSheet", "Billing")" class="nav-link" data-page="reading-sheet">
+                <span class="nav-link__icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M6 6h8M6 9h8M6 12h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                </span>
                 <span class="nav-link__label">Reading Sheet</span>
               </a>
             </li>
             <li class="nav-item">
-              <a href="@Url.Action("Penalty", "Billing")" class="nav-link" data-page="penalty">
-                <span class="nav-link__label">Penalty</span>
+              <a href="@Url.Action("OtherCharges", "Billing")" class="nav-link" data-page="other-charges">
+                <span class="nav-link__label">Other Charges</span>
+              </a>
+            </li>
+            <li class="nav-item nav-item--nested">
+              <a href="@Url.Action("Reading", "Billing")" class="nav-link" data-page="reading">
+                <span class="nav-link__icon" aria-hidden="true" style="padding-left: var(--space-sm); display: inline-flex; align-items: center;">
+                  <svg viewBox="0 0 20 20" fill="none" style="width: 14px; height: 14px; color: currentColor;">
+                    <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M10 10l3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    <circle cx="10" cy="10" r="1" fill="currentColor" />
+                  </svg>
+                </span>
+                <span class="nav-link__label" style="padding-left: 8px;">Reading</span>
               </a>
             </li>
             <li class="nav-item">
-              <a href="@Url.Action("PenaltyCharging", "Billing")" class="nav-link" data-page="penalty-charging">
-                <span class="nav-link__label">Penalty Charging</span>
+              <a href="@Url.Action("BillAdjustment", "Billing")" class="nav-link" data-page="bill-adjustment">
+                <span class="nav-link__icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M6 6h8M6 9h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M6 13l1.5 1.5L11 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="nav-link__label">Bill Adjustment</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="@Url.Action("OtherCharges", "Billing")" class="nav-link" data-page="other-charges">
+                <span class="nav-link__icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M7.5 10h5M10 7.5v5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span class="nav-link__label">Other Charges</span>
               </a>
             </li>
           </ul>

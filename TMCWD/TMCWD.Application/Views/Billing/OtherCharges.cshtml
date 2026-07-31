@@ -1,0 +1,158 @@
+@{
+    Layout = "_InsideLayout";
+    ViewData["PageTitle"] = "Other Charges";
+    ViewData["ActivePage"] = "other-charges";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/reading-sheet.css" />
+    <link rel="stylesheet" href="~/css/other-charges.css" />
+}
+
+<section class="page-section" aria-label="Other Charges">
+
+    <div class="panel">
+
+        <!-- ── Account + Total Due row ── -->
+        <div class="oc-account-bar">
+            <div class="oc-field">
+                <label class="oc-label" for="ocAccountNumber">Account Number</label>
+                <input type="text" id="ocAccountNumber" class="oc-input"
+                       placeholder="e.g. 02-090015" autocomplete="off" />
+                <span class="oc-field-error" id="ocAccountNumberError"></span>
+            </div>
+            <div class="oc-field">
+                <label class="oc-label" for="ocAccountName">Account Name</label>
+                <input type="text" id="ocAccountName" class="oc-input"
+                       placeholder="Auto-populated" readonly />
+            </div>
+            <div class="oc-total-due">
+                <span class="oc-label">Total Due</span>
+                <strong id="ocTotalDue">0.00</strong>
+            </div>
+        </div>
+
+        <!-- ── Entry row ── -->
+        <div class="oc-entry-bar">
+            <div class="oc-entry-section-label">
+                <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Add New Charge
+            </div>
+            <div class="oc-entry-fields">
+            <div class="oc-field">
+                <label class="oc-label" for="ocChargeType">Charge Type</label>
+                <select id="ocChargeType" class="oc-input oc-select">
+                    <option value="" selected>Select Charge Type</option>
+                </select>
+            </div>
+            <div class="oc-field">
+                <label class="oc-label" for="ocPayableIn">Payable In</label>
+                <select id="ocPayableIn" class="oc-input oc-select">
+                    <option value="" selected>Select...</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Check">Check</option>
+                    <option value="GCash">GCash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Maya">Maya</option>
+                    <option value="__other__">Other...</option>
+                </select>
+                <input type="text" id="ocPayableInOther" class="oc-input oc-payable-other"
+                       placeholder="Specify payment method" autocomplete="off" />
+            </div>
+            <div class="oc-field">
+                <label class="oc-label" for="ocParticulars">Particulars</label>
+                <input type="text" id="ocParticulars" class="oc-input" placeholder="Particulars" />
+            </div>
+            <div class="oc-field">
+                <label class="oc-label" for="ocAmount">Amount</label>
+                <input type="text" inputmode="decimal" id="ocAmount"
+                       class="oc-input oc-input--amount" placeholder="0.00" />
+            </div>
+            <div class="oc-field oc-field--btn">
+                <label class="oc-label">&nbsp;</label>
+                <button type="button" class="btn btn--green" id="ocAddChargeBtn">
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Add
+                </button>
+            </div>
+            </div>
+        </div>
+        <div class="oc-entry-error" id="ocEntryError"></div>
+
+        <!-- ── Table ── -->
+        <div class="table-wrap">
+            <table class="data-table" id="ocTable" aria-label="Other charges">
+                <thead>
+                    <tr>
+                        <th scope="col" class="oc-sortable" data-sort="description">
+                            <span class="th-inner" data-sort="description">
+                                Description
+                                <svg class="sort-icon" viewBox="0 0 10 14" fill="none" aria-hidden="true">
+                                    <path d="M5 1v12M1 4l4-3 4 3M1 10l4 3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </th>
+                        <th scope="col">Payable In</th>
+                        <th scope="col" class="oc-sortable" data-sort="particulars">
+                            <span class="th-inner" data-sort="particulars">
+                                Particulars
+                                <svg class="sort-icon" viewBox="0 0 10 14" fill="none" aria-hidden="true">
+                                    <path d="M5 1v12M1 4l4-3 4 3M1 10l4 3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </th>
+                        <th scope="col" class="oc-col-amount">Charge Amount</th>
+                        <th scope="col" class="col-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ocTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="oc-empty" id="ocEmptyState" hidden>
+            <p>No other charges yet. Enter an account number and add a charge above.</p>
+        </div>
+
+        <!-- ── Pagination ── -->
+        <div class="pagination" aria-label="Table pagination">
+            <div class="oc-page-size">
+                <label for="ocPageSize" style="font-size:var(--font-size-xs);color:var(--color-text-faint);">Rows per page</label>
+                <select id="ocPageSize" class="oc-page-size-select">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            <span class="pagination__summary" id="ocPageInfo">0–0 of 0</span>
+            <div class="pagination__controls">
+                <button type="button" class="pagination__btn" id="ocFirstPage" aria-label="First page" disabled>
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 12L6 8l4-4M4 4v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button type="button" class="pagination__btn" id="ocPrevPage" aria-label="Previous page" disabled>
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Prev
+                </button>
+                <span class="oc-page-current" id="ocPageCurrent">1</span>
+                <button type="button" class="pagination__btn" id="ocNextPage" aria-label="Next page">
+                    Next
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button type="button" class="pagination__btn" id="ocLastPage" aria-label="Last page">
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 12l4-4-4-4M12 4v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+@section Scripts {
+    <script src="~/js/other-charges-sample.js" asp-append-version="true"></script>
+    <script src="~/js/other-charges.js" asp-append-version="true"></script>
+}

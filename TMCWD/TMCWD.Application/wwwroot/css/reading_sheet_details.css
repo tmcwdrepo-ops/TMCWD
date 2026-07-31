@@ -1,0 +1,460 @@
+/* ============================================================
+   READING SHEET DETAILS
+   Uses the app-shell CSS variables so dark/light theme toggle
+   works automatically via [data-theme] on <html>.
+   ============================================================ */
+
+/* ── Component-local tokens (map to app-shell vars) ── */
+:root {
+  --rsd-bg:          var(--color-panel);
+  --rsd-bg-alt:      var(--color-panel-alt);
+  --rsd-ink:         var(--color-text);
+  --rsd-ink-dim:     var(--color-text-dim);
+  --rsd-ink-faint:   var(--color-text-faint);
+  --rsd-border:      var(--color-border);
+  --rsd-green:       #3f7d5c;
+  --rsd-green-h:     #356b4d;
+  --rsd-tan:         #a68a64;
+  --rsd-tan-h:       #927650;
+  --rsd-orange:      #d98a1e;
+  --rsd-red:         #e0483f;
+  --rsd-link:        #2f9e5b;
+  --rsd-row-hover:   var(--color-panel-alt);
+  --rsd-pdf-color:   #e05c52;
+  --rsd-pdf-border:  rgba(224,92,82,0.35);
+  --rsd-pdf-hover:   rgba(224,92,82,0.08);
+  --rsd-xls-color:   #2f9e5b;
+  --rsd-xls-border:  rgba(47,158,91,0.35);
+  --rsd-xls-hover:   rgba(47,158,91,0.08);
+}
+
+/* ── Standalone page wrapper ── */
+.rsd-panel {
+  max-width: 1400px;
+  margin: 24px auto;
+  background: var(--rsd-bg);
+  border: 1px solid var(--rsd-border);
+  border-radius: 4px;
+  overflow: hidden;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  color: var(--rsd-ink);
+  box-sizing: border-box;
+  transition: var(--transition-theme, background 0.2s, color 0.2s);
+}
+
+/* ── Action buttons ── */
+.rsd-panel .btn,
+.rsd-drawer .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  color: #fff;
+  transition: background-color 0.15s ease, transform 0.05s ease;
+  white-space: nowrap;
+}
+.rsd-panel .btn:active,
+.rsd-drawer .btn:active { transform: translateY(1px); }
+
+.rsd-panel .btn-complete,
+.rsd-drawer .btn-complete { background: var(--rsd-green); }
+.rsd-panel .btn-complete:hover,
+.rsd-drawer .btn-complete:hover { background: var(--rsd-green-h); }
+
+.rsd-panel .btn-partial,
+.rsd-drawer .btn-partial { background: var(--rsd-tan); }
+.rsd-panel .btn-partial:hover,
+.rsd-drawer .btn-partial:hover { background: var(--rsd-tan-h); }
+
+.rsd-panel .icon-btn,
+.rsd-drawer .icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--rsd-ink-dim);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s, background 0.15s;
+}
+.rsd-panel .icon-btn:hover,
+.rsd-drawer .icon-btn:hover {
+  color: var(--rsd-ink);
+  background: var(--rsd-bg-alt);
+}
+
+/* ── Top bar ── */
+.rsd-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--rsd-border);
+  gap: 12px;
+  background: var(--rsd-bg);
+  transition: var(--transition-theme, background 0.2s);
+}
+.rsd-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Info row ── */
+.rsd-info {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--rsd-border);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 0;
+  background: var(--rsd-bg);
+  transition: var(--transition-theme, background 0.2s);
+}
+
+.rsd-info-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.rsd-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-right: 20px;
+  margin-right: 20px;
+  border-right: 1px solid var(--rsd-border);
+  flex-shrink: 0;
+}
+.rsd-info-item:last-child { border-right: none; }
+
+.rsd-info-status {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 20px;
+  border-right: 1px solid var(--rsd-border);
+  flex-shrink: 0;
+}
+
+.rsd-info-ref {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 20px;
+  border-right: 1px solid var(--rsd-border);
+  flex-shrink: 0;
+}
+
+.rsd-info-export {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 20px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.rsd-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--rsd-ink-dim);
+  white-space: nowrap;
+}
+
+.rsd-value {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--rsd-ink);
+  white-space: nowrap;
+}
+
+.rsd-ref-code {
+  font-weight: 600;
+  color: var(--rsd-ink-dim);
+  font-size: 13px;
+}
+
+/* ── Save / export buttons ── */
+.rsd-export-icons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.export-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1.5px solid;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.export-icon-btn:active { transform: translateY(1px); }
+
+.export-icon-btn__label {
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.export-pdf   { color: var(--rsd-pdf-color); border-color: var(--rsd-pdf-border); }
+.export-pdf:hover  { background: var(--rsd-pdf-hover); border-color: var(--rsd-pdf-color); }
+
+.export-excel { color: var(--rsd-xls-color); border-color: var(--rsd-xls-border); }
+.export-excel:hover { background: var(--rsd-xls-hover); border-color: var(--rsd-xls-color); }
+
+/* ── Toolbar ── */
+.rsd-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--rsd-border);
+  background: var(--rsd-bg);
+  transition: var(--transition-theme, background 0.2s);
+}
+
+.rsd-toolbar .search-wrap { flex: 0 0 240px; }
+.rsd-toolbar .filter-wrap { flex: 0 0 160px; }
+
+#accountSearch,
+#rsdAccountSearch {
+  width: 100%;
+  border: 1.5px solid var(--rsd-border);
+  border-radius: 6px;
+  padding: 7px 11px;
+  font-size: 13px;
+  outline: none;
+  color: var(--rsd-ink);
+  background: var(--rsd-bg-alt);
+  font-family: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+#accountSearch:focus,
+#rsdAccountSearch:focus { border-color: var(--color-blue, #3d6bfa); }
+#accountSearch::placeholder,
+#rsdAccountSearch::placeholder { color: var(--rsd-ink-faint); }
+
+#usageFilter,
+#rsdUsageFilter {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1.5px solid var(--rsd-border);
+  border-radius: 6px;
+  padding: 7px 32px 7px 11px;
+  font-size: 13px;
+  color: var(--rsd-ink);
+  background-color: var(--rsd-bg-alt);
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a94a3' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 14px;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+#usageFilter:focus,
+#rsdUsageFilter:focus { border-color: var(--color-blue, #3d6bfa); }
+
+/* ── Table ── */
+.rsd-table-wrap {
+  padding: 0 20px 20px;
+  overflow-x: auto;
+  background: var(--rsd-bg);
+  transition: var(--transition-theme, background 0.2s);
+}
+
+#accountsTable,
+#rsdAccountsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+#accountsTable thead th,
+#rsdAccountsTable thead th {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--rsd-ink-dim);
+  padding: 9px 12px;
+  border-bottom: 1.5px solid var(--rsd-border);
+  white-space: nowrap;
+  text-align: right;
+  background: var(--rsd-bg);
+  transition: var(--transition-theme, background 0.2s);
+}
+#accountsTable thead th.col-account,
+#rsdAccountsTable thead th.col-account { text-align: left; }
+#accountsTable thead th.col-status,
+#rsdAccountsTable thead th.col-status  { text-align: left; }
+#accountsTable thead th.col-action,
+#rsdAccountsTable thead th.col-action  { width: 44px; text-align: center; }
+
+#accountsTable tbody td,
+#rsdAccountsTable tbody td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--rsd-border);
+  text-align: right;
+  vertical-align: middle;
+  color: var(--rsd-ink);
+  transition: var(--transition-theme, color 0.2s);
+}
+#accountsTable tbody tr:hover,
+#rsdAccountsTable tbody tr:hover { background: var(--rsd-row-hover); }
+
+#accountsTable tbody tr:last-child td,
+#rsdAccountsTable tbody tr:last-child td { border-bottom: none; }
+
+#accountsTable td.col-account,
+#rsdAccountsTable td.col-account { text-align: left; min-width: 160px; }
+#accountsTable td.col-status,
+#rsdAccountsTable td.col-status  { text-align: left; }
+#accountsTable td.col-action,
+#rsdAccountsTable td.col-action  { text-align: center; padding: 6px 8px; }
+#accountsTable td.col-num,
+#rsdAccountsTable td.col-num     { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Account cell contents */
+.acct-name   { font-weight: 600; color: var(--rsd-ink); line-height: 1.3; }
+.acct-code   { font-size: 11.5px; color: var(--rsd-ink-faint); margin-top: 1px; }
+.acct-number {
+  font-size: 12.5px;
+  color: var(--rsd-link);
+  font-weight: 600;
+  margin-top: 1px;
+  cursor: pointer;
+}
+.acct-number:hover { text-decoration: underline; }
+
+.usage-cell      { display: table-cell; white-space: nowrap; }
+.usage-cell span { vertical-align: middle; }
+.trend-icon      { vertical-align: middle; margin-left: 3px; }
+.trend-up        { color: var(--rsd-red); }
+.trend-down      { color: var(--rsd-green); }
+
+.status-text        { font-weight: 700; font-size: 12.5px; }
+.status-for-posting { color: var(--rsd-orange); }
+.status-posted      { color: var(--rsd-green); }
+.status-abnormal    { color: var(--rsd-red); }
+.status-pending     { color: var(--rsd-ink-dim); }
+
+.row-print-btn {
+  background: transparent;
+  border: none;
+  color: var(--rsd-ink-dim);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.row-print-btn:hover {
+  background: var(--rsd-bg-alt);
+  color: var(--rsd-ink);
+}
+
+.no-results        { padding: 36px 20px; text-align: center; color: var(--rsd-ink-faint); font-size: 13.5px; }
+.no-results.hidden { display: none; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .rsd-info {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .rsd-info-item,
+  .rsd-info-status,
+  .rsd-info-ref {
+    border-right: none;
+    padding-right: 0;
+    margin-right: 0;
+  }
+  .rsd-info-export  { margin-left: 0; padding-left: 0; }
+  .rsd-toolbar      { flex-wrap: wrap; }
+  .rsd-toolbar .search-wrap,
+  .rsd-toolbar .filter-wrap { flex: 1 1 140px; }
+}
+
+/* ============================================================
+   MODAL BACKDROP + PANEL
+   ============================================================ */
+
+.rsd-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: rsdBackdropIn 0.18s ease forwards;
+}
+
+@keyframes rsdBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.rsd-drawer {
+  width: min(980px, 100%);
+  max-height: 88vh;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.15);
+  animation: rsdModalIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  color: var(--color-text);
+  transition: var(--transition-theme, background 0.2s, color 0.2s);
+}
+
+@keyframes rsdModalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.rsd-drawer .rsd-table-wrap {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 0 20px 20px;
+  background: var(--color-panel);
+}
+
+.rsd-drawer .rsd-topbar,
+.rsd-drawer .rsd-info,
+.rsd-drawer .rsd-toolbar { flex-shrink: 0; }
+
+body.rsd-drawer-open { overflow: hidden; }
+
+@media (max-width: 600px) {
+  .rsd-drawer-backdrop { padding: 8px; }
+  .rsd-drawer          { max-height: 96vh; border-radius: 8px; }
+}
