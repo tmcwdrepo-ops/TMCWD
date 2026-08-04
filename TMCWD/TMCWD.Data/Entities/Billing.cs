@@ -54,5 +54,8 @@ namespace TMCWD.Data.Entities
         [Column("DateUpdated")]
         public DateTime DateUpdated { get; set; }
 
+        [Column("RemainingAmount")]
+        public decimal RemainingAmount { get; set; }
+
     }
 }

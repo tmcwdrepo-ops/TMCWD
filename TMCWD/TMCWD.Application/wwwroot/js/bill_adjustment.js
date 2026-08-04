@@ -8,6 +8,10 @@
     var acctList = document.getElementById("accountList");
     var billingDateInput = document.getElementById("BillingDate");
 
+    const modal = document.getElementById("billingHistoryModal");
+    const openBtn = document.getElementById("btnBillingHistory");
+    const closeBtn = document.getElementById("closeBillingHistory");
+
     // ── Favorite toggle (safe no-op if button not present) ──
     if (favBtn) {
         favBtn.addEventListener("click", function () { favBtn.classList.toggle("active"); });
@@ -174,4 +178,102 @@
         toastTimer = setTimeout(function () { toast.setAttribute("hidden", ""); }, 2800);
     }
 
+    if (openBtn && modal) {
+        openBtn.addEventListener("click", function () {
+
+            modal.classList.add("show");
+
+            loadBillingHistory();
+
+        });
+    }
+
+    if (closeBtn && modal) {
+        closeBtn.addEventListener("click", function () {
+            modal.classList.remove("show");
+        });
+    }
+    modal.addEventListener("click", function (e) {
+
+        if (e.target === modal) {
+            modal.classList.remove("show");
+        }
+
+    });
+    async function loadBillingHistory() {
+
+        const accountNumber = acctInput.value.trim();
+
+        if (!accountNumber) {
+            alert("Please select an account first.");
+            return;
+        }
+
+        const response = await fetch(
+            "/Billing/History?accountNumber=" +
+            encodeURIComponent(accountNumber)
+        );
+
+        if (!response.ok) {
+            alert("Unable to load billing history.");
+            return;
+        }
+
+        const data = await response.json();
+
+        const tbody = document.getElementById("billingHistoryTable");
+        tbody.innerHTML = "";
+
+        data.forEach(function (item) {
+
+            tbody.insertAdjacentHTML("beforeend", `
+            <tr>
+                <td>${item.referenceNo}</td>
+                <td>${item.billingDate.substring(0, 10)}</td>
+                <td>${item.previous}</td>
+                <td>${item.present}</td>
+                <td>${item.usage}</td>
+                <td>${item.amount.toFixed(2)}</td>
+                <td>
+                    <button
+                        type="button"
+                        class="btn btn--green btnSelectBilling"
+                        data-reference="${item.referenceNo}"
+                        data-date="${item.billingDate.substring(0, 10)}"
+                        data-previous="${item.previous}"
+                        data-present="${item.present}"
+                        data-usage="${item.usage}"
+                        data-amount="${item.amount}">
+                        Select
+                    </button>
+                </td>
+            </tr>
+            `);
+
+        });
+
+        document.querySelectorAll(".btnSelectBilling").forEach(function (btn) {
+
+            btn.addEventListener("click", function () {
+
+                document.getElementById("ReferenceNo").value =
+                    this.dataset.reference;
+
+                document.getElementById("BillingDate").value =
+                    this.dataset.date;
+
+                fillLine("usage", this.dataset.usage);
+                fillLine("present", this.dataset.present);
+                fillLine("previous", this.dataset.previous);
+
+                modal.classList.remove("show");
+
+                tryAutoFillAsBilled();
+            });
+
+        });
+
+    }
+    
 })();
+

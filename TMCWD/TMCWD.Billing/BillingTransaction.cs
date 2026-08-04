@@ -2,6 +2,7 @@
     using System.Text.Json;
     using TMCWD.Services;
     using TMCWD.Model.Billing.Interfaces;
+    using TMCWD.Model.Billing;
     using BillingModel = TMCWD.Model.Billing.Billing;
 
     namespace TMCWD.Billing
@@ -29,7 +30,18 @@
                 return JsonSerializer.Deserialize<BillingModel>(json, serializerOptions);
             }
 
-            public List<BillingBase> ConverJsonToBillings(string json)
+            public List<BillingHistory> ConvertJsonToBillingHistory(string json)
+            {
+                var serializerOptions = new JsonSerializerOptions()
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                return JsonSerializer.Deserialize<List<BillingHistory>>(json, serializerOptions)
+                       ?? new List<BillingHistory>();
+            }
+
+        public List<BillingBase> ConverJsonToBillings(string json)
             {
                 var serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
                 var billings = JsonSerializer.Deserialize<List<BillingModel>>(json, serializerOptions) ?? new();
@@ -76,7 +88,20 @@
                 if (!response.IsSuccessStatusCode) return null;
                 return ConverJsonToBillings(data);
             }
-            #endregion
 
-        }
+            public async Task<List<BillingHistory>> GetBillingHistory(string accountNumber)
+            {
+                var response = await _service.Client.GetAsync(
+                    $"api/Billing/History/{accountNumber}");
+
+                if (!response.IsSuccessStatusCode)
+                    return new List<BillingHistory>();
+
+                var json = await response.Content.ReadAsStringAsync();
+
+                return ConvertJsonToBillingHistory(json);
+            }
+        #endregion
+
+    }
     }

@@ -277,6 +277,13 @@ namespace TMCWD.Application.Controllers
             return Ok(new { currentBill = billing.TotalBillAmount, penalty = activePenaltyTotal });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> History(string accountNumber)
+        {
+            var result = await _billingTrans.GetBillingHistory(accountNumber);
+            return Json(result);
+        }
+
         #endregion
     }
 }

@@ -8,6 +8,7 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/reading-sheet.css" />
     <link rel="stylesheet" href="~/css/create_reading.css" />
+    <link rel="stylesheet" href="~/css/bill_adjustment.css" />
 }
 @section Scripts {
     <script src="~/js/bill_adjustment.js"></script>
@@ -31,7 +32,7 @@
     <form method="post" asp-action="SubmitAdjustment" asp-controller="Billing">
         @Html.AntiForgeryToken()
 
-        <!-- ── Header fields ── -->
+        <!-- ── Header fields ── -->   
         <div class="panel" style="margin-bottom:var(--space-md);border-radius:var(--radius-md);">
             <div style="padding:var(--space-md);">
                 <div class="cr-form">
@@ -82,11 +83,34 @@
                         </div>
                        <!-- Calendar should be changed to a  new pop out to be populated with the data based on the account number  -->
                         <div class="cr-field">
-                            <label class="cr-field__label" for="BillingDate">Billing Date</label>
-                            <div class="cr-input-wrap">
-                                <input class="cr-input" id="BillingDate" name="BillingDate"
-                                       type="date" value="@(Model.BillingDate?.ToString("yyyy-MM-dd"))" />
+
+                            <label class="cr-field__label">
+                                Billing History
+                            </label>
+
+                            <div style="display:flex;gap:10px;align-items:center;">
+
+                                <input class="cr-input"
+                                       id="BillingDate"
+                                       name="BillingDate"
+                                       type="text"
+                                       readonly
+                                       placeholder="No billing selected" />
+
+                                <button type="button"
+                                        class="btn btn--ghost"
+                                        id="btnBillingHistory">
+
+                                    Select Billing
+
+                                </button>
+
                             </div>
+
+                            <input type="hidden"
+                                   id="ReferenceNo"
+                                   name="ReferenceNo" />
+
                         </div>
                     </div>
 
@@ -203,3 +227,55 @@
     </form>
 
 </section>
+
+<!-- Billing History Modal -->
+
+<div id="billingHistoryModal"
+     class="billing-modal"
+     >
+
+    <div class="billing-modal-content">
+        <div class="billing-modal-header">
+
+            <h3>Billing History</h3>
+
+            <button
+                type="button"
+                id="closeBillingHistory">
+                X
+            </button>
+
+        </div>
+
+        <div class="table-wrap">
+
+            <table class="data-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Reference No</th>
+                        <th>Billing Date</th>
+                        <th>Previous</th>
+                        <th>Present</th>
+                        <th>Usage</th>
+                        <th>Amount</th>
+                        <th>Action</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="billingHistoryTable">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        
+
+    </div>
+
+</div>
