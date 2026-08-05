@@ -18,8 +18,8 @@ namespace TMCWD.Model.Billing.Interfaces
 
         public DateTime DateCreated { get; set; }
 
-        public int UpdatedBy { get; set; }
+        public int? UpdatedBy { get; set; }
 
-        public DateTime DateUpdated { get; set; }
+        public DateTime? DateUpdated { get; set; }
     }
 }

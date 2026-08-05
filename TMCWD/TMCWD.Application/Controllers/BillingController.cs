@@ -199,10 +199,17 @@ namespace TMCWD.Application.Controllers
             if (presentLine != null)
             {
                 var currentReading = await _readingTrans.GetByAccountAndBillingPeriod(account.Id, billing.BillingPeriod);
-                if (currentReading != null)
+                if (currentReading == null)
                 {
-                    currentReading.CurrentReading = presentLine.ShouldBe.Value;
-                    await _readingTrans.SaveUpdate(_user.User.Id, currentReading);
+                    TempData["ErrorMessage"] = $"DEBUG: No reading found for accountId={account.Id}, billingPeriod={billing.BillingPeriod:yyyy-MM-dd}";
+                    return View("BillAdjustment", model);
+                }
+                currentReading.CurrentReading = presentLine.ShouldBe.Value;
+                var savedReading = await _readingTrans.SaveUpdate(_user.User.Id, currentReading);
+                if (savedReading == null)
+                {
+                    TempData["ErrorMessage"] = "DEBUG: SaveUpdate returned null for reading.";
+                    return View("BillAdjustment", model);
                 }
             }
 

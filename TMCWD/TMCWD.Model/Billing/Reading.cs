@@ -30,9 +30,9 @@ namespace TMCWD.Model.Billing
         public DateTime DateCreated { get; set; }
 
         [DisplayName("Updated By")]
-        public int UpdatedBy { get; set; }
+        public int? UpdatedBy { get; set; }
 
         [DisplayName("Date Updated")]
-        public DateTime DateUpdated { get; set; }
+        public DateTime? DateUpdated { get; set; }
     }
 }
