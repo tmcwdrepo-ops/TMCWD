@@ -26,6 +26,21 @@
       var createNewBtn = document.getElementById('createNewBtn');
       if (createNewBtn) {
         createNewBtn.addEventListener('click', function () {
+          var backdrop = document.getElementById('crBackdrop');
+          if (backdrop) delete backdrop.dataset.editId;
+          
+          var titleEl = document.getElementById('crModalTitleText');
+          if (titleEl) {
+              titleEl.innerText = 'Create Reading Sheet';
+              titleEl.style.display = 'block';
+          }
+          var favBtn = document.querySelector('.cr-header__fav');
+          var tplWrap = document.querySelector('.cr-header__template-wrap');
+          var tplsWrap = document.querySelector('.cr-header__templates-wrap');
+          if (favBtn) favBtn.style.display = '';
+          if (tplWrap) tplWrap.style.display = '';
+          if (tplsWrap) tplsWrap.style.display = '';
+
           if (typeof openCreateModal === 'function') openCreateModal();
         });
       }
@@ -109,8 +124,15 @@
             seqTo:            (document.getElementById('crToSeq')               || {}).value || 0
           };
           console.log('Reading Sheet Data:', data);
-          if (typeof onReadingSheetCreate === 'function') await onReadingSheetCreate(data);
-          document.dispatchEvent(new CustomEvent('readingSheet:created', { detail: data }));
+          var backdrop = document.getElementById('crBackdrop');
+          if (backdrop && backdrop.dataset.editId) {
+              data.id = backdrop.dataset.editId;
+              if (typeof onReadingSheetEdit === 'function') await onReadingSheetEdit(data);
+              document.dispatchEvent(new CustomEvent('readingSheet:edited', { detail: data }));
+          } else {
+              if (typeof onReadingSheetCreate === 'function') await onReadingSheetCreate(data);
+              document.dispatchEvent(new CustomEvent('readingSheet:created', { detail: data }));
+          }
         });
       }
     });
@@ -188,46 +210,7 @@
     </div>
   </div>
 
-  <!-- Edit Record Modal -->
-  <form id="frmReadingSheet" method="POST">
-  <div class="modal-backdrop" id="editModalBackdrop" hidden aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" style="max-width: 500px;">
-      <h2 class="modal__title" id="editModalTitle">Edit Reading Sheet</h2>
-      <div class="modal__body" style="width: 100%; max-width: 100%; text-align: left;">
-        <input type="hidden" id="editRowId" />
-        <div style="display: flex; flex-direction: column; gap: 14px;">
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="editMeterReader" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Meter Reader</label>
-            <input type="text" id="editMeterReader" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="editBillingDate" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Billing Date</label>
-            <input type="date" id="editBillingDate" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="editZone" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Zone</label>
-            <input type="text" id="editZone" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="editForPosting" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">For Posting</label>
-            <input type="number" id="editForPosting" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="editStatus" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Status</label>
-            <select id="editStatus" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);">
-              <option value="In-Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="modal__actions">
-        <button class="btn btn--ghost" type="button" id="editModalCancel">Cancel</button>
-        <button class="btn btn--green" type="button" id="editModalSave">Save Changes</button>
-      </div>
-    </div>
-  </div>
-  </form>
+
 
   <!-- Bulk Delete Confirmation Modal -->
   <div class="modal-backdrop" id="bulkDeleteModalBackdrop" hidden aria-hidden="true">
@@ -339,6 +322,7 @@
 
       <!-- Header -->
       <div class="cr-header">
+        <h2 id="crModalTitleText" style="display: none; margin: 0; font-size: 16px; font-weight: 600; color: var(--color-text); margin-right: auto;"></h2>
         <button class="cr-header__fav" type="button" aria-label="Favourite template">
           <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path d="M10 2l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 14.27l-4.77 2.44.91-5.32L2.27 7.62l5.34-.78L10 2z"

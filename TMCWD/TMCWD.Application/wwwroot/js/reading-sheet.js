@@ -571,19 +571,32 @@ function openViewPanel(id) {
 
   // Populate header info
   var billingDateEl = document.getElementById('rsdBillingDate');
+  var dueDateEl     = document.getElementById('rsdDueDate');
+  var disconDateEl  = document.getElementById('rsdDisconDate');
   var meterReaderEl = document.getElementById('rsdMeterReader');
   var postingEl     = document.getElementById('rsdPostingStatus');
   var sheetRefEl    = document.getElementById('rsdSheetRef');
 
-  if (billingDateEl) billingDateEl.textContent = row.billingDate;
-  if (meterReaderEl) meterReaderEl.textContent = row.meterReader;
-  if (postingEl)     postingEl.textContent      = row.forPosting + ' of ' + row.forPosting;
-  if (sheetRefEl)    sheetRefEl.textContent      = 'RS-' + String(row.id).padStart(5, '0');
+  // Pull richer details from mock data
+  var details = (typeof getReadingSheetDetails === 'function')
+    ? getReadingSheetDetails(id)
+    : { billingDate: row.billingDate, dueDate: '—', disconDate: '—', accounts: [] };
 
-  // Populate sample account rows (replace with real data fetch when available)
+  if (billingDateEl) billingDateEl.textContent = details.billingDate || row.billingDate;
+  if (dueDateEl)     dueDateEl.textContent     = details.dueDate     || '—';
+  if (disconDateEl)  disconDateEl.textContent  = details.disconDate  || '—';
+  if (meterReaderEl) meterReaderEl.textContent = row.meterReader;
+  if (postingEl) {
+    var total    = details.accounts ? details.accounts.length : row.forPosting;
+    var posted   = details.accounts ? details.accounts.filter(function(a) { return a.status === 'Posted'; }).length : row.forPosting;
+    postingEl.textContent = posted + ' of ' + total;
+  }
+  if (sheetRefEl) sheetRefEl.textContent = 'RS-' + String(row.id).padStart(5, '0');
+
+  // Populate account rows from mock data
   var tbody = document.getElementById('rsdAccountsTableBody');
   if (tbody) {
-    tbody.innerHTML = renderSampleAccountRows(row);
+    tbody.innerHTML = renderSampleAccountRows(details.accounts || []);
   }
 
   // Reset search and filter
@@ -606,26 +619,13 @@ function openViewPanel(id) {
 }
 
 /**
- * Build placeholder account rows for the drawer.
- * Replace this with a real fetch to your reading sheet accounts endpoint.
+ * Build account rows for the drawer from an accounts array.
  *
- * @param {Object} row - The reading sheet row.
+ * @param {Array} accounts - Array of account objects from mock data.
  * @returns {string} HTML string of <tr> elements.
  */
-function renderSampleAccountRows(row) {
-  // Placeholder accounts — replace with data from your API/controller
-  var placeholderAccounts = [
-    { name: 'Maria Santos',      code: '03-050001', number: '260700001', prev: 1120, pres: 1198, usage: 78,  trend: 'up',     balance: 120.00, amount: 312.00, total: 432.00,  status: 'For Posting', category: 'normal'   },
-    { name: 'Roberto Reyes',     code: '03-050002', number: '260700002', prev: 840,  pres: 895,  usage: 55,  trend: 'down',   balance: 0.00,   amount: 220.00, total: 220.00,  status: 'Posted',      category: 'normal'   },
-    { name: 'Carlo Mendoza',     code: '03-050003', number: '260700003', prev: 560,  pres: 730,  usage: 170, trend: 'up',     balance: 480.00, amount: 680.00, total: 1160.00, status: 'Abnormal',    category: 'abnormal' },
-    { name: 'Dante Villanueva',  code: '03-050004', number: '260700004', prev: 2200, pres: 2265, usage: 65,  trend: 'normal', balance: 0.00,   amount: 260.00, total: 260.00,  status: 'Posted',      category: 'normal'   },
-    { name: 'Noel Castillo',     code: '03-050005', number: '260700005', prev: 410,  pres: 475,  usage: 65,  trend: 'up',     balance: 95.00,  amount: 260.00, total: 355.00,  status: 'For Posting', category: 'normal'   },
-    { name: 'Rachel Domingo',    code: '03-050006', number: '260700006', prev: 990,  pres: 1045, usage: 55,  trend: 'down',   balance: 0.00,   amount: 220.00, total: 220.00,  status: 'Posted',      category: 'normal'   },
-    { name: 'Samuel Ong',        code: '03-050007', number: '260700007', prev: 310,  pres: 500,  usage: 190, trend: 'up',     balance: 700.00, amount: 760.00, total: 1460.00, status: 'Abnormal',    category: 'abnormal' },
-    { name: 'Teresa Padilla',    code: '03-050008', number: '260700008', prev: 1500, pres: 1558, usage: 58,  trend: 'normal', balance: 0.00,   amount: 232.00, total: 232.00,  status: 'Posted',      category: 'normal'   },
-    { name: 'Eduardo Flores',    code: '03-050009', number: '260700009', prev: 720,  pres: 788,  usage: 68,  trend: 'up',     balance: 140.00, amount: 272.00, total: 412.00,  status: 'For Posting', category: 'remarks'  },
-    { name: 'Ligaya Ramos',      code: '03-050010', number: '260700010', prev: 880,  pres: 910,  usage: 30,  trend: 'down',   balance: 0.00,   amount: 120.00, total: 120.00,  status: 'Posted',      category: 'remarks'  }
-  ];
+function renderSampleAccountRows(accounts) {
+  var placeholderAccounts = accounts || [];
 
   if (placeholderAccounts.length === 0) {
     return '<tr><td colspan="9" style="text-align:center;padding:32px;color:#9aa4b2;">No accounts found for this reading sheet.</td></tr>';
@@ -708,15 +708,25 @@ function openEditModal(id) {
     return;
   }
 
-  console.log('[ReadingSheet] Found row:', row);
-
-  var backdrop = document.getElementById('editModalBackdrop');
+  var backdrop = document.getElementById('crBackdrop');
   if (!backdrop) {
-    console.error('[ReadingSheet] editModalBackdrop element not found in DOM');
+    console.error('[ReadingSheet] crBackdrop element not found in DOM');
     return;
   }
 
-  console.log('[ReadingSheet] Backdrop element found, opening modal');
+  backdrop.dataset.editId = id; // set edit mode
+
+  var titleEl = document.getElementById('crModalTitleText');
+  if (titleEl) {
+      titleEl.innerText = 'Edit Reading Sheet';
+      titleEl.style.display = 'block';
+  }
+  var favBtn = document.querySelector('.cr-header__fav');
+  var tplWrap = document.querySelector('.cr-header__template-wrap');
+  var tplsWrap = document.querySelector('.cr-header__templates-wrap');
+  if (favBtn) favBtn.style.display = 'none';
+  if (tplWrap) tplWrap.style.display = 'none';
+  if (tplsWrap) tplsWrap.style.display = 'none';
 
   // Convert display date format "Jul 01, 2025" to input format "yyyy-MM-dd"
   var isoDate = '';
@@ -732,76 +742,27 @@ function openEditModal(id) {
     console.error('Date conversion error:', e);
   }
 
-  // Populate fields
-  document.getElementById('editRowId').value        = row.id;
-  document.getElementById('editMeterReader').value  = row.meterReader;
-  document.getElementById('editBillingDate').value  = isoDate;
-  document.getElementById('editZone').value         = row.zone;
-  document.getElementById('editForPosting').value   = row.forPosting;
-  document.getElementById('editStatus').value       = row.status;
-
-  backdrop.hidden = false;
-  backdrop.setAttribute('aria-hidden', 'false');
-
-  console.log('[ReadingSheet] Modal opened successfully');
-
-  // Focus first field
-  var firstInput = document.getElementById('editMeterReader');
-  if (firstInput) firstInput.focus();
-}
-
-/**
- * Close the edit modal.
- */
-function closeEditModal() {
-  var backdrop = document.getElementById('editModalBackdrop');
-  if (!backdrop) return;
-  backdrop.hidden = true;
-  backdrop.setAttribute('aria-hidden', 'true');
-}
-
-/**
- * Save the edited values back into readingSheetState.rows and re-render.
- */
-function handleEditSave() {
-  var id = parseInt(document.getElementById('editRowId').value, 10);
-  if (!id) return;
-
-  var meterReader = document.getElementById('editMeterReader').value.trim();
-  var billingDateRaw = document.getElementById('editBillingDate').value.trim();
-  var zone        = document.getElementById('editZone').value.trim();
-  var forPosting  = parseInt(document.getElementById('editForPosting').value, 10) || 0;
-  var status      = document.getElementById('editStatus').value;
-
-  if (!meterReader || !billingDateRaw || !zone) return;
-
-  // Convert date from "yyyy-MM-dd" to display format "Jul 01, 2025"
-  var displayDate = billingDateRaw;
-  try {
-    var d = new Date(billingDateRaw);
-    if (!isNaN(d)) {
-      displayDate = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
-    }
-  } catch (e) {
-    console.error('Date formatting error:', e);
+  var crBillingDate = document.getElementById('crBillingDate');
+  if (crBillingDate) crBillingDate.value = isoDate;
+  
+  var crMeterReaderInput = document.getElementById('crMeterReaderInput');
+  if (crMeterReaderInput) {
+      crMeterReaderInput.value = row.meterReader;
+      crMeterReaderInput.dataset.id = row.meterReader; 
+  }
+  
+  var crZone = document.getElementById('crZone');
+  if (crZone) {
+      var zoneVal = '';
+      if (row.zone && row.zone.startsWith('ZN-')) {
+          zoneVal = parseInt(row.zone.replace('ZN-', ''), 10).toString();
+      }
+      crZone.value = zoneVal;
   }
 
-  // Update the matching row in state
-  readingSheetState.rows = readingSheetState.rows.map(function(row) {
-    if (row.id !== id) return row;
-    return {
-      id:          row.id,
-      meterReader: meterReader,
-      billingDate: displayDate,
-      zone:        zone,
-      forPosting:  forPosting,
-      status:      status
-    };
-  });
-
-  closeEditModal();
-  applyAllFilters();
-  applyAndRender();
+  if (typeof openCreateModal === 'function') {
+      openCreateModal();
+  }
 }
 
 /**
@@ -1235,7 +1196,7 @@ function handleNextClick() {
  * Initialize the Reading Sheet page.
  * Called by appshell.js loadPage() after all assets are loaded.
  */
-function initReadingSheetPage() {
+async function initReadingSheetPage() {
     // Reset all runtime state on every init — prevents stale data
     // from a previous page load bleeding through.
     readingSheetState.rows = [];
@@ -1246,58 +1207,19 @@ function initReadingSheetPage() {
     readingSheetState.sortDirection = 'asc';
     readingSheetState.statusFilter = 'in-progress';
 
-    // Inject edit modal if it doesn't exist (fallback for SPA navigation)
-    if (!document.getElementById('editModalBackdrop')) {
-        var modalHTML =
-            '<div class="modal-backdrop" id="editModalBackdrop" hidden aria-hidden="true">' +
-            '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" style="max-width: 500px;">' +
-            '<h2 class="modal__title" id="editModalTitle">Edit Reading Sheet</h2>' +
-            '<div class="modal__body" style="width: 100%; max-width: 100%; text-align: left;">' +
-            '<input type="hidden" id="editRowId" />' +
-            '<div style="display: flex; flex-direction: column; gap: 14px;">' +
-            '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-            '<label for="editMeterReader" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Meter Reader</label>' +
-            '<input type="text" id="editMeterReader" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-            '</div>' +
-            '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-            '<label for="editBillingDate" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Billing Date</label>' +
-            '<input type="date" id="editBillingDate" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-            '</div>' +
-            '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-            '<label for="editZone" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Zone</label>' +
-            '<input type="text" id="editZone" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-            '</div>' +
-            '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-            '<label for="editForPosting" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">For Posting</label>' +
-            '<input type="number" id="editForPosting" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-            '</div>' +
-            '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-            '<label for="editStatus" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Status</label>' +
-            '<select id="editStatus" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);">' +
-            '<option value="In-Progress">In Progress</option>' +
-            '<option value="Completed">Completed</option>' +
-            '</select>' +
-            '</div>' +
-            '</div>' +
-            '</div>' +
-            '<div class="modal__actions">' +
-            '<button class="btn btn--ghost" type="button" id="editModalCancel">Cancel</button>' +
-            '<button class="btn btn--green" type="button" id="editModalSave">Save Changes</button>' +
-            '</div>' +
-            '</div>' +
-            '</div>';
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        console.log('[ReadingSheet] Edit modal injected via JavaScript');
+    // Old edit modal injection removed
+
+  if (typeof READING_SHEET_SAMPLE_DATA !== 'undefined') {
+    readingSheetState.rows = READING_SHEET_SAMPLE_DATA.slice();
+  }
+
+  try {
+    const READING_SHEETS = await loadReadingSheets();
+    if (typeof READING_SHEETS !== 'undefined' && READING_SHEETS && READING_SHEETS.length > 0) {
+          readingSheetState.rows = READING_SHEETS;
     }
-
-  // if (typeof READING_SHEET_SAMPLE_DATA !== 'undefined') {
-  //   readingSheetState.rows = READING_SHEET_SAMPLE_DATA.slice();
-  // }
-
-  const READING_SHEETS = await loadReadingSheets();
-
-  if (typeof READING_SHEETS !== 'undefined') {
-        readingSheetState.rows = READING_SHEETS;
+  } catch (e) {
+      console.error('Failed to load reading sheets from API, using sample data.', e);
   }
 
     applyAllFilters();
@@ -1345,7 +1267,15 @@ function initReadingSheetPage() {
         tbody.addEventListener('click', function (event) {
             console.log('[ReadingSheet] tbody click detected', event.target);
 
-            // Check for edit button first
+            // Check for view button first
+            var viewBtn = event.target.closest('.action-btn--view');
+            if (viewBtn) {
+                console.log('[ReadingSheet] View button found in delegation');
+                handleViewClick(event);
+                return;
+            }
+
+            // Check for edit button
             var editBtn = event.target.closest('.action-btn--edit');
             if (editBtn) {
                 console.log('[ReadingSheet] Edit button found in delegation');
@@ -1365,18 +1295,7 @@ function initReadingSheetPage() {
     if (bulkDelete) bulkDelete.addEventListener('click', handleBulkDelete);
     if (bulkClear) bulkClear.addEventListener('click', handleBulkClear);
 
-    // Edit modal
-    var editSave = document.getElementById('editModalSave');
-    var editCancel = document.getElementById('editModalCancel');
-    var editBackdrop = document.getElementById('editModalBackdrop');
-
-    if (editSave) editSave.addEventListener('click', handleEditSave);
-    if (editCancel) editCancel.addEventListener('click', closeEditModal);
-    if (editBackdrop) {
-        editBackdrop.addEventListener('click', function (event) {
-            if (event.target === editBackdrop) closeEditModal();
-        });
-    }
+    // Old edit modal bindings removed
 
     // Delete modal (single row)
     var deleteConfirm = document.getElementById('deleteModalConfirm');
@@ -1489,6 +1408,36 @@ async function onReadingSheetCreate(data) {
     }).then(result => {
         return result;
     });
+}
+
+async function onReadingSheetEdit(data) {
+  var id = parseInt(data.id, 10);
+  if (!id) return;
+  var displayDate = data.billingDate;
+  try {
+    var d = new Date(data.billingDate);
+    if (!isNaN(d)) {
+      displayDate = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    }
+  } catch (e) {}
+
+  var zoneMap = { '1': 'ZN-01', '2': 'ZN-02', '3': 'ZN-03', '4': 'ZN-04', '5': 'ZN-05', '6': 'ZN-06', '7': 'ZN-07' };
+  var zoneLabel = zoneMap[data.zone] || 'ZN-' + String(data.zone).padStart(2, '0');
+  
+  readingSheetState.rows = readingSheetState.rows.map(function(row) {
+    if (row.id !== id) return row;
+    return {
+      id:          row.id,
+      meterReader: data.meterReader || row.meterReader,
+      billingDate: displayDate,
+      zone:        data.zone ? zoneLabel : row.zone,
+      forPosting:  row.forPosting,
+      status:      row.status
+    };
+  });
+  
+  applyAllFilters();
+  applyAndRender();
 }
 
 function onReadingSheetCreated(data) {
