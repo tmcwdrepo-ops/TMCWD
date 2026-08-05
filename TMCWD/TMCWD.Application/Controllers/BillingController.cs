@@ -64,6 +64,7 @@ namespace TMCWD.Application.Controllers
         }
 
         public IActionResult Index() => View();
+        public IActionResult Collections() => View("Collections");
         public IActionResult PenaltyCharging() => View();
         public IActionResult Penalty() => View();
 

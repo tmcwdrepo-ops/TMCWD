@@ -429,4 +429,46 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+
+  // --- Auto-open accordion group and mark active link based on current URL ---
+  // Matches the current path against each nav link's href so the correct
+  // submenu stays open and the correct item is highlighted on full-page loads.
+  (function autoActivateNav() {
+    var currentPath = window.location.pathname.toLowerCase();
+
+    // Find all non-trigger nav links and check if their href matches the URL
+    var allLinks = document.querySelectorAll('.sidebar .nav-link:not(.nav-accordion-trigger)');
+    var matched = null;
+
+    allLinks.forEach(function(link) {
+      var href = (link.getAttribute('href') || '').toLowerCase();
+      // Exact match or current path starts with href (covers sub-routes)
+      if (href && href !== '#' && currentPath === href) {
+        matched = link;
+      }
+    });
+
+    // Looser match if exact didn't find anything (last segment comparison)
+    if (!matched) {
+      allLinks.forEach(function(link) {
+        var href = (link.getAttribute('href') || '').toLowerCase();
+        if (href && href !== '#' && currentPath.startsWith(href)) {
+          matched = link;
+        }
+      });
+    }
+
+    if (!matched) return;
+
+    // Mark it active
+    setActiveLink(matched);
+
+    // Walk up the DOM to find a parent nav-submenu and open its accordion
+    var submenu = matched.closest('.nav-submenu');
+    if (submenu) {
+      var trigger = document.querySelector('[aria-controls="' + submenu.id + '"]');
+      if (trigger) openAccordion(trigger);
+    }
+  }());
+
 });
