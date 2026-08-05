@@ -20,6 +20,7 @@ namespace TMCWD.Application.Controllers
         private readonly AccountTransaction _accountTrans;
         private readonly BillingAdjustmentTransaction _billingAdjustmentTrans;
         private readonly UserTransaction _userTrans;
+        private readonly ReadingTransaction _readingTrans;
 
         #endregion
 
@@ -30,7 +31,9 @@ namespace TMCWD.Application.Controllers
              PenaltyTransaction penaltyTrans,
              AccountTransaction accountTrans,
              BillingAdjustmentTransaction billingAdjustmentTrans,
-             UserTransaction userTrans)
+             UserTransaction userTrans,
+             ReadingTransaction readingTrans)
+
         {
             _user = user;
             _billingTrans = billingTrans;
@@ -38,6 +41,7 @@ namespace TMCWD.Application.Controllers
             _accountTrans = accountTrans;
             _billingAdjustmentTrans = billingAdjustmentTrans;
             _userTrans = userTrans;
+            _readingTrans = readingTrans;
         }
 
         public async Task<IActionResult> BillAdjustment()
@@ -92,6 +96,13 @@ namespace TMCWD.Application.Controllers
             {
                 TempData["ErrorMessage"] = "Please provide an account number, billing date, and select at least one line item.";
                  await RestoreDropdowns();
+                return View("BillAdjustment", model);
+            }
+
+            if (string.IsNullOrWhiteSpace(model.MeterReader) || string.IsNullOrWhiteSpace(model.Remarks))
+            {
+                TempData["ErrorMessage"] = "Please select a Meter Reader and a Remarks reason before submitting.";
+                await RestoreDropdowns();
                 return View("BillAdjustment", model);
             }
 
@@ -159,6 +170,51 @@ namespace TMCWD.Application.Controllers
                 }
 
                 if (line.HasAdjustmentColumn) netAdjustment += adjustmentAmount;
+            }
+
+            // ── Sync Penalty and Reading data for special line items ──
+
+            var penaltyLine = checkedLines.FirstOrDefault(l => l.Key == "penalty");
+            if (penaltyLine != null)
+            {
+                var penaltyDelta = penaltyLine.Adjustment ?? (penaltyLine.ShouldBe.Value - penaltyLine.AsBilled.Value);
+
+                if (penaltyDelta != 0)
+                {
+                    var newPenalty = new Model.Billing.Penalty
+                    {
+                        BillingReferenceId = billing.BillingReferenceId,
+                        Amount = penaltyDelta,
+                        PenaltyTypeId = 0,
+                        PaymentStatus = PaymentStatus.Unpaid
+                    };
+                    await _penaltyTrans.SaveUpdate(_user.User.Id, newPenalty);
+                }
+
+                var allPenalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.Penalty>();
+                billing.Penalties = allPenalties.Where(p => p.PaymentStatus != PaymentStatus.Waived).Sum(p => p.Amount);
+            }
+
+            var presentLine = checkedLines.FirstOrDefault(l => l.Key == "present");
+            if (presentLine != null)
+            {
+                var currentReading = await _readingTrans.GetByAccountAndBillingPeriod(account.Id, billing.BillingPeriod);
+                if (currentReading != null)
+                {
+                    currentReading.CurrentReading = presentLine.ShouldBe.Value;
+                    await _readingTrans.SaveUpdate(_user.User.Id, currentReading);
+                }
+            }
+
+            var previousLine = checkedLines.FirstOrDefault(l => l.Key == "previous");
+            if (previousLine != null)
+            {
+                var previousReading = await _readingTrans.GetAccountPreviousReading(account.Id);
+                if (previousReading != null)
+                {
+                    previousReading.CurrentReading = previousLine.ShouldBe.Value;
+                    await _readingTrans.SaveUpdate(_user.User.Id, previousReading);
+                }
             }
 
             // ── 3. Recompute billing ──

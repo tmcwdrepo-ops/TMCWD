@@ -28,6 +28,7 @@
         if (keyInput) row.dataset.key = keyInput.value;
         if (!checkbox || !asBilled || !shouldBe) return;
 
+
         function setEnabled(on) {
             asBilled.disabled = !on;
             shouldBe.disabled = !on;
@@ -54,6 +55,34 @@
         recalc();
     });
 
+    // ── Usage auto-calc from Present/Previous ──
+    function syncUsageFromReadings() {
+        var presentRow = document.querySelector('tr[data-key="present"]');
+        var previousRow = document.querySelector('tr[data-key="previous"]');
+        var usageRow = document.querySelector('tr[data-key="usage"]');
+        if (!presentRow || !previousRow || !usageRow) return;
+
+        var presentShouldBe = parseFloat(presentRow.querySelector('input[name$=".ShouldBe"]').value);
+        var previousShouldBe = parseFloat(previousRow.querySelector('input[name$=".ShouldBe"]').value);
+
+        if (isNaN(presentShouldBe) || isNaN(previousShouldBe)) return;
+
+        var usageChk = usageRow.querySelector('input[name$=".IsChecked"]');
+        var usageShouldBe = usageRow.querySelector('input[name$=".ShouldBe"]');
+
+        usageChk.checked = true;
+        usageChk.dispatchEvent(new Event("change"));
+        usageShouldBe.value = (presentShouldBe - previousShouldBe).toFixed(2);
+        usageShouldBe.dispatchEvent(new Event("input"));
+    }
+
+    ["present", "previous"].forEach(function (key) {
+        var row = document.querySelector('tr[data-key="' + key + '"]');
+        if (!row) return;
+        var shouldBeInput = row.querySelector('input[name$=".ShouldBe"]');
+        if (shouldBeInput) shouldBeInput.addEventListener("input", syncUsageFromReadings);
+    });
+
     // ── Validation ──
     function setInvalid(el, isInvalid) {
         var field = el.closest(".cr-field") || el.closest(".ba-field");
@@ -72,6 +101,19 @@
             setInvalid(acctInput, true);
             ok = false;
         }
+
+        var meterReaderSelect = document.getElementById("MeterReader");
+        var remarksSelect = document.getElementById("Remarks");
+
+        if (meterReaderSelect && !meterReaderSelect.value) {
+            setInvalid(meterReaderSelect, true);
+            ok = false;
+        }
+        if (remarksSelect && !remarksSelect.value) {
+            setInvalid(remarksSelect, true);
+            ok = false;
+        }
+
         var anyChecked = Array.from(document.querySelectorAll('input[name$=".IsChecked"]'))
             .some(function (c) { return c.checked; });
         if (!anyChecked) {

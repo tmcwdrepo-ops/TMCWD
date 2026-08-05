@@ -57,12 +57,13 @@ namespace TMCWD.Billing
             return ConvertJsonToReadings(data);
         }
 
-        public async Task<List<Reading>> GetByAccountAndBillingPeriod(int accountId, DateTime billingPeriod)
+
+        public async Task<Reading> GetByAccountAndBillingPeriod(int accountId, DateTime billingPeriod)
         {
-            var response = await _service.Client.GetAsync($"api/Reading/GetByAccountAndBillingPeriod/{accountId}/{billingPeriod}");
+            var response = await _service.Client.GetAsync($"api/Reading/GetByAccountAndBillingPeriod/{accountId}/{billingPeriod:yyyy-MM-dd}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
-            return ConvertJsonToReadings(data);
+            return ConvertJsonToReading(data);
         }
 
         public async Task<List<Reading>> GetByReader(int readerId)

@@ -3,8 +3,48 @@
   "WorkspaceRootPath": "C:\\Projects\\TMCWD\\TMCWD\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\views\\billing\\billadjustment.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\views\\billing\\billadjustment.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\controllers\\readingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\controllers\\readingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.data\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|solutionrelative:tmcwd.data\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.data\\controllers\\billingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|solutionrelative:tmcwd.data\\controllers\\billingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{09612385-17A7-4B27-9250-46A264DE7BF4}|TMCWD.Billing\\TMCWD.Billing.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.billing\\readingtransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{09612385-17A7-4B27-9250-46A264DE7BF4}|TMCWD.Billing\\TMCWD.Billing.csproj|solutionrelative:tmcwd.billing\\readingtransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\controllers\\billingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\controllers\\billingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.data\\controllers\\readingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|solutionrelative:tmcwd.data\\controllers\\readingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.model\\billing\\interfaces\\ireading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|solutionrelative:tmcwd.model\\billing\\interfaces\\ireading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.model\\billing\\reading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|solutionrelative:tmcwd.model\\billing\\reading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\wwwroot\\js\\bill_adjustment.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\wwwroot\\js\\bill_adjustment.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\wwwroot\\js\\create_temp.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\wwwroot\\js\\create_temp.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.data\\services\\readingservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -19,14 +59,6 @@
       "RelativeMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|solutionrelative:tmcwd.model\\billing\\interfaces\\billingbase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\wwwroot\\js\\bill_adjustment.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\wwwroot\\js\\bill_adjustment.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.data\\controllers\\billingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|solutionrelative:tmcwd.data\\controllers\\billingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.data\\services\\ireadingservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|solutionrelative:tmcwd.data\\services\\ireadingservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -35,48 +67,12 @@
       "RelativeMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|solutionrelative:tmcwd.data\\entities\\reading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\controllers\\billingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\controllers\\billingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\controllers\\readingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\controllers\\readingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.model\\billing\\interfaces\\ireading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|solutionrelative:tmcwd.model\\billing\\interfaces\\ireading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.model\\billing\\reading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|solutionrelative:tmcwd.model\\billing\\reading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.data\\services\\billingservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|solutionrelative:tmcwd.data\\services\\billingservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.data\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|solutionrelative:tmcwd.data\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{09612385-17A7-4B27-9250-46A264DE7BF4}|TMCWD.Billing\\TMCWD.Billing.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.billing\\billingtransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{09612385-17A7-4B27-9250-46A264DE7BF4}|TMCWD.Billing\\TMCWD.Billing.csproj|solutionrelative:tmcwd.billing\\billingtransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.model\\billing\\billinghistory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|solutionrelative:tmcwd.model\\billing\\billinghistory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.data\\services\\accountservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|solutionrelative:tmcwd.data\\services\\accountservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{09612385-17A7-4B27-9250-46A264DE7BF4}|TMCWD.Billing\\TMCWD.Billing.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.billing\\readingtransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{09612385-17A7-4B27-9250-46A264DE7BF4}|TMCWD.Billing\\TMCWD.Billing.csproj|solutionrelative:tmcwd.billing\\readingtransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.model\\billing\\billingadjustment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -85,14 +81,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.model\\billing\\billing.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{DCE5392C-28FB-4AC3-B636-C8C79FEA3F8D}|TMCWD.Model\\TMCWD.Model.csproj|solutionrelative:tmcwd.model\\billing\\billing.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\wwwroot\\css\\bill_adjustment.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
-      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\wwwroot\\css\\bill_adjustment.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\models\\billadjustmentviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|solutionrelative:tmcwd.application\\models\\billadjustmentviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
@@ -125,14 +113,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.data\\services\\iaccountservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|solutionrelative:tmcwd.data\\services\\iaccountservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{09612385-17A7-4B27-9250-46A264DE7BF4}|TMCWD.Billing\\TMCWD.Billing.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.billing\\billingadjustmenttransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{09612385-17A7-4B27-9250-46A264DE7BF4}|TMCWD.Billing\\TMCWD.Billing.csproj|solutionrelative:tmcwd.billing\\billingadjustmenttransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.data\\controllers\\billingadjustmentcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{7EEF6108-D2D4-47FD-BA05-4713E8676C92}|TMCWD.Data\\TMCWD.Data.csproj|solutionrelative:tmcwd.data\\controllers\\billingadjustmentcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{2B013004-DA5A-2790-BDBC-61DAFFC3B9FB}|TMCWD.Application\\TMCWD.Application.csproj|c:\\projects\\tmcwd\\tmcwd\\tmcwd.application\\wwwroot\\lib\\jquery-validation\\dist\\additional-methods.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
@@ -189,20 +169,124 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 8,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 4,
               "Title": "BillingController.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Controllers\\BillingController.cs",
               "RelativeDocumentMoniker": "TMCWD.Application\\Controllers\\BillingController.cs",
               "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Controllers\\BillingController.cs",
               "RelativeToolTip": "TMCWD.Application\\Controllers\\BillingController.cs",
-              "ViewState": "AgIAAPgAAAAAAAAAAAAkwCABAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAB0BAAAAAAAAAAAIwKcAAAAnAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-07-22T06:30:25.736Z",
               "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Program.cs",
+              "RelativeDocumentMoniker": "TMCWD.Data\\Program.cs",
+              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Program.cs",
+              "RelativeToolTip": "TMCWD.Data\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACIAAABMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-04T01:30:53.372Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "BillingController.cs",
+              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\BillingController.cs",
+              "RelativeDocumentMoniker": "TMCWD.Data\\Controllers\\BillingController.cs",
+              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\BillingController.cs",
+              "RelativeToolTip": "TMCWD.Data\\Controllers\\BillingController.cs",
+              "ViewState": "AgIAADEAAAAAAAAAAAAkwIUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-04T01:25:31.806Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ReadingController.cs",
+              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Controllers\\ReadingController.cs",
+              "RelativeDocumentMoniker": "TMCWD.Application\\Controllers\\ReadingController.cs",
+              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Controllers\\ReadingController.cs",
+              "RelativeToolTip": "TMCWD.Application\\Controllers\\ReadingController.cs",
+              "ViewState": "AgIAACMAAAAAAAAAAAAiwBAAAAA6AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T01:16:18.464Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Program.cs",
+              "RelativeDocumentMoniker": "TMCWD.Application\\Program.cs",
+              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Program.cs",
+              "RelativeToolTip": "TMCWD.Application\\Program.cs",
+              "ViewState": "AgIAAA0AAAAAAAAAAAAkwB8AAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-27T08:28:12.967Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ReadingTransaction.cs",
+              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Billing\\ReadingTransaction.cs",
+              "RelativeDocumentMoniker": "TMCWD.Billing\\ReadingTransaction.cs",
+              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Billing\\ReadingTransaction.cs",
+              "RelativeToolTip": "TMCWD.Billing\\ReadingTransaction.cs",
+              "ViewState": "AgIAAGEAAAAAAAAAAAAwwHgAAAA3AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T01:09:24.495Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ReadingController.cs",
+              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\ReadingController.cs",
+              "RelativeDocumentMoniker": "TMCWD.Data\\Controllers\\ReadingController.cs",
+              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\ReadingController.cs",
+              "RelativeToolTip": "TMCWD.Data\\Controllers\\ReadingController.cs",
+              "ViewState": "AgIAAFQAAAAAAAAAAAAIwF0AAAA+AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-05T01:06:47.49Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "create_temp.js",
+              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\wwwroot\\js\\create_temp.js",
+              "RelativeDocumentMoniker": "TMCWD.Application\\wwwroot\\js\\create_temp.js",
+              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\wwwroot\\js\\create_temp.js",
+              "RelativeToolTip": "TMCWD.Application\\wwwroot\\js\\create_temp.js",
+              "ViewState": "AgIAAL8AAAAAAAAAAAAuwMUAAAAZAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2026-08-05T00:52:16.159Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "bill_adjustment.js",
+              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\wwwroot\\js\\bill_adjustment.js",
+              "RelativeDocumentMoniker": "TMCWD.Application\\wwwroot\\js\\bill_adjustment.js",
+              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\wwwroot\\js\\bill_adjustment.js",
+              "RelativeToolTip": "TMCWD.Application\\wwwroot\\js\\bill_adjustment.js",
+              "ViewState": "AgIAAEIAAAAAAAAAAAAYwFYAAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2026-08-05T00:51:46.499Z",
               "EditorCaption": ""
             },
             {
@@ -215,59 +299,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "bill_adjustment.js",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\wwwroot\\js\\bill_adjustment.js",
-              "RelativeDocumentMoniker": "TMCWD.Application\\wwwroot\\js\\bill_adjustment.js",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\wwwroot\\js\\bill_adjustment.js",
-              "RelativeToolTip": "TMCWD.Application\\wwwroot\\js\\bill_adjustment.js",
-              "ViewState": "AgIAAPEAAAAAAAAAAAAkwBEBAAALAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-07-31T02:33:25.57Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "BillingController.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\BillingController.cs",
-              "RelativeDocumentMoniker": "TMCWD.Data\\Controllers\\BillingController.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\BillingController.cs",
-              "RelativeToolTip": "TMCWD.Data\\Controllers\\BillingController.cs",
-              "ViewState": "AgIAAF0AAAAAAAAAAAAswIEAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-04T01:25:31.806Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "BillingBase.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Interfaces\\BillingBase.cs",
-              "RelativeDocumentMoniker": "TMCWD.Model\\Billing\\Interfaces\\BillingBase.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Interfaces\\BillingBase.cs",
-              "RelativeToolTip": "TMCWD.Model\\Billing\\Interfaces\\BillingBase.cs",
-              "ViewState": "AgIAAEEAAAAAAAAAAAAiwGEAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T06:53:29.253Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 11,
               "Title": "ReadingService.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Services\\ReadingService.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Services\\ReadingService.cs",
               "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Services\\ReadingService.cs",
               "RelativeToolTip": "TMCWD.Data\\Services\\ReadingService.cs",
-              "ViewState": "AgIAACAAAAAAAAAAAAAgwBEAAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADsAAABNAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-08-04T01:29:27.796Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 12,
               "Title": "Billing.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Entities\\Billing.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Entities\\Billing.cs",
@@ -275,25 +320,49 @@
               "RelativeToolTip": "TMCWD.Data\\Entities\\Billing.cs",
               "ViewState": "AgIAACYAAAAAAAAAAAAUwDYAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-30T01:53:34.901Z",
+              "WhenOpened": "2026-07-30T01:53:34.901Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Reading.cs",
+              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Reading.cs",
+              "RelativeDocumentMoniker": "TMCWD.Model\\Billing\\Reading.cs",
+              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Reading.cs",
+              "RelativeToolTip": "TMCWD.Model\\Billing\\Reading.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-04T02:37:56.473Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "BillAdjustment.cshtml",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Views\\Billing\\BillAdjustment.cshtml",
-              "RelativeDocumentMoniker": "TMCWD.Application\\Views\\Billing\\BillAdjustment.cshtml",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Views\\Billing\\BillAdjustment.cshtml",
-              "RelativeToolTip": "TMCWD.Application\\Views\\Billing\\BillAdjustment.cshtml",
-              "ViewState": "AgIAAAoBAAAAAAAAAAD4vxQBAAAIAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-07-31T07:14:09.32Z",
+              "DocumentIndex": 7,
+              "Title": "IReading.cs",
+              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Interfaces\\IReading.cs",
+              "RelativeDocumentMoniker": "TMCWD.Model\\Billing\\Interfaces\\IReading.cs",
+              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Interfaces\\IReading.cs",
+              "RelativeToolTip": "TMCWD.Model\\Billing\\Interfaces\\IReading.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-04T03:22:57.544Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 13,
+              "Title": "BillingBase.cs",
+              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Interfaces\\BillingBase.cs",
+              "RelativeDocumentMoniker": "TMCWD.Model\\Billing\\Interfaces\\BillingBase.cs",
+              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Interfaces\\BillingBase.cs",
+              "RelativeToolTip": "TMCWD.Model\\Billing\\Interfaces\\BillingBase.cs",
+              "ViewState": "AgIAAEEAAAAAAAAAAAAiwGEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-31T06:53:29.253Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
               "Title": "IReadingService.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Services\\IReadingService.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Services\\IReadingService.cs",
@@ -301,12 +370,11 @@
               "RelativeToolTip": "TMCWD.Data\\Services\\IReadingService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACMAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-04T05:47:31.899Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-04T05:47:31.899Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 15,
               "Title": "Reading.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Entities\\Reading.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Entities\\Reading.cs",
@@ -314,125 +382,19 @@
               "RelativeToolTip": "TMCWD.Data\\Entities\\Reading.cs",
               "ViewState": "AgIAAAYAAAAAAAAAAAAAACUAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-22T07:28:01.424Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-07-22T07:28:01.424Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "ReadingController.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Controllers\\ReadingController.cs",
-              "RelativeDocumentMoniker": "TMCWD.Application\\Controllers\\ReadingController.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Controllers\\ReadingController.cs",
-              "RelativeToolTip": "TMCWD.Application\\Controllers\\ReadingController.cs",
-              "ViewState": "AgIAACgAAAAAAAAAAAAuwDMAAAAfAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-04T03:23:41.502Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "IReading.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Interfaces\\IReading.cs",
-              "RelativeDocumentMoniker": "TMCWD.Model\\Billing\\Interfaces\\IReading.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Interfaces\\IReading.cs",
-              "RelativeToolTip": "TMCWD.Model\\Billing\\Interfaces\\IReading.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAxAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-04T03:22:57.544Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "Reading.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Reading.cs",
-              "RelativeDocumentMoniker": "TMCWD.Model\\Billing\\Reading.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Reading.cs",
-              "RelativeToolTip": "TMCWD.Model\\Billing\\Reading.cs",
-              "ViewState": "AgIAAB4AAAAAAAAAAAAiwCQAAAAzAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-04T02:37:56.473Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 16,
               "Title": "BillingService.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Services\\BillingService.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Services\\BillingService.cs",
               "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Services\\BillingService.cs",
               "RelativeToolTip": "TMCWD.Data\\Services\\BillingService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEkAAAAIAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEoAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-30T01:23:35.512Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Program.cs",
-              "RelativeDocumentMoniker": "TMCWD.Data\\Program.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Program.cs",
-              "RelativeToolTip": "TMCWD.Data\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACkAAABWAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-04T01:30:53.372Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "BillingTransaction.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Billing\\BillingTransaction.cs",
-              "RelativeDocumentMoniker": "TMCWD.Billing\\BillingTransaction.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Billing\\BillingTransaction.cs",
-              "RelativeToolTip": "TMCWD.Billing\\BillingTransaction.cs",
-              "ViewState": "AgIAADYAAAAAAAAAAAAowFkAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T02:33:58.781Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 15,
-              "Title": "BillingHistory.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\BillingHistory.cs",
-              "RelativeDocumentMoniker": "TMCWD.Model\\Billing\\BillingHistory.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\BillingHistory.cs",
-              "RelativeToolTip": "TMCWD.Model\\Billing\\BillingHistory.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAsAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-04T01:20:22.814Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 18,
-              "Title": "ReadingTransaction.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Billing\\ReadingTransaction.cs",
-              "RelativeDocumentMoniker": "TMCWD.Billing\\ReadingTransaction.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Billing\\ReadingTransaction.cs",
-              "RelativeToolTip": "TMCWD.Billing\\ReadingTransaction.cs",
-              "ViewState": "AgIAABEAAAAAAAAAAAAAwCUAAAA/AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-04T01:24:41.83Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 16,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Program.cs",
-              "RelativeDocumentMoniker": "TMCWD.Application\\Program.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Program.cs",
-              "RelativeToolTip": "TMCWD.Application\\Program.cs",
-              "ViewState": "AgIAACYAAAAAAAAAAAAswFAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-27T08:28:12.967Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-07-30T01:23:35.512Z"
             },
             {
               "$type": "Document",
@@ -444,12 +406,11 @@
               "RelativeToolTip": "TMCWD.Data\\Services\\AccountService.cs",
               "ViewState": "AgIAAC8AAAAAAAAAAAAgwFYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-22T05:43:02.628Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-07-22T05:43:02.628Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 19,
               "Title": "Billing.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Billing.cs",
               "RelativeDocumentMoniker": "TMCWD.Model\\Billing\\Billing.cs",
@@ -457,12 +418,11 @@
               "RelativeToolTip": "TMCWD.Model\\Billing\\Billing.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAKEAAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-04T01:13:03.283Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-04T01:13:03.283Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 18,
               "Title": "BillingAdjustment.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\BillingAdjustment.cs",
               "RelativeDocumentMoniker": "TMCWD.Model\\Billing\\BillingAdjustment.cs",
@@ -470,38 +430,11 @@
               "RelativeToolTip": "TMCWD.Model\\Billing\\BillingAdjustment.cs",
               "ViewState": "AgIAAAYAAAAAAAAAAAAIwAUAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T02:36:30.512Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-07-31T02:36:30.512Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 21,
-              "Title": "bill_adjustment.css",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\wwwroot\\css\\bill_adjustment.css",
-              "RelativeDocumentMoniker": "TMCWD.Application\\wwwroot\\css\\bill_adjustment.css",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\wwwroot\\css\\bill_adjustment.css",
-              "RelativeToolTip": "TMCWD.Application\\wwwroot\\css\\bill_adjustment.css",
-              "ViewState": "AgIAAJYBAAAAAAAAAADwv7MBAAAYAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
-              "WhenOpened": "2026-08-04T00:54:59.455Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 22,
-              "Title": "BillAdjustmentViewModel.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Models\\BillAdjustmentViewModel.cs",
-              "RelativeDocumentMoniker": "TMCWD.Application\\Models\\BillAdjustmentViewModel.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Models\\BillAdjustmentViewModel.cs",
-              "RelativeToolTip": "TMCWD.Application\\Models\\BillAdjustmentViewModel.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-04T00:53:27.468Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 23,
+              "DocumentIndex": 20,
               "Title": "_Layout.cshtml",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Views\\Shared\\_Layout.cshtml",
               "RelativeDocumentMoniker": "TMCWD.Application\\Views\\Shared\\_Layout.cshtml",
@@ -509,12 +442,11 @@
               "RelativeToolTip": "TMCWD.Application\\Views\\Shared\\_Layout.cshtml",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-08-04T00:52:29.767Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-04T00:52:29.767Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 24,
+              "DocumentIndex": 21,
               "Title": "_Layout.cshtml.css",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Views\\Shared\\_Layout.cshtml.css",
               "RelativeDocumentMoniker": "TMCWD.Application\\Views\\Shared\\_Layout.cshtml.css",
@@ -522,12 +454,11 @@
               "RelativeToolTip": "TMCWD.Application\\Views\\Shared\\_Layout.cshtml.css",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
-              "WhenOpened": "2026-08-04T00:52:27.988Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-04T00:52:27.988Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 25,
+              "DocumentIndex": 22,
               "Title": "_ValidationScriptsPartial.cshtml",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Views\\Shared\\_ValidationScriptsPartial.cshtml",
               "RelativeDocumentMoniker": "TMCWD.Application\\Views\\Shared\\_ValidationScriptsPartial.cshtml",
@@ -535,12 +466,11 @@
               "RelativeToolTip": "TMCWD.Application\\Views\\Shared\\_ValidationScriptsPartial.cshtml",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-08-04T00:52:26.04Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-04T00:52:26.04Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 26,
+              "DocumentIndex": 23,
               "Title": "_ViewImports.cshtml",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Views\\_ViewImports.cshtml",
               "RelativeDocumentMoniker": "TMCWD.Application\\Views\\_ViewImports.cshtml",
@@ -548,12 +478,11 @@
               "RelativeToolTip": "TMCWD.Application\\Views\\_ViewImports.cshtml",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-08-04T00:52:22.539Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-04T00:52:22.539Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 27,
+              "DocumentIndex": 24,
               "Title": "ModalDialogViewComponent.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\ViewComponents\\ModalDialogViewComponent.cs",
               "RelativeDocumentMoniker": "TMCWD.Application\\ViewComponents\\ModalDialogViewComponent.cs",
@@ -561,12 +490,11 @@
               "RelativeToolTip": "TMCWD.Application\\ViewComponents\\ModalDialogViewComponent.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-04T00:48:06.305Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-04T00:48:06.305Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 28,
+              "DocumentIndex": 25,
               "Title": "AccountTransaction.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.CustomerSupport\\AccountTransaction.cs",
               "RelativeDocumentMoniker": "TMCWD.CustomerSupport\\AccountTransaction.cs",
@@ -578,7 +506,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 30,
+              "DocumentIndex": 27,
               "Title": "IAccountService.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Services\\IAccountService.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Services\\IAccountService.cs",
@@ -590,7 +518,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 29,
+              "DocumentIndex": 26,
               "Title": "AccountController.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\AccountController.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Controllers\\AccountController.cs",
@@ -602,31 +530,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 31,
-              "Title": "BillingAdjustmentTransaction.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Billing\\BillingAdjustmentTransaction.cs",
-              "RelativeDocumentMoniker": "TMCWD.Billing\\BillingAdjustmentTransaction.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Billing\\BillingAdjustmentTransaction.cs",
-              "RelativeToolTip": "TMCWD.Billing\\BillingAdjustmentTransaction.cs",
-              "ViewState": "AgIAABwAAAAAAAAAAAAkwDoAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T03:01:40.151Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 32,
-              "Title": "BillingAdjustmentController.cs",
-              "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\BillingAdjustmentController.cs",
-              "RelativeDocumentMoniker": "TMCWD.Data\\Controllers\\BillingAdjustmentController.cs",
-              "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\BillingAdjustmentController.cs",
-              "RelativeToolTip": "TMCWD.Data\\Controllers\\BillingAdjustmentController.cs",
-              "ViewState": "AgIAAAcAAAAAAAAAAAAswDEAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T03:03:52.397Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 33,
+              "DocumentIndex": 28,
               "Title": "additional-methods.js",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\wwwroot\\lib\\jquery-validation\\dist\\additional-methods.js",
               "RelativeDocumentMoniker": "TMCWD.Application\\wwwroot\\lib\\jquery-validation\\dist\\additional-methods.js",
@@ -638,7 +542,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 34,
+              "DocumentIndex": 29,
               "Title": "IBillingAdjustmentService.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Services\\IBillingAdjustmentService.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Services\\IBillingAdjustmentService.cs",
@@ -650,7 +554,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 35,
+              "DocumentIndex": 30,
               "Title": "IBillingAdjustment.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Model\\Billing\\Interfaces\\IBillingAdjustment.cs",
               "RelativeDocumentMoniker": "TMCWD.Model\\Billing\\Interfaces\\IBillingAdjustment.cs",
@@ -662,7 +566,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 36,
+              "DocumentIndex": 31,
               "Title": "WebHookService.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Services\\WebHookService.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Services\\WebHookService.cs",
@@ -674,7 +578,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 38,
+              "DocumentIndex": 33,
               "Title": "WebHook.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Entities\\WebHook.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Entities\\WebHook.cs",
@@ -686,7 +590,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 37,
+              "DocumentIndex": 32,
               "Title": "IWebHookService.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Services\\IWebHookService.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Services\\IWebHookService.cs",
@@ -698,7 +602,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 39,
+              "DocumentIndex": 34,
               "Title": "UsersController.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\UsersController.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Controllers\\UsersController.cs",
@@ -710,7 +614,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 40,
+              "DocumentIndex": 35,
               "Title": "ZoneBookController.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Controllers\\ZoneBookController.cs",
               "RelativeDocumentMoniker": "TMCWD.Application\\Controllers\\ZoneBookController.cs",
@@ -722,7 +626,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 41,
+              "DocumentIndex": 36,
               "Title": "PenaltyController.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\PenaltyController.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Controllers\\PenaltyController.cs",
@@ -734,7 +638,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 44,
+              "DocumentIndex": 39,
               "Title": "ReadingSheetTransaction.cs",
               "DocumentMoniker": "D:\\Projects 20260720\\TMCWD\\TMCWD\\Billing\\ReadingSheetTransaction.cs",
               "ToolTip": "D:\\Projects 20260720\\TMCWD\\TMCWD\\Billing\\ReadingSheetTransaction.cs",
@@ -743,7 +647,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 42,
+              "DocumentIndex": 37,
               "Title": "ReadingSheetController.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Data\\Controllers\\ReadingSheetController.cs",
               "RelativeDocumentMoniker": "TMCWD.Data\\Controllers\\ReadingSheetController.cs",
@@ -755,7 +659,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 43,
+              "DocumentIndex": 38,
               "Title": "AccountController.cs",
               "DocumentMoniker": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\Controllers\\AccountController.cs",
               "RelativeDocumentMoniker": "TMCWD.Application\\Controllers\\AccountController.cs",
