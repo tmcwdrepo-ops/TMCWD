@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 
@@ -44,7 +43,6 @@ namespace TMCWD.Data.Services
 
         public async Task<List<ReadingSheet>> GetByZoneBookAndAssignedTo(int zone, int book, int assignedTo)
         {
-            //var readingSheets = _context.ReadingSheets.Where(x => x.Zone == zone && x.Book == book && x.AssignedTo == assignedTo);
             var sheets = from zoneBooks in _context.ZoneBooks
                          join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
                          where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.AssignedTo == assignedTo
@@ -54,11 +52,10 @@ namespace TMCWD.Data.Services
 
         public async Task<ReadingSheet> GetByBillingDate(int zone, int book, DateTime billingDate)
         {
-            //var readingSheet = await _context.ReadingSheets.Where(x => x.Zone == zone && x.Book == book && x.BillingDate == billingDate).FirstOrDefaultAsync();
             var sheet = await (from zoneBooks in _context.ZoneBooks
-                          join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
-                          where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.BillingDate == billingDate
-                          select readingSheets).FirstOrDefaultAsync();
+                               join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
+                               where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.BillingDate == billingDate
+                               select readingSheets).FirstOrDefaultAsync();
             return sheet;
         }
 
@@ -66,17 +63,21 @@ namespace TMCWD.Data.Services
         {
             if (readingSheet.Id > 0)
             {
-                var forUpdate = await _context.ReadingSheets.Where(x => x.ZoneBookId == readingSheet.ZoneBookId && x.BillingDate == readingSheet.BillingDate).FirstOrDefaultAsync();
+                var forUpdate = await _context.ReadingSheets.Where(x => x.Id == readingSheet.Id).FirstOrDefaultAsync();
                 if (forUpdate != null)
                 {
                     forUpdate.Name = readingSheet.Name;
                     forUpdate.BillingDate = readingSheet.BillingDate;
+                    forUpdate.DueDate = readingSheet.DueDate;
+                    forUpdate.DisconnectionDate = readingSheet.DisconnectionDate;
+                    forUpdate.BillingPeriodStart = readingSheet.BillingPeriodStart;
                     forUpdate.AssignedTo = readingSheet.AssignedTo;
                     forUpdate.ZoneBookId = readingSheet.ZoneBookId;
-                    forUpdate.UpdatedBy = userId;
-                    forUpdate.DateUpdated = DateTime.Now;
+                    forUpdate.SeqFrom = readingSheet.SeqFrom;
+                    forUpdate.SeqTo = readingSheet.SeqTo;
+                    forUpdate.Status = readingSheet.Status;
+                    forUpdate.DateUpload = DateTime.Now;
                     readingSheet = forUpdate;
-                    _context.ReadingSheets.Update(readingSheet);
                 }
             }
             else
@@ -86,7 +87,7 @@ namespace TMCWD.Data.Services
                 _context.ReadingSheets.Add(readingSheet);
             }
 
-            await  _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
             return readingSheet;
         }
