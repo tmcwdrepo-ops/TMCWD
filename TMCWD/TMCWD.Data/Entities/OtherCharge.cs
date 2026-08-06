@@ -33,7 +33,7 @@ namespace TMCWD.Data.Entities
         [Column("UpdatedBy")]
         public System.Int64 UpdatedBy { get; set; }
 
-        [Column("UpdatedBy")]
+        [Column("DateUpdated")]
         public DateTime DateUpdated { get; set; }
 
     }

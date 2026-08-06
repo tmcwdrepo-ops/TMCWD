@@ -5,7 +5,7 @@ using TMCWD.Data.Services;
 namespace TMCWD.Data.Controllers
 {
     [ApiController]
-    [Route("api/[controll]")]
+    [Route("api/[controller]")]
     public class WebHookController : Controller
     {
 
