@@ -6,7 +6,6 @@ namespace TMCWD.Data.Services
 {
     public class ReadingService : IReadingService
     {
-
         #region fields
 
         private readonly UserDbContext _context;
@@ -38,29 +37,40 @@ namespace TMCWD.Data.Services
 
         public async Task<Reading> GetByAccountAndBillingPeriod(int accountId, DateTime billingPeriod)
         {
-            var reading = await _context.Readings.Where(x => x.AccountId == accountId && x.BillingPeriod == billingPeriod).FirstOrDefaultAsync();
+            var reading = await (
+                from r in _context.Readings
+                join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
+                where r.AccountId == accountId && rs.BillingDate.Date == billingPeriod.Date
+                select r
+            ).FirstOrDefaultAsync();
             return reading;
         }
 
         public async Task<List<Reading>> GetByReader(int readerId)
         {
-            var reading = await _context.Readings.Where(x=>x.ReaderId == readerId).ToListAsync();
-            return reading;
+            var readings = await (
+                from r in _context.Readings
+                join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
+                where rs.AssignedTo == readerId
+                select r
+            ).ToListAsync();
+            return readings;
         }
 
         public async Task<List<Reading>> GetByZoneAndBook(int zone, int book)
         {
-            //var readings = await _context.Readings.Where(x=> x.Zone == zone && x.Book == book).ToListAsync();
-            var res = from zoneBooks in _context.ZoneBooks
-                      join readings in _context.Readings on zoneBooks.Id equals readings.ZoneBookId
-                      where zoneBooks.Zone == zone && zoneBooks.Book == book
-                      select readings;
+            var res =
+                from zoneBooks in _context.ZoneBooks
+                join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
+                join readings in _context.Readings on readingSheets.Id equals readings.ReadingSheetId
+                where zoneBooks.Zone == zone && zoneBooks.Book == book
+                select readings;
             return await res.ToListAsync();
         }
 
         public async Task<Reading> SaveUpdate(int userId, Reading reading)
         {
-            if(reading.Id == 0)
+            if (reading.Id == 0)
             {
                 reading.CreatedBy = userId;
                 reading.DateCreated = DateTime.Now;
@@ -68,13 +78,16 @@ namespace TMCWD.Data.Services
             }
             else
             {
-                var toUpdate = await _context.Readings.Where(x=>x.Id == reading.Id).FirstOrDefaultAsync();
-                if(toUpdate != null)
+                var toUpdate = await _context.Readings.Where(x => x.Id == reading.Id).FirstOrDefaultAsync();
+                if (toUpdate != null)
                 {
-                    toUpdate = reading;
+                    toUpdate.AccountId = reading.AccountId;
+                    toUpdate.ReadingSheetId = reading.ReadingSheetId;
+                    toUpdate.CurrentReading = reading.CurrentReading;
+                    toUpdate.Status = reading.Status;
                     toUpdate.UpdatedBy = userId;
                     toUpdate.DateUpdated = DateTime.Now;
-                    _context.Readings.Update(toUpdate);
+                    reading = toUpdate;
                 }
             }
 
@@ -84,17 +97,35 @@ namespace TMCWD.Data.Services
 
         public async Task<Reading> GetAccountCurrentReading(int accountId)
         {
-            var reading = await _context.Readings.Where(x => x.AccountId == accountId).Take(1).FirstOrDefaultAsync();
+            var reading = await (
+                from r in _context.Readings
+                join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
+                where r.AccountId == accountId
+                orderby rs.BillingDate descending
+                select r
+            ).FirstOrDefaultAsync();
             return reading;
         }
 
         public async Task<Reading> GetAccountPreviousReading(int accountId)
         {
-            var reading = await _context.Readings.Where(x => x.AccountId == accountId).OrderByDescending(x => x.BillingPeriod).Skip(1).Take(1).FirstOrDefaultAsync();
+            var reading = await (
+                from r in _context.Readings
+                join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
+                where r.AccountId == accountId
+                orderby rs.BillingDate descending
+                select r
+            ).Skip(1).Take(1).FirstOrDefaultAsync();
             return reading;
         }
 
-        #endregion
+        public async Task<List<Reading>> SaveRange(List<Reading> readings)
+        {
+            _context.Readings.AddRange(readings);
+            await _context.SaveChangesAsync();
+            return readings;
+        }
 
+        #endregion
     }
 }

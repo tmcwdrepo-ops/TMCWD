@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text;
 using TMCWD.Model.Billing.Interfaces;
 
@@ -13,7 +14,7 @@ namespace TMCWD.Model.Billing
 
         public Reading() { }
 
-        #endregion
+        #endregion 
 
         #region members
 
@@ -23,17 +24,17 @@ namespace TMCWD.Model.Billing
         [DisplayName("Account Id")]
         public int AccountId { get; set; }
 
-        [DisplayName("Zone Book Id")]
-        public int ZoneBookId { get; set; }
-
-        [DisplayName("Render Id")]
-        public int ReaderId { get; set; }
+        [DisplayName("Reading Sheet Id")]
+        public int ReadingSheetId { get; set; }
 
         [DisplayName("Current Reading")]
         public decimal CurrentReading { get; set; }
 
-        [DisplayName("Billing Period")]
-        public DateTime BillingPeriod { get; set; }
+        [DisplayName("Status")]
+        public int Status { get; set; }
+
+        [DisplayName("Completed")]
+        public bool IsCompleted { get; set; }
 
         [DisplayName("Created By")]
         public int CreatedBy { get; set; }
