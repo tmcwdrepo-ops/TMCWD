@@ -30,7 +30,7 @@ namespace TMCWD.Data.Entities
         public decimal CurrentReading { get; set; }
 
         [Column("Status")]
-        public int Status { get; set; }
+        public ReadingStatus Status { get; set; }
 
         [Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }

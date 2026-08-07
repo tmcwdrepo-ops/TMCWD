@@ -37,9 +37,14 @@ namespace TMCWD.Application.Controllers
             return View();
         }
 
+        public IActionResult Reading()
+        {
+            return View();
+        }
+
         public async Task<IActionResult> GetBillById(int id)
         {
-            
+
             return Ok();
         }
 
@@ -47,6 +52,7 @@ namespace TMCWD.Application.Controllers
         {
             return Ok();
         }
+
 
         #endregion
 
