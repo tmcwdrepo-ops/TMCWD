@@ -209,8 +209,16 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 4,
           "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{b1ce3aef-c78d-49ee-b72b-ec1fbc908313}"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 1,
@@ -221,8 +229,7 @@
               "RelativeToolTip": "TMCWD.Application\\wwwroot\\js\\create_temp.js",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-08-06T08:56:55.777Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-06T08:56:55.777Z"
             },
             {
               "$type": "Document",
@@ -234,8 +241,7 @@
               "RelativeToolTip": "TMCWD.Application\\wwwroot\\create_reading.html",
               "ViewState": "AgIAAJ0AAAAAAAAAAAAswLEAAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
-              "WhenOpened": "2026-08-06T08:55:56.515Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-06T08:55:56.515Z"
             },
             {
               "$type": "Document",
@@ -245,7 +251,7 @@
               "RelativeDocumentMoniker": "TMCWD.Application\\wwwroot\\js\\create_reading.js",
               "ToolTip": "C:\\Projects\\TMCWD\\TMCWD\\TMCWD.Application\\wwwroot\\js\\create_reading.js",
               "RelativeToolTip": "TMCWD.Application\\wwwroot\\js\\create_reading.js",
-              "ViewState": "AgIAAO0AAAAAAAAAAADwv/cAAAAhAAAAAAAAAA==",
+              "ViewState": "AgIAAO0AAAAAAAAAAADwv/8AAABAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
               "WhenOpened": "2026-08-06T08:32:50.161Z",
               "EditorCaption": ""
@@ -260,16 +266,7 @@
               "RelativeToolTip": "TMCWD.Application\\Controllers\\ReadingSheetController.cs",
               "ViewState": "AgIAANIAAAAAAAAAAAA3wOYAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-06T08:22:10.05Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{b1ce3aef-c78d-49ee-b72b-ec1fbc908313}"
+              "WhenOpened": "2026-08-06T08:22:10.05Z"
             },
             {
               "$type": "Document",
@@ -281,8 +278,7 @@
               "RelativeToolTip": "TMCWD.Data\\Controllers\\ReadingSheetTemplateController.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-06T07:54:48.054Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-06T07:54:48.054Z"
             },
             {
               "$type": "Document",
@@ -294,8 +290,7 @@
               "RelativeToolTip": "TMCWD.Model\\Billing\\Interfaces\\IReadingSheet.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-06T03:32:09.164Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-06T03:32:09.164Z"
             },
             {
               "$type": "Document",
@@ -307,8 +302,7 @@
               "RelativeToolTip": "TMCWD.Data\\Controllers\\ReadingSheetController.cs",
               "ViewState": "AgIAADMAAAAAAAAAAAAowCIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-22T06:15:16.751Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-07-22T06:15:16.751Z"
             },
             {
               "$type": "Document",
@@ -320,8 +314,7 @@
               "RelativeToolTip": "TMCWD.Data\\Services\\ReadingSheetService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAFMAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-06T03:32:22.708Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-06T03:32:22.708Z"
             },
             {
               "$type": "Document",
@@ -333,8 +326,7 @@
               "RelativeToolTip": "TMCWD.Application\\Controllers\\BillingController.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAADYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-22T06:30:25.736Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-07-22T06:30:25.736Z"
             },
             {
               "$type": "Document",
@@ -346,8 +338,7 @@
               "RelativeToolTip": "TMCWD.Model\\Billing\\ReadingSheet.cs",
               "ViewState": "AgIAABcAAAAAAAAAAAAAADEAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-06T03:31:56.27Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-06T03:31:56.27Z"
             },
             {
               "$type": "Document",
@@ -359,8 +350,7 @@
               "RelativeToolTip": "TMCWD.Data\\Entities\\ReadingSheet.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAA5AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-06T03:31:32.528Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-06T03:31:32.528Z"
             },
             {
               "$type": "Document",
@@ -372,8 +362,7 @@
               "RelativeToolTip": "TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAtAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-08-06T03:19:34.964Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-06T03:19:34.964Z"
             },
             {
               "$type": "Document",
