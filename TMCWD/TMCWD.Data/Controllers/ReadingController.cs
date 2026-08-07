@@ -67,8 +67,8 @@ namespace TMCWD.Data.Controllers
             return Ok(readings);
         }
 
-        [HttpPost("SaveUpdate/{userId}/{reading}")]
-        public async Task<IActionResult> SaveUpdate(int userId, Reading reading)
+        [HttpPost("SaveUpdate/{userId}")]
+        public async Task<IActionResult> SaveUpdate(int userId,[FromBody] Reading reading)
         {
             var savedReading = await _service.SaveUpdate(userId, reading);
             return Ok(savedReading);

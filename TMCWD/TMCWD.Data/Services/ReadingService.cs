@@ -40,7 +40,7 @@ namespace TMCWD.Data.Services
             var reading = await (
                 from r in _context.Readings
                 join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
-                where r.AccountId == accountId && rs.BillingDate.Date == billingPeriod.Date
+                where r.AccountId == accountId && rs.BillingDate.Value.Date == billingPeriod.Date
                 select r
             ).FirstOrDefaultAsync();
             return reading;
