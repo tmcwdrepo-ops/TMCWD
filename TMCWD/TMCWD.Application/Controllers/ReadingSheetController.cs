@@ -82,6 +82,44 @@ namespace TMCWD.Application.Controllers
             return Ok(savedSheet);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> UpdateReadingSheet(
+            [FromBody] ReadingSheet request)
+        {
+            if (request == null || request.Id <= 0)
+                return BadRequest("Invalid reading sheet.");
+
+            var existing = await _readingSheetTrans.Get((int)request.Id);
+
+            if (existing == null)
+                return NotFound("Reading sheet not found.");
+
+            // Update the editable fields
+            existing.Name = request.Name;
+            existing.BillingDate = request.BillingDate;
+            existing.DueDate = request.DueDate;
+            existing.DisconnectionDate = request.DisconnectionDate;
+            existing.BillingPeriodStart = request.BillingPeriodStart;
+            existing.AssignedTo = request.AssignedTo;
+            existing.ZoneBookId = request.ZoneBookId;
+            existing.SeqFrom = request.SeqFrom;
+            existing.SeqTo = request.SeqTo;
+
+            // IMPORTANT:
+            // This is what persists In-Progress / Completed.
+            existing.Status = request.Status;
+
+            var saved = await _readingSheetTrans.SaveUpdate(
+                _user.User.Id,
+                existing
+            );
+
+            if (saved == null)
+                return BadRequest("Failed to update reading sheet.");
+
+            return Ok(saved);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetCurrentByAssignedTo(int assignedTo)
         {
@@ -96,13 +134,58 @@ namespace TMCWD.Application.Controllers
             return Ok(readingSheets);
         }
 
+        
         [HttpGet]
         public async Task<IActionResult> GetAllReadingSheet()
         {
             var readingSheets = await _readingSheetTrans.GetAll();
-            if (readingSheets == null || !readingSheets.Any()) return NotFound();
-            return Ok(readingSheets);
+
+            if (readingSheets == null || !readingSheets.Any())
+                return Ok(new List<object>());
+
+            var result = new List<object>();
+
+            foreach (var sheet in readingSheets)
+            {
+                // Get the meter reader's name
+                var reader = await _userTrans.Get((int)sheet.AssignedTo);
+
+                // Get the Zone and Book using ZoneBookId
+                var zoneBook = await _zoneBookTrans.Get(sheet.ZoneBookId.ToString());
+
+                result.Add(new
+                {
+                    id = sheet.Id,
+                    name = sheet.Name,
+
+                    meterReader = reader?.Name ?? "—",
+
+                    billingDate = sheet.BillingDate,
+                    dueDate = sheet.DueDate,
+                    disconnectionDate = sheet.DisconnectionDate,
+                    billingPeriodStart = sheet.BillingPeriodStart,
+
+                    zone = zoneBook?.Zone ?? 0,
+                    book = zoneBook?.Book ?? 0,
+
+                    seqFrom = sheet.SeqFrom,
+                    seqTo = sheet.SeqTo,
+
+                    assignedTo = sheet.AssignedTo,
+                    zoneBookId = sheet.ZoneBookId,
+
+                    status = sheet.Status,
+
+                    createdBy = sheet.CreatedBy,
+                    dateCreated = sheet.DateCreated,
+                    dateUpload = sheet.DateUpload
+                });
+            }
+
+            return Ok(result);
         }
+
+
 
         [HttpGet]
         public async Task<IActionResult> GetReadingSheetTemplates()

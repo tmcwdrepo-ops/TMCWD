@@ -41,24 +41,32 @@ var readingSheetState = {
    Load data from .net controller
    ============================================================ */
 
+
 async function loadDataAsync(url) {
-    let returnResult = null;
-    await fetch(this.url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(this.data)
-    }).then(response => {
-        if (!response.ok || response.status == 204)
-            return null;
-        return response.json();
-    }).then(result => {
-        returnResult = result;
+  try {
+    var response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
     });
-    readingSheetState.rows = returnResult;
-    return returnResult;
+
+    if (!response.ok) {
+      throw new Error(
+        'Failed to load reading sheets. HTTP status: ' + response.status
+      );
+    }
+
+    var result = await response.json();
+
+    return result;
+  } catch (error) {
+    console.error('[ReadingSheet] Failed to load data:', error);
+    throw error;
+  }
 }
+
+
 
 /* End data load */
 
@@ -496,45 +504,192 @@ function closeEditModal() {
 /**
  * Save the edited values back into readingSheetState.rows and re-render.
  */
-function handleEditSave() {
-  var id = parseInt(document.getElementById('editRowId').value, 10);
-  if (!id) return;
+async function handleEditSave() {
+    var id = parseInt(document.getElementById('editRowId').value, 10);
 
-  var meterReader = document.getElementById('editMeterReader').value.trim();
-  var billingDateRaw = document.getElementById('editBillingDate').value.trim();
-  var zone        = document.getElementById('editZone').value.trim();
-  var forPosting  = parseInt(document.getElementById('editForPosting').value, 10) || 0;
-  var status      = document.getElementById('editStatus').value;
-
-  if (!meterReader || !billingDateRaw || !zone) return;
-
-  // Convert date from "yyyy-MM-dd" to display format "Jul 01, 2025"
-  var displayDate = billingDateRaw;
-  try {
-    var d = new Date(billingDateRaw);
-    if (!isNaN(d)) {
-      displayDate = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    if (!id) {
+        console.error('[ReadingSheet] Invalid reading sheet ID.');
+        return;
     }
-  } catch (e) {
-    console.error('Date formatting error:', e);
-  }
 
-  // Update the matching row in state
-  readingSheetState.rows = readingSheetState.rows.map(function(row) {
-    if (row.id !== id) return row;
-    return {
-      id:          row.id,
-      meterReader: meterReader,
-      billingDate: displayDate,
-      zone:        zone,
-      forPosting:  forPosting,
-      status:      status
+    var row = readingSheetState.rows.find(function (r) {
+        return r.id === id;
+    });
+
+    if (!row) {
+        console.error('[ReadingSheet] Reading sheet not found:', id);
+        return;
+    }
+
+    var meterReader = document.getElementById('editMeterReader').value.trim();
+    var billingDateRaw = document.getElementById('editBillingDate').value.trim();
+    var zone = document.getElementById('editZone').value.trim();
+    var forPosting = parseInt(
+        document.getElementById('editForPosting').value,
+        10
+    ) || 0;
+
+    var statusText = document.getElementById('editStatus').value;
+
+    if (!meterReader || !billingDateRaw || !zone) {
+        alert('Please complete all required fields.');
+        return;
+    }
+
+    /*
+     * Convert UI status text back to the ReadingStatus enum value.
+     *
+     * 1 = Created
+     * 2 = InProgress
+     * 3 = Completed
+     * 4 = Deleted
+     */
+    var statusValue;
+
+    switch (statusText) {
+        case 'In-Progress':
+            statusValue = 2;
+            break;
+
+        case 'Completed':
+            statusValue = 3;
+            break;
+
+        case 'Deleted':
+            statusValue = 4;
+            break;
+
+        default:
+            statusValue = 1;
+            break;
+    }
+
+    /*
+     * Convert yyyy-MM-dd into an ISO date.
+     */
+    var billingDate = billingDateRaw
+        ? new Date(billingDateRaw).toISOString()
+        : null;
+
+    /*
+     * Build the object expected by the ASP.NET controller.
+     *
+     * IMPORTANT:
+     * We use the original database values for fields
+     * that are not currently editable in the modal.
+     */
+    var payload = {
+        id: row.id,
+        name: row.name || '',
+        billingDate: billingDate,
+
+        dueDate: row.dueDate || null,
+        disconnectionDate: row.disconnectionDate || null,
+        billingPeriodStart: row.billingPeriodStart || null,
+
+        assignedTo: row.assignedTo,
+        zoneBookId: row.zoneBookId,
+
+        seqFrom: row.seqFrom || null,
+        seqTo: row.seqTo || null,
+
+        status: statusValue,
+
+        createdBy: row.createdBy || 0,
+        dateCreated: row.dateCreated || null,
+        dateUpload: row.dateUpload || null
     };
-  });
 
-  closeEditModal();
-  applyAllFilters();
-  applyAndRender();
+    console.log(
+        '[ReadingSheet] Saving update:',
+        payload
+    );
+
+    try {
+
+        var response = await fetch(
+            '/ReadingSheet/UpdateReadingSheet',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            }
+        );
+
+        var resultText = await response.text();
+
+        if (!response.ok) {
+            console.error(
+                '[ReadingSheet] Update failed:',
+                response.status,
+                resultText
+            );
+
+            alert(
+                'Failed to update the reading sheet.\n\n' +
+                resultText
+            );
+
+            return;
+        }
+
+        var saved = resultText
+            ? JSON.parse(resultText)
+            : null;
+
+        console.log(
+            '[ReadingSheet] Update successful:',
+            saved
+        );
+
+        /*
+         * Close modal.
+         */
+        closeEditModal();
+
+        /*
+         * Reload the actual database data.
+         *
+         * This is intentional.
+         * We don't want the browser state to become
+         * different from the database.
+         */
+        var freshData = await loadDataAsync(
+            '/ReadingSheet/GetAllReadingSheet'
+        );
+
+        readingSheetState.rows =
+            mapReadingSheetRows(freshData);
+
+        /*
+         * Keep the current status filter.
+         */
+        applyAllFilters();
+        applyAndRender();
+
+        /*
+         * Rebuild zone progress.
+         */
+        generateZoneProgressInputs();
+
+        console.log(
+            '[ReadingSheet] Table refreshed from database.'
+        );
+
+    } catch (error) {
+
+        console.error(
+            '[ReadingSheet] Error updating reading sheet:',
+            error
+        );
+
+        alert(
+            'An error occurred while updating the reading sheet.'
+        );
+    }
 }
 
 /**
@@ -920,6 +1075,124 @@ function handleNextClick() {
   applyAndRender();
 }
 
+function mapReadingSheetStatus(status) {
+    switch (Number(status)) {
+        case 1:
+            // Created = still active, so show under In-Progress
+            return 'In-Progress';
+
+        case 2:
+            // InProgress
+            return 'In-Progress';
+
+        case 3:
+            // Completed
+            return 'Completed';
+
+        case 4:
+            // Deleted
+            return 'Deleted';
+
+        default:
+            console.warn(
+                '[ReadingSheet] Unknown status:',
+                status
+            );
+            return 'In-Progress';
+    }
+}
+function mapReadingSheetRows(data) {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map(function (sheet) {
+    var billingDate = sheet.billingDate || '';
+
+    if (billingDate) {
+      try {
+        var d = new Date(billingDate);
+
+        if (!isNaN(d.getTime())) {
+          billingDate = d.toLocaleDateString('en-US', {
+            month: 'short',
+            day: '2-digit',
+            year: 'numeric'
+          });
+        }
+      } catch (e) {
+        console.warn(
+          '[ReadingSheet] Could not format billing date:',
+          billingDate
+        );
+      }
+    }
+
+      return {
+          id: sheet.id,
+
+          name: sheet.name || '',
+
+          meterReader:
+              sheet.meterReader ||
+              String(sheet.assignedTo || '—'),
+
+          billingDate: billingDate,
+
+          dueDate: sheet.dueDate || null,
+
+          disconnectionDate:
+              sheet.disconnectionDate || null,
+
+          billingPeriodStart:
+              sheet.billingPeriodStart || null,
+
+          zone: sheet.zone
+              ? String(sheet.zone)
+              : String(sheet.zoneBookId || '—'),
+
+          book: sheet.book || null,
+
+          forPosting:
+              sheet.forPosting ?? 0,
+
+          assignedTo:
+              sheet.assignedTo,
+
+          zoneBookId:
+              sheet.zoneBookId,
+
+          seqFrom:
+              sheet.seqFrom ?? null,
+
+          seqTo:
+              sheet.seqTo ?? null,
+
+          createdBy:
+              sheet.createdBy ?? 0,
+
+          dateCreated:
+              sheet.dateCreated || null,
+
+          dateUpload:
+              sheet.dateUpload || null,
+
+          /*
+           * Keep the display text for the UI.
+           */
+          status:
+              mapReadingSheetStatus(sheet.status),
+
+          /*
+           * Keep the actual enum value too.
+           */
+          statusValue:
+              Number(sheet.status)
+      };
+  });
+}
+
+
 
 /* ============================================================
    INIT
@@ -940,56 +1213,41 @@ function initReadingSheetPage() {
   readingSheetState.sortDirection = 'asc';
   readingSheetState.statusFilter  = 'in-progress';
 
-  // Inject edit modal if it doesn't exist (fallback for SPA navigation)
-  if (!document.getElementById('editModalBackdrop')) {
-    var modalHTML = 
-      '<div class="modal-backdrop" id="editModalBackdrop" hidden aria-hidden="true">' +
-        '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" style="max-width: 500px;">' +
-          '<h2 class="modal__title" id="editModalTitle">Edit Reading Sheet</h2>' +
-          '<div class="modal__body" style="width: 100%; max-width: 100%; text-align: left;">' +
-            '<input type="hidden" id="editRowId" />' +
-            '<div style="display: flex; flex-direction: column; gap: 14px;">' +
-              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<label for="editMeterReader" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Meter Reader</label>' +
-                '<input type="text" id="editMeterReader" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-              '</div>' +
-              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<label for="editBillingDate" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Due Date</label>' +
-                '<input type="date" id="editBillingDate" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-              '</div>' +
-              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<label for="editZone" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Zone</label>' +
-                '<input type="text" id="editZone" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-              '</div>' +
-              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<label for="editForPosting" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">For Posting</label>' +
-                '<input type="number" id="editForPosting" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />' +
-              '</div>' +
-              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<label for="editStatus" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Status</label>' +
-                '<select id="editStatus" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);">' +
-                  '<option value="In-Progress">In Progress</option>' +
-                  '<option value="Completed">Completed</option>' +
-                '</select>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="modal__actions">' +
-            '<button class="btn btn--ghost" type="button" id="editModalCancel">Cancel</button>' +
-            '<button class="btn btn--green" type="button" id="editModalSave">Save Changes</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    console.log('[ReadingSheet] Edit modal injected via JavaScript');
-  }
+  // Inject edit modal if it doesn't exist (fallback for SPA navigation)}
+  // Load real Reading Sheet data from the database.
+  loadDataAsync('/ReadingSheet/GetAllReadingSheet')
+    .then(function (data) {
+      console.log(
+        '[ReadingSheet] API returned:',
+        data
+      );
 
-  if (typeof READING_SHEET_SAMPLE_DATA !== 'undefined') {
-    readingSheetState.rows = READING_SHEET_SAMPLE_DATA.slice();
-  }
+      readingSheetState.rows = mapReadingSheetRows(data);
 
-  applyAllFilters();
-  applyAndRender();
+      readingSheetState.currentPage = 1;
+
+      applyAllFilters();
+      applyAndRender();
+
+      // Rebuild zone progress using the real data.
+      generateZoneProgressInputs();
+
+      console.log(
+        '[ReadingSheet] Real rows loaded:',
+        readingSheetState.rows.length
+      );
+    })
+    .catch(function (error) {
+      console.error(
+        '[ReadingSheet] Could not load Reading Sheet data:',
+        error
+      );
+
+      readingSheetState.rows = [];
+      readingSheetState.filteredRows = [];
+
+      applyAndRender('Unable to load reading sheets.');
+    });
 
   // Initialize zone progress input controls
   generateZoneProgressInputs();
@@ -1126,52 +1384,65 @@ function initReadingSheetPage() {
  *
  * @param {{billingDate:string, meterReader:string, zone:string}} data
  */
+/**
+ * Called by the Create Reading Sheet modal after the
+ * server successfully saves the reading sheet.
+ *
+ * Instead of creating a fake client-side row, reload
+ * the actual records from the database.
+ */
 function onReadingSheetCreated(data) {
-  if (!data || !data.meterReader) return;
 
-  /* Generate a new id one higher than the current max */
-  var maxId = readingSheetState.rows.reduce(function (m, r) {
-    return Math.max(m, r.id);
-  }, 0);
+    console.log('[ReadingSheet] Reading sheet created. Reloading data from database...');
 
-  /* Map zone value (e.g. "zone1") to display label (e.g. "ZN-01") */
-  var zoneMap = { zone1: 'ZN-01', zone2: 'ZN-02', zone3: 'ZN-03', zone4: 'ZN-04' };
-  var zoneLabel = zoneMap[data.zone] || data.zone || 'ZN-01';
+    loadDataAsync('/ReadingSheet/GetAllReadingSheet')
+        .then(function (result) {
 
-  /* Format billing date from yyyy-MM-dd to "Jul 01, 2025" */
-  var displayDate = data.billingDate;
-  try {
-    var d = new Date(data.billingDate);
-    if (!isNaN(d)) {
-      displayDate = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
-    }
-  } catch (e) { /* keep raw value */ }
+            console.log(
+                '[ReadingSheet] Fresh data after create:',
+                result
+            );
 
-  var newRow = {
-    id:          maxId + 1,
-    meterReader: data.meterReader,
-    billingDate: displayDate,
-    zone:        zoneLabel,
-    forPosting:  0,
-    status:      'In-Progress'
-  };
+            // Replace the current rows with REAL database records.
+            readingSheetState.rows = mapReadingSheetRows(result);
 
-  readingSheetState.rows.unshift(newRow);
+            // Show In-Progress records after creating a sheet.
+            readingSheetState.statusFilter = 'in-progress';
 
-  /* Switch to In-Progress view so the new row is visible */
-  readingSheetState.statusFilter = 'in-progress';
-  readingSheetState.currentPage  = 1;
+            // Start at page 1.
+            readingSheetState.currentPage = 1;
 
-  var statusToggleInput = document.querySelector('.status-toggle__input');
-  if (statusToggleInput) {
-    statusToggleInput.checked = false;
-    statusToggleInput.setAttribute('aria-checked', 'false');
-  }
+            // Make sure the Show Completed toggle is OFF.
+            var statusToggleInput =
+                document.querySelector('.status-toggle__input');
 
-  applyAllFilters();
-  applyAndRender();
+            if (statusToggleInput) {
+                statusToggleInput.checked = false;
+                statusToggleInput.setAttribute('aria-checked', 'false');
+            }
 
-  console.log('[ReadingSheet] New row added from modal:', newRow);
+            // Recalculate filters and render the table.
+            applyAllFilters();
+            applyAndRender();
+
+            // Rebuild zone progress from the real database records.
+            generateZoneProgressInputs();
+
+            console.log(
+                '[ReadingSheet] Table refreshed. Real rows:',
+                readingSheetState.rows.length
+            );
+        })
+        .catch(function (error) {
+
+            console.error(
+                '[ReadingSheet] Failed to reload data after creating reading sheet:',
+                error
+            );
+
+            // We don't create a fake row if the reload fails.
+            // The database remains the source of truth.
+        });
 }
 
 /* ============================================================
@@ -1207,7 +1478,7 @@ function generateZoneProgressInputs() {
     return (
       '<div class="zone-input-card" data-zone="' + zone + '">' +
         '<div class="zone-input-header">' +
-          '<span class="zone-input-label">' + zone + '</span>' +
+          '<span class="zone-input-label">Zone ' + zone + '</span>' +
           '<span class="zone-input-current">Current: ' + currentDone + '/' + currentTotal + ' (' + percentage + '%)</span>' +
         '</div>' +
         '<div class="zone-input-controls">' +

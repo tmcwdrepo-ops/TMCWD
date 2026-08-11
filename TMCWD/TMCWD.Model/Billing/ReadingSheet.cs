@@ -39,12 +39,13 @@ namespace TMCWD.Model.Billing
         public int AssignedTo { get; set; }
 
         [DisplayName("Status")]
-        public ReadingStatus Status { get; set; }
+        public ReadingStatus Status { get; set; } = ReadingStatus.Created;
 
         [DisplayName("Created By")]
         public int CreatedBy { get; set; }
 
         [DisplayName("Date Created")]
         public DateTime? DateCreated { get; set; }
+        public object DateUpload { get; set; }
     }
 }
