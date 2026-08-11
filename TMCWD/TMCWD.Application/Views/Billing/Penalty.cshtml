@@ -1,0 +1,117 @@
+@{
+    Layout = "_InsideLayout";
+    ViewData["PageTitle"] = "Penalties";
+    ViewData["ActivePage"] = "penalty";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/penalties.css?v=7" />
+}
+
+@section Scripts {
+    <script src="~/js/penalties-sample.js?v=4"></script>
+    <script src="~/js/penalties.js?v=7" defer></script>
+}
+
+<div class="pn-container">
+
+    <div class="pn-card">
+        <div class="pn-card-header">
+            <div class="pn-card-header__inputs">
+                <div class="pn-field pn-field--sm">
+                    <label class="pn-label" for="billingDate">Billing Date</label>
+                    <div class="pn-input-wrap">
+                        <input type="date" class="pn-input pn-input--date" id="billingDate" name="billingDate" value="2026-07-15" />
+                        <svg class="pn-icon-date" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M3 8h14M7 2v4M13 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="pn-search-field">
+                    <input type="text" class="pn-input-search" id="searchTextbox" placeholder="Search" />
+                    <svg class="pn-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="9" cy="9" r="5" />
+                        <line x1="17" y1="17" x2="12.5" y2="12.5" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="pn-card-header__actions">
+                <button type="button" class="pn-btn-load" id="loadEntriesBtn">Load Entries</button>
+                <button type="button" class="pn-btn-waive" id="waivePenaltyBtn">Waive Penalty</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="pn-table-container">
+        <div class="pn-table-heading">
+            <h4>Accounts with Active Penalty Records</h4>
+        </div>
+        <table class="pn-table">
+            <thead>
+                <tr>
+                    <th>Account No.</th>
+                    <th>Usage</th>
+                    <th>Bill Amount</th>
+                    <th>Discount</th>
+                    <th>Penalty</th>
+                    <th class="pn-col-check">
+                        <input type="checkbox" class="pn-checkbox" id="selectAllCheckbox" />
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="penaltyTableBody">
+                <tr>
+                    <td colspan="6" class="pn-table-empty">
+                        Please select a billing date and click "Load Entries" to view accounts.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="pn-pagination">
+            <div class="pn-pagination-size">
+                <span>Rows per page:</span>
+                <select class="pn-select-sm" id="rowsPerPage">
+                    <option value="5" selected>5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                </select>
+            </div>
+            <div class="pn-pagination-info" id="paginationInfo">0–0 of 0</div>
+            <div class="pn-pagination-controls">
+                <button type="button" class="pn-btn-page" id="prevPageBtn" aria-label="Previous Page" disabled>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button type="button" class="pn-btn-page" id="nextPageBtn" aria-label="Next Page" disabled>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===== CUSTOM CONFIRMATION/SUCCESS MODAL ===== -->
+<div class="pn-modal-overlay" id="successModal">
+    <div class="pn-modal-card">
+        <div class="pn-modal-icon pn-modal-icon--success" id="modalIcon">
+            <svg class="pn-modal-icon__check" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <svg class="pn-modal-icon__error" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" hidden>
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </div>
+        <div class="pn-modal-title" id="modalTitle">Success!</div>
+        <div class="pn-modal-msg" id="modalMsg">Action processed successfully.</div>
+        <button type="button" class="pn-modal-btn" onclick="closeSuccessModal()">Close</button>
+    </div>
+</div>
