@@ -24,7 +24,7 @@ namespace TMCWD.Model.Billing.Interfaces
 
         public int AssignedTo { get; set; }
 
-        public int Status { get; set; }
+        public ReadingStatus Status { get; set; }
 
         public int CreatedBy { get; set; }
 

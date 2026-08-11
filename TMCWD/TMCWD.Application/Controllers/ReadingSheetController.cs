@@ -7,6 +7,7 @@ using TMCWD.Model.Administrator;
 using TMCWD.Model.Billing;
 using TMCWD.Model.CustomerSupport;
 using TMCWD.Services;
+using TMCWD.Model.Billing.Requests;
 
 namespace TMCWD.Application.Controllers
 {
@@ -204,29 +205,12 @@ namespace TMCWD.Application.Controllers
             return Ok(result);
         }
 
+
+        
+        
         #endregion
 
     }
 
-    public class SaveTemplateRequest
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public int ReaderId { get; set; }
-        public int Zone { get; set; }
-        public int Book { get; set; }
-        public bool IsActive { get; set; } = true;
-    }
-    public class SaveReadingSheetRequest
-    {
-        public int Zone { get; set; }
-        public int Book { get; set; }
-        public int AssignedTo { get; set; }
-        public DateTime BillingPeriod { get; set; }
-        public DateTime? DueDate { get; set; }
-        public DateTime? DisconnectionDate { get; set; }
-        public DateTime? BillingPeriodStart { get; set; }
-        public int? SeqFrom { get; set; }
-        public int? SeqTo { get; set; }
-    }
+    
 }
