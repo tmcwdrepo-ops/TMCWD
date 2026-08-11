@@ -14,6 +14,7 @@ namespace TMCWD.Data.Services
         Task<IEnumerable<Account>> GetAccounts();
         Task<IEnumerable<Account>> GetByZoneBookId(int zoneBookId);
         Task<IEnumerable<Account>> GetByZoneBookAndSequence(int zone, int book, int from, int to);
+        Task<IEnumerable<Account>> Search(string query);
 
     }
 }

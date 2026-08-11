@@ -28,6 +28,9 @@ namespace TMCWD.Data.Entities
         [Required, Column("Reading")]
         public decimal CurrentReading { get; set; }
 
+        [Column("PreviousReading")]
+        public decimal PreviousReading { get; set; }
+
         [Column("Status")]
         public int Status { get; set; }
 
@@ -42,6 +45,9 @@ namespace TMCWD.Data.Entities
 
         [Column("DateUpdated")]
         public DateTime DateUpdated { get; set; }
+
+        [Column("IsCompleted")]
+        public bool IsCompleted { get; set; }
 
         #endregion
 

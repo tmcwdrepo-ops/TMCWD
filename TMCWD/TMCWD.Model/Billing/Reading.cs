@@ -30,6 +30,9 @@ namespace TMCWD.Model.Billing
         [DisplayName("Current Reading")]
         public decimal CurrentReading { get; set; }
 
+        [DisplayName("Previous Reading")]
+        public decimal PreviousReading { get; set; }
+
         [DisplayName("Status")]
         public ReadingStatus Status { get; set; }
 

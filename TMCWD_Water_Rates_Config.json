@@ -1,0 +1,87 @@
+{
+  "waterMeterMaintenanceFee": 20.00,
+  "notes": [
+    "Tier rates are constant across all meter sizes within a classification; only minimumCharge changes by size.",
+    "minimumCharge covers usage from 1 to 10 cu.m flat (no per-cu.m add-on).",
+    "Computation is cumulative/additive per tier, not usage x rate. Example: Residential/Government, size 0.5, usage 12 cu.m = 170.00 + (18.25 x 2) = 206.50.",
+    "usage = presentReading - previousReading. If presentReading < previousReading, raise a validation error.",
+    "waterMeterMaintenanceFee (PHP 20.00) is added on top of minimumCharge + tier charges on every bill, regardless of classification, size, or usage.",
+    "Full example: Residential/Government, size 0.5, previousReading 1589, presentReading 1600 (usage 11) = 170.00 + 18.25 + 20.00 = 208.25 total.",
+    "If a classification+meterSize combination is not found below, throw a validation error rather than defaulting to a guessed rate.",
+    "Flat Rate billing (accounts with no meter reading) is NOT yet in scope. Do not implement unless explicitly instructed."
+  ],
+  "classifications": {
+    "Residential/Government": {
+      "tierRates": { "11-20": 18.25, "21-30": 19.55, "31-40": 20.90, "41-up": 23.50 },
+      "minimumChargeBySize": {
+        "0.5": 170.00,
+        "0.75": 272.00,
+        "1.0": 544.00,
+        "1.5": 1360.00,
+        "2.0": 3400.00,
+        "3.0": 6120.00,
+        "4.0": 12240.00
+      }
+    },
+    "Commercial/Industrial": {
+      "tierRates": { "11-20": 36.50, "21-30": 39.10, "31-40": 41.80, "41-up": 47.00 },
+      "minimumChargeBySize": {
+        "0.5": 340.00,
+        "0.75": 544.00,
+        "1.0": 1088.00,
+        "1.5": 2720.00,
+        "2.0": 6800.00,
+        "3.0": 12240.00,
+        "4.0": 24480.00
+      }
+    },
+    "Commercial A": {
+      "tierRates": { "11-20": 31.90, "21-30": 34.20, "31-40": 36.55, "41-up": 41.10 },
+      "minimumChargeBySize": {
+        "0.5": 297.50,
+        "0.75": 476.00,
+        "1.0": 952.00,
+        "1.5": 2380.00,
+        "2.0": 5950.00,
+        "3.0": 10710.00,
+        "4.0": 21420.00
+      }
+    },
+    "Commercial B": {
+      "tierRates": { "11-20": 27.35, "21-30": 29.30, "31-40": 31.35, "41-up": 35.25 },
+      "minimumChargeBySize": {
+        "0.5": 255.00,
+        "0.75": 408.00,
+        "1.0": 816.00,
+        "1.5": 2040.00,
+        "2.0": 5100.00,
+        "3.0": 9180.00,
+        "4.0": 18360.00
+      }
+    },
+    "Commercial C": {
+      "tierRates": { "11-20": 22.80, "21-30": 24.40, "31-40": 26.10, "41-up": 29.35 },
+      "minimumChargeBySize": {
+        "0.5": 212.50,
+        "0.75": 340.00,
+        "1.0": 680.00,
+        "1.5": 1700.00,
+        "2.0": 4250.00,
+        "3.0": 7650.00,
+        "4.0": 15300.00
+      }
+    },
+    "Wholesale/Bulk": {
+      "tierRates": { "11-20": 54.75, "21-30": 58.65, "31-40": 62.70, "41-up": 70.50 },
+      "minimumChargeBySize": {
+        "0.5": 510.00,
+        "0.75": 816.00,
+        "1.0": 1632.00,
+        "1.5": 4080.00,
+        "2.0": 10200.00,
+        "3.0": 18360.00,
+        "4.0": 36720.00
+      }
+    }
+  }
+}

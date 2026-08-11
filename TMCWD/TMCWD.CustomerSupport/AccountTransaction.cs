@@ -143,6 +143,14 @@ namespace TMCWD.CustomerSupport
             return ConvertJsonToAccounts(data);
         }
 
+        public async Task<List<Account>> Search(string query)
+        {
+            var response = await _webService.Client.GetAsync($"api/Account/Search?q={Uri.EscapeDataString(query)}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return new List<Account>();
+            return ConvertJsonToAccounts(data);
+        }
+
         #endregion
 
     }

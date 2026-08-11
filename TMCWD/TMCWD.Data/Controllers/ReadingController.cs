@@ -63,7 +63,7 @@ namespace TMCWD.Data.Controllers
         public async Task<IActionResult> GetByReadingSheetId(int readingSheetId)
         {
             var readings = await _service.GetByReadingSheetId(readingSheetId);
-            if (readings == null || !readings.Any()) return NotFound();
+            if (readings == null || !readings.Any()) return Ok(new List<Reading>());
             return Ok(readings);
         }
 

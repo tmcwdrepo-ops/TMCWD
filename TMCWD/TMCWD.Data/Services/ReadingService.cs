@@ -108,10 +108,19 @@ namespace TMCWD.Data.Services
                 var toUpdate = await _context.Readings.Where(x=>x.Id == reading.Id).FirstOrDefaultAsync();
                 if(toUpdate != null)
                 {
-                    toUpdate = reading;
-                    toUpdate.UpdatedBy = userId;
-                    toUpdate.DateUpdated = DateTime.Now;
-                    _context.Readings.Update(toUpdate);
+                    // Copy individual properties onto the tracked entity so EF generates an UPDATE,
+                    // not a new INSERT. Assigning the reference ( toUpdate = reading ) would abandon
+                    // the tracked entity and attach an untracked object instead.
+                    toUpdate.AccountId       = reading.AccountId;
+                    toUpdate.ReadingSheetId  = reading.ReadingSheetId;
+                    toUpdate.CurrentReading  = reading.CurrentReading;
+                    toUpdate.PreviousReading = reading.PreviousReading;
+                    toUpdate.Status          = reading.Status;
+                    toUpdate.IsCompleted     = reading.IsCompleted;
+                    toUpdate.UpdatedBy       = userId;
+                    toUpdate.DateUpdated     = DateTime.Now;
+                    // No explicit Update() call needed — EF change tracking already
+                    // marks the loaded entity as Modified when properties are changed.
                 }
             }
 
@@ -162,6 +171,7 @@ namespace TMCWD.Data.Services
         public async Task<List<Reading>> SaveRange(List<Reading> readings)
         {
             _context.Readings.AddRange([.. readings]);
+            await _context.SaveChangesAsync();
             return readings;
         }
 

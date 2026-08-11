@@ -9,8 +9,7 @@
 }
 
 @section Scripts {
-    <script src="~/js/reading-sample.js?v=1"></script>
-    <script src="~/js/reading.js?v=1" defer></script>
+    <script src="~/js/reading.js?v=2" defer></script>
 }
 
 <div class="pr-container">
@@ -78,12 +77,6 @@
                         <div class="pr-select-wrap">
                             <select class="pr-select" id="zoneSelect" name="zoneSelect">
                                 <option value="">Select Zone</option>
-                                <option value="1">Zone 01</option>
-                                <option value="2">Zone 02</option>
-                                <option value="3">Zone 03</option>
-                                <option value="4">Zone 04</option>
-                                <option value="5">Zone 05</option>
-                                <option value="6">Zone 06</option>
                             </select>
                             <svg class="pr-select-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                                 <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -96,13 +89,8 @@
                     <div class="pr-field">
                         <label class="pr-label" for="bookSelect">Book</label>
                         <div class="pr-select-wrap">
-                            <select class="pr-select" id="bookSelect" name="bookSelect">
+                            <select class="pr-select" id="bookSelect" name="bookSelect" disabled>
                                 <option value="">Select Book</option>
-                                <option value="1">Book 01</option>
-                                <option value="2">Book 02</option>
-                                <option value="3">Book 03</option>
-                                <option value="4">Book 04</option>
-                                <option value="5">Book 05</option>
                             </select>
                             <svg class="pr-select-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                                 <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -117,9 +105,6 @@
                         <div class="pr-select-wrap">
                             <select class="pr-select" id="readerSelect" name="readerSelect">
                                 <option value="">Select Reader</option>
-                                <option value="1">Walk-In Counter</option>
-                                <option value="2">Meter Reader 01</option>
-                                <option value="3">Meter Reader 02</option>
                             </select>
                             <svg class="pr-select-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                                 <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -185,8 +170,9 @@
                 </div>
 
                 <!-- Hidden / Helper inputs for Rate Class, Usage, Amount calculation -->
-                <input type="hidden" id="rateClass" value="Residential" />
-                <input type="hidden" id="calculatedUsage" value="0" />
+                <input type="hidden" id="rateClass"        value="Residential" />
+                <input type="hidden" id="meterSize"        value="0.5" />
+                <input type="hidden" id="calculatedUsage"  value="0" />
                 <input type="hidden" id="calculatedAmount" value="0.00" />
 
             </div>

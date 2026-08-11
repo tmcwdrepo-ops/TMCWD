@@ -59,7 +59,7 @@ namespace TMCWD.Application.Controllers
                                ZoneBookId = zoneBookId
                            }).ToList();
 
-            var savedReadings = await _readingTrans.SaveRange(readings);
+            var savedReadings = await _readingTrans.SaveMultiple(readings);
             if (savedReadings == null) return BadRequest();
             return Ok(savedReadings);
         }

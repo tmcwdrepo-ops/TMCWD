@@ -103,6 +103,20 @@ namespace TMCWD.Data.Services
             return await data.ToListAsync();
         }
 
+        public async Task<IEnumerable<Account>> Search(string query)
+        {
+            var q = query.Trim().ToLower();
+            var accounts = await _dbContext.Accounts
+                .Where(x => x.AccountNumber.ToLower().Contains(q)
+                          || x.MeterNumber.ToLower().Contains(q)
+                          || (x.HouseNumber != null && x.HouseNumber.ToLower().Contains(q))
+                          || (x.Street != null && x.Street.ToLower().Contains(q))
+                          || (x.Barangay != null && x.Barangay.ToLower().Contains(q)))
+                .Take(30)
+                .ToListAsync();
+            return accounts;
+        }
+
         #endregion
     }
 }

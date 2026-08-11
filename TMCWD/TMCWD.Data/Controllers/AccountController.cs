@@ -90,6 +90,16 @@ namespace TMCWD.Data.Controllers
             if (accounts == null || !accounts.Any()) return NotFound();
             return Ok(accounts);
         }
+
+        [HttpGet("Search")]
+        public async Task<IActionResult> Search([FromQuery] string q)
+        {
+            if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 1)
+                return Ok(new List<Account>());
+
+            var accounts = await _accountService.Search(q);
+            return Ok(accounts);
+        }
     }
 
 }
