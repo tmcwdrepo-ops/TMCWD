@@ -40,7 +40,7 @@ namespace TMCWD.Data.Services
             var reading = await (
                 from r in _context.Readings
                 join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
-                where r.AccountId == accountId && rs.BillingDate.Date == billingPeriod.Date
+                where r.AccountId == accountId && rs.BillingDate.HasValue && rs.BillingDate.Value.Date == billingPeriod.Date
                 select r
             ).FirstOrDefaultAsync();
             return reading;
@@ -119,28 +119,84 @@ namespace TMCWD.Data.Services
             return reading;
         }
 
-        public async Task<List<Reading>> SaveRange(List<Reading> readings)
+        public async Task<List<ReadingWithBillingDate>> GetByAccountWithBillingDate(int accountId)
+        {
+            var result = await (
+                from r in _context.Readings
+                join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
+                where r.AccountId == accountId && rs.BillingDate.HasValue
+                select new ReadingWithBillingDate
+                {
+                    Id = r.Id,
+                    AccountId = r.AccountId,
+                    CurrentReading = r.CurrentReading,
+                    BillingDate = rs.BillingDate.Value
+                }
+            ).ToListAsync();
+            return result;
+        }
+
+        public async Task<Reading> GetCurrentByAccountZoneBook(int zone, int book, int accountId)
+        {
+            var reading = await (
+                from r in _context.Readings
+                join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
+                join zb in _context.ZoneBooks on rs.ZoneBookId equals zb.Id
+                where r.AccountId == accountId && zb.Zone == zone && zb.Book == book
+                orderby rs.BillingDate descending
+                select r
+            ).FirstOrDefaultAsync();
+            return reading;
+        }
+
+        public async Task<List<Reading>> GetByReadingSheetId(int readingSheetId)
+        {
+            var readings = await _context.Readings.Where(x => x.ReadingSheetId == readingSheetId).ToListAsync();
+            return readings;
+        }
+
+        public async Task<List<Reading>> SaveMultiple(List<Reading> readings)
         {
             _context.Readings.AddRange(readings);
             await _context.SaveChangesAsync();
             return readings;
         }
 
-        public async Task<List<ReadingWithBillingDate>> GetByAccountWithBillingDate(int accountId)
+        public async Task<List<Reading>> SaveRange(List<Reading> readings)
         {
-            var result = await (
+            return await SaveMultiple(readings);
+        }
+
+        public async Task<List<Reading>> UpdateStatusByReadingSheetIds(IEnumerable<int> readingSheetIds, int status, int userId)
+        {
+            var idsList = readingSheetIds.ToList();
+            var readings = await _context.Readings.Where(x => idsList.Contains((int)x.ReadingSheetId)).ToListAsync();
+            foreach (var reading in readings)
+            {
+                reading.Status = (ReadingStatus)status;
+                reading.UpdatedBy = userId;
+                reading.DateUpdated = DateTime.Now;
+            }
+            await _context.SaveChangesAsync();
+            return readings;
+        }
+
+        public async Task<List<Reading>> GetReadingsByBillingPeriod(int zone, int book, DateTime billingPeriod)
+        {
+            var readings = await (
                 from r in _context.Readings
                 join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
-                where r.AccountId == accountId
-                select new ReadingWithBillingDate
-                {
-                    Id = r.Id,
-                    AccountId = r.AccountId,
-                    CurrentReading = r.CurrentReading,
-                    BillingDate = rs.BillingDate
-                }
+                join zb in _context.ZoneBooks on rs.ZoneBookId equals zb.Id
+                where zb.Zone == zone && zb.Book == book && rs.BillingDate.HasValue && rs.BillingDate.Value.Date == billingPeriod.Date
+                select r
             ).ToListAsync();
-            return result;
+            return readings;
+        }
+
+        public async Task<List<Reading>> GetRangeByReadingSheetIds(IEnumerable<int> ids)
+        {
+            var readings = await _context.Readings.Where(x => ids.Contains((int)x.ReadingSheetId)).ToListAsync();
+            return readings;
         }
 
         #endregion

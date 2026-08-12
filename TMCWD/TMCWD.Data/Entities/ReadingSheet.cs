@@ -45,6 +45,12 @@ namespace TMCWD.Data.Entities
         [Column("DateCreated")]
         public DateTime? DateCreated { get; set; }
 
+        [Column("UpdatedBy")]
+        public System.Int64? UpdatedBy { get; set; }
+
+        [Column("DateUpdated")]
+        public DateTime? DateUpdated { get; set; }
+
         [Column("DateUpload")]
         public DateTime? DateUpload { get; set; }
     }
