@@ -204,5 +204,7 @@ namespace TMCWD.Data.Services
             var readingSheet = await _context.ReadingSheets.Where(x => x.AssignedTo == assignedTo).OrderByDescending(x => x.BillingDate).FirstOrDefaultAsync();
             return readingSheet;
         }
+
+        #endregion
     }
 }
