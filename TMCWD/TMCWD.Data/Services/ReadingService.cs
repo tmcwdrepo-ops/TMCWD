@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Net;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 
@@ -7,7 +6,6 @@ namespace TMCWD.Data.Services
 {
     public class ReadingService : IReadingService
     {
-
         #region fields
 
         private readonly UserDbContext _context;
@@ -31,73 +29,48 @@ namespace TMCWD.Data.Services
             return reading;
         }
 
-        public async Task<List<Reading>> GetByZoneAndBook(int zone, int book)
-        {
-            var res = from zoneBooks in _context.ZoneBooks
-                      join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
-                      join readings in _context.Readings on readingSheets.Id equals readings.ReadingSheetId
-                      where zoneBooks.Zone == zone && zoneBooks.Book == book
-                      select readings;
-            return await res.ToListAsync();
-        }
-
         public async Task<List<Reading>> GetByAccount(int accountId)
         {
             var readings = await _context.Readings.Where(x => x.AccountId == accountId).ToListAsync();
             return readings;
         }
 
-        public async Task<Reading> GetCurrentByAccountZoneBook(int zone, int book, int accountId)
+        public async Task<Reading> GetByAccountAndBillingPeriod(int accountId, DateTime billingPeriod)
         {
-            var data = await (from readings in _context.Readings
-                              join readingSheets in _context.ReadingSheets on readings.ReadingSheetId equals readingSheets.Id
-                              join zoneBooks in _context.ZoneBooks on readingSheets.ZoneBookId equals zoneBooks.Id
-                              where zoneBooks.Zone == zone && zoneBooks.Book == book && readings.AccountId == accountId
-                              orderby readingSheets.BillingDate descending
-                              select readings).FirstOrDefaultAsync();
-            return data;
-        }
-
-        public async Task<List<Reading>> GetByReadingSheetId(int readingSheetId)
-        {
-            var readings = await _context.Readings.Where(x => x.ReadingSheetId == readingSheetId).ToListAsync();
-            return readings;
-        }
-
-        public async Task<Reading> GetAccountPreviousReading(int accountId)
-        {
-            var data = await (from readingSheets in _context.ReadingSheets
-                       join readings in _context.Readings on readingSheets.Id equals readings.ReadingSheetId
-                       where readings.AccountId == accountId
-                       orderby readingSheets.BillingDate descending
-                       select readings).ToListAsync();
-            if (data == null || !data.Any()) return null;
-            var previousReading = data.Skip(1).Take(1).FirstOrDefault();
-            return previousReading;
-        }
-
-        public async Task<Reading> GetAccountCurrentReading(int accountId)
-        {
-            var data = await (from readingSheets in _context.ReadingSheets
-                              join readings in _context.Readings on readingSheets.Id equals readings.ReadingSheetId
-                              where readings.AccountId == accountId
-                              orderby readingSheets.BillingDate descending
-                              select readings).FirstOrDefaultAsync();
-            return data;
+            var reading = await (
+                from r in _context.Readings
+                join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
+                where r.AccountId == accountId && rs.BillingDate.Value.Date == billingPeriod.Date
+                select r
+            ).FirstOrDefaultAsync();
+            return reading;
         }
 
         public async Task<List<Reading>> GetByReader(int readerId)
         {
-            var data = from readingSheets in _context.ReadingSheets
-                       join readings in _context.Readings on readingSheets.Id equals readings.ReadingSheetId
-                       where readingSheets.AssignedTo == readerId
-                       select readings;
-            return await data.ToListAsync();
+            var readings = await (
+                from r in _context.Readings
+                join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
+                where rs.AssignedTo == readerId
+                select r
+            ).ToListAsync();
+            return readings;
+        }
+
+        public async Task<List<Reading>> GetByZoneAndBook(int zone, int book)
+        {
+            var res =
+                from zoneBooks in _context.ZoneBooks
+                join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
+                join readings in _context.Readings on readingSheets.Id equals readings.ReadingSheetId
+                where zoneBooks.Zone == zone && zoneBooks.Book == book
+                select readings;
+            return await res.ToListAsync();
         }
 
         public async Task<Reading> SaveUpdate(int userId, Reading reading)
         {
-            if(reading.Id == 0)
+            if (reading.Id == 0)
             {
                 reading.CreatedBy = userId;
                 reading.DateCreated = DateTime.Now;
@@ -105,22 +78,16 @@ namespace TMCWD.Data.Services
             }
             else
             {
-                var toUpdate = await _context.Readings.Where(x=>x.Id == reading.Id).FirstOrDefaultAsync();
-                if(toUpdate != null)
+                var toUpdate = await _context.Readings.Where(x => x.Id == reading.Id).FirstOrDefaultAsync();
+                if (toUpdate != null)
                 {
-                    // Copy individual properties onto the tracked entity so EF generates an UPDATE,
-                    // not a new INSERT. Assigning the reference ( toUpdate = reading ) would abandon
-                    // the tracked entity and attach an untracked object instead.
-                    toUpdate.AccountId       = reading.AccountId;
-                    toUpdate.ReadingSheetId  = reading.ReadingSheetId;
-                    toUpdate.CurrentReading  = reading.CurrentReading;
-                    toUpdate.PreviousReading = reading.PreviousReading;
-                    toUpdate.Status          = reading.Status;
-                    toUpdate.IsCompleted     = reading.IsCompleted;
-                    toUpdate.UpdatedBy       = userId;
-                    toUpdate.DateUpdated     = DateTime.Now;
-                    // No explicit Update() call needed — EF change tracking already
-                    // marks the loaded entity as Modified when properties are changed.
+                    toUpdate.AccountId = reading.AccountId;
+                    toUpdate.ReadingSheetId = reading.ReadingSheetId;
+                    toUpdate.CurrentReading = reading.CurrentReading;
+                    toUpdate.Status = reading.Status;
+                    toUpdate.UpdatedBy = userId;
+                    toUpdate.DateUpdated = DateTime.Now;
+                    reading = toUpdate;
                 }
             }
 
@@ -128,54 +95,37 @@ namespace TMCWD.Data.Services
             return reading;
         }
 
-        public async Task<List<Reading>> SaveMultiple(List<Reading> readings)
+        public async Task<Reading> GetAccountCurrentReading(int accountId)
         {
-            await _context.Readings.AddRangeAsync([.. readings]);
-            await _context.SaveChangesAsync();
-            return readings;
+            var reading = await (
+                from r in _context.Readings
+                join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
+                where r.AccountId == accountId
+                orderby rs.BillingDate descending
+                select r
+            ).FirstOrDefaultAsync();
+            return reading;
         }
 
-        public async Task<List<Reading>> GetReadingsByBillingPeriod(int zone, int book, DateTime billingPeriod)
+        public async Task<Reading> GetAccountPreviousReading(int accountId)
         {
-            var data = from zoneBooks in _context.ZoneBooks
-                       join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
-                       join readings in _context.Readings on readingSheets.Id equals readings.ReadingSheetId
-                       where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.BillingDate == billingPeriod
-                       select readings;
-            return await data.ToListAsync();
-        }
-
-        public async Task<List<Reading>> GetRangeByReadingSheetIds(IEnumerable<int> ids)
-        {
-            var readings = await _context.Readings.Where(x => ids.Contains((int)x.ReadingSheetId)).ToListAsync();
-            return readings;
-        }
-
-        public async Task<List<Reading>> UpdateStatusByReadingSheetIds(IEnumerable<int> readingSheetIds, int status, int userId)
-        {
-            var readings = await this.GetRangeByReadingSheetIds(readingSheetIds);
-            if (readings == null || !readings.Any()) return new List<Reading>();
-
-            foreach (var reading in readings)
-            {
-                reading.Status = status;
-                reading.UpdatedBy = userId;
-                reading.DateUpdated = DateTime.Now;
-            }
-
-            _context.Readings.UpdateRange(readings);
-            await _context.SaveChangesAsync();
-            return readings.ToList();
+            var reading = await (
+                from r in _context.Readings
+                join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
+                where r.AccountId == accountId
+                orderby rs.BillingDate descending
+                select r
+            ).Skip(1).Take(1).FirstOrDefaultAsync();
+            return reading;
         }
 
         public async Task<List<Reading>> SaveRange(List<Reading> readings)
         {
-            _context.Readings.AddRange([.. readings]);
+            _context.Readings.AddRange(readings);
             await _context.SaveChangesAsync();
             return readings;
         }
 
         #endregion
-
     }
 }

@@ -4,268 +4,265 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Water District System</title>
-  <link rel="icon" type="image/png" href="~/images/logo.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="~/css/appshell.css?v=2" />
-  @await RenderSectionAsync("Styles", required: false)
-  <script src="~/js/appshell.js" defer></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Water District System</title>
+    <link rel="icon" type="image/png" href="~/images/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/appshell.css?v=2" />
+    @await RenderSectionAsync("Styles", required: false)
+    <script src="~/js/appshell.js" defer></script>
 </head>
 <body>
 
-  <!-- ===== SIDEBAR ===== -->
-  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
 
-    <div class="sidebar__header">
-      <div class="sidebar__logo" aria-hidden="true">
-        <img src="~/images/logo.png" alt="TMCWD Logo" class="sidebar__logo-img" />
-      </div>
-      <span class="sidebar__wordmark">Trece Martires City<br>Water District</span>
-    </div>
-
-    <nav class="sidebar__nav" aria-label="Site sections">
-      <ul class="nav-list" role="list">
-
-        <li class="nav-item">
-          <a href="@Url.Action("Index", "Admin")" class="nav-link" data-page="dashboard">
-            <span class="nav-link__icon" aria-hidden="true">
-              <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5"/><rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5"/><rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5"/></svg>
-            </span>
-            <span class="nav-link__label">Dashboard</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#customers" class="nav-link" data-page="customers">
-            <span class="nav-link__icon" aria-hidden="true">
-              <svg viewBox="0 0 20 20" fill="none"><circle cx="8" cy="7" r="3.5" fill="currentColor"/><path d="M2 17c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="14.5" cy="7.5" r="2.5" fill="currentColor" opacity=".5"/><path d="M16 14c1.657 0 3 1.343 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".5"/></svg>
-            </span>
-            <span class="nav-link__label">Customers</span>
-          </a>
-        </li>
-
-        <li class="nav-item nav-item--accordion" data-group="billing">
-          <button class="nav-link nav-accordion-trigger" aria-expanded="false" aria-controls="submenu-billing">
-            <span class="nav-link__icon" aria-hidden="true">
-              <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h8M6 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            </span>
-            <span class="nav-link__label">Billing</span>
-            <span class="nav-link__chevron" aria-hidden="true">
-              <svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-          </button>
-          <ul class="nav-submenu" id="submenu-billing" role="list">
-            <li class="nav-item">
-              <a href="@Url.Action("ReadingSheet", "Billing")" class="nav-link" data-page="reading-sheet">
-                <span class="nav-link__icon" aria-hidden="true">
-                  <svg viewBox="0 0 20 20" fill="none">
-                    <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.4"/>
-                    <path d="M6 6h8M6 9h8M6 12h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                  </svg>
-                </span>
-                <span class="nav-link__label">Reading Sheet</span>
-              </a>
-            </li>
-            <li class="nav-item nav-item--nested">
-              <a href="@Url.Action("Reading", "Billing")" class="nav-link" data-page="reading">
-                <span class="nav-link__icon" aria-hidden="true">
-                  <!-- Water meter / gauge icon -->
-                  <svg viewBox="0 0 20 20" fill="none"><path d="M3 15a7 7 0 1 1 14 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 15V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M6.5 11.5l2.8 2.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="10" cy="15" r="1.1" fill="currentColor"/></svg>
-                </span>
-                <span class="nav-link__label">Reading</span>
-              </a>
-            </li>
-            <li class="nav-item nav-item--nested">
-              <a href="@Url.Action("DebitCreditMemo", "Billing")" class="nav-link" data-page="debit-credit-memo">
-                <span class="nav-link__icon" aria-hidden="true">
-                  <!-- Credit card icon -->
-                  <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M2 8.5h16" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="11.5" width="4" height="1.5" rx=".5" fill="currentColor" opacity=".6"/></svg>
-                </span>
-                <span class="nav-link__label">DEBIT/CREDIT Memo</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="@Url.Action("BillAdjustment", "Billing")" class="nav-link" data-page="bill-adjustment">
-                <span class="nav-link__icon" aria-hidden="true">
-                  <svg viewBox="0 0 20 20" fill="none">
-                    <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.4"/>
-                    <path d="M6 6h8M6 9h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                    <path d="M6 13l1.5 1.5L11 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </span>
-                <span class="nav-link__label">Bill Adjustment</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="@Url.Action("OtherCharges", "Billing")" class="nav-link" data-page="other-charges">
-                <span class="nav-link__icon" aria-hidden="true">
-                  <svg viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.4"/>
-                    <path d="M7.5 10h5M10 7.5v5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                  </svg>
-                </span>
-                <span class="nav-link__label">Other Charges</span>
-              </a>
-            </li>
-          </ul>
-        </li>
-
-        <li class="nav-item nav-item--accordion" data-group="services">
-          <button class="nav-link nav-accordion-trigger" aria-expanded="false" aria-controls="submenu-services">
-            <span class="nav-link__icon" aria-hidden="true">
-              <svg viewBox="0 0 20 20" fill="none"><path d="M10 2l2.5 5 5.5.8-4 3.9.95 5.5L10 14.5l-4.95 2.7.95-5.5L2 7.8 7.5 7z" fill="currentColor" opacity=".7"/></svg>
-            </span>
-            <span class="nav-link__label">Services</span>
-            <span class="nav-link__chevron" aria-hidden="true">
-              <svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-          </button>
-          <ul class="nav-submenu" id="submenu-services" role="list">
-            <!-- submenu links will be added here -->
-          </ul>
-        </li>
-
-        <li class="nav-item">
-          <a href="#announcements" class="nav-link" data-page="announcements">
-            <span class="nav-link__icon" aria-hidden="true">
-              <svg viewBox="0 0 20 20" fill="none"><path d="M3 7h14v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" stroke="currentColor" stroke-width="1.5"/><path d="M3 7l7-4 7 4" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-            </span>
-            <span class="nav-link__label">Announcements</span>
-          </a>
-        </li>
-
-        <li class="nav-item nav-item--accordion" data-group="settings">
-          <button class="nav-link nav-accordion-trigger" aria-expanded="false" aria-controls="submenu-settings">
-            <span class="nav-link__icon" aria-hidden="true">
-              <svg viewBox="0 0 20 20" fill="none"><path d="M10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="currentColor" stroke-width="1.5"/><path d="M17.66 10a8.1 8.1 0 0 0-.07-1.01l1.56-1.22a.4.4 0 0 0 .1-.5l-1.48-2.56a.4.4 0 0 0-.49-.17l-1.84.74a7.8 7.8 0 0 0-1.75-1.01l-.28-1.96A.4.4 0 0 0 13 2h-2.96a.4.4 0 0 0-.4.34l-.28 1.96a7.8 7.8 0 0 0-1.75 1.01l-1.84-.74a.4.4 0 0 0-.49.17L3.8 7.27a.4.4 0 0 0 .1.5l1.56 1.22A8.1 8.1 0 0 0 5.39 10c0 .34.02.68.07 1.01L3.9 12.23a.4.4 0 0 0-.1.5l1.48 2.56c.1.17.31.24.49.17l1.84-.74c.54.38 1.13.69 1.75 1.01l.28 1.96c.05.2.22.34.4.34H13a.4.4 0 0 0 .4-.34l.28-1.96a7.8 7.8 0 0 0 1.75-1.01l1.84.74c.18.07.39 0 .49-.17l1.48-2.56a.4.4 0 0 0-.1-.5L17.73 11A8.1 8.1 0 0 0 17.66 10z" stroke="currentColor" stroke-width="1.5"/></svg>
-            </span>
-            <span class="nav-link__label">Settings</span>
-            <span class="nav-link__chevron" aria-hidden="true">
-              <svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-          </button>
-          <ul class="nav-submenu" id="submenu-settings" role="list">
-            <!-- submenu links will be added here -->
-          </ul>
-        </li>
-
-        <li class="nav-item nav-item--accordion" data-group="reports">
-          <button class="nav-link nav-accordion-trigger" aria-expanded="false" aria-controls="submenu-reports">
-            <span class="nav-link__icon" aria-hidden="true">
-              <svg viewBox="0 0 20 20" fill="none"><path d="M4 14l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
-            </span>
-            <span class="nav-link__label">Reports</span>
-            <span class="nav-link__chevron" aria-hidden="true">
-              <svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-          </button>
-          <ul class="nav-submenu" id="submenu-reports" role="list">
-            <!-- submenu links will be added here -->
-          </ul>
-        </li>
-
-      </ul>
-    </nav>
-
-    <div class="sidebar__footer">
-      <a href="#logout" class="nav-link nav-link--logout" data-page="logout">
-        <span class="nav-link__icon" aria-hidden="true">
-          <svg viewBox="0 0 20 20" fill="none"><path d="M7 3H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13 14l3-4-3-4M16 10H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
-        <span class="nav-link__label">Logout</span>
-      </a>
-    </div>
-
-  </aside>
-
-  <!-- ===== SIDEBAR OVERLAY (mobile) ===== -->
-  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
-
-  <!-- ===== MAIN WRAPPER ===== -->
-  <div class="main-wrapper">
-
-    <!-- ===== TOPBAR ===== -->
-    <header class="topbar" role="banner">
-
-      <div class="topbar__left">
-        <button
-          class="topbar__hamburger"
-          id="hamburgerBtn"
-          aria-label="Open navigation menu"
-          aria-expanded="false"
-          aria-controls="sidebar"
-          data-action="toggle-sidebar"
-        >
-          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </button>
-        <span class="topbar__version">v1.0.0</span>
-      </div>
-
-      <div class="topbar__right">
-        <button
-          class="topbar__theme-toggle"
-          id="themeToggle"
-          aria-label="Switch to light mode"
-          aria-pressed="true"
-          data-action="toggle-theme"
-        >
-          <!-- Moon icon (shown in dark mode) -->
-          <svg class="icon-moon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M17.293 13.293A8 8 0 0 1 6.707 2.707a8.001 8.001 0 1 0 10.586 10.586z" fill="currentColor"/>
-          </svg>
-          <!-- Sun icon (shown in light mode) -->
-          <svg class="icon-sun" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <circle cx="10" cy="10" r="4" fill="currentColor"/>
-            <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </button>
-
-        <div class="topbar__user">
-          <span class="topbar__user-avatar" aria-hidden="true">A</span>
-          <span class="topbar__user-name">Admin User</span>
+        <div class="sidebar__header">
+            <div class="sidebar__logo" aria-hidden="true">
+                <img src="~/images/logo.png" alt="TMCWD Logo" class="sidebar__logo-img" />
+            </div>
+            <span class="sidebar__wordmark">Trece Martires City<br>Water District</span>
         </div>
-      </div>
 
-    </header>
+        <nav class="sidebar__nav" aria-label="Site sections">
+            <ul class="nav-list" role="list">
 
-    <!-- ===== CONTENT AREA ===== -->
-    <main class="content" id="mainContent" role="main">
-      <div class="content__header">
-        <h1 class="content__title" id="pageTitle">@(ViewData["PageTitle"] ?? "Dashboard")</h1>
-      </div>
-      <div class="content__body" id="pageContent">
-        @RenderBody()
-      </div>
-    </main>
+                <li class="nav-item">
+                    <a href="@Url.Action("Index", "Admin")" class="nav-link" data-page="dashboard">
+                        <span class="nav-link__icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor" /><rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5" /><rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5" /><rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5" /></svg>
+                        </span>
+                        <span class="nav-link__label">Dashboard</span>
+                    </a>
+                </li>
 
-  </div>
+                <li class="nav-item">
+                    <a href="#customers" class="nav-link" data-page="customers">
+                        <span class="nav-link__icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" fill="none"><circle cx="8" cy="7" r="3.5" fill="currentColor" /><path d="M2 17c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /><circle cx="14.5" cy="7.5" r="2.5" fill="currentColor" opacity=".5" /><path d="M16 14c1.657 0 3 1.343 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".5" /></svg>
+                        </span>
+                        <span class="nav-link__label">Customers</span>
+                    </a>
+                </li>
 
-  @if (ViewData["ActivePage"] != null)
-  {
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        var activePage = '@ViewData["ActivePage"]';
-        var activeLink = document.querySelector('.nav-link[data-page="' + activePage + '"]');
-        if (activeLink) {
-          activeLink.classList.add('is-active');
-          var submenu = activeLink.closest('.nav-submenu');
-          if (submenu) {
-            var trigger = document.querySelector('[aria-controls="' + submenu.id + '"]');
-            if (trigger) {
-              trigger.setAttribute('aria-expanded', 'true');
-              submenu.classList.add('is-open');
-            }
-          }
-        }
-      });
-    </script>
-  }
-  @RenderSection("Scripts", required: false)
+                <li class="nav-item nav-item--accordion" data-group="billing">
+                    <button class="nav-link nav-accordion-trigger" aria-expanded="false" aria-controls="submenu-billing">
+                        <span class="nav-link__icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5" /><path d="M6 8h8M6 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
+                        </span>
+                        <span class="nav-link__label">Billing</span>
+                        <span class="nav-link__chevron" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </span>
+                    </button>
+                    <ul class="nav-submenu" id="submenu-billing" role="list">
+                        <li class="nav-item">
+                            <a href="@Url.Action("ReadingSheet", "Billing")" class="nav-link" data-page="reading-sheet">
+                                <span class="nav-link__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 20 20" fill="none">
+                                        <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.4" />
+                                        <path d="M6 6h8M6 9h8M6 12h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link__label">Reading Sheet</span>
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item nav-item--nested">
+                            <a href="@Url.Action("DebitCreditMemo", "Billing")" class="nav-link" data-page="debit-credit-memo">
+                                <span class="nav-link__icon" aria-hidden="true">
+                                    <!-- Credit card icon -->
+                                    <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="11" rx="2" stroke="currentColor" stroke-width="1.5" /><path d="M2 8.5h16" stroke="currentColor" stroke-width="1.5" /><rect x="4" y="11.5" width="4" height="1.5" rx=".5" fill="currentColor" opacity=".6" /></svg>
+                                </span>
+                                <span class="nav-link__label">DEBIT/CREDIT Memo</span>
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--nested">
+                            <a href="@Url.Action("Reading", "Billing")" class="nav-link" data-page="reading">
+                                <span class="nav-link__icon" aria-hidden="true">
+                                    <!-- Water meter / gauge icon -->
+                                    <svg viewBox="0 0 20 20" fill="none"><path d="M3 15a7 7 0 1 1 14 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /><path d="M10 15V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /><path d="M6.5 11.5l2.8 2.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /><circle cx="10" cy="15" r="1.1" fill="currentColor" /></svg>
+                                </span>
+                                <span class="nav-link__label">Reading</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("BillAdjustment", "Billing")" class="nav-link" data-page="bill-adjustment">
+                                <span class="nav-link__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 20 20" fill="none">
+                                        <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.4" />
+                                        <path d="M6 6h8M6 9h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                                        <path d="M6 13l1.5 1.5L11 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link__label">Bill Adjustment</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("OtherCharges", "Billing")" class="nav-link" data-page="other-charges">
+                                <span class="nav-link__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 20 20" fill="none">
+                                        <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.4" />
+                                        <path d="M7.5 10h5M10 7.5v5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link__label">Other Charges</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item nav-item--accordion" data-group="services">
+                    <button class="nav-link nav-accordion-trigger" aria-expanded="false" aria-controls="submenu-services">
+                        <span class="nav-link__icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" fill="none"><path d="M10 2l2.5 5 5.5.8-4 3.9.95 5.5L10 14.5l-4.95 2.7.95-5.5L2 7.8 7.5 7z" fill="currentColor" opacity=".7" /></svg>
+                        </span>
+                        <span class="nav-link__label">Services</span>
+                        <span class="nav-link__chevron" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </span>
+                    </button>
+                    <ul class="nav-submenu" id="submenu-services" role="list">
+                        <!-- submenu links will be added here -->
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#announcements" class="nav-link" data-page="announcements">
+                        <span class="nav-link__icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" fill="none"><path d="M3 7h14v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" stroke="currentColor" stroke-width="1.5" /><path d="M3 7l7-4 7 4" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" /></svg>
+                        </span>
+                        <span class="nav-link__label">Announcements</span>
+                    </a>
+                </li>
+
+                <li class="nav-item nav-item--accordion" data-group="settings">
+                    <button class="nav-link nav-accordion-trigger" aria-expanded="false" aria-controls="submenu-settings">
+                        <span class="nav-link__icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" fill="none"><path d="M10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="currentColor" stroke-width="1.5" /><path d="M17.66 10a8.1 8.1 0 0 0-.07-1.01l1.56-1.22a.4.4 0 0 0 .1-.5l-1.48-2.56a.4.4 0 0 0-.49-.17l-1.84.74a7.8 7.8 0 0 0-1.75-1.01l-.28-1.96A.4.4 0 0 0 13 2h-2.96a.4.4 0 0 0-.4.34l-.28 1.96a7.8 7.8 0 0 0-1.75 1.01l-1.84-.74a.4.4 0 0 0-.49.17L3.8 7.27a.4.4 0 0 0 .1.5l1.56 1.22A8.1 8.1 0 0 0 5.39 10c0 .34.02.68.07 1.01L3.9 12.23a.4.4 0 0 0-.1.5l1.48 2.56c.1.17.31.24.49.17l1.84-.74c.54.38 1.13.69 1.75 1.01l.28 1.96c.05.2.22.34.4.34H13a.4.4 0 0 0 .4-.34l.28-1.96a7.8 7.8 0 0 0 1.75-1.01l1.84.74c.18.07.39 0 .49-.17l1.48-2.56a.4.4 0 0 0-.1-.5L17.73 11A8.1 8.1 0 0 0 17.66 10z" stroke="currentColor" stroke-width="1.5" /></svg>
+                        </span>
+                        <span class="nav-link__label">Settings</span>
+                        <span class="nav-link__chevron" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </span>
+                    </button>
+                    <ul class="nav-submenu" id="submenu-settings" role="list">
+                        <!-- submenu links will be added here -->
+                    </ul>
+                </li>
+
+                <li class="nav-item nav-item--accordion" data-group="reports">
+                    <button class="nav-link nav-accordion-trigger" aria-expanded="false" aria-controls="submenu-reports">
+                        <span class="nav-link__icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" fill="none"><path d="M4 14l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /><rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5" /></svg>
+                        </span>
+                        <span class="nav-link__label">Reports</span>
+                        <span class="nav-link__chevron" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </span>
+                    </button>
+                    <ul class="nav-submenu" id="submenu-reports" role="list">
+                        <!-- submenu links will be added here -->
+                    </ul>
+                </li>
+
+            </ul>
+        </nav>
+
+        <div class="sidebar__footer">
+            <a href="#logout" class="nav-link nav-link--logout" data-page="logout">
+                <span class="nav-link__icon" aria-hidden="true">
+                    <svg viewBox="0 0 20 20" fill="none"><path d="M7 3H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /><path d="M13 14l3-4-3-4M16 10H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                </span>
+                <span class="nav-link__label">Logout</span>
+            </a>
+        </div>
+
+    </aside>
+
+    <!-- ===== SIDEBAR OVERLAY (mobile) ===== -->
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <!-- ===== MAIN WRAPPER ===== -->
+    <div class="main-wrapper">
+
+        <!-- ===== TOPBAR ===== -->
+        <header class="topbar" role="banner">
+
+            <div class="topbar__left">
+                <button class="topbar__hamburger"
+                        id="hamburgerBtn"
+                        aria-label="Open navigation menu"
+                        aria-expanded="false"
+                        aria-controls="sidebar"
+                        data-action="toggle-sidebar">
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                </button>
+                <span class="topbar__version">v1.0.0</span>
+            </div>
+
+            <div class="topbar__right">
+                <button class="topbar__theme-toggle"
+                        id="themeToggle"
+                        aria-label="Switch to light mode"
+                        aria-pressed="true"
+                        data-action="toggle-theme">
+                    <!-- Moon icon (shown in dark mode) -->
+                    <svg class="icon-moon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="M17.293 13.293A8 8 0 0 1 6.707 2.707a8.001 8.001 0 1 0 10.586 10.586z" fill="currentColor" />
+                    </svg>
+                    <!-- Sun icon (shown in light mode) -->
+                    <svg class="icon-sun" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <circle cx="10" cy="10" r="4" fill="currentColor" />
+                        <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                </button>
+
+                <div class="topbar__user">
+                    <span class="topbar__user-avatar" aria-hidden="true">A</span>
+                    <span class="topbar__user-name">Admin User</span>
+                </div>
+            </div>
+
+        </header>
+
+        <!-- ===== CONTENT AREA ===== -->
+        <main class="content" id="mainContent" role="main">
+            <div class="content__header">
+                <h1 class="content__title" id="pageTitle">@(ViewData["PageTitle"] ?? "Dashboard")</h1>
+            </div>
+            <div class="content__body" id="pageContent">
+                @RenderBody()
+            </div>
+        </main>
+
+    </div>
+
+    @if (ViewData["ActivePage"] != null)
+    {
+        <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var activePage = '@ViewData["ActivePage"]';
+                    var activeLink = document.querySelector('.nav-link[data-page="' + activePage + '"]');
+                    if (activeLink) {
+                        activeLink.classList.add('is-active');
+                        var submenu = activeLink.closest('.nav-submenu');
+                        if (submenu) {
+                            var trigger = document.querySelector('[aria-controls="' + submenu.id + '"]');
+                            if (trigger) {
+                                trigger.setAttribute('aria-expanded', 'true');
+                                submenu.classList.add('is-open');
+                            }
+                        }
+                    }
+                });
+        </script>
+    }
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+
 namespace TMCWD.Data.Entities
 {
 
@@ -32,7 +33,10 @@ namespace TMCWD.Data.Entities
         public decimal PreviousReading { get; set; }
 
         [Column("Status")]
-        public int Status { get; set; }
+        public ReadingStatus Status { get; set; } = ReadingStatus.Created;
+
+        [Column("IsCompleted")]
+        public bool IsCompleted { get; set; }
 
         [Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }
@@ -45,9 +49,6 @@ namespace TMCWD.Data.Entities
 
         [Column("DateUpdated")]
         public DateTime DateUpdated { get; set; }
-
-        [Column("IsCompleted")]
-        public bool IsCompleted { get; set; }
 
         #endregion
 

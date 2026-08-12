@@ -1,4 +1,4 @@
-public enum UserRole
+﻿public enum UserRole
 {
     SuperAdmin = 1,
     CustomerRepresentative = 2,
@@ -111,7 +111,8 @@ public enum GatewayType
 
 public enum ReadingStatus
 {
-    InProgress = 1,
-    Completed = 2,
-    Deleted = 3
+    Created = 1,
+    InProgress = 2,
+    Completed = 3,
+    Deleted = 4
 }

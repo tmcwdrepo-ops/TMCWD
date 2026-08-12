@@ -17,7 +17,7 @@ namespace TMCWD.Model.Billing.Interfaces
 
         public decimal PreviousReading { get; set; }
 
-        public ReadingStatus Status { get; set; }
+        public ReadingStatus Status { get; set; } 
 
         public bool IsCompleted { get; set; }
 
