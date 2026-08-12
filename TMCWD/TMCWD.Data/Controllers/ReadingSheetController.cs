@@ -16,7 +16,7 @@ namespace TMCWD.Data.Controllers
 
         #endregion
 
-        #region ctor
+        #region constructor
 
         public ReadingSheetController(IReadingSheetService readingSheetService)
         {
@@ -83,8 +83,6 @@ namespace TMCWD.Data.Controllers
             return Ok(readingSheet);
         }
 
-        [HttpPost("SaveUpdate/{userId}")]
-        public async Task<IActionResult> SaveUpdate(int userId, [FromBody] ReadingSheet readingSheet)
         [HttpGet("GetByBillingPeriodStart/{zone}/{book}/{billingPeriodStart}")]
         public async Task<IActionResult> GetByBillingPeriodStart(int zone, int book, DateTime billingPeriodStart)
         {

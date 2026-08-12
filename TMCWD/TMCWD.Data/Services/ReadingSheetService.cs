@@ -13,7 +13,7 @@ namespace TMCWD.Data.Services
 
         #endregion
 
-        #region ctor
+        #region constructor
 
         public ReadingSheetService(UserDbContext context)
         {
@@ -24,9 +24,11 @@ namespace TMCWD.Data.Services
 
         #region methods
 
-        public async Task<ReadingSheet> Get(int id)
+        public async Task<ReadingSheet?> Get(int id)
         {
-            var readingSheet = await _context.ReadingSheets.Where(x => x.Id == id).FirstOrDefaultAsync();
+            var readingSheet = await _context.ReadingSheets
+                .FirstOrDefaultAsync(x => x.Id == id);
+
             return readingSheet;
         }
 
@@ -63,18 +65,18 @@ namespace TMCWD.Data.Services
         public async Task<List<ReadingSheet>> GetByBillingDate(int zone, int book, DateTime billingDate)
         {
             //var readingSheet = await _context.ReadingSheets.Where(x => x.Zone == zone && x.Book == book && x.BillingDate == billingDate).FirstOrDefaultAsync();
-            var sheet = await (from zoneBooks in _context.ZoneBooks
+            var sheets = await (from zoneBooks in _context.ZoneBooks
                           join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
                           where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.BillingDate == billingDate
-                          select readingSheets).FirstOrDefaultAsync();
-            return sheet;
+                          select readingSheets).ToListAsync();
+            return sheets;
         }
 
         public async Task<ReadingSheet> GetByBillingDateAndAssignedTo(int zone, int book, DateTime billingDate, int assignedTo)
         {
             var sheets = await (from zoneBooks in _context.ZoneBooks
                                 join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
-                                where zoneBooks.Zone == zone && zoneBooks.Book == book && DateOnly.FromDateTime(readingSheets.BillingDate) == DateOnly.FromDateTime(billingDate)
+                                where zoneBooks.Zone == zone && zoneBooks.Book == book && DateOnly.FromDateTime(readingSheets.BillingDate.Value) == DateOnly.FromDateTime(billingDate)
                                 && readingSheets.AssignedTo == assignedTo
                                 select readingSheets).FirstOrDefaultAsync();
             return sheets;
@@ -149,9 +151,7 @@ namespace TMCWD.Data.Services
 
             foreach (var readingSheet in readingSheets)
             {
-                readingSheet.UpdatedBy = userId;
-                readingSheet.DateUpdated = DateTime.Now;
-                readingSheet.Status = status;
+                readingSheet.Status = (ReadingStatus)status;
             }
 
             _context.ReadingSheets.UpdateRange(readingSheets);

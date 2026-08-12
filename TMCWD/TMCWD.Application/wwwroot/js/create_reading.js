@@ -364,9 +364,15 @@ var crAccountsLoaded = false;
 /* Save — persist to database, then show toast and close modal */
 if (crSaveBtn) {
     crSaveBtn.addEventListener('click', function () {
+
         if (!validateCrDates()) {
-            if (crDueDate && !crDueDate.checkValidity()) crDueDate.reportValidity();
-            else if (crDisconnectionDate) crDisconnectionDate.reportValidity();
+            if (crDueDate && !crDueDate.checkValidity()) {
+                crDueDate.reportValidity();
+            }
+            else if (crDisconnectionDate) {
+                crDisconnectionDate.reportValidity();
+            }
+
             return;
         }
 
@@ -378,43 +384,65 @@ if (crSaveBtn) {
             alert('Please select a Meter Reader from the list.');
             return;
         }
+
         if (!zoneVal || !bookVal) {
             alert('Please select a Zone and Book.');
             return;
         }
+
         if (!crBillingDate.value) {
             alert('Please set a Billing Date.');
             return;
         }
 
         var payload = {
-            zone: parseInt(zoneVal, 10),
-            book: parseInt(bookVal, 10),
             assignedTo: parseInt(crMeterReaderId, 10),
-            billingPeriod: crBillingDate.value,
+            billingDate: crBillingDate.value,
             dueDate: crDueDate.value || null,
             disconnectionDate: crDisconnectionDate.value || null,
             billingPeriodStart: crBillingPeriodStart.value || null,
-            seqFrom: scopeVal === 'ranged' ? (parseInt(crFromSeq.value, 10) || null) : null,
-            seqTo: scopeVal === 'ranged' ? (parseInt(crToSeq.value, 10) || null) : null
+            seqFrom: scopeVal === 'ranged'
+                ? (parseInt(crFromSeq.value, 10) || null)
+                : null,
+            seqTo: scopeVal === 'ranged'
+                ? (parseInt(crToSeq.value, 10) || null)
+                : null
         };
+
+        var createUrl =
+            '/ReadingSheet/CreateReadingSheet' +
+            '?zone=' + encodeURIComponent(zoneVal) +
+            '&book=' + encodeURIComponent(bookVal);
+
+        console.log('[ReadingSheet] Creating:', createUrl);
+        console.log('[ReadingSheet] Payload:', payload);
 
         crSaveBtn.disabled = true;
 
-        fetch('/ReadingSheet/CreateReadingSheet', {
+        fetch(createUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(payload)
         })
             .then(function (res) {
-                if (!res.ok) return res.text().then(function (t) { throw new Error(t || 'Save failed'); });
+                if (!res.ok) {
+                    return res.text().then(function (t) {
+                        throw new Error(t || 'Save failed');
+                    });
+                }
+
                 return res.json();
             })
-            .then(function () {
+            .then(function (result) {
+                console.log('[ReadingSheet] Created:', result);
+
                 showToast('Reading sheet saved successfully');
                 setTimeout(closeCreateModal, 1000);
             })
             .catch(function (err) {
+                console.error('[ReadingSheet] Create failed:', err);
                 alert('Could not save reading sheet: ' + err.message);
             })
             .finally(function () {

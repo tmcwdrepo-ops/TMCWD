@@ -139,87 +139,226 @@ function renderReadingSheetTable(rows, emptyMessage) {
     '</svg>';
 
   // Build zone stats from FULL dataset so the bar is always accurate
-  var zoneStats = {};
-  readingSheetState.rows.forEach(function(r) {
-    if (!zoneStats[r.zone]) zoneStats[r.zone] = { total: r.totalAccounts, done: r.totalCompleted };
-    //zoneStats[r.zone].total += 1;
-    //if (r.status === 'Completed') zoneStats[r.zone].done += 1;
-  });
+    var zoneStats = {};
 
-  var html = rows.map(function(row) {
-    var badgeClass  = row.status === 'Completed' ? 'badge--green' : 'badge--yellow';
-    var isSelected  = readingSheetState.selectedIds.has(row.id);
-    var rowClass    = isSelected ? ' class="is-selected"' : '';
-    var chkChecked  = isSelected ? ' checked' : '';
+    readingSheetState.rows.forEach(function (r) {
+        if (!zoneStats[r.zone]) {
+            zoneStats[r.zone] = {
+                total: r.totalAccounts,
+                done: r.totalCompleted
+            };
+        }
 
-    // Zone mini progress — computed from full dataset
-    var zoneStat    = zoneStats[row.zone] || { total: 0, done: 0 };
-    var isCompleted = readingSheetState.statusFilter === 'completed';
+        zoneStats[r.zone].total += 1;
 
-    // Check for manual progress override
-    var override = readingSheetState.manualProgress && readingSheetState.zoneProgressOverrides[row.zone];
-    var actualDone = override ? override.done : zoneStat.done;
-    var actualTotal = override ? override.total : zoneStat.total;
+        if (r.status === 'Completed')
+            zoneStats[r.zone].done += 1;
+    });
 
-    // In-Progress view: done / total (bar fills as work completes)
-    // Completed view:   bar always 100% full
-    var zonePct  = isCompleted ? 100 : (actualTotal > 0 ? Math.round((actualDone / actualTotal) * 100) : 0);
-    var labelNum = isCompleted ? actualTotal : actualDone;
-    var barLabel = labelNum + '/' + actualTotal;
+    function formatShortDate(value) {
+        if (!value) return '—';
 
-    // Determine color class based on percentage
-    // 1-30% = red, 31-79% = yellow, 80-100% = green
-    var colorClass = '';
-    if (zonePct >= 80) {
-      colorClass = 'zone-mini-bar__fill--green';
-    } else if (zonePct >= 31) {
-      colorClass = 'zone-mini-bar__fill--yellow';
-    } else if (zonePct >= 1) {
-      colorClass = 'zone-mini-bar__fill--red';
+        var date = new Date(value);
+
+        if (isNaN(date.getTime())) {
+            return '—';
+        }
+
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
     }
 
-    var zoneCell =
-      '<div class="zone-cell">' +
-        '<span class="zone-cell__label">' + row.zone + '</span>' +
-        '<div class="zone-mini-bar" title="' + barLabel + '">' +
-          '<div class="zone-mini-bar__track">' +
-            '<div class="zone-mini-bar__fill ' + colorClass + '" style="width:' + zonePct + '%"></div>' +
-          '</div>' +
-          '<span class="zone-mini-bar__text">' + barLabel + '</span>' +
-        '</div>' +
-      '</div>';
+    var html = rows.map(function (row) {
 
-    return (
-      '<tr data-id="' + row.id + '"' + rowClass + '>' +
-        '<td class="col-check">' +
-          '<input class="tbl-checkbox" type="checkbox" aria-label="Select row"' + chkChecked + ' />' +
-        '</td>' +
-        '<td>' + row.meterReader + '</td>' +
-        '<td>' + new Date(row.billingDate).toISOString().split("T")[0] + '</td>' +
-        '<td>' + zoneCell + '</td>' +
-        '<td>' + row.forPosting + '</td>' +
-        '<td><span class="badge ' + badgeClass + '">' + row.status + '</span></td>' +
-        '<td class="col-actions">' +
-          '<div class="action-btns">' +
-            '<button class="action-btn action-btn--view" type="button"' +
-              ' aria-label="View details" data-id="' + row.id + '">' +
-              viewIcon +
-            '</button>' +
-            '<button class="action-btn action-btn--edit" type="button"' +
-              ' aria-label="Edit row" data-id="' + row.id + '">' +
-              editIcon +
-            '</button>' +
-            '<button class="action-btn action-btn--delete" type="button"' +
-              ' aria-label="Delete row" data-id="' + row.id + '">' +
-              deleteIcon +
-            '</button>' +
-          '</div>' +
-        '</td>' +
-      '</tr>'
-    );
-  }).join('');
+        var badgeClass =
+            row.status === 'Completed'
+                ? 'badge--green'
+                : 'badge--yellow';
 
-  tbody.innerHTML = html;
+        var isSelected =
+            readingSheetState.selectedIds.has(row.id);
+
+        var rowClass =
+            isSelected ? ' class="is-selected"' : '';
+
+        var chkChecked =
+            isSelected ? ' checked' : '';
+
+
+        // --------------------------------------------------------
+        // Zone progress
+        // --------------------------------------------------------
+
+        var zoneStat = zoneStats[row.zone] || {
+            total: 0,
+            done: 0
+        };
+
+        var override =
+            readingSheetState.manualProgress &&
+            readingSheetState.zoneProgressOverrides[row.zone];
+
+        var actualDone =
+            override ? override.done : zoneStat.done;
+
+        var actualTotal =
+            override ? override.total : zoneStat.total;
+
+        var isCompleted =
+            readingSheetState.statusFilter === 'completed';
+
+        var zonePct =
+            isCompleted
+                ? 100
+                : actualTotal > 0
+                    ? Math.round((actualDone / actualTotal) * 100)
+                    : 0;
+
+        var barLabel =
+            (isCompleted ? actualTotal : actualDone) +
+            '/' +
+            actualTotal;
+
+
+        // --------------------------------------------------------
+        // Progress bar color
+        // --------------------------------------------------------
+
+        var colorClass = '';
+
+        if (zonePct >= 80) {
+            colorClass = 'zone-mini-bar__fill--green';
+        } else if (zonePct >= 31) {
+            colorClass = 'zone-mini-bar__fill--yellow';
+        } else if (zonePct >= 1) {
+            colorClass = 'zone-mini-bar__fill--red';
+        }
+
+
+        // --------------------------------------------------------
+        // Zone cell
+        // --------------------------------------------------------
+
+        var zoneCell =
+            '<div class="zone-cell">' +
+            '<span class="zone-cell__label">' +
+            row.zone +
+            '</span>' +
+
+            '<div class="zone-mini-bar" title="' +
+            barLabel +
+            '">' +
+
+            '<div class="zone-mini-bar__track">' +
+            '<div class="zone-mini-bar__fill ' +
+            colorClass +
+            '" style="width:' +
+            zonePct +
+            '%">' +
+            '</div>' +
+            '</div>' +
+
+            '<span class="zone-mini-bar__text">' +
+            barLabel +
+            '</span>' +
+
+            '</div>' +
+            '</div>';
+
+
+        // --------------------------------------------------------
+        // Billing date
+        // --------------------------------------------------------
+
+        var billingDate = formatShortDate(row.billingDate);
+
+
+        // --------------------------------------------------------
+        // Table row
+        // --------------------------------------------------------
+
+        return (
+            '<tr data-id="' + row.id + '"' + rowClass + '>' +
+
+            // Checkbox
+            '<td class="col-check">' +
+            '<input ' +
+            'class="tbl-checkbox" ' +
+            'type="checkbox" ' +
+            'aria-label="Select row"' +
+            chkChecked +
+            ' />' +
+            '</td>' +
+
+            // Meter Reader
+            '<td>' +
+            (row.meterReader || '—') +
+            '</td>' +
+
+            // Billing Date
+            '<td>' +
+            billingDate +
+            '</td>' +
+
+            // Zone
+            '<td>' +
+            zoneCell +
+            '</td>' +
+
+            // For Posting
+            '<td>' +
+            (row.forPosting ?? 0) +
+            '</td>' +
+
+            // Status
+            '<td>' +
+            '<span class="badge ' +
+            badgeClass +
+            '">' +
+            (row.status || '—') +
+            '</span>' +
+            '</td>' +
+
+            // Actions
+            '<td class="col-actions">' +
+            '<div class="action-btns">' +
+
+            '<button ' +
+            'class="action-btn action-btn--view" ' +
+            'type="button" ' +
+            'aria-label="View details" ' +
+            'data-id="' + row.id + '">' +
+            viewIcon +
+            '</button>' +
+
+            '<button ' +
+            'class="action-btn action-btn--edit" ' +
+            'type="button" ' +
+            'aria-label="Edit row" ' +
+            'data-id="' + row.id + '">' +
+            editIcon +
+            '</button>' +
+
+            '<button ' +
+            'class="action-btn action-btn--delete" ' +
+            'type="button" ' +
+            'aria-label="Delete row" ' +
+            'data-id="' + row.id + '">' +
+            deleteIcon +
+            '</button>' +
+
+            '</div>' +
+            '</td>' +
+
+            '</tr>'
+        );
+
+    }).join('');
+
+    tbody.innerHTML = html;
 
   // Sync select-all checkbox indeterminate / checked state
   var selectAll = document.getElementById('selectAllRows');
@@ -455,77 +594,77 @@ function handleStatusToggle(event) {
 function ensureDrawerExists() {
   if (document.getElementById('rsdDrawerBackdrop')) return;
 
-  var html =
-    '<div class="rsd-drawer-backdrop" id="rsdDrawerBackdrop" aria-hidden="true" style="display:none;">' +
-      '<div class="rsd-drawer" role="dialog" aria-modal="true">' +
-        '<div class="rsd-topbar">' +
-          '<div class="rsd-topbar-actions">' +
-            '<button type="button" id="rsdCompleteBtn" class="btn btn-complete">' +
-              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
-              ' Complete' +
-            '</button>' +
-            '<button type="button" id="rsdPartialPostBtn" class="btn btn-partial">' +
-              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
-              ' Partial Post' +
-            '</button>' +
-          '</div>' +
-          '<button type="button" id="rsdCloseBtn" class="icon-btn rsd-close" aria-label="Close details panel">' +
-            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
-          '</button>' +
-        '</div>' +
-        '<div class="rsd-info">' +
-          '<div class="rsd-info-group">' +
-            '<div class="rsd-info-item"><span class="rsd-label">Billing Date</span><span class="rsd-value" id="rsdBillingDate">—</span></div>' +
-            '<div class="rsd-info-item"><span class="rsd-label">Due Date</span><span class="rsd-value" id="rsdDueDate">—</span></div>' +
-            '<div class="rsd-info-item"><span class="rsd-label">Discon Date</span><span class="rsd-value" id="rsdDisconDate">—</span></div>' +
-            '<div class="rsd-info-item"><span class="rsd-label">Meter Reader</span><span class="rsd-value" id="rsdMeterReader">—</span></div>' +
-          '</div>' +
-          '<div class="rsd-info-status"><span class="rsd-label">Posting Status</span><span class="rsd-value" id="rsdPostingStatus">— of —</span></div>' +
-          '<div class="rsd-info-ref"><span class="rsd-label">Sheet Reference</span><span class="rsd-value rsd-ref-code" id="rsdSheetRef">—</span></div>' +
-          '<div class="rsd-info-export">' +
-            '<span class="rsd-label">Save</span>' +
-            '<div class="rsd-export-icons">' +
-              '<button type="button" id="rsdExportPdfBtn" class="export-icon-btn export-pdf" title="Save as PDF" aria-label="Save as PDF">' +
-                '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="9" y2="17"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="15" y1="13" x2="15" y2="17"/></svg>' +
-                '<span class="export-icon-btn__label">PDF</span>' +
-              '</button>' +
-              '<button type="button" id="rsdExportExcelBtn" class="export-icon-btn export-excel" title="Save as Excel" aria-label="Save as Excel">' +
-                '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/><path d="M13 12l2 3M15 12l-2 3" stroke-linecap="round"/></svg>' +
-                '<span class="export-icon-btn__label">Excel</span>' +
+      var html =
+        '<div class="rsd-drawer-backdrop" id="rsdDrawerBackdrop" aria-hidden="true" style="display:none;">' +
+          '<div class="rsd-drawer" role="dialog" aria-modal="true">' +
+            '<div class="rsd-topbar">' +
+              '<div class="rsd-topbar-actions">' +
+                '<button type="button" id="rsdCompleteBtn" class="btn btn-complete">' +
+                  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+                  ' Complete' +
+                '</button>' +
+                '<button type="button" id="rsdPartialPostBtn" class="btn btn-partial">' +
+                  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
+                  ' Partial Post' +
+                '</button>' +
+              '</div>' +
+              '<button type="button" id="rsdCloseBtn" class="icon-btn rsd-close" aria-label="Close details panel">' +
+                '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
               '</button>' +
             '</div>' +
+            '<div class="rsd-info">' +
+              '<div class="rsd-info-group">' +
+                '<div class="rsd-info-item"><span class="rsd-label">Billing Date</span><span class="rsd-value" id="rsdBillingDate">—</span></div>' +
+                '<div class="rsd-info-item"><span class="rsd-label">Due Date</span><span class="rsd-value" id="rsdDueDate">—</span></div>' +
+                '<div class="rsd-info-item"><span class="rsd-label">Discon Date</span><span class="rsd-value" id="rsdDisconDate">—</span></div>' +
+                '<div class="rsd-info-item"><span class="rsd-label">Meter Reader</span><span class="rsd-value" id="rsdMeterReader">—</span></div>' +
+              '</div>' +
+              '<div class="rsd-info-status"><span class="rsd-label">Posting Status</span><span class="rsd-value" id="rsdPostingStatus">— of —</span></div>' +
+              '<div class="rsd-info-ref"><span class="rsd-label">Sheet Reference</span><span class="rsd-value rsd-ref-code" id="rsdSheetRef">—</span></div>' +
+              '<div class="rsd-info-export">' +
+                '<span class="rsd-label">Save</span>' +
+                '<div class="rsd-export-icons">' +
+                  '<button type="button" id="rsdExportPdfBtn" class="export-icon-btn export-pdf" title="Save as PDF" aria-label="Save as PDF">' +
+                    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="9" y2="17"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="15" y1="13" x2="15" y2="17"/></svg>' +
+                    '<span class="export-icon-btn__label">PDF</span>' +
+                  '</button>' +
+                  '<button type="button" id="rsdExportExcelBtn" class="export-icon-btn export-excel" title="Save as Excel" aria-label="Save as Excel">' +
+                    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/><path d="M13 12l2 3M15 12l-2 3" stroke-linecap="round"/></svg>' +
+                    '<span class="export-icon-btn__label">Excel</span>' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="rsd-toolbar">' +
+              '<div class="search-wrap"><input type="text" id="rsdAccountSearch" placeholder="Search accounts..." autocomplete="off"/></div>' +
+              '<div class="filter-wrap">' +
+                '<select id="rsdUsageFilter">' +
+                  '<option value="all">All</option>' +
+                  '<option value="normal">Normal Usage</option>' +
+                  '<option value="remarks">With Remarks</option>' +
+                  '<option value="abnormal">Abnormal Usage</option>' +
+                '</select>' +
+              '</div>' +
+            '</div>' +
+            '<div class="rsd-table-wrap">' +
+              '<table id="rsdAccountsTable">' +
+                '<thead><tr>' +
+                  '<th class="col-account">Account</th>' +
+                  '<th class="col-num">Prev</th>' +
+                  '<th class="col-num">Pres</th>' +
+                  '<th class="col-num">Usage</th>' +
+                  '<th class="col-num">Balance</th>' +
+                  '<th class="col-num">Amount</th>' +
+                  '<th class="col-num">Total</th>' +
+                  '<th class="col-status">Status</th>' +
+                  '<th class="col-action"></th>' +
+                '</tr></thead>' +
+                '<tbody id="rsdAccountsTableBody"></tbody>' +
+              '</table>' +
+              '<div id="rsdNoResults" class="no-results hidden"><p>No accounts match your search or filter.</p></div>' +
+            '</div>' +
           '</div>' +
-        '</div>' +
-        '<div class="rsd-toolbar">' +
-          '<div class="search-wrap"><input type="text" id="rsdAccountSearch" placeholder="Search accounts..." autocomplete="off"/></div>' +
-          '<div class="filter-wrap">' +
-            '<select id="rsdUsageFilter">' +
-              '<option value="all">All</option>' +
-              '<option value="normal">Normal Usage</option>' +
-              '<option value="remarks">With Remarks</option>' +
-              '<option value="abnormal">Abnormal Usage</option>' +
-            '</select>' +
-          '</div>' +
-        '</div>' +
-        '<div class="rsd-table-wrap">' +
-          '<table id="rsdAccountsTable">' +
-            '<thead><tr>' +
-              '<th class="col-account">Account</th>' +
-              '<th class="col-num">Prev</th>' +
-              '<th class="col-num">Pres</th>' +
-              '<th class="col-num">Usage</th>' +
-              '<th class="col-num">Balance</th>' +
-              '<th class="col-num">Amount</th>' +
-              '<th class="col-num">Total</th>' +
-              '<th class="col-status">Status</th>' +
-              '<th class="col-action"></th>' +
-            '</tr></thead>' +
-            '<tbody id="rsdAccountsTableBody"></tbody>' +
-          '</table>' +
-          '<div id="rsdNoResults" class="no-results hidden"><p>No accounts match your search or filter.</p></div>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
+        '</div>';
 
   document.body.insertAdjacentHTML('beforeend', html);
 
@@ -1204,14 +1343,14 @@ function closeBulkDeleteModal() {
  *
  * @param {Event} event
  */
-// function handleBulkDeleteInput(event) {
-//   var val        = event.target.value.trim().toLowerCase();
-//   var confirmBtn = document.getElementById('bulkDeleteModalConfirm');
-//   var isValid    = val === 'delete all';
+function handleBulkDeleteInput(event) {
+  var val        = event.target.value.trim().toLowerCase();
+  var confirmBtn = document.getElementById('bulkDeleteModalConfirm');
+  var isValid    = val === 'delete all';
 
-//   if (confirmBtn) confirmBtn.disabled = !isValid;
-//   event.target.classList.toggle('is-valid', isValid);
-// }
+   if (confirmBtn) confirmBtn.disabled = !isValid;
+   event.target.classList.toggle('is-valid', isValid);
+}
 
 /**
  * Execute the bulk deletion after modal confirmation.
@@ -1224,11 +1363,17 @@ async function handleBulkDeleteConfirm() {
   });
 
     var queryParam = '';
-    readingSheetState.selectedIds.forEach((value, index) => {
-        if (index == 1) queryParam += 'ids=' + value;
-        else queryParam += '&ids=' + value;
+
+    readingSheetState.selectedIds.forEach(function (value, index) {
+        if (index === 0) {
+            queryParam += 'ids=' + value;
+        } else {
+            queryParam += '&ids=' + value;
+        }
     });
+
     queryParam += '&status=3';
+    
     var result = await fetch('/ReadingSheet/BulkDeleteReadingSheet?' + queryParam, {
         method: 'DELETE',
         headers: {
@@ -1453,11 +1598,21 @@ function mapReadingSheetRows(data) {
           billingPeriodStart:
               sheet.billingPeriodStart || null,
 
-          zone: sheet.zone
+          zone: sheet.zone != null
               ? String(sheet.zone)
-              : String(sheet.zoneBookId || '—'),
+              : '—',
 
-          book: sheet.book || null,
+          book: sheet.book != null
+              ? String(sheet.book)
+              : '—',
+          totalAccounts:
+              sheet.totalAccounts ?? 0,
+
+          totalCompleted:
+              sheet.totalCompleted ?? 0,
+
+          totalInProgress:
+              sheet.totalInProgress ?? 0,
 
           forPosting:
               sheet.forPosting ?? 0,
@@ -1685,7 +1840,7 @@ function initReadingSheetPage() {
  */
 
 async function loadReadingSheets() {
-    return await fetch('/readingsheet/GetAllReadingSheets', {
+    return await fetch('/readingsheet/GetAllReadingSheet', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -1722,8 +1877,8 @@ async function onReadingSheetCreate(data) {
         disconnectionDate: data.disconnectionDate,
         billingPeriodStart: data.billingPeriodStart,
         zoneBookId: 0,
-        sequenceFrom: data.seqFrom,
-        sequenceTo: data.seqTo,
+        seqFrom: data.seqFrom,
+        seqTo: data.seqTo,
         assignedTo: data.meterReader
     };
 

@@ -16,12 +16,6 @@ namespace TMCWD.Model.Billing.Interfaces
 
         public DateTime? BillingPeriodStart { get; set; }
 
-        public DateTime DueDate { get; set; }
-
-        public DateTime DisconnectionDate { get; set; }
-
-        public DateTime BillingPeriodStart { get; set; }
-
         public int ZoneBookId { get; set; }
 
         public int? SeqFrom { get; set; }
