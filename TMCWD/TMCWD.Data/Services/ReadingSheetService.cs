@@ -7,8 +7,6 @@ namespace TMCWD.Data.Services
     public class ReadingSheetService : IReadingSheetService
     {
 
-        #region fields
-
         private readonly UserDbContext _context;
 
         #endregion
@@ -64,7 +62,6 @@ namespace TMCWD.Data.Services
 
         public async Task<List<ReadingSheet>> GetByBillingDate(int zone, int book, DateTime billingDate)
         {
-            //var readingSheet = await _context.ReadingSheets.Where(x => x.Zone == zone && x.Book == book && x.BillingDate == billingDate).FirstOrDefaultAsync();
             var sheets = await (from zoneBooks in _context.ZoneBooks
                           join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
                           where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.BillingDate == billingDate
@@ -123,44 +120,87 @@ namespace TMCWD.Data.Services
 
         public async Task<ReadingSheet> GetByBillingPeriodStart(int zone, int book, DateTime billingPeriodStart)
         {
-            var data = from readingSheets in _context.ReadingSheets
-                       join zoneBooks in _context.ZoneBooks on readingSheets.ZoneBookId equals zoneBooks.Id
-                       where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.BillingPeriodStart == billingPeriodStart
-                       select readingSheets;
-            return await data.FirstOrDefaultAsync();
+            var sheet = await (from zoneBooks in _context.ZoneBooks
+                               join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
+                               where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.BillingPeriodStart.HasValue && readingSheets.BillingPeriodStart.Value.Date == billingPeriodStart.Date
+                               select readingSheets).FirstOrDefaultAsync();
+            return sheet;
         }
 
         public async Task<ReadingSheet> GetCurrentByAssignedTo(int zone, int book, int assignedTo)
         {
-            var data = await (from readingSheets in _context.ReadingSheets
-                              join zoneBooks in _context.ZoneBooks on readingSheets.ZoneBookId equals zoneBooks.Id
+            var sheet = await (from zoneBooks in _context.ZoneBooks
+                              join readingSheets in _context.ReadingSheets on zoneBooks.Id equals readingSheets.ZoneBookId
                               where zoneBooks.Zone == zone && zoneBooks.Book == book && readingSheets.AssignedTo == assignedTo
-                              select readingSheets).OrderByDescending(x => x.BillingDate).FirstOrDefaultAsync();
-            return data;
+                              orderby readingSheets.BillingDate descending
+                              select readingSheets).FirstOrDefaultAsync();
+            return sheet;
+        }
+
+        public async Task<List<ReadingSheet>> GetByZoneBookId(int zoneBookId)
+        {
+            var sheets = await _context.ReadingSheets.Where(x => x.ZoneBookId == zoneBookId).ToListAsync();
+            return sheets;
         }
 
         public async Task<IEnumerable<ReadingSheet>> GetRangeReadingSheets(IEnumerable<int> ids)
         {
-            var readingSheets = await _context.ReadingSheets.Where(x => ids.Contains((int)x.Id)).ToListAsync();
-            return readingSheets;
+            var idsList = ids.ToList();
+            var sheets = await _context.ReadingSheets.Where(x => idsList.Contains((int)x.Id)).ToListAsync();
+            return sheets;
         }
 
         public async Task<IEnumerable<ReadingSheet>> UpdateReadingSheetsStatus(IEnumerable<int> ids, int userId, int status)
         {
-            var readingSheets = await this.GetRangeReadingSheets(ids);
-
-            foreach (var readingSheet in readingSheets)
+            var idsList = ids.ToList();
+            var sheets = await _context.ReadingSheets.Where(x => idsList.Contains((int)x.Id)).ToListAsync();
+            foreach (var sheet in sheets)
             {
-                readingSheet.Status = (ReadingStatus)status;
+                sheet.Status = (ReadingStatus)status;
+                sheet.UpdatedBy = userId;
+                sheet.DateUpdated = DateTime.Now;
             }
-
-            _context.ReadingSheets.UpdateRange(readingSheets);
             await _context.SaveChangesAsync();
-
-            return readingSheets;
+            return sheets;
         }
 
-        #endregion
+        public async Task<ReadingSheet> SaveUpdate(int userId, ReadingSheet readingSheet)
+        {
+            if (readingSheet.Id > 0)
+            {
+                var forUpdate = await _context.ReadingSheets.Where(x => x.Id == readingSheet.Id).FirstOrDefaultAsync();
+                if (forUpdate != null)
+                {
+                    forUpdate.Name = readingSheet.Name;
+                    forUpdate.BillingDate = readingSheet.BillingDate;
+                    forUpdate.DueDate = readingSheet.DueDate;
+                    forUpdate.DisconnectionDate = readingSheet.DisconnectionDate;
+                    forUpdate.BillingPeriodStart = readingSheet.BillingPeriodStart;
+                    forUpdate.AssignedTo = readingSheet.AssignedTo;
+                    forUpdate.ZoneBookId = readingSheet.ZoneBookId;
+                    forUpdate.SeqFrom = readingSheet.SeqFrom;
+                    forUpdate.SeqTo = readingSheet.SeqTo;
+                    forUpdate.Status = readingSheet.Status;
+                    forUpdate.DateUpload = DateTime.Now;
+                    readingSheet = forUpdate;
+                }
+            }
+            else
+            {
+                readingSheet.CreatedBy = userId;
+                readingSheet.DateCreated = DateTime.Now;
+                _context.ReadingSheets.Add(readingSheet);
+            }
 
+            await _context.SaveChangesAsync();
+
+            return readingSheet;
+        }
+
+        public async Task<ReadingSheet> GetCurrentByAssignedTo(int assignedTo)
+        {
+            var readingSheet = await _context.ReadingSheets.Where(x => x.AssignedTo == assignedTo).OrderByDescending(x => x.BillingDate).FirstOrDefaultAsync();
+            return readingSheet;
+        }
     }
 }

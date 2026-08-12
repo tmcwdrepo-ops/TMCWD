@@ -20,6 +20,14 @@ namespace TMCWD.Data.Controllers
             _accountService = service;
         }
 
+        [HttpGet("GetAll")]
+        public async Task<ActionResult> GetAll()
+        {
+            var accounts = await _accountService.GetAccounts();
+            if (accounts == null || !accounts.Any()) return NotFound();
+            return Ok(accounts);
+        }
+
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<ActionResult> SaveUpdate(int userId, [FromBody] Account account)
         {
@@ -88,6 +96,16 @@ namespace TMCWD.Data.Controllers
         {
             var accounts = await _accountService.GetByZoneBookAndSequence(zone, book, seqFrom, seqTo);
             if (accounts == null || !accounts.Any()) return NotFound();
+            return Ok(accounts);
+        }
+
+        [HttpGet("Search")]
+        public async Task<IActionResult> Search([FromQuery] string q)
+        {
+            if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 1)
+                return Ok(new List<Account>());
+
+            var accounts = await _accountService.Search(q);
             return Ok(accounts);
         }
     }

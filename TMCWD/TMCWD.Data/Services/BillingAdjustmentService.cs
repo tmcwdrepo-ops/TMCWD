@@ -33,7 +33,7 @@ namespace TMCWD.Data.Services
 
         public async Task<BillingAdjustment> SaveUpdate(int userId, BillingAdjustment billingAdjustment)
         {
-            if(billingAdjustment.Id == 0)
+            if (billingAdjustment.Id == 0)
             {
                 billingAdjustment.CreatedBy = userId;
                 billingAdjustment.DateCreated = DateTime.UtcNow;
@@ -42,6 +42,7 @@ namespace TMCWD.Data.Services
             else
             {
                 var existingBillingAdjustment = await _context.BillingAdjustments.FindAsync(billingAdjustment.Id);
+
                 if (existingBillingAdjustment != null)
                 {
                     existingBillingAdjustment.Type = billingAdjustment.Type;
@@ -52,8 +53,20 @@ namespace TMCWD.Data.Services
             }
 
             await _context.SaveChangesAsync();
-            return billingAdjustment;
 
+            var billing = await _context.Billings
+                .FirstOrDefaultAsync(x => x.BillingReferenceId == billingAdjustment.BillingReferenceId);
+
+            if (billing != null)
+            {
+                billing.BillingAdjustment = await _context.BillingAdjustments
+                    .Where(x => x.BillingReferenceId == billingAdjustment.BillingReferenceId)
+                    .SumAsync(x => x.Amount);
+
+                await _context.SaveChangesAsync();
+            }
+
+            return billingAdjustment;
         }
 
     }

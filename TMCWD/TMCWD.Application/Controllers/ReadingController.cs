@@ -49,17 +49,16 @@ namespace TMCWD.Application.Controllers
                            select new Reading
                            {
                                AccountId = account.Id,
-                               BillingPeriod = billingPeriod,
                                CreatedBy = _userService.User.Id,
                                CurrentReading = 0,
                                DateCreated = DateTime.Now,
                                DateUpdated = DateTime.Now,
-                               ReaderId = readerId,
-                               UpdatedBy = _userService.User.Id,
-                               ZoneBookId = zoneBookId
+                               
+                               UpdatedBy = _userService.User.Id
+                               
                            }).ToList();
 
-            var savedReadings = await _readingTrans.SaveRange(readings);
+            var savedReadings = await _readingTrans.SaveMultiple(readings);
             if (savedReadings == null) return BadRequest();
             return Ok(savedReadings);
         }

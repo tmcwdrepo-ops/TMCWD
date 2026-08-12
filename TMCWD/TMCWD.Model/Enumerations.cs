@@ -109,10 +109,19 @@ public enum GatewayType
     GCash = 1
 }
 
+public enum AdjustmentLineType
+{
+    Usage = 1,
+    CurrentBill = 2,
+    Penalty = 3,
+    Present = 4,
+    Previous = 5
+}
+
 public enum ReadingStatus
 {
-    Created = 1,
+    Created    = 1,
     InProgress = 2,
-    Completed = 3,
-    Deleted = 4
+    Completed  = 3,
+    Deleted    = 4
 }
