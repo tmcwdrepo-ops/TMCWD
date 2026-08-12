@@ -81,37 +81,20 @@ if (crOverrideStart) {
 }
 
 /* ============================================================
-   Phase 3 — Meter Reader searchable combobox
+   Phase 3 — Meter Reader searchable combobox (real data)
    ============================================================ */
 
-/* Mock data — 15 meter readers */
-//WALLY WORK HERE
-// var METER_READERS = [
-//   'Juan dela Cruz',
-//   'Ana Lim',
-//   'Liza Torres',
-//   'Grace Aquino',
-//   'Ben Ramos',
-//   'Clara Bautista',
-//   'Dennis Pascual',
-//   'Elena Varga',
-//   'Felix Soriano',
-//   'Gloria Navarro',
-//   'Hector Flores',
-//   'Iris Magtanggol',
-//   'Joel Manalo',
-//   'Karen Dela Rosa',
-//   'Leo Cabrera'
-// ];
+var REAL_METER_READERS = []; // [{id, name}]
 
-// const METER_READERS = loadMeterReaders();
-// console.log('Meter Readers:', METER_READERS);
-var METER_READERS = [];
-loadMeterReaders();
+function loadRealMeterReaders() {
+    return fetch('/ReadingSheet/GetReaders')
+        .then(function (res) { return res.ok ? res.json() : []; })
+        .then(function (data) { REAL_METER_READERS = data || []; });
+}
+loadRealMeterReaders();
 
-/* Elements */
-var crMeterReaderInput    = document.getElementById('crMeterReaderInput');
-var crMeterReaderList     = document.getElementById('crMeterReaderList');
+var crMeterReaderInput = document.getElementById('crMeterReaderInput');
+var crMeterReaderList = document.getElementById('crMeterReaderList');
 var crMeterReaderCombobox = document.getElementById('crMeterReaderCombobox');
 var selectedZone = 0;
 var selectedBook = 0;
@@ -119,8 +102,8 @@ var selectedScope = 0;
 var currentFromSeq = 0;
 var currentToSeq = 0;
 
-/* Currently selected value */
-var crMeterReaderValue = '';
+var crMeterReaderValue = ''; // display name
+var crMeterReaderId = ''; // real id, used for saving
 
 async function loadMeterReaders() {
     METER_READERS = await fetch('/Admin/GetUsersByRole' + '?role=4', {
@@ -141,99 +124,83 @@ async function loadMeterReaders() {
  * @param {string} query
  */
 function renderMeterReaderOptions(query) {
-  var term = query.trim().toLowerCase();
-  var filtered = METER_READERS.filter(function (data) {
-    return data.name.toLowerCase().indexOf(term) !== -1;
-  });
-
-  crMeterReaderList.innerHTML = '';
-
-  if (filtered.length === 0) {
-    var empty = document.createElement('li');
-    empty.className = 'cr-combobox__option cr-combobox__option--empty';
-    empty.textContent = 'No results found.';
-    empty.setAttribute('role', 'option');
-    crMeterReaderList.appendChild(empty);
-    return;
-  }
-
-  filtered.forEach(function (data) {
-    var li = document.createElement('li');
-    li.className = 'cr-combobox__option';
-    li.textContent = data.name;
-    li.data = data.id;
-    li.setAttribute('role', 'option');
-    li.setAttribute('aria-selected', data.name === crMeterReaderValue ? 'true' : 'false');
-
-    li.addEventListener('mousedown', function (e) {
-      // mousedown fires before input blur — prevent blur closing list first
-      e.preventDefault();
-      selectMeterReader(data);
+    var term = query.trim().toLowerCase();
+    var filtered = REAL_METER_READERS.filter(function (r) {
+        return r.name.toLowerCase().indexOf(term) !== -1;
     });
 
-    crMeterReaderList.appendChild(li);
-  });
-}
+    crMeterReaderList.innerHTML = '';
 
-/**
- * Open the dropdown.
- */
-function openMeterReaderList() {
-  renderMeterReaderOptions(crMeterReaderInput.value);
-  crMeterReaderList.hidden = false;
-  crMeterReaderInput.setAttribute('aria-expanded', 'true');
-}
-
-/**
- * Close the dropdown.
- */
-function closeMeterReaderList() {
-  crMeterReaderList.hidden = true;
-  crMeterReaderInput.setAttribute('aria-expanded', 'false');
-}
-
-/**
- * Select a meter reader, update input value, close list.
- * @param {string} name
- */
-function selectMeterReader(data) {
-  console.log('Meter Reader Data:', data);
-  crMeterReaderValue = data.id;
-  crMeterReaderInput.dataset.id = data.id;
-  crMeterReaderInput.value = data.name;
-  closeMeterReaderList();
-}
-
-/* Events */
-if (crMeterReaderInput) {
-
-  crMeterReaderInput.addEventListener('focus', function () {
-    openMeterReaderList();
-  });
-
-  crMeterReaderInput.addEventListener('input', function () {
-    crMeterReaderValue = ''; // clear selection if user edits
-    openMeterReaderList();
-  });
-
-  crMeterReaderInput.addEventListener('blur', function () {
-    // Small delay so mousedown on an option fires first
-    setTimeout(closeMeterReaderList, 150);
-  });
-
-  crMeterReaderInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') {
-      closeMeterReaderList();
-      crMeterReaderInput.blur();
+    if (filtered.length === 0) {
+        var empty = document.createElement('li');
+        empty.className = 'cr-combobox__option cr-combobox__option--empty';
+        empty.textContent = 'No results found.';
+        empty.setAttribute('role', 'option');
+        crMeterReaderList.appendChild(empty);
+        return;
     }
-  });
+
+    filtered.forEach(function (r) {
+        var li = document.createElement('li');
+        li.className = 'cr-combobox__option';
+        li.textContent = r.name;
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', r.name === crMeterReaderValue ? 'true' : 'false');
+
+        li.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            selectMeterReader(r.id, r.name);
+        });
+
+        crMeterReaderList.appendChild(li);
+    });
 }
 
-/* Close list if clicking outside the combobox */
-document.addEventListener('click', function (e) {
-  if (crMeterReaderCombobox && !crMeterReaderCombobox.contains(e.target)) {
+function openMeterReaderList() {
+    renderMeterReaderOptions(crMeterReaderInput.value);
+    crMeterReaderList.hidden = false;
+    crMeterReaderInput.setAttribute('aria-expanded', 'true');
+}
+
+function closeMeterReaderList() {
+    crMeterReaderList.hidden = true;
+    crMeterReaderInput.setAttribute('aria-expanded', 'false');
+}
+
+function selectMeterReader(id, name) {
+    crMeterReaderId = id;
+    crMeterReaderValue = name;
+    crMeterReaderInput.value = name;
     closeMeterReaderList();
-  }
+}
+
+if (crMeterReaderInput) {
+    crMeterReaderInput.addEventListener('focus', function () {
+        openMeterReaderList();
+    });
+
+    crMeterReaderInput.addEventListener('input', function () {
+        crMeterReaderValue = '';
+        crMeterReaderId = '';
+        openMeterReaderList();
+    });
+
+    crMeterReaderInput.addEventListener('blur', function () {
+        setTimeout(closeMeterReaderList, 150);
+    });
+
+    crMeterReaderInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeMeterReaderList();
+            crMeterReaderInput.blur();
+        }
+    });
+}
+
+document.addEventListener('click', function (e) {
+    if (crMeterReaderCombobox && !crMeterReaderCombobox.contains(e.target)) {
+        closeMeterReaderList();
+    }
 });
 
 /* ============================================================
@@ -394,7 +361,7 @@ function showToast(message, duration) {
 /* Load Accounts — wired after Phase 7 where renderAccountsTable is defined */
 var crAccountsLoaded = false;
 
-/* Save — show toast then close modal */
+/* Save — persist to database, then show toast and close modal */
 if (crSaveBtn) {
     crSaveBtn.addEventListener('click', function () {
         if (!validateCrDates()) {
@@ -402,8 +369,57 @@ if (crSaveBtn) {
             else if (crDisconnectionDate) crDisconnectionDate.reportValidity();
             return;
         }
-        showToast('Reading sheet saved successfully');
-        setTimeout(closeCreateModal, 1000);
+
+        var zoneVal = document.getElementById('crZone').value;
+        var bookVal = document.getElementById('crBook').value;
+        var scopeVal = document.getElementById('crScope').value;
+
+        if (!crMeterReaderId) {
+            alert('Please select a Meter Reader from the list.');
+            return;
+        }
+        if (!zoneVal || !bookVal) {
+            alert('Please select a Zone and Book.');
+            return;
+        }
+        if (!crBillingDate.value) {
+            alert('Please set a Billing Date.');
+            return;
+        }
+
+        var payload = {
+            zone: parseInt(zoneVal, 10),
+            book: parseInt(bookVal, 10),
+            assignedTo: parseInt(crMeterReaderId, 10),
+            billingPeriod: crBillingDate.value,
+            dueDate: crDueDate.value || null,
+            disconnectionDate: crDisconnectionDate.value || null,
+            billingPeriodStart: crBillingPeriodStart.value || null,
+            seqFrom: scopeVal === 'ranged' ? (parseInt(crFromSeq.value, 10) || null) : null,
+            seqTo: scopeVal === 'ranged' ? (parseInt(crToSeq.value, 10) || null) : null
+        };
+
+        crSaveBtn.disabled = true;
+
+        fetch('/ReadingSheet/CreateReadingSheet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(function (res) {
+                if (!res.ok) return res.text().then(function (t) { throw new Error(t || 'Save failed'); });
+                return res.json();
+            })
+            .then(function () {
+                showToast('Reading sheet saved successfully');
+                setTimeout(closeCreateModal, 1000);
+            })
+            .catch(function (err) {
+                alert('Could not save reading sheet: ' + err.message);
+            })
+            .finally(function () {
+                crSaveBtn.disabled = false;
+            });
     });
 }
 
@@ -944,6 +960,7 @@ function applyTemplate(tplId) {
         if (crMeterReaderInput) {
             crMeterReaderInput.value = tpl.readerName;
             crMeterReaderValue = tpl.readerName;
+            crMeterReaderId = tpl.readerId;
         }
         var zoneSelect = document.getElementById('crZone');
         if (zoneSelect) {

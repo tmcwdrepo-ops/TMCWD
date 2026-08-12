@@ -7,6 +7,7 @@ using TMCWD.Model.Administrator;
 using TMCWD.Model.Billing;
 using TMCWD.Model.CustomerSupport;
 using TMCWD.Services;
+using TMCWD.Model.Billing.Requests;
 
 namespace TMCWD.Application.Controllers
 {
@@ -55,52 +56,69 @@ namespace TMCWD.Application.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateReadingSheet(int zone, int book, [FromBody] ReadingSheet readingSheet)
         {
+            var assignedToUser = await _userTrans.Get(request.AssignedTo);
+            if (assignedToUser == null) return BadRequest("Selected meter reader was not found.");
 
-            ReadingSheet savedSheet = new(); 
+            var zoneBook = await _zoneBookTrans.GetByZoneAndBook(request.Zone, request.Book);
+            if (zoneBook == null) return BadRequest("Zone/Book combination not found.");
 
-            try
+            var sheet = new ReadingSheet
             {
+                Name = $"{DateTime.Now:MM - dd - yyyy} - {assignedToUser.Name}",
+                AssignedTo = request.AssignedTo,
+                BillingDate = request.BillingPeriod,
+                DueDate = request.DueDate,
+                DisconnectionDate = request.DisconnectionDate,
+                BillingPeriodStart = request.BillingPeriodStart,
+                SeqFrom = request.SeqFrom,
+                SeqTo = request.SeqTo,
+                ZoneBookId = zoneBook.Id
+            };
 
-                var assignedToUser = await _userTrans.Get(readingSheet.AssignedTo);
+            var savedSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, sheet);
 
-                string name = $"{readingSheet.BillingDate.ToString("MM-dd-yyyy")} {assignedToUser.Name}";
-                readingSheet.Name = name ;
-
-                var zoneBook = await _zoneBookTrans.GetByZoneAndBook(zone, book);
-
-                if (zoneBook == null) return BadRequest();
-
-                readingSheet.DateCreated = DateTime.Now;
-                readingSheet.CreatedBy = _user.User.Id;
-                readingSheet.ZoneBookId = zoneBook.Id;
-                readingSheet.Status = ReadingStatus.InProgress;
-
-                savedSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, readingSheet);
-
-                if(savedSheet != null)
-                {
-                    var accounts = await _accountTransaction.GetByZoneBookAndSequence(zone, book, readingSheet.SequenceFrom, readingSheet.SequenceTo);
-                    var readings = from accts in accounts
-                                   select new Reading
-                                   {
-                                       AccountId = accts.Id,
-                                       CreatedBy = _user.User.Id,
-                                       CurrentReading = 0,
-                                       DateCreated = DateTime.Now,
-                                       DateUpdated = DateTime.Now,
-                                       Status = ReadingStatus.InProgress,
-                                       ReadingSheetId = savedSheet.Id,
-                                       UpdatedBy = _user.User.Id
-                                   };
-                    var savedReadings = await _readingTransaction.SaveMultiple([..readings]);
-                }
-
-                return Ok(savedSheet);
-
-            }
-            catch { }
+            if (savedSheet == null || savedSheet.Id <= 0)
+                return BadRequest("Failed to save reading sheet.");
 
             return Ok(savedSheet);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateReadingSheet(
+            [FromBody] ReadingSheet request)
+        {
+            if (request == null || request.Id <= 0)
+                return BadRequest("Invalid reading sheet.");
+
+            var existing = await _readingSheetTrans.Get((int)request.Id);
+
+            if (existing == null)
+                return NotFound("Reading sheet not found.");
+
+            // Update the editable fields
+            existing.Name = request.Name;
+            existing.BillingDate = request.BillingDate;
+            existing.DueDate = request.DueDate;
+            existing.DisconnectionDate = request.DisconnectionDate;
+            existing.BillingPeriodStart = request.BillingPeriodStart;
+            existing.AssignedTo = request.AssignedTo;
+            existing.ZoneBookId = request.ZoneBookId;
+            existing.SeqFrom = request.SeqFrom;
+            existing.SeqTo = request.SeqTo;
+
+            // IMPORTANT:
+            // This is what persists In-Progress / Completed.
+            existing.Status = request.Status;
+
+            var saved = await _readingSheetTrans.SaveUpdate(
+                _user.User.Id,
+                existing
+            );
+
+            if (saved == null)
+                return BadRequest("Failed to update reading sheet.");
+
+            return Ok(saved);
         }
 
         [HttpGet]
@@ -117,13 +135,58 @@ namespace TMCWD.Application.Controllers
             return Ok(readingSheets);
         }
 
+        
         [HttpGet]
         public async Task<IActionResult> GetAllReadingSheet()
         {
             var readingSheets = await _readingSheetTrans.GetAll();
-            if (readingSheets == null || !readingSheets.Any()) return NotFound();
-            return Ok(readingSheets);
+
+            if (readingSheets == null || !readingSheets.Any())
+                return Ok(new List<object>());
+
+            var result = new List<object>();
+
+            foreach (var sheet in readingSheets)
+            {
+                // Get the meter reader's name
+                var reader = await _userTrans.Get((int)sheet.AssignedTo);
+
+                // Get the Zone and Book using ZoneBookId
+                var zoneBook = await _zoneBookTrans.Get(sheet.ZoneBookId.ToString());
+
+                result.Add(new
+                {
+                    id = sheet.Id,
+                    name = sheet.Name,
+
+                    meterReader = reader?.Name ?? "—",
+
+                    billingDate = sheet.BillingDate,
+                    dueDate = sheet.DueDate,
+                    disconnectionDate = sheet.DisconnectionDate,
+                    billingPeriodStart = sheet.BillingPeriodStart,
+
+                    zone = zoneBook?.Zone ?? 0,
+                    book = zoneBook?.Book ?? 0,
+
+                    seqFrom = sheet.SeqFrom,
+                    seqTo = sheet.SeqTo,
+
+                    assignedTo = sheet.AssignedTo,
+                    zoneBookId = sheet.ZoneBookId,
+
+                    status = sheet.Status,
+
+                    createdBy = sheet.CreatedBy,
+                    dateCreated = sheet.DateCreated,
+                    dateUpload = sheet.DateUpload
+                });
+            }
+
+            return Ok(result);
         }
+
+
 
         [HttpGet]
         public async Task<IActionResult> GetReadingSheetTemplates()
@@ -274,13 +337,5 @@ namespace TMCWD.Application.Controllers
 
     }
 
-    public class SaveTemplateRequest
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public int ReaderId { get; set; }
-        public int Zone { get; set; }
-        public int Book { get; set; }
-        public bool IsActive { get; set; } = true;
-    }
+    
 }
