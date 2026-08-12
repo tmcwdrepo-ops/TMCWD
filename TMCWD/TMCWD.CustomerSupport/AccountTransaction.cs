@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Collections.Generic;
 using System.Net.Http.Json;
@@ -45,7 +45,7 @@ namespace TMCWD.CustomerSupport
             StringBuilder sb = new();
 
             if (account == null) throw new Exception("Required account fields are not supplied");
-            if (account.Id > 0 && String.IsNullOrEmpty(account.AccountNumber.Trim())) sb.AppendLine("Äccount number is required");
+            if (account.Id > 0 && String.IsNullOrEmpty(account.AccountNumber.Trim())) sb.AppendLine("�ccount number is required");
             if (account.Id > 0 && String.IsNullOrEmpty(account.MeterNumber.Trim())) sb.AppendLine("Meter number is required");
             if (account.CustomerId <= 0) sb.AppendLine("No customer has been selected for this account");
             if (String.IsNullOrEmpty(account.HouseNumber.Trim())) sb.AppendLine("Account house number is required for account creation");
@@ -131,6 +131,30 @@ namespace TMCWD.CustomerSupport
             var response = await _webService.Client.GetAsync($"api/Account/GetByZoneBookId/{zoneBookId}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToAccounts(data);
+        }
+
+        public async Task<List<Account>> GetAccounts()
+        {
+            var response = await _webService.Client.GetAsync("api/Account/GetAll");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToAccounts(data);
+        }
+
+        public async Task<List<Account>> GetByZoneBookAndSequence(int zone, int book, int seqFrom, int seqTo)
+        {
+            var response = await _webService.Client.GetAsync($"api/Account/GetByZoneBookAndSequence/{zone}/{book}/{seqFrom}/{seqTo}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToAccounts(data);
+        }
+
+        public async Task<List<Account>> Search(string query)
+        {
+            var response = await _webService.Client.GetAsync($"api/Account/Search?q={Uri.EscapeDataString(query)}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return new List<Account>();
             return ConvertJsonToAccounts(data);
         }
 

@@ -48,7 +48,7 @@ namespace TMCWD.Data.Controllers
             return Ok(webHooks);
         }
 
-        [HttpGet("SaveUpdate")]
+        [HttpPost("SaveUpdate")]
         public async Task<IActionResult> SaveUpdate(WebHook webHook)
         {
             var savedWebHook = await _service.SaveUpdate(webHook);

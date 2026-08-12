@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -47,6 +47,9 @@ namespace TMCWD.Model.Billing.Interfaces
         [DisplayName("Payment Transaction Id")]
         public string PaymentTransactionId { get; set; } = string.Empty;
 
+        [DisplayName("ReadingId")]
+        public int ReadingId { get; set; }
+
         [DisplayName("MaterialsAmount")]
         public decimal MaterialsAmount { get; set; }
 
@@ -76,6 +79,12 @@ namespace TMCWD.Model.Billing.Interfaces
 
         [DisplayName("Date Updated")]
         public DateTime DateUpdated { get; set; }
+
+        [DisplayName("Billing Period")]
+        public DateTime BillingPeriod { get; set; }
+
+        [DisplayName("Remaining Amount")]
+        public decimal RemainingAmount { get; set; }
 
         #endregion
 

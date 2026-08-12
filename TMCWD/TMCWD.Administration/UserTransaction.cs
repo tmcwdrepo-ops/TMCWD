@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -135,6 +135,15 @@ namespace TMCWD.Administration
         public async Task<List<User>> GetUsersByRole(UserRole role)
         {
             var response = await _webService.Client.GetAsync($"api/Users/GetUsersByRole/{(int)role}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonStringToUsers(data);
+        }
+
+        public async Task<List<User>> GetUsersById(List<int> ids)
+        {
+            string queryParam = string.Join("&", ids.Select(x => $"&ids={x}"));
+            var response = await _webService.Client.GetAsync($"api/Users/GetUsersById?{queryParam}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonStringToUsers(data);

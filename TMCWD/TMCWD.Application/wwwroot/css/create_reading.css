@@ -536,20 +536,33 @@
       display: none;
     }
 
-    /* Keep padding tight on date inputs since no custom icon */
-    .cr-input[type="date"] {
-      padding-right: 8px;
-    }
-      appearance: none;
-      -webkit-appearance: none;
-      cursor: pointer;
-      padding-right: 36px;
-    }
+/* Keep padding tight on date inputs since no custom icon */
+.cr-input[type="date"] {
+  padding-right: 8px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 36px;
+}
 
-    /* Sequence range row — hidden by default, shown via JS */
-    .cr-scope-range[hidden] {
-      display: none;
-    }
+cr-input:required{
+    border: inherit;
+    background-color: inherit;
+}
+
+cr-input:required:invalid{
+    border: 1px solid red;
+}
+
+cr-input:required label::after{
+    content: " *";
+    color: red;
+}
+
+/* Sequence range row — hidden by default, shown via JS */
+.cr-scope-range[hidden] {
+  display: none;
+}
 
     /* Animate in when revealed */
     .cr-scope-range {

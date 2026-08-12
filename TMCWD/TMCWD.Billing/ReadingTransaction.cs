@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Text;
@@ -57,12 +57,12 @@ namespace TMCWD.Billing
             return ConvertJsonToReadings(data);
         }
 
-        public async Task<List<Reading>> GetByAccountAndBillingPeriod(int accountId, DateTime billingPeriod)
+        public async Task<Reading> GetByAccountAndBillingPeriod(int accountId, DateTime billingPeriod)
         {
-            var response = await _service.Client.GetAsync($"api/Reading/GetByAccountAndBillingPeriod/{accountId}/{billingPeriod}");
+            var response = await _service.Client.GetAsync($"api/Reading/GetByAccountAndBillingPeriod/{accountId}/{billingPeriod:yyyy-MM-dd}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
-            return ConvertJsonToReadings(data);
+            return ConvertJsonToReading(data);
         }
 
         public async Task<List<Reading>> GetByReader(int readerId)
@@ -119,6 +119,42 @@ namespace TMCWD.Billing
         {
             var content = JsonContent.Create(readings);
             var response = await _service.Client.PostAsync("api/Reading/SaveRange", content);
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadings(data);
+        }
+
+        public async Task<List<Reading>> SaveMultiple(params Reading[] readings)
+        {
+            var content = JsonContent.Create(readings.ToList());
+            var response = await _service.Client.PostAsync("api/Reading/SaveRange", content);
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadings(data);
+        }
+
+        public async Task<List<Reading>> GetRangeByReadingSheetIds(List<int> readingSheetIds)
+        {
+            var content = JsonContent.Create(readingSheetIds);
+            var response = await _service.Client.PostAsync("api/Reading/GetRangeByReadingSheetIds", content);
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return new List<Reading>();
+            return ConvertJsonToReadings(data);
+        }
+
+        public async Task<List<Reading>> UpdateStatusByReadingSheetIds(List<int> readingSheetIds, ReadingStatus status, int userId)
+        {
+            var payload = new { readingSheetIds, status = (int)status, userId };
+            var content = JsonContent.Create(payload);
+            var response = await _service.Client.PostAsync("api/Reading/UpdateStatusByReadingSheetIds", content);
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return new List<Reading>();
+            return ConvertJsonToReadings(data);
+        }
+
+        public async Task<List<Reading>> GetByReadingSheetId(int readingSheetId)
+        {
+            var response = await _service.Client.GetAsync($"api/Reading/GetByReadingSheetId/{readingSheetId}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToReadings(data);

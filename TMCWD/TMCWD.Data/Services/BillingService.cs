@@ -69,5 +69,18 @@ namespace TMCWD.Data.Services
             await _dbContext.SaveChangesAsync();
             return billing;
         }
+
+        public async Task<Billing> GetByReadingId(int readingId)
+        {
+            var billing = await _dbContext.Billings.Where(x => x.ReadingId == readingId).FirstOrDefaultAsync();
+            return billing;
+        }
+
+        public async Task<List<Billing>> GetByReadings(int[] readingIds)
+        {
+            var billings = await _dbContext.Billings.Where(x => readingIds.Contains((int)x.ReadingId)).ToListAsync();
+            return billings;
+        }
+        
     }
 }

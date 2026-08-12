@@ -63,5 +63,13 @@ namespace TMCWD.Data.Controllers
             return Ok(customers);
         }
 
+        [HttpGet("GetCustomersFromIds")]
+        public async Task<IActionResult> GetCustomersFromIds([FromQuery] int[] ids)
+        {
+            var customers = await _customerService.GetCustomersFromIds(ids.ToList());
+            if (customers == null || !customers.Any()) return NotFound();
+            return Ok(customers);
+        }
+
     }
 }

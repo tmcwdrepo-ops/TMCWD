@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Xml;
 using TMCWD.Model.Billing;
 using TMCWD.Services;
 
@@ -80,14 +81,6 @@ namespace TMCWD.Billing
             return ConvertJsonToReadingSheets(data);
         }
 
-        public async Task<List<ReadingSheet>> GetByZoneBookAndAssignedTo(int zone, int book, int assignedTo)
-        {
-            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetByZoneBookAndAssignedTo/{zone}/{book}/{assignedTo}");
-            var data = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return null;
-            return ConvertJsonToReadingSheets(data);
-        }
-
         public async Task<List<ReadingSheet>> GetByZoneAndBook(int zone, int book)
         {
             var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetByZoneAndBook/{zone}/{book}");
@@ -96,27 +89,33 @@ namespace TMCWD.Billing
             return ConvertJsonToReadingSheets(data);
         }
 
-        public async Task<ReadingSheet> GetByBillingDate(DateTime billingDate)
+        public async Task<List<ReadingSheet>> GetByZoneBookAndAssignedTo(int zone, int book, int assignedTo)
         {
-            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetByBillingDate/{billingDate}");
+            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetByZoneBookAndAssignedTo/{zone}/{book}/{assignedTo}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadingSheets(data);
+        }
+
+        public async Task<List<ReadingSheet>> GetByBillingDate(int zone, int book, DateTime billingDate)
+        {
+            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetByBillingDate/{zone}/{book}/{billingDate}");
             var data = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode) return null;
 
-            return ConvertJsonToReadingSheet(data);
+            return ConvertJsonToReadingSheets(data);
         }
 
-        public async Task<ReadingSheet> GetCurrentByAssignedTo(int assignedTo)
+        public async Task<ReadingSheet> GetByBillingDateAndAssignedTo(int zone, int book, DateTime billingDate, int assignedTo)
         {
-            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetCurrentByAssignedTo/{assignedTo}");
+            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetByBillingDateAndAssignedTo/{zone}/{book}/{billingDate}/{assignedTo}");
             var data = await response.Content.ReadAsStringAsync();
-
             if (!response.IsSuccessStatusCode) return null;
-
             return ConvertJsonToReadingSheet(data);
         }
 
-        public async Task<ReadingSheet> SaveUpdate(int userId, ReadingSheet readingSheet) 
+        public async Task<ReadingSheet> SaveUpdate(int userId, ReadingSheet readingSheet)
         {
             var content = JsonContent.Create(readingSheet);
             var response = await _webService.Client.PostAsync($"api/ReadingSheet/SaveUpdate/{userId}", content);
@@ -124,6 +123,50 @@ namespace TMCWD.Billing
 
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToReadingSheet(data);
+        }
+
+        public async Task<List<ReadingSheet>> GetByZoneBookId(int zoneBookId)
+        {
+            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetByZoneBookId/{zoneBookId}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadingSheets(data);
+        }
+
+        public async Task<ReadingSheet> GetByBillingPeriodStart(int zone, int book, DateTime billingPeriodStart)
+        {
+            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetByBillingPeriodStart/{zone}/{book}/{billingPeriodStart}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadingSheet(data);
+        }
+
+        public async Task<ReadingSheet> GetCurrentByAssignedTo(int zone, int book, int assignedTo)
+        {
+            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetCurrentByAssignedTo/{zone}/{book}/{assignedTo}");
+            var data = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode) return null;
+
+            return ConvertJsonToReadingSheet(data);
+        }
+
+        public async Task<List<ReadingSheet>> GetRangeReadingSheets(List<int> ids)
+        {
+            string queryParam = string.Join("&", ids.Select(x => $"ids={x}"));
+            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetRangeReadingSheets?{queryParam}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadingSheets(data);
+        }
+
+        public async Task<List<ReadingSheet>> UpdateReadingSheetsStatus(List<int> ids, int userId, ReadingStatus status)
+        {
+            string queryParam = string.Join("&", ids.Select(x => $"ids={x}"));
+            var response = await _webService.Client.PatchAsync($"api/ReadingSheet/UpdateReadingSheetsStatus/{userId}/{(int)status}?{queryParam}", null);
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadingSheets(data);
         }
 
         #endregion

@@ -3,18 +3,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TMCWD.Data.Entities
 {
-
     [Table("readings")]
     public class Reading
     {
-
-        #region constructors
-
         public Reading() { }
-
-        #endregion
-
-        #region properties
 
         [Key, Column("Id")]
         public System.Int64 Id { get; set; }
@@ -22,20 +14,20 @@ namespace TMCWD.Data.Entities
         [Required, Column("AccountId")]
         public System.Int64 AccountId { get; set; }
 
-        [Required, Column("ZoneBookId")]
-        public int ZoneBookId { get; set; }
+        [Required, Column("ReadingSheetId")]
+        public System.Int64 ReadingSheetId { get; set; }
 
         [Required, Column("Reading")]
         public decimal CurrentReading { get; set; }
 
-        [Required, Column("ReaderId")]
-        public System.Int64 ReaderId { get; set; }
+        [Column("PreviousReading")]
+        public decimal PreviousReading { get; set; }
 
-        [Column("BillingPeriod")]
-        public DateTime BillingPeriod { get; set; }
+        [Column("IsCompleted")]
+        public bool IsCompleted { get; set; }
 
         [Column("Status")]
-        public bool IsCompleted { get; set; }
+        public ReadingStatus Status { get; set; }
 
         [Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }
@@ -44,12 +36,9 @@ namespace TMCWD.Data.Entities
         public DateTime DateCreated { get; set; }
 
         [Column("UpdatedBy")]
-        public System.Int64 UpdatedBy { get; set; }
+        public System.Int64? UpdatedBy { get; set; }
 
         [Column("DateUpdated")]
-        public DateTime DateUpdated { get; set; }
-
-        #endregion
-
+        public DateTime? DateUpdated { get; set; }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
-
+using BillingHistoryModel = TMCWD.Model.Billing.BillingHistory;
 namespace TMCWD.Data.Controllers
 {
 
@@ -11,10 +11,17 @@ namespace TMCWD.Data.Controllers
     {
 
         private readonly IBillingService _billingService;
+        private readonly IAccountService _accountService;
+        private readonly IReadingService _readingService;
 
-        public BillingController(IBillingService billingService)
+        public BillingController(
+            IBillingService billingService,
+            IAccountService accountService,
+            IReadingService readingService)
         {
             _billingService = billingService;
+            _accountService = accountService;
+            _readingService = readingService;
         }
 
         [HttpGet("Get/{id}")]
@@ -76,11 +83,53 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
-        public async Task<IActionResult> SaveUpdate(int userId, Billing billing)
+        public async Task<IActionResult> SaveUpdate(int userId, [FromBody]Billing billing)
         {
             var savedBilling = await _billingService.SaveUpdate(userId, billing);
             return Ok(savedBilling);
         }
 
+        [HttpGet("History/{accountNumber}")]
+        public async Task<IActionResult> History(string accountNumber)
+        {
+            var account = await _accountService.GetByAccountNumber(accountNumber);
+
+            if (account == null)
+                return Ok(new List<BillingHistoryModel>());
+
+            var billings = await _billingService.GetByAccountId((int)account.Id);
+
+            var readings = await _readingService.GetByAccountWithBillingDate((int)account.Id);
+
+            var result = new List<BillingHistoryModel>();
+
+            foreach (var billing in billings.OrderByDescending(x => x.BillingPeriod))
+            {
+                var current = readings
+                    .FirstOrDefault(x => x.BillingDate == billing.BillingPeriod);
+
+                if (current == null)
+                    continue;
+
+                var previous = readings
+                    .Where(x => x.BillingDate < billing.BillingPeriod)
+                    .OrderByDescending(x => x.BillingDate)
+                    .FirstOrDefault();
+
+                decimal previousReading = previous?.CurrentReading ?? 0;
+
+                result.Add(new BillingHistoryModel
+                {
+                    ReferenceNo = billing.BillingReferenceId,
+                    BillingDate = billing.BillingPeriod,
+                    Previous = previousReading,
+                    Present = current.CurrentReading,
+                    Usage = current.CurrentReading - previousReading,
+                    Amount = billing.TotalBillAmount
+                });
+            }
+
+            return Ok(result);
+        }
     }
 }

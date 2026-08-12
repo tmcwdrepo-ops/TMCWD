@@ -15,11 +15,21 @@ namespace TMCWD.Data.Services
 
         public Task<List<ReadingSheet>> GetByZoneBookAndAssignedTo(int zone, int book, int assignedTo);
 
-        public Task<ReadingSheet> GetByBillingDate(int zone, int book, DateTime billingDate);
+        public Task<List<ReadingSheet>> GetByZoneBookId(int zoneBookId);
 
-        public Task<ReadingSheet> GetCurrentByAssignedTo(int assignedTo);
+        public Task<List<ReadingSheet>> GetByBillingDate(int zone, int book, DateTime billingDate);
+
+        public Task<ReadingSheet> GetByBillingDateAndAssignedTo(int zone, int book, DateTime billingDate, int assignedTo);
+
+        public Task<ReadingSheet> GetByBillingPeriodStart(int zone, int book, DateTime billingPeriodStart);
+
+        public Task<ReadingSheet> GetCurrentByAssignedTo(int zone, int book, int assignedTo);
+
+        public Task<IEnumerable<ReadingSheet>> GetRangeReadingSheets(IEnumerable<int> ids);
 
         public Task<ReadingSheet> SaveUpdate(int userId, ReadingSheet readingSheet);
+
+        public Task<IEnumerable<ReadingSheet>> UpdateReadingSheetsStatus(IEnumerable<int> ids, int userId, int status);
 
     }
 }

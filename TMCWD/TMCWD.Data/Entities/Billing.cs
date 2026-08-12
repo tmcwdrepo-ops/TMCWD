@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TMCWD.Data.Entities
@@ -21,6 +21,9 @@ namespace TMCWD.Data.Entities
         [Column("PaymentTransactionId")]
         public string PaymentTransactionId { get; set; } = string.Empty;
 
+        [Column("ReadingId")]
+        public System.Int64 ReadingId { get; set; }
+
         [Column("BillingPeriodf")]
         public DateTime BillingPeriod { get; set; }
 
@@ -39,7 +42,7 @@ namespace TMCWD.Data.Entities
         [Required, Column("TotalBillAmount")]
         public decimal TotalBillAmount { get; set; }
 
-        [Required, Column("PaymentStatus")]
+        [Required, Column("Status")]
         public int PaymentStatus { get; set; }
 
         [Column("CreatedBy")]
@@ -53,6 +56,9 @@ namespace TMCWD.Data.Entities
 
         [Column("DateUpdated")]
         public DateTime DateUpdated { get; set; }
+
+        [Column("RemainingAmount")]
+        public decimal RemainingAmount { get; set; }
 
     }
 }

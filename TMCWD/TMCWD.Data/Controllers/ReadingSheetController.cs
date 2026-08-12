@@ -65,17 +65,17 @@ namespace TMCWD.Data.Controllers
             return Ok(readingSheet);
         }
 
-        [HttpGet("SaveUpdate/{userId}")]
-        public async Task<IActionResult> SaveUpdate(int userId, ReadingSheet readingSheet)
+        [HttpPost("SaveUpdate/{userId}")]
+        public async Task<IActionResult> SaveUpdate(int userId, [FromBody] ReadingSheet readingSheet)
         {
             var savedReadingSheet = await _readingSheetService.SaveUpdate(userId, readingSheet);
             return Ok(savedReadingSheet);
         }
 
-        [HttpGet("GetCurrentByAssignedTo/{assignedTo}")]
-        public async Task<IActionResult> GetCurrentByAssignedTo(int assignedTo)
+        [HttpGet("GetCurrentByAssignedTo/{zone}/{book}/{assignedTo}")]
+        public async Task<IActionResult> GetCurrentByAssignedTo(int zone, int book, int assignedTo)
         {
-            var readingSheet = await _readingSheetService.GetCurrentByAssignedTo(assignedTo);
+            var readingSheet = await _readingSheetService.GetCurrentByAssignedTo(zone, book, assignedTo);
             if(readingSheet == null) return NotFound();
             return Ok(readingSheet);
         }

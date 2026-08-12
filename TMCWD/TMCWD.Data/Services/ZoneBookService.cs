@@ -74,6 +74,12 @@ namespace TMCWD.Data.Services
             return zoneBook;
         }
 
+        public async Task<List<ZoneBook>> GetByIds(IEnumerable<int> ids) 
+        {
+            var zonesBooks = await _context.ZoneBooks.Where(x => ids.Contains((int)x.Id)).ToListAsync();
+            return zonesBooks;
+        }
+
         #endregion
 
     }

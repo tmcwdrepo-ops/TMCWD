@@ -96,6 +96,15 @@ namespace TMCWD.Billing
             return ConvertJsonToZoneBooks(data);
         }
 
+        public async Task<List<ZoneBook>> GetByIds(List<int> ids)
+        {
+            string queryParam = string.Join("&", ids.Select(x => $"ids={x}"));
+            var response = await _service.Client.GetAsync($"api/ZoneBook/GetByIds?{queryParam}");
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToZoneBooks(data);
+        }
+
         #endregion
 
     }

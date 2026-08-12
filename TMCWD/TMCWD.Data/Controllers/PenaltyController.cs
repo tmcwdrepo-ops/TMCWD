@@ -51,11 +51,11 @@ namespace TMCWD.Data.Controllers
             return Ok(penalties);
         }
 
-        [HttpGet("SaveUpdate/{userId}")]
-        public async Task<IActionResult> SaveUpdate(int userId, Penalty penalty)
+        [HttpPost("SaveUpdate/{userId}")]
+        public async Task<IActionResult> SaveUpdate(int userId, [FromBody] Penalty penalty)
         {
             var updatedPenalty = await _service.SaveUpdate(userId, penalty);
-            if(updatedPenalty == null) return BadRequest();
+            if (updatedPenalty == null) return BadRequest();
             return Ok(updatedPenalty);
         }
 

@@ -1,0 +1,234 @@
+@{
+    Layout = "_InsideLayout";
+    ViewData["PageTitle"] = "Present Reading";
+    ViewData["ActivePage"] = "reading";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/reading.css?v=1" />
+}
+
+@section Scripts {
+    <script src="~/js/reading.js?v=2" defer></script>
+}
+
+<div class="pr-container">
+
+    <!-- ===== FORM CARD ===== -->
+    <div class="pr-card">
+        <form id="presentReadingForm" onsubmit="return false;">
+            
+            <!-- Top Right Action Inside Card -->
+            <div class="pr-card-header">
+                <button type="button" class="pr-btn-save" id="saveReadingBtn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M3 13h10M8 3v7M5 7l3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Save
+                </button>
+            </div>
+
+            <div class="pr-grid">
+
+                <!-- Row 1: Calendar Dates -->
+                <div class="pr-col-4">
+                    <div class="pr-field">
+                        <label class="pr-label" for="billingDate">Billing Date</label>
+                        <div class="pr-input-wrap">
+                            <input type="date" class="pr-input pr-input--date" id="billingDate" name="billingDate" />
+                            <svg class="pr-icon-date" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M3 8h14M7 2v4M13 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pr-col-4">
+                    <div class="pr-field">
+                        <label class="pr-label" for="dueDate">Due Date</label>
+                        <div class="pr-input-wrap">
+                            <input type="date" class="pr-input pr-input--date" id="dueDate" name="dueDate" />
+                            <svg class="pr-icon-date" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M3 8h14M7 2v4M13 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pr-col-4">
+                    <div class="pr-field">
+                        <label class="pr-label" for="readingDate">Reading Date</label>
+                        <div class="pr-input-wrap">
+                            <input type="date" class="pr-input pr-input--date" id="readingDate" name="readingDate" />
+                            <svg class="pr-icon-date" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M3 8h14M7 2v4M13 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Dropdowns (Zone, Book, Reader) -->
+                <div class="pr-col-4">
+                    <div class="pr-field">
+                        <label class="pr-label" for="zoneSelect">Zone</label>
+                        <div class="pr-select-wrap">
+                            <select class="pr-select" id="zoneSelect" name="zoneSelect">
+                                <option value="">Select Zone</option>
+                            </select>
+                            <svg class="pr-select-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pr-col-4">
+                    <div class="pr-field">
+                        <label class="pr-label" for="bookSelect">Book</label>
+                        <div class="pr-select-wrap">
+                            <select class="pr-select" id="bookSelect" name="bookSelect" disabled>
+                                <option value="">Select Book</option>
+                            </select>
+                            <svg class="pr-select-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pr-col-4">
+                    <div class="pr-field">
+                        <label class="pr-label" for="readerSelect">Reader</label>
+                        <div class="pr-select-wrap">
+                            <select class="pr-select" id="readerSelect" name="readerSelect">
+                                <option value="">Select Reader</option>
+                            </select>
+                            <svg class="pr-select-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Account Number, Account Name, Previous Reading -->
+                <div class="pr-col-3">
+                    <div class="pr-field">
+                        <label class="pr-label" for="accountNumber">Account Number</label>
+                        <div class="pr-input-wrap">
+                            <input type="text" class="pr-input" id="accountNumber" name="accountNumber" placeholder="Account Number" autocomplete="off" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pr-col-5">
+                    <div class="pr-field">
+                        <label class="pr-label" for="accountName">Account Name</label>
+                        <div class="pr-input-wrap">
+                            <input type="text" class="pr-input" id="accountName" name="accountName" placeholder="Account Name" readonly />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pr-col-4">
+                    <div class="pr-field">
+                        <label class="pr-label" for="previousReading">Previous Reading</label>
+                        <div class="pr-input-wrap">
+                            <input type="number" class="pr-input" id="previousReading" name="previousReading" placeholder="Previous Reading" readonly />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 4: Meter Number, Address, Present Reading -->
+                <div class="pr-col-3">
+                    <div class="pr-field">
+                        <label class="pr-label" for="meterNumber">Meter Number</label>
+                        <div class="pr-input-wrap">
+                            <input type="text" class="pr-input" id="meterNumber" name="meterNumber" placeholder="Meter Number" readonly />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pr-col-6">
+                    <div class="pr-field">
+                        <label class="pr-label" for="address">Address</label>
+                        <div class="pr-input-wrap">
+                            <input type="text" class="pr-input" id="address" name="address" placeholder="Address" readonly />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pr-col-3">
+                    <div class="pr-field">
+                        <label class="pr-label" for="presentReading">Present Reading</label>
+                        <div class="pr-input-wrap">
+                            <input type="number" class="pr-input" id="presentReading" name="presentReading" placeholder="Present Reading" style="border-color: var(--color-blue);" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden / Helper inputs for Rate Class, Usage, Amount calculation -->
+                <input type="hidden" id="rateClass"        value="Residential" />
+                <input type="hidden" id="meterSize"        value="0.5" />
+                <input type="hidden" id="calculatedUsage"  value="0" />
+                <input type="hidden" id="calculatedAmount" value="0.00" />
+
+            </div>
+
+        </form>
+    </div>
+
+    <!-- ===== ACCOUNT DETAILS DATA TABLE SECTION ===== -->
+    <div class="pr-table-container">
+        <div class="pr-table-wrapper">
+            <table class="pr-table">
+                <thead>
+                    <tr>
+                        <th>Account Number</th>
+                        <th>Name</th>
+                        <th>Class / Rate</th>
+                        <th>Present</th>
+                        <th>Previous</th>
+                        <th>Usage</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="readingsTableBody">
+                </tbody>
+            </table>
+        </div>
+        <!-- ===== TABLE PAGINATION FOOTER ===== -->
+        <div class="pr-pagination">
+            <div class="pr-pagination-size">
+                <span>Rows per page:</span>
+                <select class="pr-select-sm" id="rowsPerPage">
+                    <option value="5" selected>5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+
+            <div class="pr-pagination-info" id="paginationInfo">
+                1–0 of 0
+            </div>
+
+            <div class="pr-pagination-controls">
+                <button type="button" class="pr-btn-page" id="prevPageBtn" aria-label="Previous Page" disabled>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button type="button" class="pr-btn-page" id="nextPageBtn" aria-label="Next Page" disabled>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,470 @@
+/* ============================================================
+   Bill Adjustment — Page Styles
+   Shared layout classes (panel, btn, page-section) come from
+   reading-sheet.css which is loaded alongside this file.
+   ============================================================ */
+
+/* ── Page card (reuses .panel for the border/bg/radius) ── */
+.ba-page-card {
+  padding: 0;
+  overflow: visible;
+}
+
+/* ── Card header ── */
+.ba-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ba-card-header__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ba-card-header__right {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ba-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── Icon buttons ── */
+.ba-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-text-dim);
+  transition: background 0.15s, color 0.15s;
+}
+
+.ba-icon-btn:hover {
+  background: var(--color-panel-alt);
+  color: var(--color-text);
+}
+
+.ba-icon-btn svg { width: 17px; height: 17px; }
+
+.ba-icon-btn.active { color: #f5b400; }
+.ba-icon-btn.active svg { fill: currentColor; }
+
+/* ── More-options dropdown ── */
+.ba-more-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px -8px rgba(15, 23, 42, 0.2);
+  min-width: 170px;
+  overflow: hidden;
+  z-index: 50;
+}
+
+.ba-more-menu.hidden { display: none; }
+
+.ba-more-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ba-more-menu button:hover { background: var(--color-panel-alt); }
+
+/* ── Form body ── */
+#billAdjustmentForm {
+  padding: 24px;
+}
+
+/* ── Two-column top grid ── */
+.ba-top-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.ba-col-left,
+.ba-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Field ── */
+.ba-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ba-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ba-input {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--color-panel-alt);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: var(--color-text);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Selects: restore native appearance so the arrow renders once,
+   then override colors. color-scheme on the element itself makes
+   the popup respect dark/light mode. */
+select.ba-input {
+  appearance: auto;
+  -webkit-appearance: auto;
+  background-image: none;
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+[data-theme="light"] select.ba-input {
+  color-scheme: light;
+}
+
+textarea.ba-input {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.ba-input::placeholder { color: var(--color-text-muted, #9ca3af); }
+
+.ba-input:focus {
+  background: var(--color-surface);
+  border-color: var(--color-accent, #3f7d5c);
+  box-shadow: 0 0 0 3px rgba(63, 125, 92, 0.13);
+}
+
+.ba-input:disabled {
+  background: var(--color-panel-alt);
+  color: var(--color-text-muted, #9ca3af);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.ba-field.invalid .ba-input {
+  border-color: var(--color-red, #dc2626);
+}
+
+.ba-error-msg {
+  display: none;
+  font-size: 11.5px;
+  color: var(--color-red, #dc2626);
+}
+
+.ba-field.invalid .ba-error-msg { display: block; }
+
+/* ── Custom select ── */
+.ba-select {
+  position: relative;
+  width: 100%;
+}
+
+.ba-select__btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  background: var(--color-panel-alt);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: var(--color-text);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.ba-select__btn:focus,
+.ba-select--open .ba-select__btn {
+  background: var(--color-panel);
+  border-color: var(--color-accent, #3f7d5c);
+  box-shadow: 0 0 0 3px rgba(63, 125, 92, 0.13);
+  outline: none;
+}
+
+.ba-select__text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+
+.ba-select__text--placeholder {
+  color: var(--color-text-dim);
+}
+
+.ba-select__chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--color-text-dim);
+  transition: transform 0.15s;
+  margin-left: 8px;
+}
+
+.ba-select--open .ba-select__chevron {
+  transform: rotate(180deg);
+}
+
+.ba-select__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.35);
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  z-index: 100;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.ba-select__list[hidden] { display: none; }
+
+.ba-select__option {
+  padding: 9px 14px;
+  font-size: 13.5px;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.ba-select__option:first-child {
+  color: var(--color-text-dim);
+}
+
+.ba-select__option:hover,
+.ba-select__option--active {
+  background: var(--color-blue-hover);
+}
+
+.ba-select__option--selected {
+  background: var(--color-blue-soft);
+  color: var(--color-blue);
+  font-weight: 600;
+}
+
+/* ── Date wrap ── */
+.ba-date-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.ba-date-wrap .ba-input { flex: 1; }
+
+.ba-date-btn {
+  flex-shrink: 0;
+  width: 40px;
+  border: none;
+  border-radius: 6px;
+  background: #16233d;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ba-date-btn:hover { background: #223259; }
+.ba-date-btn svg { width: 17px; height: 17px; }
+
+/* ── Adjustment grid ── */
+.ba-grid-section {
+  margin-bottom: 28px;
+}
+
+.ba-grid-header {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 0 4px 10px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 2px;
+}
+
+.ba-grid-header-col {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: 0.02em;
+}
+
+.ba-grid-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ba-grid-row:last-child { border-bottom: none; }
+
+.ba-row-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--color-text);
+  user-select: none;
+}
+
+.ba-row-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-accent, #3f7d5c);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.grid-input { text-align: right; }
+
+.grid-input.adjustment-input {
+  background: var(--color-panel-alt) !important;
+  font-weight: 600;
+  cursor: default;
+}
+
+.ba-grid-placeholder { display: block; }
+
+/* ── Form footer ── */
+.ba-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Toast ── */
+.ba-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-text);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.4);
+  z-index: 300;
+  pointer-events: none;
+}
+.ba-toast[hidden] { display: none; }
+
+/* ── sr-only ── */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .ba-top-grid { grid-template-columns: 1fr; }
+
+  .ba-grid-header,
+  .ba-grid-row {
+    grid-template-columns: 1.2fr 1fr 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+.billing-modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+    .billing-modal.show {
+        display: flex;
+    }
+
+.billing-modal-content {
+    width: 1000px;
+    max-height: 80vh;
+    overflow: auto;
+    background: #1e2335;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.billing-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#billingHistoryTable tr {
+    cursor: pointer;
+}
+
+    #billingHistoryTable tr:hover {
+        background: #2b3350;
+    }
+
+    #billingHistoryTable tr.selected {
+        background: #335cff66;
+    }

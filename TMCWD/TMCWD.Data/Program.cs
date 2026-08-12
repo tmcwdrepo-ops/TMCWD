@@ -30,8 +30,10 @@
     builder.Services.AddScoped<IApprovalHistoryService, ApprovalHistoryService>();
     builder.Services.AddScoped<IRequestFileService, RequestFileService>();
     builder.Services.AddScoped<IBillingService, BillingService>();
+    builder.Services.AddScoped<IReadingService, ReadingService>();
+    builder.Services.AddScoped<IBillingAdjustmentService, BillingAdjustmentService>();
     builder.Services.AddScoped<IReadingSheetService, ReadingSheetService>();
-
+    
     builder.Services.AddScoped<IZoneBookService, ZoneBookService>();
     builder.Services.AddScoped<IReadingSheetTemplateService, ReadingSheetTemplateService>();
     builder.Services.AddScoped<IChargeTypeService, ChargeTypeService>();

@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "_insideLayout";
     ViewData["PageTitle"] = "View Reading Sheet Created";
     ViewData["ActivePage"] = "reading-sheet";
@@ -7,20 +7,20 @@
 @section Styles {
   <link rel="stylesheet" href="~/css/reading-sheet.css"/>
   <link rel="stylesheet" href="~/css/create_reading.css"/>
-  <link rel="stylesheet" href="~/css/create_temp.css"/>
+  <link rel="stylesheet" href="~/css/reading_sheet_details.css"/>
 }
 
 @section Scripts {
   <script src="~/js/reading-sheet-sample.js"></script>
   <script src="~/js/reading-sheet.js"></script>
   <script src="~/js/create_reading.js"></script>
-  <script src="~/js/create_temp.js"></script>
   <script>
     // Wait for DOM to be fully ready before initializing
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
+
       // Initialize the reading sheet page
       if (typeof initReadingSheetPage === 'function') {
-        initReadingSheetPage();
+        await initReadingSheetPage();
       }
 
       var createNewBtn = document.getElementById('createNewBtn');
@@ -30,24 +30,91 @@
         });
       }
 
+      const crBillingDate = document.getElementById('crBillingDate');
+      const crDueDate = document.getElementById('crDueDate');
+      const crDisconnectionDate = document.getElementById('crDisconnectionDate');
+      const crBillingPeriodStart = document.getElementById('crBillingPeriodStart');
+      if (crBillingDate){
+          var dateToday = new Date();
+          crBillingDate.addEventListener('change', (evt) => {
+              const billingDate = new Date(evt.target.value);
+              if(crDueDate){
+                var minDueDate = new Date();
+                minDueDate.setDate(billingDate.getDate() + 1);
+                crDueDate.min = minDueDate.toISOString().split("T")[0];
+                crDueDate.addEventListener('change', (event) => {
+                    if (crDisconnectionDate){
+                        const dueDate = new Date(event.target.value);
+                        var minDisconnectionDate = new Date();
+                        minDisconnectionDate.setDate(dueDate.getDate() + 1);
+                        crDisconnectionDate.min = minDisconnectionDate.toISOString().split("T")[0];
+                    }
+                });
+              }
+          });
+      }
+
+      if(crDueDate){
+          var dueDate = new Date(crBillingDate.value);
+          dueDate.setDate(dueDate.getDate() + 1);
+          crDueDate.value = dueDate.toISOString().split("T")[0];
+          crDueDate.min = dueDate.toISOString().split("T")[0];
+      }
+
+      if(crDisconnectionDate){
+          var disconnectionDate = new Date(crDueDate.value);
+          disconnectionDate.setDate(disconnectionDate.getDate() + 1);
+          crDisconnectionDate.value = disconnectionDate.toISOString().split("T")[0];
+          crDisconnectionDate.min = disconnectionDate.toISOString().split("T")[0];
+      }
+
+      if (crBillingPeriodStart) {
+        var billingPeriodStart = new Date(crBillingDate.value);
+        billingPeriodStart.setMonth(billingPeriodStart.getMonth() - 1);
+        crBillingPeriodStart.value = billingPeriodStart.toISOString().split("T")[0];
+        crBillingPeriodStart.min = billingPeriodStart.toISOString().split("T")[0];
+      }
+
+      const crScope = document.getElementById('crScope');
+      if(crScope){
+          crScope.addEventListener('change', (evt) => {
+              const selectedValue = evt.target.value;
+              const crScopeRange = document.getElementById('crScopeRange');
+              if(crScopeRange){
+                if(selectedValue === 'ranged'){  
+                    crScopeRange.style.display = 'grid';
+                }
+                else{
+                    crScopeRange.style.display = 'none';
+                }
+              }
+          });
+      }
+
       var crSaveBtnEl = document.getElementById('crSaveBtn');
       if (crSaveBtnEl) {
-        crSaveBtnEl.addEventListener('click', function () {
+        crSaveBtnEl.addEventListener('click', async function (evt) {
+          evt.preventDefault();
+          evt.stopPropagation();
           var data = {
             billingDate:        (document.getElementById('crBillingDate')        || {}).value || '',
             dueDate:            (document.getElementById('crDueDate')            || {}).value || '',
             disconnectionDate:  (document.getElementById('crDisconnectionDate') || {}).value || '',
             billingPeriodStart: (document.getElementById('crBillingPeriodStart') || {}).value || '',
-            meterReader:        (document.getElementById('crMeterReaderInput')  || {}).value || '',
+            meterReader:        (document.getElementById('crMeterReaderInput')  || {}).dataset.id || '',
             zone:               (document.getElementById('crZone')              || {}).value || '',
             book:               (document.getElementById('crBook')              || {}).value || '',
-            scope:              (document.getElementById('crScope')             || {}).value || ''
+            scope:              (document.getElementById('crScope')             || {}).value || '',
+            seqFrom:            (document.getElementById('crFromSeq')           || {}).value || 0,
+            seqTo:            (document.getElementById('crToSeq')               || {}).value || 0
           };
-          if (typeof onReadingSheetCreated === 'function') onReadingSheetCreated(data);
+          console.log('Reading Sheet Data:', data);
+          if (typeof onReadingSheetCreate === 'function') await onReadingSheetCreate(data);
           document.dispatchEvent(new CustomEvent('readingSheet:created', { detail: data }));
         });
       }
     });
+
   </script>
 }
 
@@ -122,6 +189,7 @@
   </div>
 
   <!-- Edit Record Modal -->
+  <form id="frmReadingSheet" method="POST">
   <div class="modal-backdrop" id="editModalBackdrop" hidden aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" style="max-width: 500px;">
       <h2 class="modal__title" id="editModalTitle">Edit Reading Sheet</h2>
@@ -133,7 +201,7 @@
             <input type="text" id="editMeterReader" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />
           </div>
           <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="editBillingDate" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Due Date</label>
+            <label for="editBillingDate" style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">Billing Date</label>
             <input type="date" id="editBillingDate" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />
           </div>
           <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -159,6 +227,7 @@
       </div>
     </div>
   </div>
+  </form>
 
   <!-- Bulk Delete Confirmation Modal -->
   <div class="modal-backdrop" id="bulkDeleteModalBackdrop" hidden aria-hidden="true">
@@ -171,7 +240,7 @@
       </div>
       <h2 class="modal__title" id="bulkDeleteModalTitle">Delete Selected Records</h2>
       <p class="modal__body" id="bulkDeleteModalBody">You are about to delete <strong id="bulkDeleteCount">0</strong> record(s). This cannot be undone.</p>
-      <p class="modal__body">Type <strong>delete all</strong> to confirm.</p>
+      @* <p class="modal__body">Type <strong>delete all</strong> to confirm.</p>
       <input
         class="modal__confirm-input"
         type="text"
@@ -180,28 +249,11 @@
         aria-label="Type delete all to confirm"
         autocomplete="off"
         spellcheck="false"
-      />
+      /> *@
       <div class="modal__actions">
         <button class="btn btn--ghost" type="button" id="bulkDeleteModalCancel">Cancel</button>
-        <button class="btn btn--danger" type="button" id="bulkDeleteModalConfirm" disabled>Delete All</button>
+        <button class="btn btn--danger" type="button" id="bulkDeleteModalConfirm">Delete All</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Zone Progress Input Panel -->
-  <div class="panel zone-progress-input-panel" id="zoneProgressPanel">
-    <div class="zone-progress-input-header">
-      <h3>Zone Progress Controls</h3>
-      <div class="zone-progress-toggle">
-        <label class="toggle-switch">
-          <input type="checkbox" id="manualProgressToggle" />
-          <span class="toggle-slider"></span>
-          <span class="toggle-label">Manual Progress Control</span>
-        </label>
-      </div>
-    </div>
-    <div class="zone-progress-inputs" id="zoneProgressInputs">
-      <!-- Zone input controls will be generated here by JavaScript -->
     </div>
   </div>
 
@@ -224,7 +276,7 @@
             </th>
             <th scope="col">
               <span class="th-inner" data-sort="billingDate">
-                Due Date
+                Billing Date
                 <svg class="sort-icon" viewBox="0 0 10 14" fill="none" aria-hidden="true">
                   <path d="M5 1v12M1 4l4-3 4 3M1 10l4 3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -296,7 +348,10 @@
         <div class="cr-header__template-wrap">
           <div class="cr-select-wrap">
             <select id="crTemplateSelect" class="cr-select">
-              <option value="">Select Reading...</option>
+              <option value="">Select Template...</option>
+              <option value="tpl_monthly">Monthly Standard</option>
+              <option value="tpl_quarterly">Quarterly Round</option>
+              <option value="tpl_special">Special Reading</option>
             </select>
             <svg class="cr-select__chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -314,6 +369,18 @@
             Templates
           </button>
           <ul class="cr-templates-dropdown" id="crTemplatesDropdown" hidden>
+            <li class="cr-templates-dropdown__item" data-tpl="tpl_monthly">
+              <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 1v2M11 1v2M1 6h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              Monthly Standard
+            </li>
+            <li class="cr-templates-dropdown__item" data-tpl="tpl_quarterly">
+              <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 1v2M11 1v2M1 6h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              Quarterly Round
+            </li>
+            <li class="cr-templates-dropdown__item" data-tpl="tpl_special">
+              <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 1v2M11 1v2M1 6h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              Special Reading
+            </li>
           </ul>
         </div>
         <button class="cr-header__close" type="button" id="crCloseBtn" aria-label="Close modal">
@@ -329,19 +396,20 @@
 
           <div class="cr-row cr-row--2col">
             <div class="cr-field">
-              <label class="cr-field__label" for="crBillingDate">Due Date</label>
+              <label class="cr-field__label" for="crBillingDate">Billing Date</label>
               <div class="cr-input-wrap">
-                <input class="cr-input" type="date" id="crBillingDate" value="2025-07-01"/>
+                <input class="cr-input" type="date" id="crBillingDate" value="2025-07-01" required/>
                 <svg class="cr-input__icon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 1v2M11 1v2M1 6h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
               </div>
             </div>
             <div class="cr-field">
-              <label class="cr-field__label" for="crDueDate">Billing Date</label>
+              <label class="cr-field__label" for="crDueDate">Due Date</label>
               <div class="cr-input-wrap">
                 <input class="cr-input" type="date" id="crDueDate" value="2025-07-15"/>
                 <svg class="cr-input__icon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 1v2M11 1v2M1 6h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
               </div>
             </div>
+          </div>
 
           <div class="cr-row cr-row--1col">
             <div class="cr-field">
@@ -357,7 +425,7 @@
             <div class="cr-field">
               <label class="cr-field__label" for="crBillingPeriodStart">Billing Period Start</label>
               <div class="cr-input-wrap">
-                <input class="cr-input" type="date" id="crBillingPeriodStart" value="2025-07-01" disabled/>
+                <input class="cr-input" type="date" id="crBillingPeriodStart" value="2025-07-01" required disabled/>
                 <svg class="cr-input__icon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 1v2M11 1v2M1 6h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
               </div>
             </div>
@@ -393,11 +461,27 @@
               <label class="cr-field__label" for="crZone">Zone</label>
               <div class="cr-input-wrap">
                 <select class="cr-input cr-input--select" id="crZone">
-                  <option value="">Select Zone...</option>
-                  <option value="zone1">Zone 1</option>
-                  <option value="zone2">Zone 2</option>
-                  <option value="zone3">Zone 3</option>
-                  <option value="zone4">Zone 4</option>
+                    <option value="">Select Zone...</option>
+                    <option value="1">Zone 1</option>
+                    <option value="2">Zone 2</option>
+                    <option value="3">Zone 3</option>
+                    <option value="4">Zone 4</option>
+                    <option value="5">Zone 5</option>
+                    <option value="6">Zone 6</option>
+                    <option value="7">Zone 7</option>
+                    <option value="8">Zone 8</option>
+                    <option value="9">Zone 9</option>
+                    <option value="10">Zone 10</option>
+                    <option value="11">Zone 11</option>
+                    <option value="12">Zone 12</option>
+                    <option value="13">Zone 13</option>
+                    <option value="14">Zone 14</option>
+                    <option value="15">Zone 15</option>
+                    <option value="16">Zone 16</option>
+                    <option value="17">Zone 17</option>
+                    <option value="18">Zone 18</option>
+                    <option value="19">Zone 19</option>
+                    <option value="20">Zone 20</option>
                 </select>
                 <svg class="cr-input__icon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
@@ -407,12 +491,6 @@
               <div class="cr-input-wrap">
                 <select class="cr-input cr-input--select" id="crBook">
                   <option value="">Select Book...</option>
-                  <option value="book1">Book 1</option>
-                  <option value="book2">Book 2</option>
-                  <option value="book3">Book 3</option>
-                  <option value="book4">Book 4</option>
-                  <option value="book5">Book 5</option>
-                  <option value="book6">Book 6</option>
                 </select>
                 <svg class="cr-input__icon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
@@ -433,7 +511,7 @@
             </div>
           </div>
 
-          <div class="cr-row cr-row--2col cr-scope-range" id="crScopeRange" hidden>
+          <div style="display: none" class="cr-row cr-row--2col cr-scope-range" id="crScopeRange" hidden>
             <div class="cr-field">
               <label class="cr-field__label" for="crFromSeq">From Sequence</label>
               <div class="cr-input-wrap">
@@ -491,9 +569,13 @@
         </div>
         <div class="cr-footer__spacer"></div>
         <div class="cr-footer__right">
-          <button class="cr-btn cr-btn--outline" type="button" id="crLoadAccountsBtn">
+          @* <button class="cr-btn cr-btn--outline" type="button" id="crRefreshAccountsBtn">
             <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-            Load Accounts
+            Refresh
+          </button> *@
+          <button class="cr-btn cr-btn--outline" type="button" id="crLoadAccountsBtn">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" /><path d="M2 12h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+            Show Accounts
           </button>
           <button class="cr-btn cr-btn--primary" type="button" id="crSaveBtn">
             <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8.5l4 4 8-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -509,144 +591,4 @@
   <!-- Toast -->
   <div class="cr-toast" id="crToast" hidden aria-live="polite"></div>
 
-  <!-- ===== TEMPLATES MODAL ===== -->
-  <div id="templateModalOverlay" class="ct-modal-overlay ct-hidden">
-    <div class="ct-modal" role="dialog" aria-modal="true" aria-labelledby="templateModalTitle">
-
-      <div class="ct-modal-header">
-        <h2 id="templateModalTitle">Reading Sheet Templates</h2>
-        <button id="closeTemplateModal" class="ct-icon-btn" type="button" aria-label="Close">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-
-      <div class="ct-modal-body">
-        <form id="templateForm" novalidate>
-          <input type="hidden" id="templateId" value="" />
-
-          <div class="ct-field">
-            <label for="templateName">Template Name</label>
-            <input type="text" id="templateName" placeholder="e.g. Monthly Standard" autocomplete="off" />
-            <span class="ct-error-msg" id="templateNameError">Template name is required</span>
-          </div>
-
-          <div class="ct-field-row">
-            <div class="ct-field">
-              <label for="ctMeterReader">Meter Reader</label>
-              <select id="ctMeterReader">
-                <option value="">Select meter reader...</option>
-                <option value="juan">Juan dela Cruz</option>
-                <option value="ana">Ana Lim</option>
-                <option value="liza">Liza Torres</option>
-                <option value="grace">Grace Aquino</option>
-                <option value="ben">Ben Ramos</option>
-              </select>
-            </div>
-            <div class="ct-field">
-              <label for="ctZone">Zone</label>
-              <select id="ctZone">
-                <option value="">Select zone...</option>
-                <option value="zone1">Zone 1</option>
-                <option value="zone2">Zone 2</option>
-                <option value="zone3">Zone 3</option>
-                <option value="zone4">Zone 4</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="ct-field-row">
-            <div class="ct-field">
-              <label for="ctBook">Book</label>
-              <select id="ctBook">
-                <option value="">Select book...</option>
-                <option value="book1">Book 1</option>
-                <option value="book2">Book 2</option>
-                <option value="book3">Book 3</option>
-                <option value="book4">Book 4</option>
-                <option value="book5">Book 5</option>
-                <option value="book6">Book 6</option>
-              </select>
-            </div>
-            <div class="ct-field">
-              <label for="ctScope">Scope</label>
-              <select id="ctScope">
-                <option value="all">All</option>
-                <option value="unbilled">Unbilled</option>
-                <option value="ranged">Ranged</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="ct-field-row" id="ctRangeFields" hidden>
-            <div class="ct-field">
-              <label for="ctFromSeq">From</label>
-              <input type="number" id="ctFromSeq" placeholder="e.g. 1" min="0" />
-            </div>
-            <div class="ct-field">
-              <label for="ctToSeq">To</label>
-              <input type="number" id="ctToSeq" placeholder="e.g. 100" min="0" />
-            </div>
-          </div>
-          <span class="ct-error-msg" id="ctRangeError">Enter a valid range — "To" must be greater than "From"</span>
-
-          <div class="ct-form-actions">
-            <button type="button" id="ctResetForm" class="ct-btn ct-btn-ghost">Clear</button>
-            <button type="submit" class="ct-btn ct-btn-primary">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-              <span id="ctSubmitLabel">Save Template</span>
-            </button>
-          </div>
-        </form>
-
-        <div class="ct-table-section">
-          <div class="ct-table-heading">
-            <h3>Saved Templates</h3>
-            <span class="ct-table-count" id="ctTemplateCount">0 templates</span>
-          </div>
-          <div class="ct-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Template Name</th>
-                  <th>Meter Reader</th>
-                  <th>Zone</th>
-                  <th>Book</th>
-                  <th>Scope</th>
-                  <th class="ct-actions-col">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="ctTemplateTableBody"></tbody>
-            </table>
-            <div id="ctEmptyState" class="ct-empty-state ct-empty-visible">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <p>No templates yet. Fill out the form above and save one.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ===== TEMPLATE CONFIRM DIALOG ===== -->
-  <div id="ctConfirmOverlay" class="ct-modal-overlay ct-hidden" style="z-index:600;">
-    <div class="ct-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="ctConfirmTitle">
-      <div class="ct-confirm-icon ct-confirm-icon--danger" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M10 11v5M14 11v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <h3 class="ct-confirm-title" id="ctConfirmTitle">Delete Template</h3>
-      <p class="ct-confirm-body" id="ctConfirmBody">Are you sure you want to delete this template? This cannot be undone.</p>
-      <div class="ct-confirm-actions">
-        <button type="button" id="ctConfirmCancel" class="ct-btn ct-btn-ghost">Cancel</button>
-        <button type="button" id="ctConfirmOk" class="ct-btn ct-btn-danger">Delete</button>
-      </div>
-    </div>
-  </div>
-
 </section>
-<script type="text/javascript">
-    loadData('@Url.Action("", "")')
-</script>

@@ -1,0 +1,130 @@
+@{
+    ViewData["Title"] = "Reading Sheet Details";
+    Layout = "_InsideLayout";
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/reading_sheet_details.css" asp-append-version="true" />
+}
+
+<div class="rsd-panel">
+
+  <!-- Top action bar -->
+  <div class="rsd-topbar">
+    <div class="rsd-topbar-actions">
+      <button type="button" id="completeBtn" class="btn btn-complete">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+        Complete
+      </button>
+      <button type="button" id="partialPostBtn" class="btn btn-partial">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+        Partial Post
+      </button>
+    </div>
+    <button type="button" id="closePanelBtn" class="icon-btn rsd-close" aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+    </button>
+  </div>
+
+  <!-- Info row -->
+  <div class="rsd-info">
+    <div class="rsd-info-group">
+      <div class="rsd-info-item">
+        <span class="rsd-label">Billing Date</span>
+        <span class="rsd-value" id="billingDateVal">—</span>
+      </div>
+      <div class="rsd-info-item">
+        <span class="rsd-label">Due Date</span>
+        <span class="rsd-value" id="dueDateVal">—</span>
+      </div>
+      <div class="rsd-info-item">
+        <span class="rsd-label">Discon Date</span>
+        <span class="rsd-value" id="disconDateVal">—</span>
+      </div>
+      <div class="rsd-info-item">
+        <span class="rsd-label">Meter Reader</span>
+        <span class="rsd-value" id="meterReaderVal">—</span>
+      </div>
+    </div>
+
+    <div class="rsd-info-status">
+      <span class="rsd-label">Posting Status</span>
+      <span class="rsd-value" id="postingStatusValue">— of —</span>
+    </div>
+
+    <div class="rsd-info-ref">
+      <span class="rsd-label">Sheet Reference</span>
+      <span class="rsd-value rsd-ref-code" id="sheetRefVal">—</span>
+    </div>
+
+    <div class="rsd-info-export">
+      <span class="rsd-label">Save</span>
+      <div class="rsd-export-icons">
+        <button type="button" id="exportPdfBtn" class="export-icon-btn export-pdf" title="Save as PDF" aria-label="Save as PDF">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="9" y1="13" x2="9" y2="17"/>
+            <line x1="12" y1="13" x2="12" y2="17"/>
+            <line x1="15" y1="13" x2="15" y2="17"/>
+          </svg>
+          <span class="export-icon-btn__label">PDF</span>
+        </button>
+        <button type="button" id="exportExcelBtn" class="export-icon-btn export-excel" title="Save as Excel" aria-label="Save as Excel">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M3 9h18M3 15h18M9 3v18"/>
+            <path d="M13 12l2 3M15 12l-2 3" stroke-linecap="round"/>
+          </svg>
+          <span class="export-icon-btn__label">Excel</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search + filter toolbar -->
+  <div class="rsd-toolbar">
+    <div class="search-wrap">
+      <input type="text" id="accountSearch" placeholder="Search" autocomplete="off" />
+    </div>
+    <div class="filter-wrap">
+      <select id="usageFilter">
+        <option value="all">All</option>
+        <option value="normal">Normal Usage</option>
+        <option value="remarks">With Remarks</option>
+        <option value="abnormal">Abnormal Usage</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="rsd-table-wrap">
+    <table id="accountsTable">
+      <thead>
+        <tr>
+          <th class="col-account">Account</th>
+          <th class="col-num">Prev</th>
+          <th class="col-num">Pres</th>
+          <th class="col-num">Usage</th>
+          <th class="col-num">Balance</th>
+          <th class="col-num">Amount</th>
+          <th class="col-num">Total</th>
+          <th class="col-status">Status</th>
+          <th class="col-action"></th>
+        </tr>
+      </thead>
+      <tbody id="accountsTableBody">
+        {{-- Rows populated by reading_sheet_details.js or server render --}}
+      </tbody>
+    </table>
+
+    <div id="noResultsState" class="no-results hidden">
+      <p>No accounts match your search or filter.</p>
+    </div>
+  </div>
+
+</div>
+
+@section Scripts {
+  <script src="~/js/reading_sheet_details.js" asp-append-version="true"></script>
+}

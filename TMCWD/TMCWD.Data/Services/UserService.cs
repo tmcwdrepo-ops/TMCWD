@@ -67,5 +67,11 @@ namespace TMCWD.Data.Services
             var users = await _dbContext.Users.Where(x => x.Role == roleId).ToListAsync();
             return users;
         }
+
+        public async Task<IEnumerable<User>> GetUsersByIds(IEnumerable<int> ids)
+        {
+            var users = await _dbContext.Users.Where(x => ids.Contains((int)x.Id)).ToListAsync();
+            return users;
+        }
     }
 }

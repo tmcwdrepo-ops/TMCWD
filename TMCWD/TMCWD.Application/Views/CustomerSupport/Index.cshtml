@@ -59,51 +59,51 @@
     //var deactivateLinks = document.getElementsByClassName("lnkDeactivate");
     //var customerId = 0;
 
-    const table = document.getElementById("tblCustomers");
+    // const table = document.getElementById("tblCustomers");
 
-    table.DataTable({
-        processing: true,
-        getUrl: '@Url.Action("GetCustomers", "CustomerSupport")',
-        rowClassNames: 'border-b hover:bg-gray-100',
-        columns:
-        [
-            { dataMember: 'id', isEditable: false },
-            { dataMember: 'fullName', isEditable: false },
-            { dataMember: 'email', isEditable: false },
-            { dataMember: 'dateCreated', isEditable: false },
-            {
-                dataMember: 'isActive',
-                isEditable: false,
-                displays:
-                [
-                    { value: 'True', icon: 'fa-solid fa-check text-green-500' },
-                    { value: 'False', icon: 'fa-solid fa-xmark text-red-500' }
-                ]
-            }
-        ],
-        buttonColumnClassNames: 'text-center',
-        buttons:
-        [
-            { className: 'fa-solid fa-pencil', isEditButton: false, clickCallback: (data) => editInspectionType(data) },
-            { className: 'fa-solid fa-trash', isSaveButton: true, clickCallback: (data) => deactivateInspectionType(data) }
-        ]
-    });
+    // table.DataTable({
+    //     processing: true,
+    //     getUrl: '@Url.Action("GetCustomers", "CustomerSupport")',
+    //     rowClassNames: 'border-b hover:bg-gray-100',
+    //     columns:
+    //     [
+    //         { dataMember: 'id', isEditable: false },
+    //         { dataMember: 'fullName', isEditable: false },
+    //         { dataMember: 'email', isEditable: false },
+    //         { dataMember: 'dateCreated', isEditable: false },
+    //         {
+    //             dataMember: 'isActive',
+    //             isEditable: false,
+    //             displays:
+    //             [
+    //                 { value: 'True', icon: 'fa-solid fa-check text-green-500' },
+    //                 { value: 'False', icon: 'fa-solid fa-xmark text-red-500' }
+    //             ]
+    //         }
+    //     ],
+    //     buttonColumnClassNames: 'text-center',
+    //     buttons:
+    //     [
+    //         { className: 'fa-solid fa-pencil', isEditButton: false, clickCallback: (data) => editInspectionType(data) },
+    //         { className: 'fa-solid fa-trash', isSaveButton: true, clickCallback: (data) => deactivateInspectionType(data) }
+    //     ]
+    // });
 
-    function editInspectionType(data){
-        window.location.href = '@Url.Action("AddEditCustomer", "CustomerSupport")' + '?editCustomerId=' + data.id;
-    }
+    // function editInspectionType(data){
+    //     window.location.href = '@Url.Action("AddEditCustomer", "CustomerSupport")' + '?editCustomerId=' + data.id;
+    // }
 
-    function deactivateInspectionType(data){
-        var modal = new ModalDialog({
-                type: 'deactivate',
-                title: 'Deactivate Customer',
-                content: 'Are you sure you want to deactivate customer? All of customer data will be permanently removed. This action cannot be undone.',
-                submitCallback: () => {
-                    window.location.href = '@Url.Action("DeactivateCustomer", "CustomerSupport")' + '?customerId=' + data.id;
-                }
-            });
+    // function deactivateInspectionType(data){
+    //     var modal = new ModalDialog({
+    //             type: 'deactivate',
+    //             title: 'Deactivate Customer',
+    //             content: 'Are you sure you want to deactivate customer? All of customer data will be permanently removed. This action cannot be undone.',
+    //             submitCallback: () => {
+    //                 window.location.href = '@Url.Action("DeactivateCustomer", "CustomerSupport")' + '?customerId=' + data.id;
+    //             }
+    //         });
 
-            modal.show();
-    }
+    //         modal.show();
+    // }
 
 </script>

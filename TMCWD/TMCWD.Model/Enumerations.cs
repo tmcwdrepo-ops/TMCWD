@@ -93,7 +93,8 @@ public enum PaymentStatus
 {
     Unpaid = 1,
     Paid = 2,
-    Overdue = 3
+    Overdue = 3,
+    Waived = 4
 }
 
 public enum PaymentMethod
@@ -106,4 +107,21 @@ public enum PaymentMethod
 public enum GatewayType
 {
     GCash = 1
-}   
+}
+
+public enum AdjustmentLineType
+{
+    Usage = 1,
+    CurrentBill = 2,
+    Penalty = 3,
+    Present = 4,
+    Previous = 5
+}
+
+public enum ReadingStatus
+{
+    Created    = 1,
+    InProgress = 2,
+    Completed  = 3,
+    Deleted    = 4
+}

@@ -1,71 +1,107 @@
-﻿using System.Net.Http.Json;
-using System.Text.Json;
-using TMCWD.Services;
-using TMCWD.Model.Billing.Interfaces;
+﻿    using System.Net.Http.Json;
+    using System.Text.Json;
+    using TMCWD.Services;
+    using TMCWD.Model.Billing.Interfaces;
+    using TMCWD.Model.Billing;
+    using BillingModel = TMCWD.Model.Billing.Billing;
 
-namespace TMCWD.Billing
-{
-    public class BillingTransaction
+    namespace TMCWD.Billing
     {
-
-        #region fields
-
-        private readonly WebService _service;
-
-        #endregion
-
-        #region constructors
-
-        public BillingTransaction(WebService service) { _service = service; }
-
-        #endregion
-
-        #region methods
-
-        public BillingBase ConvertJsonToBilling(string json)
+        public class BillingTransaction
         {
-            var serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
-            return JsonSerializer.Deserialize<BillingBase>(json, serializerOptions);
-        }
+
+            #region fields
+
+            private readonly WebService _service;
+
+            #endregion
+
+            #region constructors
+
+            public BillingTransaction(WebService service) { _service = service; }
+
+            #endregion
+
+            #region methods
+
+            public BillingBase ConvertJsonToBilling(string json)
+            {
+                var serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+                return JsonSerializer.Deserialize<BillingModel>(json, serializerOptions);
+            }
+
+            public List<BillingHistory> ConvertJsonToBillingHistory(string json)
+            {
+                var serializerOptions = new JsonSerializerOptions()
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                return JsonSerializer.Deserialize<List<BillingHistory>>(json, serializerOptions)
+                       ?? new List<BillingHistory>();
+            }
 
         public List<BillingBase> ConverJsonToBillings(string json)
-        {
-            var serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };  
-            return JsonSerializer.Deserialize<List<BillingBase>>(json, serializerOptions) ?? new();
-        }
+            {
+                var serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+                var billings = JsonSerializer.Deserialize<List<BillingModel>>(json, serializerOptions) ?? new();
+                return billings.Cast<BillingBase>().ToList();
+            }
 
-        public async Task<BillingBase> Get(int id)
-        {
-            var response = await _service.Client.GetAsync($"api/Billing/Get/{id}");
-            var data = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return null;
-            return ConvertJsonToBilling(data);
-        }
+            public async Task<BillingBase> Get(int id)
+            {
+                var response = await _service.Client.GetAsync($"api/Billing/Get/{id}");
+                var data = await response.Content.ReadAsStringAsync();
+                if (!response.IsSuccessStatusCode) return null;
+                return ConvertJsonToBilling(data);
+            }
 
-        public async Task<List<BillingBase>> GetAll()
-        {
-            var response = await _service.Client.GetAsync($"api/Billing/GetAll");
-            var data = await response.Content.ReadAsStringAsync();
-            return ConverJsonToBillings(data);
-        }
+            public async Task<List<BillingBase>> GetAll()
+            {
+                var response = await _service.Client.GetAsync($"api/Billing/GetAll");
+                var data = await response.Content.ReadAsStringAsync();
+                if (!response.IsSuccessStatusCode) return null;
+                return ConverJsonToBillings(data);
+            }
 
-        public async Task<BillingBase> GetByReference(string reference)
-        {
-            var response = await _service.Client.GetAsync($"api/Billing/GetByRefence/{reference}");
-            var data = await response.Content.ReadAsStringAsync();
-            return ConvertJsonToBilling(data);
-        }
+            public async Task<BillingBase> GetByReference(string reference)
+            {
+                var response = await _service.Client.GetAsync($"api/Billing/GetByRefence/{reference}");
+                var data = await response.Content.ReadAsStringAsync();
+                return ConvertJsonToBilling(data);
+            }
 
-        public async Task<BillingBase> SaveUpdate(int userId, BillingBase billing)
-        {
-            var content = JsonContent.Create(billing);
-            var response = await _service.Client.PostAsync($"api/Billing/SaveUpdate/{userId}", content);
-            var data = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return null;
-            return ConvertJsonToBilling(data);
-        }
+            public async Task<BillingBase> SaveUpdate(int userId, BillingBase billing)
+            {
+                var content = JsonContent.Create(billing);
+                var response = await _service.Client.PostAsync($"api/Billing/SaveUpdate/{userId}", content);
+                var data = await response.Content.ReadAsStringAsync();
+                if (!response.IsSuccessStatusCode) return null;
+                return ConvertJsonToBilling(data);
+            }
 
+
+            public async Task<List<BillingBase>> GetByAccountId(int accountId)
+            {
+                var response = await _service.Client.GetAsync($"api/Billing/GetByAccountId/{accountId}");
+                var data = await response.Content.ReadAsStringAsync();
+                if (!response.IsSuccessStatusCode) return null;
+                return ConverJsonToBillings(data);
+            }
+
+            public async Task<List<BillingHistory>> GetBillingHistory(string accountNumber)
+            {
+                var response = await _service.Client.GetAsync(
+                    $"api/Billing/History/{accountNumber}");
+
+                if (!response.IsSuccessStatusCode)
+                    return new List<BillingHistory>();
+
+                var json = await response.Content.ReadAsStringAsync();
+
+                return ConvertJsonToBillingHistory(json);
+            }
         #endregion
 
     }
-}
+    }
