@@ -154,6 +154,7 @@
       performSearch(q);
     });
 
+>>>>>>> origin/29-save-manual-reading
     input.addEventListener('input', function () {
       clearTimeout(debounceTimer);
       const q = this.value.trim();
@@ -403,7 +404,6 @@
         showPopup({ title: 'Invalid Billing Date', message: 'Billing Date cannot be earlier than today.', type: 'warning', focusId: 'billingDate' });
         return;
       }
-
       if (zone === 0 || book === 0) {
         showPopup({ title: 'Zone and Book Required', message: 'Please select a Zone and Book before saving.', type: 'warning' });
         return;
