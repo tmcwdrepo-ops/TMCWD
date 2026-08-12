@@ -68,7 +68,7 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
-        public async Task<IActionResult> SaveUpdate(int userId,[FromBody] Reading reading)
+        public async Task<IActionResult> SaveUpdate(int userId, [FromBody] Reading reading)
         {
             var savedReading = await _service.SaveUpdate(userId, reading);
             return Ok(savedReading);
@@ -88,6 +88,14 @@ namespace TMCWD.Data.Controllers
             var reading = await _service.GetAccountCurrentReading(accountId);
             if (reading == null) return NotFound();
             return Ok(reading);
+        }
+
+        [HttpPost("SaveRange")]
+        public async Task<IActionResult> SaveRange([FromBody] List<Reading> readings)
+        {
+            var savedReadings = await _service.SaveRange(readings);
+            if(savedReadings == null || !savedReadings.Any()) return NotFound();
+            return Ok(savedReadings);
         }
 
         #endregion

@@ -1,22 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Text;
 using TMCWD.Model.Billing.Interfaces;
 
 namespace TMCWD.Model.Billing
 {
     public class Reading : IReading
     {
-
-        #region constructors
-
         public Reading() { }
-
-        #endregion 
-
-        #region members
 
         [DisplayName("Id")]
         public int Id { get; set; }
@@ -34,7 +24,7 @@ namespace TMCWD.Model.Billing
         public decimal PreviousReading { get; set; }
 
         [DisplayName("Status")]
-        public ReadingStatus Status { get; set; } = new ReadingStatus();
+        public ReadingStatus Status { get; set; }
 
         [DisplayName("Completed")]
         public bool IsCompleted { get; set; }
@@ -46,12 +36,9 @@ namespace TMCWD.Model.Billing
         public DateTime DateCreated { get; set; }
 
         [DisplayName("Updated By")]
-        public int UpdatedBy { get; set; }
+        public int? UpdatedBy { get; set; }
 
         [DisplayName("Date Updated")]
-        public DateTime DateUpdated { get; set; }
-
-        #endregion
-
+        public DateTime? DateUpdated { get; set; }
     }
 }

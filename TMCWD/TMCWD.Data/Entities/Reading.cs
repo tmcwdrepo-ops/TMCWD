@@ -1,21 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-
 namespace TMCWD.Data.Entities
 {
-
     [Table("readings")]
     public class Reading
     {
-
-        #region constructors
-
         public Reading() { }
-
-        #endregion
-
-        #region properties
 
         [Key, Column("Id")]
         public System.Int64 Id { get; set; }
@@ -32,11 +23,11 @@ namespace TMCWD.Data.Entities
         [Column("PreviousReading")]
         public decimal PreviousReading { get; set; }
 
-        [Column("Status")]
-        public ReadingStatus Status { get; set; } = ReadingStatus.Created;
-
         [Column("IsCompleted")]
         public bool IsCompleted { get; set; }
+
+        [Column("Status")]
+        public ReadingStatus Status { get; set; }
 
         [Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }
@@ -45,12 +36,9 @@ namespace TMCWD.Data.Entities
         public DateTime DateCreated { get; set; }
 
         [Column("UpdatedBy")]
-        public System.Int64 UpdatedBy { get; set; }
+        public System.Int64? UpdatedBy { get; set; }
 
         [Column("DateUpdated")]
-        public DateTime DateUpdated { get; set; }
-
-        #endregion
-
+        public DateTime? DateUpdated { get; set; }
     }
 }

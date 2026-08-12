@@ -20,6 +20,14 @@ namespace TMCWD.Data.Controllers
             _accountService = service;
         }
 
+        [HttpGet("GetAll")]
+        public async Task<ActionResult> GetAll()
+        {
+            var accounts = await _accountService.GetAccounts();
+            if (accounts == null || !accounts.Any()) return NotFound();
+            return Ok(accounts);
+        }
+
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<ActionResult> SaveUpdate(int userId, [FromBody] Account account)
         {

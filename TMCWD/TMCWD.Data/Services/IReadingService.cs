@@ -30,5 +30,15 @@ namespace TMCWD.Data.Services
 
         public Task<List<Reading>> GetRangeByReadingSheetIds(IEnumerable<int> ids);
 
+        public Task<List<ReadingWithBillingDate>> GetByAccountWithBillingDate(int accountId);
+
+    }
+
+    public class ReadingWithBillingDate
+    {
+        public long Id { get; set; }
+        public long AccountId { get; set; }
+        public decimal CurrentReading { get; set; }
+        public DateTime BillingDate { get; set; }
     }
 }

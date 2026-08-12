@@ -40,7 +40,7 @@ namespace TMCWD.Data.Services
             var reading = await (
                 from r in _context.Readings
                 join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
-                where r.AccountId == accountId && rs.BillingDate.Value.Date == billingPeriod.Date
+                where r.AccountId == accountId && rs.BillingDate.Date == billingPeriod.Date
                 select r
             ).FirstOrDefaultAsync();
             return reading;
@@ -124,6 +124,23 @@ namespace TMCWD.Data.Services
             _context.Readings.AddRange(readings);
             await _context.SaveChangesAsync();
             return readings;
+        }
+
+        public async Task<List<ReadingWithBillingDate>> GetByAccountWithBillingDate(int accountId)
+        {
+            var result = await (
+                from r in _context.Readings
+                join rs in _context.ReadingSheets on r.ReadingSheetId equals rs.Id
+                where r.AccountId == accountId
+                select new ReadingWithBillingDate
+                {
+                    Id = r.Id,
+                    AccountId = r.AccountId,
+                    CurrentReading = r.CurrentReading,
+                    BillingDate = rs.BillingDate
+                }
+            ).ToListAsync();
+            return result;
         }
 
         #endregion
