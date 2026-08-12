@@ -110,9 +110,31 @@
     const due      = document.getElementById('dueDate');
     const reading  = document.getElementById('readingDate');
 
+    // Billing Date must not be earlier than today
+    if (billing) billing.min = iso(today);
+
     if (billing && !billing.value)  billing.value  = iso(today);
     if (reading && !reading.value)  reading.value  = iso(today);
     if (due     && !due.value)      due.value      = iso(dueDate);
+
+    // Due Date must not be earlier than Billing Date
+    if (due && billing)     due.min     = billing.value || iso(today);
+    // Reading Date must not be earlier than Billing Date
+    if (reading && billing) reading.min = billing.value || iso(today);
+
+    // When Billing Date changes, update Due Date and Reading Date mins and correct if needed
+    if (billing) {
+      billing.addEventListener('change', function () {
+        if (due) {
+          due.min = this.value;
+          if (due.value < this.value) due.value = this.value;
+        }
+        if (reading) {
+          reading.min = this.value;
+          if (reading.value < this.value) reading.value = this.value;
+        }
+      });
+    }
   }
 
   // ─── Live account search ──────────────────────────────────────────────────────
@@ -121,6 +143,16 @@
     if (!input) return;
 
     input.setAttribute('autocomplete', 'off');
+
+    // Enter key — immediately search and auto-fill without waiting for debounce
+    input.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const q = this.value.trim();
+      if (!q) return;
+      clearTimeout(debounceTimer);
+      performSearch(q);
+    });
 
     input.addEventListener('input', function () {
       clearTimeout(debounceTimer);
@@ -364,6 +396,13 @@
       const book      = parseInt(document.getElementById('bookSelect')?.value)   || 0;
       const readerId  = parseInt(document.getElementById('readerSelect')?.value) || 0;
       const billing   = document.getElementById('billingDate')?.value || new Date().toISOString().split('T')[0];
+
+      // Validate: billing date must not be earlier than today
+      const today = new Date().toISOString().split('T')[0];
+      if (billing < today) {
+        showPopup({ title: 'Invalid Billing Date', message: 'Billing Date cannot be earlier than today.', type: 'warning', focusId: 'billingDate' });
+        return;
+      }
 
       if (zone === 0 || book === 0) {
         showPopup({ title: 'Zone and Book Required', message: 'Please select a Zone and Book before saving.', type: 'warning' });
