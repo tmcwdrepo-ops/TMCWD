@@ -154,7 +154,6 @@
       performSearch(q);
     });
 
->>>>>>> origin/29-save-manual-reading
     input.addEventListener('input', function () {
       clearTimeout(debounceTimer);
       const q = this.value.trim();
