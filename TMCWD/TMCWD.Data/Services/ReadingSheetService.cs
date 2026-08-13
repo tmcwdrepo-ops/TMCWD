@@ -24,7 +24,7 @@ namespace TMCWD.Data.Services
 
         #region methods
 
-        public async Task<ReadingSheet?> Get(int id)
+        public async Task<ReadingSheet> Get(int id)
         {
             var readingSheet = await _context.ReadingSheets
                 .FirstOrDefaultAsync(x => x.Id == id);
@@ -139,12 +139,6 @@ namespace TMCWD.Data.Services
             return sheet;
         }
 
-        public async Task<List<ReadingSheet>> GetByZoneBookId(int zoneBookId)
-        {
-            var sheets = await _context.ReadingSheets.Where(x => x.ZoneBookId == zoneBookId).ToListAsync();
-            return sheets;
-        }
-
         public async Task<IEnumerable<ReadingSheet>> GetRangeReadingSheets(IEnumerable<int> ids)
         {
             var idsList = ids.ToList();
@@ -164,45 +158,6 @@ namespace TMCWD.Data.Services
             }
             await _context.SaveChangesAsync();
             return sheets;
-        }
-
-        public async Task<ReadingSheet> SaveUpdate(int userId, ReadingSheet readingSheet)
-        {
-            if (readingSheet.Id > 0)
-            {
-                var forUpdate = await _context.ReadingSheets.Where(x => x.Id == readingSheet.Id).FirstOrDefaultAsync();
-                if (forUpdate != null)
-                {
-                    forUpdate.Name = readingSheet.Name;
-                    forUpdate.BillingDate = readingSheet.BillingDate;
-                    forUpdate.DueDate = readingSheet.DueDate;
-                    forUpdate.DisconnectionDate = readingSheet.DisconnectionDate;
-                    forUpdate.BillingPeriodStart = readingSheet.BillingPeriodStart;
-                    forUpdate.AssignedTo = readingSheet.AssignedTo;
-                    forUpdate.ZoneBookId = readingSheet.ZoneBookId;
-                    forUpdate.SeqFrom = readingSheet.SeqFrom;
-                    forUpdate.SeqTo = readingSheet.SeqTo;
-                    forUpdate.Status = readingSheet.Status;
-                    forUpdate.DateUpload = DateTime.Now;
-                    readingSheet = forUpdate;
-                }
-            }
-            else
-            {
-                readingSheet.CreatedBy = userId;
-                readingSheet.DateCreated = DateTime.Now;
-                _context.ReadingSheets.Add(readingSheet);
-            }
-
-            await _context.SaveChangesAsync();
-
-            return readingSheet;
-        }
-
-        public async Task<ReadingSheet> GetCurrentByAssignedTo(int assignedTo)
-        {
-            var readingSheet = await _context.ReadingSheets.Where(x => x.AssignedTo == assignedTo).OrderByDescending(x => x.BillingDate).FirstOrDefaultAsync();
-            return readingSheet;
         }
 
         #endregion
