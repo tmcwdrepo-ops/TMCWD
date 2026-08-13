@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using TMCWD.Application.Models;
 using TMCWD.Billing;
@@ -75,7 +75,6 @@ namespace TMCWD.Application.Controllers
         }
 
         public IActionResult Index() => View();
-        public IActionResult Collections() => View("Collections");
         public IActionResult PenaltyCharging() => View();
         public IActionResult Penalty() => View();
 
@@ -113,10 +112,10 @@ namespace TMCWD.Application.Controllers
             //    result.Add(new
             //    {
             //        billingReferenceId = billing.BillingReferenceId,
-            //        accountNumber = account?.AccountNumber ?? "—",
-            //        usage = 0,          // not yet tracked — see note
+            //        accountNumber = account?.AccountNumber ?? "â€”",
+            //        usage = 0,          // not yet tracked â€” see note
             //        billAmount = billing.TotalBillAmount,
-            //        discount = 0,       // not yet tracked — see note
+            //        discount = 0,       // not yet tracked â€” see note
             //        penalty = activePenalties.Sum(p => p.Amount)
             //    });
             //}
@@ -208,7 +207,7 @@ namespace TMCWD.Application.Controllers
             if (accounts == null || !accounts.Any())
                 return Ok(new List<PresentReadingViewModel>());
 
-            // Group readings by AccountId — keep only the most recent per account
+            // Group readings by AccountId â€” keep only the most recent per account
             var latestReading = readings
                 .GroupBy(r => r.AccountId)
                 .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.Id).First());
@@ -245,7 +244,7 @@ namespace TMCWD.Application.Controllers
 
         #region Water Charge Computation
 
-        // ── Tier boundary constants (shared across all classifications) ──────────
+        // â”€â”€ Tier boundary constants (shared across all classifications) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private const int TierCap0 = 10;
         private const int TierCap1 = 20;
         private const int TierCap2 = 30;
@@ -253,7 +252,7 @@ namespace TMCWD.Application.Controllers
 
         /// <summary>
         /// Holds the per-cu.m tier rates for a classification group.
-        /// Minimum charge is NOT stored here — it is size-dependent and
+        /// Minimum charge is NOT stored here â€” it is size-dependent and
         /// looked up separately from <see cref="MinChargeByClassAndSize"/>.
         /// </summary>
         private readonly struct WaterRateSet
@@ -263,7 +262,7 @@ namespace TMCWD.Application.Controllers
                 => (Rate1, Rate2, Rate3, Rate4) = (r1, r2, r3, r4);
         }
 
-        // ── Per-cu.m tier rates keyed by classification ───────────────────────────
+        // â”€â”€ Per-cu.m tier rates keyed by classification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private static readonly Dictionary<AccountClassification, WaterRateSet> RateByClassification = new()
         {
             { AccountClassification.Residential, new(18.25m, 19.55m, 20.90m, 23.50m) },
@@ -277,11 +276,11 @@ namespace TMCWD.Application.Controllers
             { AccountClassification.Bulk,        new(54.75m, 58.65m, 62.70m, 70.50m) },
         };
 
-        // ── Minimum charge keyed by (classification, meterSize) ──────────────────
-        // meterSize decimal values: 0.5=½", 0.75=¾", 1.0=1", 1.5=1½", 2.0=2", 3.0=3", 4.0=4"
+        // â”€â”€ Minimum charge keyed by (classification, meterSize) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // meterSize decimal values: 0.5=Â½", 0.75=Â¾", 1.0=1", 1.5=1Â½", 2.0=2", 3.0=3", 4.0=4"
         private static readonly Dictionary<(AccountClassification, decimal), decimal> MinChargeByClassAndSize = new()
         {
-            // Residential / Government — same minimum charges per the official rate schedule
+            // Residential / Government â€” same minimum charges per the official rate schedule
             { (AccountClassification.Residential, 0.50m),   170.00m }, { (AccountClassification.Government, 0.50m),   170.00m },
             { (AccountClassification.Residential, 0.75m),   272.00m }, { (AccountClassification.Government, 0.75m),   272.00m },
             { (AccountClassification.Residential, 1.00m),   544.00m }, { (AccountClassification.Government, 1.00m),   544.00m },
@@ -368,7 +367,7 @@ namespace TMCWD.Application.Controllers
             decimal meterSize)
         {
             if (presentReading < previousReading)
-                return -1; // meter rollover — flag for manual review
+                return -1; // meter rollover â€” flag for manual review
 
             if (!MinChargeByClassAndSize.TryGetValue((classification, meterSize), out var minCharge))
                 throw new InvalidOperationException(
@@ -377,30 +376,30 @@ namespace TMCWD.Application.Controllers
 
             int usage = presentReading - previousReading;
 
-            // Fee applies whenever a reading is taken — even if usage is 0
+            // Fee applies whenever a reading is taken â€” even if usage is 0
             if (usage <= 0) return WaterMeterMaintenanceFee;
 
             var rates = RateByClassification.TryGetValue(classification, out var r)
                 ? r
                 : throw new InvalidOperationException($"No tier rates defined for classification '{classification}'.");
 
-            // Tier 0: 1–10 cu.m → flat minimum charge only
+            // Tier 0: 1â€“10 cu.m â†’ flat minimum charge only
             decimal total = minCharge;
             if (usage <= TierCap0) return total + WaterMeterMaintenanceFee;
 
-            // Tier 1: 11–20 cu.m
+            // Tier 1: 11â€“20 cu.m
             int t1 = Math.Min(usage, TierCap1) - TierCap0; total += t1 * rates.Rate1;
             if (usage <= TierCap1) return total + WaterMeterMaintenanceFee;
 
-            // Tier 2: 21–30 cu.m
+            // Tier 2: 21â€“30 cu.m
             int t2 = Math.Min(usage, TierCap2) - TierCap1; total += t2 * rates.Rate2;
             if (usage <= TierCap2) return total + WaterMeterMaintenanceFee;
 
-            // Tier 3: 31–40 cu.m
+            // Tier 3: 31â€“40 cu.m
             int t3 = Math.Min(usage, TierCap3) - TierCap2; total += t3 * rates.Rate3;
             if (usage <= TierCap3) return total + WaterMeterMaintenanceFee;
 
-            // Tier 4: 41+ cu.m — no cap
+            // Tier 4: 41+ cu.m â€” no cap
             int t4 = usage - TierCap3; total += t4 * rates.Rate4;
             return total + WaterMeterMaintenanceFee;
         }
@@ -408,7 +407,7 @@ namespace TMCWD.Application.Controllers
         #endregion
 
         /// <summary>
-        /// Live search — returns matching accounts (by account number, meter number, or address)
+        /// Live search â€” returns matching accounts (by account number, meter number, or address)
         /// together with each account's most recent reading. Used to populate the table as the
         /// user types in the Account Number field.
         /// </summary>
@@ -422,7 +421,7 @@ namespace TMCWD.Application.Controllers
             if (accounts == null || !accounts.Any())
                 return Ok(new List<object>());
 
-            // Fetch all readings in parallel — one Task per account instead of
+            // Fetch all readings in parallel â€” one Task per account instead of
             // two sequential awaits per account inside a foreach loop.
             var readingTasks = accounts.Select(a => _readingTrans.GetByAccount(a.Id));
             var allReadings = await Task.WhenAll(readingTasks);
@@ -568,7 +567,7 @@ namespace TMCWD.Application.Controllers
 
                 if (readingSheet == null)
                 {
-                    // No active sheet — create one
+                    // No active sheet â€” create one
                     var billingDate = request.BillingDate.Date;
                     readingSheet = new TMCWD.Model.Billing.ReadingSheet
                     {
@@ -600,13 +599,13 @@ namespace TMCWD.Application.Controllers
 
                 if (existingReading != null)
                 {
-                    // Update existing reading — shift current reading to previous before
+                    // Update existing reading â€” shift current reading to previous before
                     // writing the new present reading value.
                     var fullExisting = await _readingTrans.Get(existingReading.Id);
                     if (fullExisting != null)
                     {
                         fullExisting.ReadingSheetId = readingSheet.Id;
-                        fullExisting.PreviousReading = fullExisting.CurrentReading; // old present → previous
+                        fullExisting.PreviousReading = fullExisting.CurrentReading; // old present â†’ previous
                         fullExisting.CurrentReading = request.PresentReading;      // new value
                         fullExisting.Status = ReadingStatus.InProgress;
                         fullExisting.IsCompleted = false;
@@ -619,7 +618,7 @@ namespace TMCWD.Application.Controllers
                 }
                 else
                 {
-                    // First reading for this account — previous reading starts at 0
+                    // First reading for this account â€” previous reading starts at 0
                     reading = new TMCWD.Model.Billing.Reading
                     {
                         AccountId = account.Id,
@@ -645,93 +644,6 @@ namespace TMCWD.Application.Controllers
             }
         }
 
-        /// <summary>
-        /// Search accounts for the Collections page with billing and penalty information.
-        /// Returns account details, unpaid bills, and payment status.
-        /// </summary>
-        [HttpGet]
-        public async Task<IActionResult> SearchAccountsForCollection(string q)
-        {
-            if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
-                return Ok(new List<object>());
-
-            var accounts = await _accountTrans.Search(q.Trim());
-            if (accounts == null || !accounts.Any())
-                return Ok(new List<object>());
-
-            var result = new List<object>();
-
-            foreach (var account in accounts)
-            {
-                // Get customer information for the account name
-                var customer = await _customerTrans.Get(account.CustomerId);
-                var accountName = customer != null 
-                    ? customer.FullName
-                    : "Unknown Customer";
-
-                // Get all billings for this account using GetByAccountId
-                var billings = await _billingTrans.GetByAccountId(account.Id);
-                
-                // Filter unpaid bills
-                var unpaidBills = billings?
-                    .Where(b => b.PaymentStatus != PaymentStatus.Paid && b.PaymentStatus != PaymentStatus.Waived)
-                    .OrderBy(b => b.BillingPeriod)
-                    .ToList() ?? new List<Model.Billing.Interfaces.BillingBase>();
-
-                // Calculate total amounts
-                decimal totalBillAmount = 0;
-                decimal totalPenalty = 0;
-                var bills = new List<object>();
-
-                foreach (var billing in unpaidBills)
-                {
-                    // Get penalties for this bill
-                    var penalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId);
-                    var activePenalties = penalties?
-                        .Where(p => p.PaymentStatus != PaymentStatus.Waived)
-                        .ToList() ?? new List<Model.Billing.Penalty>();
-
-                    var penaltyAmount = activePenalties.Sum(p => p.Amount);
-                    
-                    // Calculate due date (15 days after billing period)
-                    var dueDate = billing.BillingPeriod.AddDays(15);
-                    
-                    bills.Add(new
-                    {
-                        billingReferenceId = billing.BillingReferenceId,
-                        billMonth = billing.BillingPeriod.ToString("MMM yyyy"),
-                        dueDate = dueDate.ToString("yyyy-MM-dd"),
-                        amount = billing.TotalBillAmount,
-                        pca = 0m, // TODO: Get from billing details if available
-                        mmf = 20.00m, // Water meter maintenance fee
-                        penalty = penaltyAmount,
-                        subTotal = billing.TotalBillAmount + penaltyAmount
-                    });
-
-                    totalBillAmount += billing.TotalBillAmount;
-                    totalPenalty += penaltyAmount;
-                }
-
-                // Get other charges balance (if implemented)
-                decimal otherChargesBalance = 0; // TODO: Implement other charges lookup
-
-                result.Add(new
-                {
-                    accountId = account.Id,
-                    accountNumber = account.AccountNumber,
-                    meterNumber = account.MeterNumber ?? "",
-                    name = accountName,
-                    address = account.FullAddress ?? "",
-                    type = account.Classification.ToString(),
-                    status = unpaidBills.Any() ? "Unpaid" : "Paid",
-                    otherChargesBalance = otherChargesBalance,
-                    totalBalance = totalBillAmount + totalPenalty + otherChargesBalance,
-                    bills = bills
-                });
-            }
-
-            return Ok(result);
-        }
 
         [HttpGet]
         public async Task<IActionResult> GetPenaltiesByBillPeriod(DateTime billPeriod)
@@ -754,7 +666,7 @@ namespace TMCWD.Application.Controllers
                 result.Add(new
                 {
                     billingReferenceId = billing.BillingReferenceId,
-                    accountNumber = account?.AccountNumber ?? "—",
+                    accountNumber = account?.AccountNumber ?? "â€”",
                     usage = 0,
                     billAmount = billing.TotalBillAmount,
                     discount = 0,

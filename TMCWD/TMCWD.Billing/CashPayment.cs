@@ -12,13 +12,16 @@ namespace TMCWD.Billing
 
         #region fields
 
-        private WebService service = new();
+        private WebService service;
 
         #endregion
 
         #region constructors
 
-        public CashPayment(TMCWD.Model.Billing.Billing bill) : base(bill, PaymentMethod.Cash) { }
+        public CashPayment(TMCWD.Model.Billing.Billing bill, WebService webService) : base(bill, PaymentMethod.Cash) 
+        {
+            service = webService;
+        }
 
         #endregion
 

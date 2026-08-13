@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function () {
       searchSuggestions.style.display = 'block';
       
       // Call the API to search accounts
-      const response = await fetch(`/Billing/SearchAccountsForCollection?q=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`/Collections/SearchAccounts?q=${encodeURIComponent(searchTerm)}`);
       
       if (!response.ok) {
         throw new Error('Search failed');
@@ -265,8 +265,8 @@ document.addEventListener('DOMContentLoaded', function () {
         return `
           <div class="suggestion-item" data-index="${index}">
             <div class="account-number">${account.accountNumber}</div>
-            <div class="account-name">${account.name}</div>
-            <div class="account-details">${account.meterNumber} \u2022 ${account.type} \u2022 ${account.address}</div>
+            <div class="account-name">${account.accountName || 'Unknown'}</div>
+            <div class="account-details">${account.address}</div>
           </div>
         `;
       }).join('');
@@ -297,21 +297,21 @@ document.addEventListener('DOMContentLoaded', function () {
     return {
       account: {
         accountNumber: apiAccount.accountNumber,
-        meterNumber: apiAccount.meterNumber,
-        name: apiAccount.name,
+        meterNumber: '',
+        name: apiAccount.accountName,
         address: apiAccount.address,
-        type: apiAccount.type,
-        status: apiAccount.status,
-        otherChargesBalance: apiAccount.otherChargesBalance
+        type: '',
+        status: apiAccount.unpaidCount > 0 ? 'Unpaid' : 'Paid',
+        otherChargesBalance: 0
       },
       bills: apiAccount.bills.map(bill => ({
-        billMonth: bill.billMonth,
+        billMonth: bill.billingPeriod,
         dueDate: bill.dueDate,
-        amount: bill.amount,
-        pca: bill.pca,
-        mmf: bill.mmf,
+        amount: bill.billAmount,
+        pca: 0,
+        mmf: 20.00,
         penalty: bill.penalty,
-        subTotal: bill.subTotal,
+        subTotal: bill.billAmount + bill.penalty,
         selected: false
       })),
       invoiceNo: '',
@@ -853,17 +853,22 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // ---------- Multiple Accounts Toggle ----------
-  multipleToggle.addEventListener('click', function () {
-    const isCurrentlyActive = this.classList.contains('active');
-    
-    if (isCurrentlyActive) {
-      this.classList.remove('active');
-      setMultipleAccountsMode(false);
-    } else {
-      this.classList.add('active');
-      setMultipleAccountsMode(true);
-    }
-  });
+  if (multipleToggle) {
+    multipleToggle.addEventListener('click', function () {
+      console.log('Multiple toggle clicked, current state:', multipleAccountsMode);
+      const isCurrentlyActive = this.classList.contains('active');
+      
+      if (isCurrentlyActive) {
+        this.classList.remove('active');
+        setMultipleAccountsMode(false);
+      } else {
+        this.classList.add('active');
+        setMultipleAccountsMode(true);
+      }
+    });
+  } else {
+    console.error('multipleToggle element not found in DOM');
+  }
 
   // ---------- Action buttons ----------
   document.getElementById('payBtn').addEventListener('click', function () {

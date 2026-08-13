@@ -188,6 +188,13 @@
     try {
       const res = await fetch(`/Billing/SearchAccounts?q=${encodeURIComponent(q)}`);
       if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Search failed:', res.status, errorText);
+        showPopup({ 
+          title: 'Search Error', 
+          message: `Failed to search accounts: ${res.status} ${res.statusText}`, 
+          type: 'warning' 
+        });
         readingsList = [];
         currentPage  = 1;
         renderTable();
@@ -222,6 +229,11 @@
       autoFillIfExactMatch(q, mapped);
     } catch (err) {
       console.error('Search error:', err);
+      showPopup({ 
+        title: 'Search Error', 
+        message: 'Error searching accounts: ' + err.message, 
+        type: 'warning' 
+      });
       readingsList = [];
       currentPage  = 1;
       renderTable();

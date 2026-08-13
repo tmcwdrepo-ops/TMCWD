@@ -13,13 +13,16 @@ namespace TMCWD.Billing
 
         #region fields
 
-        private WebService service = new();
+        private WebService service;
 
         #endregion
 
         #region constructors
 
-        public GCashWallet() : base() { }
+        public GCashWallet(WebService webService) : base() 
+        {
+            service = webService;
+        }
 
         #endregion
 

@@ -104,29 +104,32 @@
                                 <span class="nav-link__label">Debit/Credit Memo</span>
                             </a>
                         </li>
-                        <li class="nav-item nav-item--nested">
+                        <li class="nav-item">
                             <a href="@Url.Action("Reading", "Billing")" class="nav-link" data-page="reading">
-                                <span class="nav-link__icon" aria-hidden="true" style="padding-left: var(--space-sm); display: inline-flex; align-items: center;">
-                                    <svg viewBox="0 0 20 20" fill="none" style="width: 14px; height: 14px; color: currentColor;">
+                                <span class="nav-link__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 20 20" fill="none">
                                         <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5" />
                                         <path d="M10 10l3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                                         <circle cx="10" cy="10" r="1" fill="currentColor" />
                                     </svg>
                                 </span>
-                                <span class="nav-link__label" style="padding-left: 8px;">Reading</span>
+                                <span class="nav-link__label">Reading</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="@Url.Action("Penalty", "Billing")" class="nav-link" data-page="penalty">
                                 <span class="nav-link__icon" aria-hidden="true">
-                                    <svg viewBox="0 0 20 20" fill="none"><path d="M10 2l2.5 5 5.5.8-4 3.9.95 5.5L10 14.5l-4.95 2.7.95-5.5L2 7.8 7.5 7z" fill="currentColor" opacity=".7" /></svg>
+                                    <svg viewBox="0 0 20 20" fill="none">
+                                        <path d="M10 3l7 12H3l7-12z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                                        <path d="M10 8v3M10 13h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                    </svg>
                                 </span>
                                 <span class="nav-link__label">Penalty</span>
                             </a>
                         </li>
                     </ul>
         <li class="nav-item">
-          <a href="@Url.Action("Collections", "Billing")" class="nav-link" data-page="collections">
+          <a href="@Url.Action("Index", "Collections")" class="nav-link" data-page="collections">
             <span class="nav-link__icon" aria-hidden="true">
               <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M6 5V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M2 10h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M6 13h3M13 13h1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </span>

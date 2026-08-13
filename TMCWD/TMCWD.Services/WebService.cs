@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Text;
 
 namespace TMCWD.Services
@@ -8,9 +9,9 @@ namespace TMCWD.Services
     {
 
         private HttpClient _httpClient;
-        public WebService() 
+        public WebService(IHttpClientFactory httpClientFactory) 
         { 
-            _httpClient = new HttpClient();
+            _httpClient = httpClientFactory.CreateClient("TmcWdApi");
         }
 
         public HttpClient Client 
