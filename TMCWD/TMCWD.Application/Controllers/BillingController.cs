@@ -20,6 +20,7 @@ namespace TMCWD.Application.Controllers
         private readonly AccountTransaction _accountTrans;
         private readonly ReadingTransaction _readingTrans;
         private readonly ReadingSheetTransaction _readingSheetTrans;
+        private readonly CustomerTransaction _customerTrans;
 
         #endregion
 
@@ -30,7 +31,8 @@ namespace TMCWD.Application.Controllers
             PenaltyTransaction penaltyTrans,
             AccountTransaction accountTrans,
             ReadingTransaction readingTrans,
-            ReadingSheetTransaction readingSheetTrans)
+            ReadingSheetTransaction readingSheetTrans,
+            CustomerTransaction customerTrans)
         {
             _user = user;
             _billingTrans = billingTrans;
@@ -38,6 +40,7 @@ namespace TMCWD.Application.Controllers
             _accountTrans = accountTrans;
             _readingTrans = readingTrans;
             _readingSheetTrans = readingSheetTrans;
+            _customerTrans = customerTrans;
         }
 
         public IActionResult BillAdjustment()
@@ -638,6 +641,94 @@ namespace TMCWD.Application.Controllers
             {
                 return StatusCode(500, $"Error saving reading: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Search accounts for the Collections page with billing and penalty information.
+        /// Returns account details, unpaid bills, and payment status.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> SearchAccountsForCollection(string q)
+        {
+            if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
+                return Ok(new List<object>());
+
+            var accounts = await _accountTrans.Search(q.Trim());
+            if (accounts == null || !accounts.Any())
+                return Ok(new List<object>());
+
+            var result = new List<object>();
+
+            foreach (var account in accounts)
+            {
+                // Get customer information for the account name
+                var customer = await _customerTrans.Get(account.CustomerId);
+                var accountName = customer != null 
+                    ? customer.FullName
+                    : "Unknown Customer";
+
+                // Get all billings for this account using GetByAccountId
+                var billings = await _billingTrans.GetByAccountId(account.Id);
+                
+                // Filter unpaid bills
+                var unpaidBills = billings?
+                    .Where(b => b.PaymentStatus != PaymentStatus.Paid && b.PaymentStatus != PaymentStatus.Waived)
+                    .OrderBy(b => b.BillingPeriod)
+                    .ToList() ?? new List<Model.Billing.Interfaces.BillingBase>();
+
+                // Calculate total amounts
+                decimal totalBillAmount = 0;
+                decimal totalPenalty = 0;
+                var bills = new List<object>();
+
+                foreach (var billing in unpaidBills)
+                {
+                    // Get penalties for this bill
+                    var penalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId);
+                    var activePenalties = penalties?
+                        .Where(p => p.PaymentStatus != PaymentStatus.Waived)
+                        .ToList() ?? new List<Model.Billing.Penalty>();
+
+                    var penaltyAmount = activePenalties.Sum(p => p.Amount);
+                    
+                    // Calculate due date (15 days after billing period)
+                    var dueDate = billing.BillingPeriod.AddDays(15);
+                    
+                    bills.Add(new
+                    {
+                        billingReferenceId = billing.BillingReferenceId,
+                        billMonth = billing.BillingPeriod.ToString("MMM yyyy"),
+                        dueDate = dueDate.ToString("yyyy-MM-dd"),
+                        amount = billing.TotalBillAmount,
+                        pca = 0m, // TODO: Get from billing details if available
+                        mmf = 20.00m, // Water meter maintenance fee
+                        penalty = penaltyAmount,
+                        subTotal = billing.TotalBillAmount + penaltyAmount
+                    });
+
+                    totalBillAmount += billing.TotalBillAmount;
+                    totalPenalty += penaltyAmount;
+                }
+
+                // Get other charges balance (if implemented)
+                decimal otherChargesBalance = 0; // TODO: Implement other charges lookup
+
+                result.Add(new
+                {
+                    accountId = account.Id,
+                    accountNumber = account.AccountNumber,
+                    meterNumber = account.MeterNumber ?? "",
+                    name = accountName,
+                    address = account.FullAddress ?? "",
+                    type = account.Classification.ToString(),
+                    status = unpaidBills.Any() ? "Unpaid" : "Paid",
+                    otherChargesBalance = otherChargesBalance,
+                    totalBalance = totalBillAmount + totalPenalty + otherChargesBalance,
+                    bills = bills
+                });
+            }
+
+            return Ok(result);
         }
 
         #endregion

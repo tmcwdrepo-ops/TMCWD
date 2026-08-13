@@ -218,49 +218,111 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ---------- Search Functionality ----------
   
+  // Store search results cache
+  let searchResultsCache = [];
+  let searchTimeout = null;
+  
+  // Debounce function to prevent excessive API calls
+  function debounce(func, wait) {
+    return function(...args) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
+  
   // Function to show suggestions based on search term
-  function showSuggestions(searchTerm) {
-    if (searchTerm.length < 1) {
+  async function showSuggestions(searchTerm) {
+    if (searchTerm.length < 2) {
       hideSuggestions();
       return;
     }
     
-    // Find matching accounts
-    const matches = COLLECTION_ACCOUNTS.filter(account => {
-      const acc = account.account;
-      return acc.accountNumber.toLowerCase().includes(searchTerm) ||
-             acc.name.toLowerCase().includes(searchTerm);
-    });
-    
-    if (matches.length === 0) {
-      searchSuggestions.innerHTML = '<div class="no-suggestions">No accounts found</div>';
+    try {
+      // Show loading state
+      searchSuggestions.innerHTML = '<div class="no-suggestions">Searching...</div>';
       searchSuggestions.style.display = 'block';
-      return;
-    }
-    
-    // Build suggestions HTML
-    const suggestionsHTML = matches.map((account, index) => {
-      const acc = account.account;
-      return `
-        <div class="suggestion-item" data-index="${index}" data-account-index="${COLLECTION_ACCOUNTS.indexOf(account)}">
-          <div class="account-number">${acc.accountNumber}</div>
-          <div class="account-name">${acc.name}</div>
-          <div class="account-details">${acc.meterNumber} \u2022 ${acc.type} \u2022 ${acc.address}</div>
-        </div>
-      `;
-    }).join('');
-    
-    searchSuggestions.innerHTML = suggestionsHTML;
-    searchSuggestions.style.display = 'block';
-    selectedSuggestionIndex = -1;
-    
-    // Add click handlers to suggestions
-    searchSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
-      item.addEventListener('click', function() {
-        const accountIndex = parseInt(this.dataset.accountIndex);
-        selectAccount(COLLECTION_ACCOUNTS[accountIndex]);
+      
+      // Call the API to search accounts
+      const response = await fetch(`/Billing/SearchAccountsForCollection?q=${encodeURIComponent(searchTerm)}`);
+      
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+      
+      const matches = await response.json();
+      
+      // Store results in cache
+      searchResultsCache = matches;
+      
+      if (matches.length === 0) {
+        searchSuggestions.innerHTML = '<div class="no-suggestions">No accounts found</div>';
+        searchSuggestions.style.display = 'block';
+        return;
+      }
+      
+      // Build suggestions HTML
+      const suggestionsHTML = matches.map((account, index) => {
+        return `
+          <div class="suggestion-item" data-index="${index}">
+            <div class="account-number">${account.accountNumber}</div>
+            <div class="account-name">${account.name}</div>
+            <div class="account-details">${account.meterNumber} \u2022 ${account.type} \u2022 ${account.address}</div>
+          </div>
+        `;
+      }).join('');
+      
+      searchSuggestions.innerHTML = suggestionsHTML;
+      searchSuggestions.style.display = 'block';
+      selectedSuggestionIndex = -1;
+      
+      // Add click handlers to suggestions
+      searchSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
+        item.addEventListener('click', function() {
+          const accountIndex = parseInt(this.dataset.index);
+          selectAccountFromAPI(searchResultsCache[accountIndex]);
+        });
       });
-    });
+    } catch (error) {
+      console.error('Search error:', error);
+      searchSuggestions.innerHTML = '<div class="no-suggestions">Error searching accounts</div>';
+      searchSuggestions.style.display = 'block';
+    }
+  }
+  
+  // Debounced version of showSuggestions
+  const debouncedShowSuggestions = debounce(showSuggestions, 300);
+  
+  // Function to convert API result to the format expected by loadAccountData
+  function convertAPIToAccountData(apiAccount) {
+    return {
+      account: {
+        accountNumber: apiAccount.accountNumber,
+        meterNumber: apiAccount.meterNumber,
+        name: apiAccount.name,
+        address: apiAccount.address,
+        type: apiAccount.type,
+        status: apiAccount.status,
+        otherChargesBalance: apiAccount.otherChargesBalance
+      },
+      bills: apiAccount.bills.map(bill => ({
+        billMonth: bill.billMonth,
+        dueDate: bill.dueDate,
+        amount: bill.amount,
+        pca: bill.pca,
+        mmf: bill.mmf,
+        penalty: bill.penalty,
+        subTotal: bill.subTotal,
+        selected: false
+      })),
+      invoiceNo: '',
+      accountsInInvoice: 1
+    };
+  }
+  
+  // Function to select account from API result
+  function selectAccountFromAPI(apiAccount) {
+    const accountData = convertAPIToAccountData(apiAccount);
+    selectAccount(accountData);
   }
   
   // Function to hide suggestions
@@ -309,11 +371,12 @@ document.addEventListener('DOMContentLoaded', function () {
     
     if (searchTerm === '') {
       hideSuggestions();
+      clearTimeout(searchTimeout);
       return;
     }
     
-    // Show suggestions as user types
-    showSuggestions(searchTerm);
+    // Show suggestions as user types (debounced)
+    debouncedShowSuggestions(searchTerm);
   });
   
   // Handle Enter key and arrow key navigation
@@ -324,24 +387,11 @@ document.addEventListener('DOMContentLoaded', function () {
       case 'Enter':
         e.preventDefault();
         if (selectedSuggestionIndex >= 0 && suggestions[selectedSuggestionIndex]) {
-          const accountIndex = parseInt(suggestions[selectedSuggestionIndex].dataset.accountIndex);
-          selectAccount(COLLECTION_ACCOUNTS[accountIndex]);
-        } else {
-          const searchTerm = this.value.trim().toLowerCase();
-          if (searchTerm === '') return;
-          
-          const foundAccount = COLLECTION_ACCOUNTS.find(account => {
-            const acc = account.account;
-            return acc.accountNumber.toLowerCase().includes(searchTerm) ||
-                   acc.name.toLowerCase().includes(searchTerm) ||
-                   acc.meterNumber.toLowerCase().includes(searchTerm);
-          });
-          
-          if (foundAccount) {
-            selectAccount(foundAccount);
-          } else {
-            hideSuggestions();
-          }
+          const accountIndex = parseInt(suggestions[selectedSuggestionIndex].dataset.index);
+          selectAccountFromAPI(searchResultsCache[accountIndex]);
+        } else if (searchResultsCache.length === 1) {
+          // If only one result, select it automatically
+          selectAccountFromAPI(searchResultsCache[0]);
         }
         break;
         
