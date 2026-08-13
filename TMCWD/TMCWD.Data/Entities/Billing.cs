@@ -24,7 +24,7 @@ namespace TMCWD.Data.Entities
         [Column("ReadingId")]
         public System.Int64 ReadingId { get; set; }
 
-        [Column("BillingPeriodf")]
+        [Column("BillingPeriod")]
         public DateTime BillingPeriod { get; set; }
 
         [Column("MaterialsAmount")]

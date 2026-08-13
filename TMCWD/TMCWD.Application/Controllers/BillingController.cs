@@ -6,7 +6,8 @@ using TMCWD.CustomerSupport;
 using TMCWD.Model.Administrator;
 using TMCWD.Services;
 using TMCWD.Model.CustomerSupport;
-
+using TMCWD.Model.Billing;
+using TMCWD.Model.Billing.Requests;
 namespace TMCWD.Application.Controllers
 {
     public class BillingController : Controller
@@ -81,7 +82,8 @@ namespace TMCWD.Application.Controllers
         public IActionResult Reading() => View("Reading");
 
         [HttpGet]
-        public async Task<IActionResult> GetBillByBillPeriod(DateTime billPeriod) { 
+        public async Task<IActionResult> GetBillByBillPeriod(DateTime billPeriod)
+        {
             // TODO: save to database
             TempData["SuccessMessage"] = "Bill adjustment submitted successfully.";
             return RedirectToAction(nameof(BillAdjustment));
@@ -215,26 +217,26 @@ namespace TMCWD.Application.Controllers
             {
                 latestReading.TryGetValue(account.Id, out var reading);
 
-                var present  = reading?.CurrentReading  ?? 0;
+                var present = reading?.CurrentReading ?? 0;
                 var previous = reading?.PreviousReading ?? 0;
-                var usage    = Math.Max(0, present - previous);
+                var usage = Math.Max(0, present - previous);
                 // Charge is based on the present reading value (current meter reading)
                 // WaterMeterMaintenanceFee only added when a reading has actually been recorded
-                var amount   = reading != null ? ComputeWaterCharge((int)previous, (int)present, account.Classification, account.MeterSize > 0 ? account.MeterSize : 0.5m) : 0;
+                var amount = reading != null ? ComputeWaterCharge((int)previous, (int)present, account.Classification, account.MeterSize > 0 ? account.MeterSize : 0.5m) : 0;
 
                 return new PresentReadingViewModel
                 {
-                    ReadingId       = reading?.Id ?? 0,
-                    AccountId       = account.Id,
-                    AccountNumber   = account.AccountNumber,
-                    Name            = account.FullAddress,
-                    Classification  = account.Classification.ToString(),
-                    MeterNumber     = account.MeterNumber,
-                    Address         = account.FullAddress,
-                    PresentReading  = present,
+                    ReadingId = reading?.Id ?? 0,
+                    AccountId = account.Id,
+                    AccountNumber = account.AccountNumber,
+                    Name = account.FullAddress,
+                    Classification = account.Classification.ToString(),
+                    MeterNumber = account.MeterNumber,
+                    Address = account.FullAddress,
+                    PresentReading = present,
                     PreviousReading = previous,
-                    Amount          = amount,
-                    MeterSize       = account.MeterSize
+                    Amount = amount,
+                    MeterSize = account.MeterSize
                 };
             }).ToList();
 
@@ -423,29 +425,29 @@ namespace TMCWD.Application.Controllers
             // Fetch all readings in parallel — one Task per account instead of
             // two sequential awaits per account inside a foreach loop.
             var readingTasks = accounts.Select(a => _readingTrans.GetByAccount(a.Id));
-            var allReadings  = await Task.WhenAll(readingTasks);
+            var allReadings = await Task.WhenAll(readingTasks);
 
             var result = accounts.Select((account, i) =>
             {
                 var readings = allReadings[i];
-                var current  = readings?.OrderByDescending(r => r.Id).FirstOrDefault();
+                var current = readings?.OrderByDescending(r => r.Id).FirstOrDefault();
                 var previous = readings?.OrderByDescending(r => r.Id).Skip(1).FirstOrDefault();
 
-                var present      = current?.CurrentReading  ?? 0;
-                var previousVal  = current?.PreviousReading ?? 0;
-                var usage        = Math.Max(0, present - previousVal);
-                var amount       = ComputeWaterCharge((int)previousVal, (int)present, account.Classification, account.MeterSize > 0 ? account.MeterSize : 0.5m);
+                var present = current?.CurrentReading ?? 0;
+                var previousVal = current?.PreviousReading ?? 0;
+                var usage = Math.Max(0, present - previousVal);
+                var amount = ComputeWaterCharge((int)previousVal, (int)present, account.Classification, account.MeterSize > 0 ? account.MeterSize : 0.5m);
 
                 return new
                 {
-                    accountId       = account.Id,
-                    accountNumber   = account.AccountNumber,
-                    name            = account.FullAddress,
-                    meterNumber     = account.MeterNumber,
-                    address         = account.FullAddress,
-                    classification  = account.Classification.ToString(),
-                    meterSize       = account.MeterSize,
-                    presentReading  = present,
+                    accountId = account.Id,
+                    accountNumber = account.AccountNumber,
+                    name = account.FullAddress,
+                    meterNumber = account.MeterNumber,
+                    address = account.FullAddress,
+                    classification = account.Classification.ToString(),
+                    meterSize = account.MeterSize,
+                    presentReading = present,
                     previousReading = previousVal,
                     usage,
                     amount
@@ -482,17 +484,17 @@ namespace TMCWD.Application.Controllers
 
                 result.Add(new PresentReadingViewModel
                 {
-                    ReadingId       = reading.Id,
-                    AccountId       = account.Id,
-                    AccountNumber   = account.AccountNumber,
-                    Name            = account.FullAddress,
-                    Classification  = account.Classification.ToString(),
-                    MeterNumber     = account.MeterNumber,
-                    Address         = account.FullAddress,
-                    PresentReading  = reading.CurrentReading,
+                    ReadingId = reading.Id,
+                    AccountId = account.Id,
+                    AccountNumber = account.AccountNumber,
+                    Name = account.FullAddress,
+                    Classification = account.Classification.ToString(),
+                    MeterNumber = account.MeterNumber,
+                    Address = account.FullAddress,
+                    PresentReading = reading.CurrentReading,
                     PreviousReading = reading.PreviousReading,
-                    Amount          = amount,
-                    MeterSize       = account.MeterSize
+                    Amount = amount,
+                    MeterSize = account.MeterSize
                 });
             }
 
@@ -518,16 +520,16 @@ namespace TMCWD.Application.Controllers
 
             var result = new AccountLookupViewModel
             {
-                AccountId      = account.Id,
-                AccountNumber  = account.AccountNumber,
-                Name           = account.FullAddress,
-                MeterNumber    = account.MeterNumber,
-                Address        = account.FullAddress,
+                AccountId = account.Id,
+                AccountNumber = account.AccountNumber,
+                Name = account.FullAddress,
+                MeterNumber = account.MeterNumber,
+                Address = account.FullAddress,
                 Classification = account.Classification.ToString(),
                 // Use the CurrentReading value from the most recent reading record as "previous reading"
                 // because that's what the user will be updating
                 PreviousReading = currentReading?.CurrentReading ?? 0,
-                MeterSize       = account.MeterSize
+                MeterSize = account.MeterSize
             };
 
             return Ok(result);
@@ -570,11 +572,11 @@ namespace TMCWD.Application.Controllers
                     var billingDate = request.BillingDate.Date;
                     readingSheet = new TMCWD.Model.Billing.ReadingSheet
                     {
-                        ZoneBookId  = account.ZoneBookId,
+                        ZoneBookId = account.ZoneBookId,
                         BillingDate = billingDate,
-                        DueDate     = billingDate.AddDays(15),
-                        Status      = ReadingStatus.InProgress,
-                        AssignedTo  = request.ReaderId > 0 ? request.ReaderId : 0
+                        DueDate = billingDate.AddDays(15),
+                        Status = ReadingStatus.InProgress,
+                        AssignedTo = request.ReaderId > 0 ? request.ReaderId : 0
                     };
                     readingSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, readingSheet);
 
@@ -603,11 +605,11 @@ namespace TMCWD.Application.Controllers
                     var fullExisting = await _readingTrans.Get(existingReading.Id);
                     if (fullExisting != null)
                     {
-                        fullExisting.ReadingSheetId  = readingSheet.Id;
+                        fullExisting.ReadingSheetId = readingSheet.Id;
                         fullExisting.PreviousReading = fullExisting.CurrentReading; // old present → previous
-                        fullExisting.CurrentReading  = request.PresentReading;      // new value
-                        fullExisting.Status          = ReadingStatus.InProgress;
-                        fullExisting.IsCompleted     = false;
+                        fullExisting.CurrentReading = request.PresentReading;      // new value
+                        fullExisting.Status = ReadingStatus.InProgress;
+                        fullExisting.IsCompleted = false;
                         reading = fullExisting;
                     }
                     else
@@ -620,18 +622,18 @@ namespace TMCWD.Application.Controllers
                     // First reading for this account — previous reading starts at 0
                     reading = new TMCWD.Model.Billing.Reading
                     {
-                        AccountId       = account.Id,
-                        ReadingSheetId  = readingSheet.Id,
-                        CurrentReading  = request.PresentReading,
+                        AccountId = account.Id,
+                        ReadingSheetId = readingSheet.Id,
+                        CurrentReading = request.PresentReading,
                         PreviousReading = 0,
-                        Status          = ReadingStatus.InProgress,
-                        IsCompleted     = false
+                        Status = ReadingStatus.InProgress,
+                        IsCompleted = false
                     };
                 }
 
                 // Save through ReadingTransaction
                 var savedReading = await _readingTrans.SaveUpdate(_user.User.Id, reading);
-                
+
                 if (savedReading == null)
                     return StatusCode(500, "Failed to save reading.");
 
@@ -731,20 +733,40 @@ namespace TMCWD.Application.Controllers
             return Ok(result);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetPenaltiesByBillPeriod(DateTime billPeriod)
+        {
+            var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
+            var matching = allBillings.Where(b => b.BillingPeriod.Date == billPeriod.Date).ToList();
+
+            var result = new List<object>();
+
+            foreach (var billing in matching)
+            {
+                var penalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.Penalty>();
+                var activePenalties = penalties.Where(p => p.PaymentStatus != PaymentStatus.Waived).ToList();
+
+                if (!activePenalties.Any()) continue;
+                if (billing.AccountId <= 0) continue;
+
+                var account = await _accountTrans.Get((int)billing.AccountId);
+
+                result.Add(new
+                {
+                    billingReferenceId = billing.BillingReferenceId,
+                    accountNumber = account?.AccountNumber ?? "—",
+                    usage = 0,
+                    billAmount = billing.TotalBillAmount,
+                    discount = 0,
+                    penalty = activePenalties.Sum(p => p.Amount)
+                });
+            }
+
+            return Ok(result);
+        }
+
         #endregion
     }
-
-    /// <summary>
-    /// Request model for saving a reading from the UI.
-    /// </summary>
-    public class SaveReadingRequest
-    {
-        public string AccountNumber { get; set; } = string.Empty;
-        public decimal PresentReading { get; set; }
-        public decimal PreviousReading { get; set; }
-        public int Zone { get; set; }
-        public int Book { get; set; }
-        public DateTime BillingDate { get; set; }
-        public int ReaderId { get; set; }
-    }
 }
+
+  

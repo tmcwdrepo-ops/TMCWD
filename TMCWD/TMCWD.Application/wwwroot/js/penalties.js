@@ -15,8 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            fetch('/Billing/GetBillByBillPeriod?billPeriod=' + encodeURIComponent(billPeriod))
-                .then(function (res) { return res.ok ? res.json() : []; })
+            fetch('/Billing/GetPenaltiesByBillPeriod?billPeriod=' + encodeURIComponent(billPeriod))                .then(function (res) { return res.ok ? res.json() : []; })
                 .then(function (data) {
                     penaltyList = data || [];
                     isLoaded = true;
