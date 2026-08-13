@@ -478,18 +478,24 @@ if (crTemplateSelect) {
    Phase 6 — Real Data
 =============================================================== */
 
-function loadCrAccounts() {
-    var zone = (document.getElementById('crZone') || {}).value || '';
-    var book = (document.getElementById('crBook') || {}).value || '';
-    var scope = (document.getElementById('crScope') || {}).value || 'all';
-    var from = parseInt((document.getElementById('crFromSeq') || {}).value, 10) || 0;
-    var to = parseInt((document.getElementById('crToSeq') || {}).value, 10) || 0;
-
-    var ACCOUNTS = [];
-
-    var crTablePanel = document.getElementById('crTablePanel');
-    var crAccountsTbody = document.getElementById('crAccountsTbody');
-    var crTableEmpty = document.getElementById('crTableEmpty');
+/**
+ * Reset the accounts table state so the user must click Load Accounts again.
+ * Called when zone/book changes (e.g. via template apply) to avoid showing
+ * stale results. Does not fetch — billing date and reader may not be set yet.
+ */
+function resetCrAccounts() {
+    crAccountsLoaded = false;
+    var panel = document.getElementById('crTablePanel');
+    if (panel) panel.hidden = true;
+    var tbody = document.getElementById('crAccountsTbody');
+    if (tbody) tbody.innerHTML = '';
+    var empty = document.getElementById('crTableEmpty');
+    if (empty) empty.hidden = true;
+    crFilteredAccounts = [];
+    crCurrentPage = 1;
+    if (crPagination) crPagination.hidden = true;
+    if (crLoadAccountsBtn) crLoadAccountsBtn.classList.remove('is-active');
+    setLoadAccountsBtnState('load');
 }
 
 /**
@@ -501,51 +507,30 @@ function loadCrAccounts() {
  * @param {number} toSeq
  * @returns {Array}
  */
-async function filterAccounts(zone, book, scope, fromSeq, toSeq) {
+async function filterAccounts(zone, book, scope, fromSeq, toSeq, billingDate, assignedTo) {
+    var url = '/account/GetByZoneBookAndSequence'
+        + '?zone='        + encodeURIComponent(zone)
+        + '&book='        + encodeURIComponent(book)
+        + '&seqFrom='     + encodeURIComponent(fromSeq)
+        + '&seqTo='       + encodeURIComponent(toSeq)
+        + '&billingDate=' + encodeURIComponent(billingDate)
+        + '&assignedTo='  + encodeURIComponent(assignedTo);
 
-    var customers = await fetch('/account/GetByZoneBookAndSequence?zone=' + zone + '&book=' + book + '&seqFrom=' + fromSeq + '&seqTo=' + toSeq, {
+    var customers = await fetch(url, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
         }
-    }).then(response => {
-        if (!response.ok || response.status == null) return null;
+    }).then(function (response) {
+        if (!response.ok || response.status === 204) return null;
         return response.json();
-    }).then(result => {
-        return result;
     });
-    
-    return customers.filter(function (a) {
-        if ((zone && a.zone == zone) && (book && a.book == book)) return true;
-        if (scope === 'unbilled' && !a.billed) return true;
-        if (scope === 'ranged')
-            if ((fromSeq && a.sequence >= fromSeq) && (toSeq && a.sequence <= toSeq)) return true;
-        //if (scope === 'ranged') {
-        //  if (fromSeq && a.seq < fromSeq) return false;
-        //  if (toSeq   && a.seq > toSeq)   return false;
-    });
+
+    // Server handles zone/book/sequence filtering; return result as-is.
+    return customers || [];
 }
 
-if (crLoadAccountsBtn) {
-    crLoadAccountsBtn.addEventListener('click', function () {
-        var panel = document.getElementById('crTablePanel');
-        if (!panel) return;
-
-        if (!crAccountsLoaded) {
-            var zone = (document.getElementById('crZone') || {}).value || '';
-            var book = (document.getElementById('crBook') || {}).value || '';
-            if (!zone || !book) {
-                alert('Select a Zone and Book first.');
-                return;
-            }
-            loadCrAccounts();
-        } else {
-            panel.hidden = !panel.hidden;
-            crLoadAccountsBtn.classList.toggle('is-active', !panel.hidden);
-            setLoadAccountsBtnState(panel.hidden ? 'show' : 'hide');
-        }
-    });
-}
+/* Phase A — first handler removed; single consolidated handler is below (near Phase 7). */
 
 /**
  * Render filtered accounts into the table body.
@@ -637,20 +622,51 @@ function setLoadAccountsBtnState(state) {
   crLoadAccountsBtn.innerHTML = icon + label;
 }
 
+/* ============================================================
+   Phase A — single consolidated Load Accounts handler
+   Replaces the two earlier partial handlers (Phase 5 + old Phase 7).
+   Validates ALL required fields before fetching.
+   ============================================================ */
+
 if (crLoadAccountsBtn) {
   crLoadAccountsBtn.addEventListener('click', async function () {
     var panel = document.getElementById('crTablePanel');
     if (!panel) return;
 
     if (!crAccountsLoaded) {
-      /* First click — filter and render */
-      var zone  = (document.getElementById('crZone')  || {}).value || '';
-      var book  = (document.getElementById('crBook')  || {}).value || '';
-      var scope = (document.getElementById('crScope') || {}).value || 'all';
-      var from  = parseInt((document.getElementById('crFromSeq') || {}).value, 10) || 0;
-      var to    = parseInt((document.getElementById('crToSeq') || {}).value, 10) || 0;
+      /* ── Validate all required fields ── */
+      var billingDate  = (document.getElementById('crBillingDate')        || {}).value || '';
+      var periodStart  = (document.getElementById('crBillingPeriodStart') || {}).value || '';
+      var reader       = (document.getElementById('crMeterReaderInput')   || {}).dataset.id || '';
+      var zone         = (document.getElementById('crZone')               || {}).value || '';
+      var book         = (document.getElementById('crBook')               || {}).value || '';
+      var scope        = (document.getElementById('crScope')              || {}).value || '';
 
-      var accts = await filterAccounts(zone, book, scope, from, to);
+      var missing = [];
+      if (!billingDate) missing.push('Billing Date');
+      if (!periodStart) missing.push('Billing Period Start');
+      if (!reader)      missing.push('Meter Reader');
+      if (!zone)        missing.push('Zone');
+      if (!book)        missing.push('Book');
+      if (!scope)       missing.push('Scope');
+
+      if (scope === 'ranged') {
+        var from = parseInt((document.getElementById('crFromSeq') || {}).value, 10);
+        var to   = parseInt((document.getElementById('crToSeq')   || {}).value, 10) || 0;
+        if (isNaN(from)) missing.push('From Sequence');
+        if (!to)   missing.push('To Sequence');
+      }
+
+      if (missing.length > 0) {
+        alert('Please fill in the following fields before loading accounts:\n\n• ' + missing.join('\n• '));
+        return;
+      }
+
+      /* ── All fields present — fetch and render ── */
+      var fromSeq = parseInt((document.getElementById('crFromSeq') || {}).value, 10) || 0;
+      var toSeq   = parseInt((document.getElementById('crToSeq')   || {}).value, 10) || 0;
+
+      var accts = await filterAccounts(zone, book, scope, fromSeq, toSeq, billingDate, reader);
       renderAccountsTable(accts);
       crAccountsLoaded = true;
       crLoadAccountsBtn.classList.add('is-active');
@@ -987,7 +1003,8 @@ function applyTemplate(tplId) {
     if (tpl) {
         if (crMeterReaderInput) {
             crMeterReaderInput.value = tpl.readerName;
-            crMeterReaderValue = tpl.readerName;
+            crMeterReaderInput.dataset.id = tpl.readerId;
+            crMeterReaderValue = tpl.readerId;
             crMeterReaderId = tpl.readerId;
         }
         var zoneSelect = document.getElementById('crZone');
@@ -996,8 +1013,7 @@ function applyTemplate(tplId) {
             loadCrBooksForZone(tpl.zone).then(function () {
                 var bookSelect = document.getElementById('crBook');
                 if (bookSelect) bookSelect.value = tpl.book;
-                crAccountsLoaded = false; // force a fresh fetch for the new zone/book
-                loadCrAccounts();
+                resetCrAccounts();
             });
         }
     }
