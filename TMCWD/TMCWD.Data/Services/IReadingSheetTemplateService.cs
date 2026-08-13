@@ -8,5 +8,6 @@ namespace TMCWD.Data.Services
         public Task<List<ReadingSheetTemplate>> GetAll();
         public Task<List<ReadingSheetTemplate>> GetByUser(int userId);
         public Task<ReadingSheetTemplate> SaveUpdate(int userId, ReadingSheetTemplate template);
+        public Task<ReadingSheetTemplate> Deactivate(int id, int userId);
     }
 }

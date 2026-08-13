@@ -57,6 +57,17 @@ namespace TMCWD.Data.Controllers
             return Ok(savedTemplate);
         }
 
+        [HttpPut("Deactivate/{id}/{userId}")]
+        public async Task<IActionResult> Deactivate(int id, int userId)
+        {
+            var template = await _service.Deactivate(id, userId);
+
+            if (template == null)
+                return NotFound();
+
+            return Ok(template);
+        }
+
         #endregion
 
     }
