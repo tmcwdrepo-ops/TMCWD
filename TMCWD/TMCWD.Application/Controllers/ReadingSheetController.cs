@@ -324,6 +324,17 @@ namespace TMCWD.Application.Controllers
             return Ok(savedTemplate);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> DeactivateReadingSheetTemplate(int id)
+        {
+            var template = await _readingSheetTemplateTrans.Deactivate(id, _user.User.Id);
+
+            if (template == null)
+                return NotFound();
+
+            return Ok(template);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetReaders()
         {

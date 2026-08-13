@@ -73,6 +73,13 @@ namespace TMCWD.Billing
             return ConvertJsonToReadingSheetTemplate(data);
         }
 
+        public async Task<ReadingSheetTemplate> Deactivate(int id, int userId)
+        {
+            var response = await _service.Client.PutAsync($"api/ReadingSheetTemplate/Deactivate/{id}/{userId}", null);
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return null;
+            return ConvertJsonToReadingSheetTemplate(data);
+        }
         #endregion
 
     }

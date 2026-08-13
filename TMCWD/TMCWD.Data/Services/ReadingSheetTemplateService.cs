@@ -69,6 +69,25 @@ namespace TMCWD.Data.Services
             return template;
         }
 
+        public async Task<ReadingSheetTemplate> Deactivate(int id, int userId)
+        {
+            var template = await _context.ReadingSheetTemplates
+                .Where(x => x.Id == id)
+                .FirstOrDefaultAsync();
+
+            if (template == null)
+                return null;
+
+            template.IsActive = false;
+            template.UpdatedBy = userId;
+            template.DateUpdated = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return template;
+        }
+
+
         #endregion
 
     }
