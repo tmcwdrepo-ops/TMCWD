@@ -10,6 +10,7 @@ namespace TMCWD.Data.Controllers
     public class ReadingSheetController : Controller
     {
         #region fields
+
         private readonly IReadingSheetService _readingSheetService;
 
         #endregion
@@ -84,6 +85,6 @@ namespace TMCWD.Data.Controllers
             return Ok(readingSheet);
         }
 
+        #endregion
     }
 }
-    #endregion

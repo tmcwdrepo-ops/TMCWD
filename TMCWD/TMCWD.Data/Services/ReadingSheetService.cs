@@ -23,7 +23,7 @@ namespace TMCWD.Data.Services
 
         #region methods
 
-        public async Task<ReadingSheet?> Get(int id)
+        public async Task<ReadingSheet> Get(int id)
         {
             var readingSheet = await _context.ReadingSheets
                 .FirstOrDefaultAsync(x => x.Id == id);
@@ -239,7 +239,6 @@ namespace TMCWD.Data.Services
                 .OrderByDescending(x => x.BillingDate)
                 .FirstOrDefaultAsync();
         }
-
         #endregion
     }
 }
