@@ -20,6 +20,7 @@
                 <input type="text" id="ocAccountNumber" class="oc-input"
                        placeholder="e.g. 02-090015" autocomplete="off" />
                 <span class="oc-field-error" id="ocAccountNumberError"></span>
+                <div class="oc-autocomplete-list oc-hidden" id="ocAccountSuggestions"></div>
             </div>
             <div class="oc-field">
                 <label class="oc-label" for="ocAccountName">Account Name</label>
@@ -150,10 +151,19 @@
 
     </div>
 
+    <div class="oc-confirm-overlay oc-hidden" id="ocConfirmOverlay">
+        <div class="oc-confirm-card">
+            <p id="ocConfirmBody">Delete this charge?</p>
+            <div class="oc-confirm-actions">
+                <button type="button" class="btn" id="ocConfirmCancel">Cancel</button>
+                <button type="button" class="btn btn--red" id="ocConfirmOk">Delete</button>
+            </div>
+        </div>
+    </div>
+
 </section>
 
 @section Scripts {
-    <script src="~/js/bill_adjustment.js"></script>
     <script src="~/js/other-charges-sample.js" asp-append-version="true"></script>
     <script src="~/js/other-charges.js" asp-append-version="true"></script>
 }

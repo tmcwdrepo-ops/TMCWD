@@ -18,7 +18,7 @@ namespace TMCWD.Model.Administrator.Interface
 
         public int UpdatedBy { get; set; }
 
-        public DateTime DateUpdated { get; set; }
+        public DateTime? DateUpdated { get; set; }
 
     }
 }

@@ -24,6 +24,6 @@ namespace TMCWD.Model.Administrator
         [DisplayName("Updated By")]
         public int UpdatedBy { get; set; }
         [DisplayName("Date Updated")]
-        public DateTime DateUpdated { get; set; }
+        public DateTime? DateUpdated { get; set; }
     }
 }

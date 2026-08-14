@@ -322,6 +322,73 @@
     }
 }
 
+.oc-hidden {
+    display: none !important;
+}
+
+.oc-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.oc-confirm-card {
+    background: var(--color-surface, #1e2530);
+    padding: 24px;
+    border-radius: 8px;
+    max-width: 360px;
+    width: 90%;
+}
+
+.oc-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.oc-field {
+    position: relative;
+}
+
+.oc-autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--color-surface, #1e2530);
+    border: 1px solid var(--color-border, #333);
+    border-radius: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 50;
+    margin-top: 4px;
+}
+
+.oc-autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: var(--font-size-sm, 13px);
+}
+
+    .oc-autocomplete-item:hover,
+    .oc-autocomplete-item.is-active {
+        background: var(--color-hover, rgba(255,255,255,0.08));
+    }
+
+    .oc-autocomplete-item .oc-ac-number {
+        font-weight: 600;
+    }
+
+    .oc-autocomplete-item .oc-ac-name {
+        color: var(--color-text-faint, #888);
+        font-size: 0.9em;
+    }
+
 @media (max-width: 560px) {
     .oc-account-bar { flex-wrap: wrap; }
     .oc-account-bar .oc-field:nth-child(1),

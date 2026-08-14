@@ -27,7 +27,9 @@ namespace TMCWD.Data.Services
 
         public async Task<List<OtherCharge>> GetByReference(string referenceId)
         {
-            var otherCharges = await _context.OtherCharges.Where(x => x.BillingReferenceId == referenceId).ToListAsync();
+            var otherCharges = await _context.OtherCharges
+                .Where(x => x.BillingReferenceId == referenceId && x.IsActive)
+                .ToListAsync();
             return otherCharges;
         }
 
@@ -46,6 +48,20 @@ namespace TMCWD.Data.Services
                 _context.OtherCharges.Add(otherCharge);
             }
 
+            await _context.SaveChangesAsync();
+            return otherCharge;
+        }
+
+        public async Task<OtherCharge> Deactivate(int id, int userId)
+        {
+            var otherCharge = await _context.OtherCharges.Where(x => x.Id == id).FirstOrDefaultAsync();
+            if (otherCharge == null) return null;
+
+            otherCharge.IsActive = false;
+            otherCharge.UpdatedBy = userId;
+            otherCharge.DateUpdated = DateTime.Now;
+
+            _context.OtherCharges.Update(otherCharge);
             await _context.SaveChangesAsync();
             return otherCharge;
         }

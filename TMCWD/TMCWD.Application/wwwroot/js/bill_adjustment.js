@@ -161,7 +161,7 @@
             clearTimeout(debounceTimer);
             if (!q) { acctList.setAttribute("hidden", ""); return; }
             debounceTimer = setTimeout(function () {
-                fetch("/Billing/SearchAccounts?query=" + encodeURIComponent(q))
+                fetch("/Billing/SearchAccounts?q=" + encodeURIComponent(q))
                     .then(function (res) { return res.ok ? res.json() : []; })
                     .then(renderAccountOptions);
             }, 200);

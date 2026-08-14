@@ -18,11 +18,20 @@ namespace TMCWD.Data.Entities
         [Column("Type")]
         public int Type { get; set; }
 
+        [Column("PayableIn")]
+        public string PayableIn { get; set; } = string.Empty;
+
+        [Column("Particulars")]
+        public string Particulars { get; set; } = string.Empty;
+
         [Column("Amount")]
         public decimal Amount { get; set; }
 
         [Column("PaymentStatus")]
         public int PaymentStatus { get; set; }
+
+        [Column("IsActive")]
+        public bool IsActive { get; set; } = true;
 
         [Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }

@@ -17,7 +17,7 @@ builder.Services.AddTransient<RequestTransaction>();
 builder.Services.AddTransient<InventoryTransaction>();
 builder.Services.AddTransient<RecommendationTransaction>();
 builder.Services.AddTransient<MaterialTransaction>();
-builder.Services.AddTransient<OtherFeeTypeTransaction>();
+builder.Services.AddTransient<OtherFeeTypeTransaction>(); 
 builder.Services.AddTransient<FindingTransaction>();
 builder.Services.AddTransient<ApplicationLoginTransaction>();
 builder.Services.AddTransient<JobOrderTransaction>();
@@ -31,6 +31,7 @@ builder.Services.AddTransient<ReadingSheetTransaction>();
 builder.Services.AddTransient<ZoneBookTransaction>();
 builder.Services.AddTransient<ReadingTransaction>();
 builder.Services.AddTransient<ReadingSheetTemplateTransaction>();
+builder.Services.AddTransient<OtherChargeTransaction>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddDistributedMemoryCache();

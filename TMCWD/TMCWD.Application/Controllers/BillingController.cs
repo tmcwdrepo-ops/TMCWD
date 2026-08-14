@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using TMCWD.Administration;
 using TMCWD.Application.Models;
 using TMCWD.Billing;
 using TMCWD.CustomerSupport;
 using TMCWD.Model.Administrator;
-using TMCWD.Services;
-using TMCWD.Model.CustomerSupport;
 using TMCWD.Model.Billing;
 using TMCWD.Model.Billing.Requests;
+using TMCWD.Model.CustomerSupport;
+using TMCWD.Services;
 namespace TMCWD.Application.Controllers
 {
     public class BillingController : Controller
@@ -16,12 +17,15 @@ namespace TMCWD.Application.Controllers
         #region constructors
 
         private readonly AuthenticatedUserService _user;
+        private readonly UserTransaction _userTrans;
         private readonly BillingTransaction _billingTrans;
         private readonly PenaltyTransaction _penaltyTrans;
         private readonly AccountTransaction _accountTrans;
         private readonly ReadingTransaction _readingTrans;
         private readonly ReadingSheetTransaction _readingSheetTrans;
         private readonly CustomerTransaction _customerTrans;
+        private readonly OtherChargeTransaction _otherChargeTrans;
+        private readonly OtherFeeTypeTransaction _otherFeeTypeTrans;
 
         #endregion
 
@@ -32,8 +36,10 @@ namespace TMCWD.Application.Controllers
             PenaltyTransaction penaltyTrans,
             AccountTransaction accountTrans,
             ReadingTransaction readingTrans,
+            CustomerTransaction customerTrans,
             ReadingSheetTransaction readingSheetTrans,
-            CustomerTransaction customerTrans)
+            OtherChargeTransaction otherChargeTrans,
+            OtherFeeTypeTransaction otherFeeTypeTrans, UserTransaction userTrans)
         {
             _user = user;
             _billingTrans = billingTrans;
@@ -42,36 +48,125 @@ namespace TMCWD.Application.Controllers
             _readingTrans = readingTrans;
             _readingSheetTrans = readingSheetTrans;
             _customerTrans = customerTrans;
+            _otherChargeTrans = otherChargeTrans;
+            _otherFeeTypeTrans = otherFeeTypeTrans;
+            _userTrans = userTrans;
         }
 
-        public IActionResult BillAdjustment()
+        public async Task<IActionResult> BillAdjustment()
         {
+            var readers = await _userTrans.GetUsersByRole(UserRole.MeterReader) ?? new List<User>();
+
             var model = new BillAdjustmentViewModel
             {
                 BamDate = DateTime.Today,
-                MeterReaders = new List<SelectListItem>
+                MeterReaders = readers.Select(r => new SelectListItem
                 {
-                    new SelectListItem { Value = "MR001", Text = "Juan Dela Cruz" },
-                    new SelectListItem { Value = "MR002", Text = "Maria Santos" },
-                    new SelectListItem { Value = "MR003", Text = "Pedro Reyes" }
-                },
+                    Value = r.Id.ToString(),
+                    Text = r.Name
+                }).ToList(),
                 RemarksOptions = new List<SelectListItem>
-                {
-                    new SelectListItem { Value = "Meter Error",   Text = "Meter Error" },
-                    new SelectListItem { Value = "Reading Error", Text = "Reading Error" },
-                    new SelectListItem { Value = "System Error",  Text = "System Error" },
-                    new SelectListItem { Value = "Other",         Text = "Other" }
-                },
+        {
+            new SelectListItem { Value = "Meter Error",   Text = "Meter Error" },
+            new SelectListItem { Value = "Reading Error", Text = "Reading Error" },
+            new SelectListItem { Value = "System Error",  Text = "System Error" },
+            new SelectListItem { Value = "Other",         Text = "Other" }
+        },
                 AdjustmentLines = new List<AdjustmentLineItem>
-                {
-                    new AdjustmentLineItem { Key = "usage",       Label = "Usage",        HasAdjustmentColumn = true,  IsChecked = false },
-                    new AdjustmentLineItem { Key = "currentBill", Label = "Current Bill", HasAdjustmentColumn = true,  IsChecked = false },
-                    new AdjustmentLineItem { Key = "penalty",     Label = "Penalty",      HasAdjustmentColumn = true,  IsChecked = false },
-                    new AdjustmentLineItem { Key = "present",     Label = "Present",      HasAdjustmentColumn = false, IsChecked = false },
-                    new AdjustmentLineItem { Key = "previous",    Label = "Previous",     HasAdjustmentColumn = false, IsChecked = false }
-                }
+        {
+            new AdjustmentLineItem { Key = "usage",       Label = "Usage",        HasAdjustmentColumn = true,  IsChecked = false },
+            new AdjustmentLineItem { Key = "currentBill", Label = "Current Bill", HasAdjustmentColumn = true,  IsChecked = false },
+            new AdjustmentLineItem { Key = "penalty",     Label = "Penalty",      HasAdjustmentColumn = true,  IsChecked = false },
+            new AdjustmentLineItem { Key = "present",     Label = "Present",      HasAdjustmentColumn = false, IsChecked = false },
+            new AdjustmentLineItem { Key = "previous",    Label = "Previous",     HasAdjustmentColumn = false, IsChecked = false }
+        }
             };
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> History(string accountNumber)
+        {
+            if (string.IsNullOrWhiteSpace(accountNumber))
+                return BadRequest("Account number is required.");
+
+            var account = await _accountTrans.GetByAccountNumber(accountNumber);
+            if (account == null)
+                return NotFound("Account not found.");
+
+            var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
+            var accountBillings = allBillings
+                .Where(b => b.AccountId == account.Id)
+                .OrderByDescending(b => b.BillingPeriod)
+                .ToList();
+
+            var readings = (await _readingTrans.GetByAccount(account.Id) ?? new List<Model.Billing.Reading>())
+                .OrderBy(r => r.Id)
+                .ToList();
+
+            var result = accountBillings.Select(billing =>
+            {
+                // Prefer an explicit ReadingId link if one exists and is valid.
+                var reading = billing.ReadingId > 0
+                    ? readings.FirstOrDefault(r => r.Id == billing.ReadingId)
+                    : null;
+
+                // Fallback: closest reading recorded on/before the billing period.
+                if (reading == null)
+                {
+                    reading = readings
+                        .Where(r => r.DateCreated <= billing.BillingPeriod)
+                        .OrderByDescending(r => r.DateCreated)
+                        .FirstOrDefault();
+                }
+
+                var present = reading?.CurrentReading ?? 0;
+                var previous = reading?.PreviousReading ?? 0;
+                var usage = Math.Max(0, present - previous);
+
+                return new
+                {
+                    referenceNo = billing.BillingReferenceId,
+                    billingDate = billing.BillingPeriod,
+                    previous,
+                    present,
+                    usage,
+                    amount = billing.TotalBillAmount
+                };
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAsBilledValues(string accountNumber, DateTime billingDate)
+        {
+            if (string.IsNullOrWhiteSpace(accountNumber))
+                return BadRequest("Account number is required.");
+
+            var account = await _accountTrans.GetByAccountNumber(accountNumber);
+            if (account == null)
+                return NotFound("Account not found.");
+
+            var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
+            var billing = allBillings
+                .Where(b => b.AccountId == account.Id && b.BillingPeriod.Date == billingDate.Date)
+                .OrderByDescending(b => b.DateCreated)
+                .FirstOrDefault();
+
+            if (billing == null)
+                return NotFound("No billing record found for this account and date.");
+
+            var penalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.Penalty>();
+            var activePenaltyTotal = penalties
+                .Where(p => p.PaymentStatus != PaymentStatus.Waived)
+                .Sum(p => p.Amount);
+
+            return Ok(new
+            {
+                currentBill = billing.TotalBillAmount,
+                penalty = activePenaltyTotal
+            });
         }
 
         public IActionResult Index() => View();
@@ -185,11 +280,139 @@ namespace TMCWD.Application.Controllers
             return View();
         }
 
-        /// <summary>
-        /// Returns all accounts and their current/previous readings for a given zone and book.
-        /// Used to populate the Present Reading table.
-        /// Returns all accounts for a zone/book with their latest reading (0/0 if none yet).
-        /// </summary>
+
+        [HttpGet]
+        public async Task<IActionResult> GetChargeTypes()
+        {
+            var types = await _otherFeeTypeTrans.GetAll() ?? new List<OtherFeeType>();
+            return Ok(types.Select(t => new { value = t.Id, label = t.Name }));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetOtherChargesByAccount(string accountNumber)
+        {
+            if (string.IsNullOrWhiteSpace(accountNumber))
+                return BadRequest("Account number is required.");
+
+            var account = await _accountTrans.GetByAccountNumber(accountNumber);
+            if (account == null)
+                return NotFound("Account not found.");
+
+            var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
+            var accountBillings = allBillings.Where(b => b.AccountId == account.Id).ToList();
+
+            var result = new List<object>();
+
+            foreach (var billing in accountBillings)
+            {
+                var charges = await _otherChargeTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.OtherCharge>();
+                var activeCharges = charges.Where(c => c.IsActive).ToList();
+
+                foreach (var charge in activeCharges)
+                {
+                    var feeType = await _otherFeeTypeTrans.Get(charge.Type);
+                    result.Add(new
+                    {
+                        id = charge.Id,
+                        description = feeType?.Name ?? "—",
+                        payableIn = charge.PayableIn,
+                        particulars = charge.Particulars,
+                        amount = charge.Amount
+                    });
+                }
+            }
+
+            return Ok(result);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveOtherCharge([FromBody] SaveOtherChargeRequest request)
+        {
+            if (request == null)
+                return BadRequest("Invalid request.");
+
+            if (string.IsNullOrWhiteSpace(request.AccountNumber))
+                return BadRequest("Account number is required.");
+
+            if (request.ChargeType <= 0)
+                return BadRequest("Charge type is required.");
+
+            if (request.Amount <= 0)
+                return BadRequest("Amount must be greater than zero.");
+
+            var account = await _accountTrans.GetByAccountNumber(request.AccountNumber);
+            if (account == null)
+                return NotFound("Account not found.");
+
+            var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
+            var currentBilling = allBillings
+                .Where(b => b.AccountId == account.Id)
+                .OrderByDescending(b => b.DateCreated)
+                .FirstOrDefault();
+
+            if (currentBilling == null)
+            {
+                Console.WriteLine("========== OTHER CHARGE ERROR ==========");
+                Console.WriteLine($"Account Number: {request.AccountNumber}");
+                Console.WriteLine($"Account ID: {account.Id}");
+                Console.WriteLine("No billing record found for this account.");
+                Console.WriteLine("========================================");
+
+                return BadRequest("No billing record found for this account.");
+            }
+
+            var otherCharge = new Model.Billing.OtherCharge
+            {
+                BillingReferenceId = currentBilling.BillingReferenceId,
+                Type = request.ChargeType,
+                Amount = request.Amount,
+                PayableIn = request.PayableIn,
+                Particulars = request.Particulars,
+                PaymentStatus = PaymentStatus.Unpaid,
+                IsActive = true,
+                DateCreated = DateTime.Now,
+                DateUpdated = DateTime.Now
+            };
+
+            Model.Billing.OtherCharge saved;
+            try
+            {
+                saved = await _otherChargeTrans.SaveUpdate(_user.User.Id, otherCharge);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"EXCEPTION calling OtherChargeTransaction.SaveUpdate: {ex.Message} | INNER: {ex.InnerException?.Message}");
+            }
+
+            if (saved == null)
+            {
+                return BadRequest("OtherChargeTransaction.SaveUpdate returned null — the API call to TMCWD.Data likely failed. Check TMCWD.Data is running and reachable.");
+            }
+
+            var feeType = await _otherFeeTypeTrans.Get(request.ChargeType);
+
+            return Ok(new
+            {
+                id = saved.Id,
+                description = feeType?.Name ?? "—",
+                payableIn = saved.PayableIn,
+                particulars = saved.Particulars,
+                amount = saved.Amount
+            });
+        }
+
+       
+
+        [HttpPost]
+        public async Task<IActionResult> DeactivateOtherCharge(int id)
+        {
+            var result = await _otherChargeTrans.Deactivate(id, _user.User.Id);
+            if (result == null)
+                return NotFound();
+
+            return Ok(true);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetReadingsByZoneBook(int zone, int book)
         {
@@ -534,9 +757,6 @@ namespace TMCWD.Application.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// Saves a new present reading for an account.
-        /// </summary>
         [HttpPost]
         public async Task<IActionResult> SaveReading([FromBody] SaveReadingRequest request)
         {
@@ -680,5 +900,3 @@ namespace TMCWD.Application.Controllers
         #endregion
     }
 }
-
-  

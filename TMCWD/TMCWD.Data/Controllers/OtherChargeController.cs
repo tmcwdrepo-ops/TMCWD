@@ -59,10 +59,35 @@ namespace TMCWD.Data.Controllers
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<IActionResult> SaveUpdate(int userId, OtherCharge otherCharge)
         {
-            var savedOtherCharge = await _service.SaveUpdate(userId, otherCharge);
-            return Ok(savedOtherCharge);
+            try
+            {
+                if (otherCharge == null)
+                    return BadRequest("Other charge is required.");
+
+                var savedOtherCharge = await _service.SaveUpdate(userId, otherCharge);
+
+                if (savedOtherCharge == null)
+                    return BadRequest("Failed to save other charge.");
+
+                return Ok(savedOtherCharge);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("========== SAVE OTHER CHARGE ERROR ==========");
+                Console.WriteLine(ex.ToString());
+                Console.WriteLine("=============================================");
+
+                return BadRequest(ex.Message);
+            }
         }
 
+        [HttpPut("Deactivate/{id}/{userId}")]
+        public async Task<IActionResult> Deactivate(int id, int userId)
+        {
+            var otherCharge = await _service.Deactivate(id, userId);
+            if (otherCharge == null) return NotFound();
+            return Ok(otherCharge);
+        }
         #endregion
 
     }

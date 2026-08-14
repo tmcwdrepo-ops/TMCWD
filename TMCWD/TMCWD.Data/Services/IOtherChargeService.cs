@@ -1,4 +1,4 @@
-﻿using TMCWD.Data.Entities;
+﻿    using TMCWD.Data.Entities;
 
 namespace TMCWD.Data.Services
 {
@@ -11,6 +11,8 @@ namespace TMCWD.Data.Services
         public Task<List<OtherCharge>> GetByReference(string referenceId);
 
         public Task<OtherCharge> SaveUpdate(int userId, OtherCharge otherCharge);
+
+        public Task<OtherCharge> Deactivate(int id, int userId);
 
     }
 }
