@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TMCWD.Data.Entities
 {
-    [Table("tariffs")]
-    public class Tariff
+    [Table("water_rates")]
+    public class WaterRate
     {
         [Key]
         [Column("Id")]
-        public long Id { get; set; }
+        public int Id { get; set; }
 
         [Required]
         [Column("Classification")]

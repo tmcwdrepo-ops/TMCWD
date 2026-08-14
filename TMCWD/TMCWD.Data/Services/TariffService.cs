@@ -6,43 +6,35 @@ namespace TMCWD.Data.Services
 {
     public class TariffService : ITariffService
     {
-
-        #region fields
-
         private readonly UserDbContext _context;
 
-        #endregion
-
-        #region constructors
-
-        public TariffService(UserDbContext context) 
-        { 
-            _context = context; 
+        public TariffService(UserDbContext context)
+        {
+            _context = context;
         }
-
-        #endregion
-
-        #region methods
 
         public async Task<Tariff> Get(int id)
         {
-            var tariff = await _context.Tariffs.Where(x => x.Id == id).FirstOrDefaultAsync();
-            return tariff;
+            return await _context.Tariffs
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task<List<Tariff>> GetAll()
         {
-            var tariffs = await _context.Tariffs.ToListAsync();
-            return tariffs;
+            return await _context.Tariffs
+                .OrderBy(x => x.Classification)
+                .ThenBy(x => x.MeterSize)
+                .ToListAsync();
         }
 
         public async Task<List<Tariff>> GetByClassification(int classification)
         {
-            var tariffs = await _context.Tariffs.Where(x => x.Classification == classification).ToListAsync();
-            return tariffs;
+            return await _context.Tariffs
+                .Where(x =>
+                    x.Classification == classification &&
+                    x.IsActive)
+                .OrderBy(x => x.MeterSize)
+                .ToListAsync();
         }
-
-        #endregion
-
     }
 }

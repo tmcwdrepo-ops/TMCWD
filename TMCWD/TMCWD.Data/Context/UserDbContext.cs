@@ -71,6 +71,8 @@ namespace TMCWD.Data.Context
 
         public DbSet<Tariff> Tariffs { get; set; }
 
+        public DbSet<WaterRate> WaterRates { get; set; }
+
         public DbSet<ZoneBook> ZoneBooks { get; set; }
 
         public DbSet<ReadingSheetTemplate> ReadingSheetTemplates { get; set; }
@@ -90,6 +92,50 @@ namespace TMCWD.Data.Context
         #endregion
 
         #region methods
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<WaterRate>(entity =>
+            {
+                entity.ToTable("water_rates");
+
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Classification)
+                    .HasConversion<int>();
+
+                entity.Property(e => e.MeterSize)
+                    .HasPrecision(4, 2);
+
+                entity.Property(e => e.MinimumCharge)
+                    .HasPrecision(12, 2);
+
+                entity.Property(e => e.Rate11To20)
+                    .HasPrecision(12, 2);
+
+                entity.Property(e => e.Rate21To30)
+                    .HasPrecision(12, 2);
+
+                entity.Property(e => e.Rate31To40)
+                    .HasPrecision(12, 2);
+
+                entity.Property(e => e.Rate41Up)
+                    .HasPrecision(12, 2);
+
+                entity.Property(e => e.EffectiveDate)
+                    .IsRequired();
+
+                entity.Property(e => e.IsActive)
+                    .IsRequired();
+
+                entity.Property(e => e.DateCreated)
+                    .IsRequired();
+
+                entity.Property(e => e.DateUpdated)
+                    .IsRequired();
+            });
+        }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

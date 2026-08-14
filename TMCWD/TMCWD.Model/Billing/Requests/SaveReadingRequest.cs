@@ -16,6 +16,7 @@ namespace TMCWD.Model.Billing.Requests
             public int Zone { get; set; }
             public int Book { get; set; }
             public DateTime BillingDate { get; set; }
+            public DateTime ReadingDate { get; set; }
             public int ReaderId { get; set; }
         }
     }

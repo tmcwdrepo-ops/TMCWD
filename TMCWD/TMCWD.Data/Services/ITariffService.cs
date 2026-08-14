@@ -4,14 +4,10 @@ namespace TMCWD.Data.Services
 {
     public interface ITariffService
     {
-        #region members
+        Task<Tariff> Get(int id);
 
-        public Task<Tariff> Get(int id);
+        Task<List<Tariff>> GetAll();
 
-        public Task<List<Tariff>> GetAll();
-
-        public Task<List<Tariff>> GetByClassification(int classification);
-
-        #endregion
+        Task<List<Tariff>> GetByClassification(int classification);
     }
 }

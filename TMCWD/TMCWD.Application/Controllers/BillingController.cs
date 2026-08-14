@@ -9,6 +9,7 @@ using TMCWD.Model.Billing;
 using TMCWD.Model.Billing.Requests;
 using TMCWD.Model.CustomerSupport;
 using TMCWD.Services;
+
 namespace TMCWD.Application.Controllers
 {
     public class BillingController : Controller
@@ -26,7 +27,7 @@ namespace TMCWD.Application.Controllers
         private readonly CustomerTransaction _customerTrans;
         private readonly OtherChargeTransaction _otherChargeTrans;
         private readonly OtherFeeTypeTransaction _otherFeeTypeTrans;
-
+        private readonly WaterRateTransaction _waterRateTrans;
         #endregion
 
         #region methods
@@ -39,7 +40,9 @@ namespace TMCWD.Application.Controllers
             CustomerTransaction customerTrans,
             ReadingSheetTransaction readingSheetTrans,
             OtherChargeTransaction otherChargeTrans,
-            OtherFeeTypeTransaction otherFeeTypeTrans, UserTransaction userTrans)
+            OtherFeeTypeTransaction otherFeeTypeTrans,
+            UserTransaction userTrans,
+            WaterRateTransaction waterRateTrans)
         {
             _user = user;
             _billingTrans = billingTrans;
@@ -51,6 +54,7 @@ namespace TMCWD.Application.Controllers
             _otherChargeTrans = otherChargeTrans;
             _otherFeeTypeTrans = otherFeeTypeTrans;
             _userTrans = userTrans;
+            _waterRateTrans = waterRateTrans;
         }
 
         public async Task<IActionResult> BillAdjustment()
@@ -435,18 +439,29 @@ namespace TMCWD.Application.Controllers
                 .GroupBy(r => r.AccountId)
                 .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.Id).First());
 
-            var result = accounts.Select(account =>
+            var result = new List<PresentReadingViewModel>();
+
+            foreach (var account in accounts)
             {
                 latestReading.TryGetValue(account.Id, out var reading);
 
                 var present = reading?.CurrentReading ?? 0;
                 var previous = reading?.PreviousReading ?? 0;
-                var usage = Math.Max(0, present - previous);
-                // Charge is based on the present reading value (current meter reading)
-                // WaterMeterMaintenanceFee only added when a reading has actually been recorded
-                var amount = reading != null ? ComputeWaterCharge((int)previous, (int)present, account.Classification, account.MeterSize > 0 ? account.MeterSize : 0.5m) : 0;
 
-                return new PresentReadingViewModel
+                decimal amount = 0;
+
+                if (reading != null)
+                {
+                    amount = await ComputeWaterCharge(
+                        (int)previous,
+                        (int)present,
+                        account.Classification,
+                        account.MeterSize > 0
+                            ? account.MeterSize
+                            : 0.5m);
+                }
+
+                result.Add(new PresentReadingViewModel
                 {
                     ReadingId = reading?.Id ?? 0,
                     AccountId = account.Id,
@@ -459,172 +474,75 @@ namespace TMCWD.Application.Controllers
                     PreviousReading = previous,
                     Amount = amount,
                     MeterSize = account.MeterSize
-                };
-            }).ToList();
+                });
+            }
 
             return Ok(result);
         }
 
-        #region Water Charge Computation
+        #region Water Charge Computation 
 
-        // â”€â”€ Tier boundary constants (shared across all classifications) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        private const int TierCap0 = 10;
-        private const int TierCap1 = 20;
-        private const int TierCap2 = 30;
-        private const int TierCap3 = 40;
-
-        /// <summary>
-        /// Holds the per-cu.m tier rates for a classification group.
-        /// Minimum charge is NOT stored here â€” it is size-dependent and
-        /// looked up separately from <see cref="MinChargeByClassAndSize"/>.
-        /// </summary>
-        private readonly struct WaterRateSet
-        {
-            public readonly decimal Rate1, Rate2, Rate3, Rate4;
-            public WaterRateSet(decimal r1, decimal r2, decimal r3, decimal r4)
-                => (Rate1, Rate2, Rate3, Rate4) = (r1, r2, r3, r4);
-        }
-
-        // â”€â”€ Per-cu.m tier rates keyed by classification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        private static readonly Dictionary<AccountClassification, WaterRateSet> RateByClassification = new()
-        {
-            { AccountClassification.Residential, new(18.25m, 19.55m, 20.90m, 23.50m) },
-            { AccountClassification.Government,  new(18.25m, 19.55m, 20.90m, 23.50m) },
-            { AccountClassification.Commercial,  new(36.50m, 39.10m, 41.80m, 47.00m) },
-            { AccountClassification.Industrial,  new(36.50m, 39.10m, 41.80m, 47.00m) },
-            { AccountClassification.CommercialA, new(31.90m, 34.20m, 36.55m, 41.10m) },
-            { AccountClassification.CommercialB, new(27.35m, 29.30m, 31.35m, 35.25m) },
-            { AccountClassification.CommercialC, new(22.80m, 24.40m, 26.10m, 29.35m) },
-            { AccountClassification.Wholesale,   new(54.75m, 58.65m, 62.70m, 70.50m) },
-            { AccountClassification.Bulk,        new(54.75m, 58.65m, 62.70m, 70.50m) },
-        };
-
-        // â”€â”€ Minimum charge keyed by (classification, meterSize) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        // meterSize decimal values: 0.5=Â½", 0.75=Â¾", 1.0=1", 1.5=1Â½", 2.0=2", 3.0=3", 4.0=4"
-        private static readonly Dictionary<(AccountClassification, decimal), decimal> MinChargeByClassAndSize = new()
-        {
-            // Residential / Government â€” same minimum charges per the official rate schedule
-            { (AccountClassification.Residential, 0.50m),   170.00m }, { (AccountClassification.Government, 0.50m),   170.00m },
-            { (AccountClassification.Residential, 0.75m),   272.00m }, { (AccountClassification.Government, 0.75m),   272.00m },
-            { (AccountClassification.Residential, 1.00m),   544.00m }, { (AccountClassification.Government, 1.00m),   544.00m },
-            { (AccountClassification.Residential, 1.50m), 1_360.00m }, { (AccountClassification.Government, 1.50m), 1_360.00m },
-            { (AccountClassification.Residential, 2.00m), 3_400.00m }, { (AccountClassification.Government, 2.00m), 3_400.00m },
-            { (AccountClassification.Residential, 3.00m), 6_120.00m }, { (AccountClassification.Government, 3.00m), 6_120.00m },
-            { (AccountClassification.Residential, 4.00m),12_240.00m }, { (AccountClassification.Government, 4.00m),12_240.00m },
-
-            // Commercial / Industrial
-            { (AccountClassification.Commercial,  0.50m),   340.00m }, { (AccountClassification.Industrial, 0.50m),   340.00m },
-            { (AccountClassification.Commercial,  0.75m),   544.00m }, { (AccountClassification.Industrial, 0.75m),   544.00m },
-            { (AccountClassification.Commercial,  1.00m), 1_088.00m }, { (AccountClassification.Industrial, 1.00m), 1_088.00m },
-            { (AccountClassification.Commercial,  1.50m), 2_720.00m }, { (AccountClassification.Industrial, 1.50m), 2_720.00m },
-            { (AccountClassification.Commercial,  2.00m), 6_800.00m }, { (AccountClassification.Industrial, 2.00m), 6_800.00m },
-            { (AccountClassification.Commercial,  3.00m),12_240.00m }, { (AccountClassification.Industrial, 3.00m),12_240.00m },
-            { (AccountClassification.Commercial,  4.00m),24_480.00m }, { (AccountClassification.Industrial, 4.00m),24_480.00m },
-
-            // Commercial A
-            { (AccountClassification.CommercialA, 0.50m),   297.50m },
-            { (AccountClassification.CommercialA, 0.75m),   476.00m },
-            { (AccountClassification.CommercialA, 1.00m),   952.00m },
-            { (AccountClassification.CommercialA, 1.50m), 2_380.00m },
-            { (AccountClassification.CommercialA, 2.00m), 5_950.00m },
-            { (AccountClassification.CommercialA, 3.00m),10_710.00m },
-            { (AccountClassification.CommercialA, 4.00m),21_420.00m },
-
-            // Commercial B
-            { (AccountClassification.CommercialB, 0.50m),   255.00m },
-            { (AccountClassification.CommercialB, 0.75m),   408.00m },
-            { (AccountClassification.CommercialB, 1.00m),   816.00m },
-            { (AccountClassification.CommercialB, 1.50m), 2_040.00m },
-            { (AccountClassification.CommercialB, 2.00m), 5_100.00m },
-            { (AccountClassification.CommercialB, 3.00m), 9_180.00m },
-            { (AccountClassification.CommercialB, 4.00m),18_360.00m },
-
-            // Commercial C
-            { (AccountClassification.CommercialC, 0.50m),   212.50m },
-            { (AccountClassification.CommercialC, 0.75m),   340.00m },
-            { (AccountClassification.CommercialC, 1.00m),   680.00m },
-            { (AccountClassification.CommercialC, 1.50m), 1_700.00m },
-            { (AccountClassification.CommercialC, 2.00m), 4_250.00m },
-            { (AccountClassification.CommercialC, 3.00m), 7_650.00m },
-            { (AccountClassification.CommercialC, 4.00m),15_300.00m },
-
-            // Wholesale / Bulk
-            { (AccountClassification.Wholesale,   0.50m),   510.00m }, { (AccountClassification.Bulk, 0.50m),   510.00m },
-            { (AccountClassification.Wholesale,   0.75m),   816.00m }, { (AccountClassification.Bulk, 0.75m),   816.00m },
-            { (AccountClassification.Wholesale,   1.00m), 1_632.00m }, { (AccountClassification.Bulk, 1.00m), 1_632.00m },
-            { (AccountClassification.Wholesale,   1.50m), 4_080.00m }, { (AccountClassification.Bulk, 1.50m), 4_080.00m },
-            { (AccountClassification.Wholesale,   2.00m),10_200.00m }, { (AccountClassification.Bulk, 2.00m),10_200.00m },
-            { (AccountClassification.Wholesale,   3.00m),18_360.00m }, { (AccountClassification.Bulk, 3.00m),18_360.00m },
-            { (AccountClassification.Wholesale,   4.00m),36_720.00m }, { (AccountClassification.Bulk, 4.00m),36_720.00m },
-        };
-
-        // Flat fee applied to every bill regardless of classification, size, or usage
         private const decimal WaterMeterMaintenanceFee = 20.00m;
-
-        /// <summary>
-        /// Overload for call sites that have a single reading value (present reading as usage basis)
-        /// and meter size, without a separate previous reading.
-        /// </summary>
-        private static decimal ComputeWaterCharge(int presentReading, AccountClassification classification, decimal meterSize)
-            => ComputeWaterCharge(0, presentReading, classification, meterSize);
-
-        /// <summary>
-        /// Computes the water bill from meter readings, classification, and meter size.
-        /// Minimum charge is looked up from the (classification, meterSize) table.
-        /// Per-cu.m tier rates are looked up from the classification table.
-        /// </summary>
-        /// <param name="previousReading">The previous meter reading.</param>
-        /// <param name="presentReading">The current meter reading.</param>
-        /// <param name="classification">Account classification that determines tier rates.</param>
-        /// <param name="meterSize">Meter size in inches as decimal (0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0).</param>
-        /// <returns>
-        /// Total peso amount due, or -1 if presentReading &lt; previousReading (meter rollover).
-        /// </returns>
-        /// <exception cref="InvalidOperationException">
-        /// Thrown if (classification, meterSize) is not found in the rate table.
-        /// </exception>
-        private static decimal ComputeWaterCharge(
-            int previousReading,
-            int presentReading,
-            AccountClassification classification,
-            decimal meterSize)
+            private async Task<decimal> ComputeWaterCharge(
+    int previousReading,
+    int presentReading,
+    AccountClassification classification,
+    decimal meterSize)
         {
             if (presentReading < previousReading)
-                return -1; // meter rollover â€” flag for manual review
+                return -1;
 
-            if (!MinChargeByClassAndSize.TryGetValue((classification, meterSize), out var minCharge))
+            var rate = await _waterRateTrans.GetByClassificationAndMeterSize(
+                classification,
+                meterSize);
+
+            if (rate == null)
+            {
                 throw new InvalidOperationException(
-                    $"No minimum charge defined for classification '{classification}' with meter size {meterSize}\". " +
-                    $"Valid sizes are: 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0.");
+                    $"No active water rate found for " +
+                    $"classification '{classification}' " +
+                    $"and meter size {meterSize}.");
+            }
 
             int usage = presentReading - previousReading;
 
-            // Fee applies whenever a reading is taken â€” even if usage is 0
-            if (usage <= 0) return WaterMeterMaintenanceFee;
+            decimal total;
 
-            var rates = RateByClassification.TryGetValue(classification, out var r)
-                ? r
-                : throw new InvalidOperationException($"No tier rates defined for classification '{classification}'.");
+            if (usage <= 10)
+            {
+                total = rate.MinimumCharge;
+            }
+            else if (usage <= 20)
+            {
+                total = rate.MinimumCharge
+                      + ((usage - 10) * rate.Rate11To20);
+            }
+            else if (usage <= 30)
+            {
+                total = rate.MinimumCharge
+                      + (10 * rate.Rate11To20)
+                      + ((usage - 20) * rate.Rate21To30);
+            }
+            else if (usage <= 40)
+            {
+                total = rate.MinimumCharge
+                      + (10 * rate.Rate11To20)
+                      + (10 * rate.Rate21To30)
+                      + ((usage - 30) * rate.Rate31To40);
+            }
+            else
+            {
+                total = rate.MinimumCharge
+                      + (10 * rate.Rate11To20)
+                      + (10 * rate.Rate21To30)
+                      + (10 * rate.Rate31To40)
+                      + ((usage - 40) * rate.Rate41Up);
+            }
 
-            // Tier 0: 1â€“10 cu.m â†’ flat minimum charge only
-            decimal total = minCharge;
-            if (usage <= TierCap0) return total + WaterMeterMaintenanceFee;
+            // Always charged
+            total += WaterMeterMaintenanceFee;
 
-            // Tier 1: 11â€“20 cu.m
-            int t1 = Math.Min(usage, TierCap1) - TierCap0; total += t1 * rates.Rate1;
-            if (usage <= TierCap1) return total + WaterMeterMaintenanceFee;
-
-            // Tier 2: 21â€“30 cu.m
-            int t2 = Math.Min(usage, TierCap2) - TierCap1; total += t2 * rates.Rate2;
-            if (usage <= TierCap2) return total + WaterMeterMaintenanceFee;
-
-            // Tier 3: 31â€“40 cu.m
-            int t3 = Math.Min(usage, TierCap3) - TierCap2; total += t3 * rates.Rate3;
-            if (usage <= TierCap3) return total + WaterMeterMaintenanceFee;
-
-            // Tier 4: 41+ cu.m â€” no cap
-            int t4 = usage - TierCap3; total += t4 * rates.Rate4;
-            return total + WaterMeterMaintenanceFee;
+            return total;
         }
 
         #endregion
@@ -649,18 +567,36 @@ namespace TMCWD.Application.Controllers
             var readingTasks = accounts.Select(a => _readingTrans.GetByAccount(a.Id));
             var allReadings = await Task.WhenAll(readingTasks);
 
-            var result = accounts.Select((account, i) =>
+            var result = new List<object>();
+
+            for (int i = 0; i < accounts.Count; i++)
             {
+                var account = accounts[i];
                 var readings = allReadings[i];
-                var current = readings?.OrderByDescending(r => r.Id).FirstOrDefault();
-                var previous = readings?.OrderByDescending(r => r.Id).Skip(1).FirstOrDefault();
+
+                var current = readings?
+                    .OrderByDescending(r => r.Id)
+                    .FirstOrDefault();
 
                 var present = current?.CurrentReading ?? 0;
                 var previousVal = current?.PreviousReading ?? 0;
-                var usage = Math.Max(0, present - previousVal);
-                var amount = ComputeWaterCharge((int)previousVal, (int)present, account.Classification, account.MeterSize > 0 ? account.MeterSize : 0.5m);
 
-                return new
+                decimal amount = 0;
+
+                if (current != null)
+                {
+                    amount = await ComputeWaterCharge(
+                        (int)previousVal,
+                        (int)present,
+                        account.Classification,
+                        account.MeterSize > 0
+                            ? account.MeterSize
+                            : 0.5m);
+                }
+
+                var usage = Math.Max(0, present - previousVal);
+
+                result.Add(new
                 {
                     accountId = account.Id,
                     accountNumber = account.AccountNumber,
@@ -673,8 +609,8 @@ namespace TMCWD.Application.Controllers
                     previousReading = previousVal,
                     usage,
                     amount
-                };
-            }).ToList<object>();
+                });
+            }
 
             return Ok(result);
         }
@@ -701,8 +637,17 @@ namespace TMCWD.Application.Controllers
             var result = new List<PresentReadingViewModel>();
             foreach (var reading in readings)
             {
-                var usage = Math.Max(0, reading.CurrentReading - reading.PreviousReading);
-                var amount = ComputeWaterCharge((int)reading.PreviousReading, (int)reading.CurrentReading, account.Classification, account.MeterSize > 0 ? account.MeterSize : 0.5m);
+                var usage = Math.Max(
+                    0,
+                    reading.CurrentReading - reading.PreviousReading);
+
+                var amount = await ComputeWaterCharge(
+                    (int)reading.PreviousReading,
+                    (int)reading.CurrentReading,
+                    account.Classification,
+                    account.MeterSize > 0
+                        ? account.MeterSize
+                        : 0.5m);
 
                 result.Add(new PresentReadingViewModel
                 {
@@ -758,10 +703,14 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost]
+        [HttpPost]
         public async Task<IActionResult> SaveReading([FromBody] SaveReadingRequest request)
         {
             try
             {
+                if (request == null)
+                    return BadRequest("Invalid request.");
+
                 if (string.IsNullOrWhiteSpace(request.AccountNumber))
                     return BadRequest("Account number is required.");
 
@@ -771,96 +720,145 @@ namespace TMCWD.Application.Controllers
                 if (request.Zone <= 0 || request.Book <= 0)
                     return BadRequest("Zone and book are required.");
 
-                // Get account by account number
+                if (request.ReadingDate.Date >= request.BillingDate.Date)
+                    return BadRequest(
+                        "Billing date must be after the reading date.");
+
+                // ============================================================
+                // 1. GET ACCOUNT
+                // ============================================================
+
                 var account = await _accountTrans.GetByAccountNumber(request.AccountNumber);
+
                 if (account == null)
                     return NotFound("Account not found.");
 
-                // Find the most recent InProgress reading sheet for this zone and book.
-                // Using GetByZoneAndBook so we reuse whatever sheet already exists rather
-                // than creating a new one every time the billing date doesn't match exactly.
-                var existingSheets = await _readingSheetTrans.GetByZoneAndBook(request.Zone, request.Book);
+                // ============================================================
+                // 2. GET EXISTING READING SHEET
+                // ============================================================
+
+                var existingSheets =
+                    await _readingSheetTrans.GetByZoneAndBook(request.Zone, request.Book);
+
                 var readingSheet = existingSheets?
                     .Where(s => s.Status == ReadingStatus.InProgress)
                     .OrderByDescending(s => s.BillingDate)
                     .FirstOrDefault();
 
+                // ============================================================
+                // 3. CREATE READING SHEET IF NONE EXISTS
+                // ============================================================
+
                 if (readingSheet == null)
                 {
-                    // No active sheet â€” create one
                     var billingDate = request.BillingDate.Date;
+
                     readingSheet = new TMCWD.Model.Billing.ReadingSheet
                     {
                         ZoneBookId = account.ZoneBookId,
                         BillingDate = billingDate,
                         DueDate = billingDate.AddDays(15),
                         Status = ReadingStatus.InProgress,
-                        AssignedTo = request.ReaderId > 0 ? request.ReaderId : 0
+                        AssignedTo = request.ReaderId > 0
+                            ? request.ReaderId
+                            : 0
                     };
-                    readingSheet = await _readingSheetTrans.SaveUpdate(_user.User.Id, readingSheet);
+
+                    readingSheet =
+                        await _readingSheetTrans.SaveUpdate(
+                            _user.User.Id,
+                            readingSheet);
 
                     if (readingSheet == null)
-                        return StatusCode(500, "Failed to create reading sheet.");
+                        return StatusCode(
+                            500,
+                            "Failed to create reading sheet.");
                 }
 
-                // Check if a reading already exists for this account in this reading sheet.
-                // Search directly by AccountId to avoid misses caused by sheet ID mismatches.
-                var accountReadings = await _readingTrans.GetByAccount(account.Id);
-                var existingReading = accountReadings?
-                    .Where(r => r.ReadingSheetId == readingSheet.Id)
+                // ============================================================
+                // 4. GET THE LATEST READING
+                // ============================================================
+                //
+                // DO NOT UPDATE IT.
+                //
+                // Its CurrentReading will become the PreviousReading
+                // of the NEW record.
+                //
+
+                var accountReadings =
+                    await _readingTrans.GetByAccount(account.Id);
+
+                var latestReading = accountReadings?
                     .OrderByDescending(r => r.Id)
-                    .FirstOrDefault()
-                    // Fallback: if no reading exists in the current sheet, take the most recent
-                    // reading for this account across any sheet so we can update it instead of
-                    // inserting yet another duplicate.
-                    ?? accountReadings?.OrderByDescending(r => r.Id).FirstOrDefault();
+                    .FirstOrDefault();
 
-                TMCWD.Model.Billing.Reading reading;
+                decimal previousReading =
+                    latestReading?.CurrentReading ?? 0;
 
-                if (existingReading != null)
+                // ============================================================
+                // 5. DEBUG
+                // ============================================================
+
+                Console.WriteLine("========== SAVE READING ==========");
+                Console.WriteLine($"Account ID       : {account.Id}");
+                Console.WriteLine($"Account Number   : {account.AccountNumber}");
+                Console.WriteLine($"Reading Sheet ID : {readingSheet.Id}");
+                Console.WriteLine($"Latest Reading ID: {latestReading?.Id.ToString() ?? "NONE"}");
+                Console.WriteLine($"Previous Reading : {previousReading}");
+                Console.WriteLine($"New Reading      : {request.PresentReading}");
+                Console.WriteLine("Action            : INSERT NEW READING");
+                Console.WriteLine("==================================");
+
+                // ============================================================
+                // 6. CREATE A BRAND-NEW READING
+                // ============================================================
+
+                var reading = new TMCWD.Model.Billing.Reading
                 {
-                    // Update existing reading â€” shift current reading to previous before
-                    // writing the new present reading value.
-                    var fullExisting = await _readingTrans.Get(existingReading.Id);
-                    if (fullExisting != null)
-                    {
-                        fullExisting.ReadingSheetId = readingSheet.Id;
-                        fullExisting.PreviousReading = fullExisting.CurrentReading; // old present â†’ previous
-                        fullExisting.CurrentReading = request.PresentReading;      // new value
-                        fullExisting.Status = ReadingStatus.InProgress;
-                        fullExisting.IsCompleted = false;
-                        reading = fullExisting;
-                    }
-                    else
-                    {
-                        return NotFound("Existing reading not found.");
-                    }
-                }
-                else
-                {
-                    // First reading for this account â€” previous reading starts at 0
-                    reading = new TMCWD.Model.Billing.Reading
-                    {
-                        AccountId = account.Id,
-                        ReadingSheetId = readingSheet.Id,
-                        CurrentReading = request.PresentReading,
-                        PreviousReading = 0,
-                        Status = ReadingStatus.InProgress,
-                        IsCompleted = false
-                    };
-                }
+                    AccountId = account.Id,
 
-                // Save through ReadingTransaction
-                var savedReading = await _readingTrans.SaveUpdate(_user.User.Id, reading);
+                    ReadingSheetId = readingSheet.Id,
+
+                    // Previous reading comes from the latest record
+                    PreviousReading = previousReading,
+
+                    // New value entered by the meter reader
+                    CurrentReading = request.PresentReading,
+
+                    Status = ReadingStatus.InProgress,
+
+                    IsCompleted = false
+                };
+
+                // ============================================================
+                // 7. SAVE NEW READING
+                // ============================================================
+
+                var savedReading =
+                    await _readingTrans.SaveUpdate(
+                        _user.User.Id,
+                        reading);
 
                 if (savedReading == null)
-                    return StatusCode(500, "Failed to save reading.");
+                    return StatusCode(
+                        500,
+                        "Failed to save reading.");
+
+                // ============================================================
+                // 8. RETURN SUCCESS
+                // ============================================================
 
                 return Ok(savedReading);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error saving reading: {ex.Message}");
+                Console.WriteLine("========== SAVE READING ERROR ==========");
+                Console.WriteLine(ex);
+                Console.WriteLine("========================================");
+
+                return StatusCode(
+                    500,
+                    $"Error saving reading: {ex.Message}");
             }
         }
 

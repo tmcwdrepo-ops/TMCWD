@@ -31,6 +31,7 @@
     builder.Services.AddScoped<IRequestFileService, RequestFileService>();
     builder.Services.AddScoped<IBillingService, BillingService>();
     builder.Services.AddScoped<IReadingService, ReadingService>();
+    builder.Services.AddScoped<IWaterRateService, WaterRateService>(); 
     builder.Services.AddScoped<IBillingAdjustmentService, BillingAdjustmentService>();
     builder.Services.AddScoped<IReadingSheetService, ReadingSheetService>();
     

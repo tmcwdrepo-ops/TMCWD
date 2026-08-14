@@ -100,42 +100,104 @@
   }
 
   // ─── Default dates ────────────────────────────────────────────────────────────
-  function initFormDefaults() {
-    const today   = new Date();
-    const dueDate = new Date();
-    dueDate.setDate(today.getDate() + 15);
-    const iso = (d) => d.toISOString().split('T')[0];
+    function initFormDefaults() {
+        const today = new Date();
 
-    const billing  = document.getElementById('billingDate');
-    const due      = document.getElementById('dueDate');
-    const reading  = document.getElementById('readingDate');
+        const iso = (d) => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
 
-    // Billing Date must not be earlier than today
-    if (billing) billing.min = iso(today);
+            return `${year}-${month}-${day}`;
+        };
 
-    if (billing && !billing.value)  billing.value  = iso(today);
-    if (reading && !reading.value)  reading.value  = iso(today);
-    if (due     && !due.value)      due.value      = iso(dueDate);
+        const billing = document.getElementById('billingDate');
+        const due = document.getElementById('dueDate');
+        const reading = document.getElementById('readingDate');
 
-    // Due Date must not be earlier than Billing Date
-    if (due && billing)     due.min     = billing.value || iso(today);
-    // Reading Date must not be earlier than Billing Date
-    if (reading && billing) reading.min = billing.value || iso(today);
+        // ------------------------------------------------------------
+        // Default values
+        // ------------------------------------------------------------
 
-    // When Billing Date changes, update Due Date and Reading Date mins and correct if needed
-    if (billing) {
-      billing.addEventListener('change', function () {
-        if (due) {
-          due.min = this.value;
-          if (due.value < this.value) due.value = this.value;
+        // Reading Date can be any date.
+        // Default to today.
+        if (reading && !reading.value) {
+            reading.value = iso(today);
         }
+
+        // Billing Date defaults to today.
+        if (billing && !billing.value) {
+            billing.value = iso(today);
+        }
+
+        // Due Date = Billing Date + 15 days
+        if (due && billing.value) {
+            const billingDate = new Date(billing.value + 'T00:00:00');
+            billingDate.setDate(billingDate.getDate() + 15);
+
+            due.value = iso(billingDate);
+        }
+
+        // ------------------------------------------------------------
+        // Billing Date must be AFTER Reading Date
+        // ------------------------------------------------------------
+
+        function updateDateRules() {
+            if (!billing || !reading) return;
+
+            if (reading.value) {
+                const readingDate = new Date(reading.value + 'T00:00:00');
+
+                // Billing must be at least 1 day after Reading
+                readingDate.setDate(readingDate.getDate() + 1);
+
+                billing.min = iso(readingDate);
+
+                // If billing is currently invalid, automatically correct it
+                if (
+                    billing.value &&
+                    billing.value < billing.min
+                ) {
+                    billing.value = billing.min;
+                }
+            }
+
+            // ----------------------------------------------------------
+            // Due Date = Billing Date + 15 days
+            // ----------------------------------------------------------
+
+            if (due && billing.value) {
+                const billingDate = new Date(billing.value + 'T00:00:00');
+
+                billingDate.setDate(billingDate.getDate() + 15);
+
+                due.value = iso(billingDate);
+            }
+        }
+
+        // ------------------------------------------------------------
+        // Reading Date changed
+        // ------------------------------------------------------------
+
         if (reading) {
-          reading.min = this.value;
-          if (reading.value < this.value) reading.value = this.value;
+            reading.addEventListener('change', function () {
+                updateDateRules();
+            });
         }
-      });
+
+        // ------------------------------------------------------------
+        // Billing Date changed
+        // ------------------------------------------------------------
+
+        if (billing) {
+            billing.addEventListener('change', function () {
+                updateDateRules();
+            });
+        }
+
+        // Initial validation
+        updateDateRules();
     }
-  }
 
   // ─── Live account search ──────────────────────────────────────────────────────
   function bindAccountSearch() {
