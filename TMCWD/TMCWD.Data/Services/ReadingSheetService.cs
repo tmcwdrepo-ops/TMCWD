@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
-
+using TMCWD.Model.Billing.Responses;
 namespace TMCWD.Data.Services
 {
     public class ReadingSheetService : IReadingSheetService
@@ -238,6 +238,55 @@ namespace TMCWD.Data.Services
                 .Where(x => x.AssignedTo == assignedTo)
                 .OrderByDescending(x => x.BillingDate)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<List<ReadingSheetAccountDto>> GetAccountsForReadingSheet(int readingSheetId)
+        {
+            var currentReadings = await _context.Readings
+                .Where(r => r.ReadingSheetId == readingSheetId)
+                .Join(_context.Accounts,
+                    r => r.AccountId,
+                    a => a.Id,
+                    (r, a) => new { Reading = r, Account = a })
+                .Join(_context.Customers,
+                    ra => ra.Account.CustomerId,
+                    c => c.Id,
+                    (ra, c) => new { ra.Reading, ra.Account, Customer = c })
+                .ToListAsync();
+
+            var result = new List<ReadingSheetAccountDto>();
+
+            foreach (var item in currentReadings)
+            {
+                decimal prev = item.Reading.PreviousReading;
+                decimal pres = item.Reading.CurrentReading;
+                decimal usage = pres - prev;
+
+                var fullName = string.Join(" ", new[]
+                {
+            item.Customer.Firstname,
+            item.Customer.Middlename,
+            item.Customer.Lastname
+        }.Where(n => !string.IsNullOrWhiteSpace(n)));
+
+                result.Add(new ReadingSheetAccountDto
+                {
+                    Name = fullName,
+                    Code = item.Account.AccountNumber,
+                    Number = item.Account.AccountNumber,
+                    Prev = prev,
+                    Pres = pres,
+                    Usage = usage,
+                    Trend = usage > 0 ? "up" : usage < 0 ? "down" : "normal",
+                    Balance = 0,   // TODO: wire to billing table once available
+                    Amount = 0,    // TODO: wire to billing table once available
+                    Total = 0,     // TODO: wire to billing table once available
+                    Status = item.Reading.Status.ToString(),
+                    Category = "normal" // TODO: derive from usage thresholds or billing status once defined
+                });
+            }
+
+            return result;
         }
         #endregion
     }

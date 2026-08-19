@@ -103,6 +103,22 @@ function debounce(fn, delay) {
  *   zone: string, forPosting: number, status: string}>} rows
  * @param {string} [emptyMessage]
  */
+
+function formatShortDate(value) {
+    if (!value) return '—';
+
+    var date = new Date(value);
+
+    if (isNaN(date.getTime())) {
+        return '—';
+    }
+
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+}
 function renderReadingSheetTable(rows, emptyMessage) {
   var tbody = document.getElementById('readingSheetBody');
   if (!tbody) return;
@@ -155,21 +171,7 @@ function renderReadingSheetTable(rows, emptyMessage) {
             zoneStats[r.zone].done += 1;
     });
 
-    function formatShortDate(value) {
-        if (!value) return '—';
-
-        var date = new Date(value);
-
-        if (isNaN(date.getTime())) {
-            return '—';
-        }
-
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
-    }
+    
 
     var html = rows.map(function (row) {
 
@@ -707,109 +709,106 @@ function ensureDrawerExists() {
  *
  * @param {number} id - Row id to view.
  */
-function openViewPanel(id) {
-  var row = readingSheetState.rows.find(function(r) { return r.id === id; });
-  if (!row) return;
+async function openViewPanel(id) {
+    var row = readingSheetState.rows.find(function (r) { return r.id === id; });
+    if (!row) return;
 
-  ensureDrawerExists();
+    ensureDrawerExists();
 
-  var backdrop = document.getElementById('rsdDrawerBackdrop');
-  if (!backdrop) return;
+    var backdrop = document.getElementById('rsdDrawerBackdrop');
+    if (!backdrop) return;
 
-  // Populate header info
-  var billingDateEl = document.getElementById('rsdBillingDate');
-  var meterReaderEl = document.getElementById('rsdMeterReader');
-  var postingEl     = document.getElementById('rsdPostingStatus');
-  var sheetRefEl    = document.getElementById('rsdSheetRef');
+    // Populate header info
+    var billingDateEl = document.getElementById('rsdBillingDate');
+    var dueDateEl = document.getElementById('rsdDueDate');
+    var disconDateEl = document.getElementById('rsdDisconDate');
+    var meterReaderEl = document.getElementById('rsdMeterReader');
+    var postingEl = document.getElementById('rsdPostingStatus');
+    var sheetRefEl = document.getElementById('rsdSheetRef');
 
-  if (billingDateEl) billingDateEl.textContent = row.billingDate;
-  if (meterReaderEl) meterReaderEl.textContent = row.meterReader;
-  if (postingEl)     postingEl.textContent      = row.forPosting + ' of ' + row.forPosting;
-  if (sheetRefEl)    sheetRefEl.textContent      = 'RS-' + String(row.id).padStart(5, '0');
+    if (billingDateEl) billingDateEl.textContent = row.billingDate;
+    if (dueDateEl) dueDateEl.textContent = row.dueDate ? formatShortDate(row.dueDate) : '—';
+    if (disconDateEl) disconDateEl.textContent = row.disconnectionDate ? formatShortDate(row.disconnectionDate) : '—';
+    if (meterReaderEl) meterReaderEl.textContent = row.meterReader;
+    if (postingEl) postingEl.textContent = row.forPosting + ' of ' + row.forPosting;
+    if (sheetRefEl) sheetRefEl.textContent = 'RS-' + String(row.id).padStart(5, '0');
 
-  // Populate sample account rows (replace with real data fetch when available)
-  var tbody = document.getElementById('rsdAccountsTableBody');
-  if (tbody) {
-    tbody.innerHTML = renderSampleAccountRows(row);
-  }
+    // Show the drawer immediately with a loading state
+    var tbody = document.getElementById('rsdAccountsTableBody');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:#9aa4b2;">Loading accounts…</td></tr>';
+    }
 
-  // Reset search and filter
-  var searchInput = document.getElementById('rsdAccountSearch');
-  var filterSelect = document.getElementById('rsdUsageFilter');
-  if (searchInput)  searchInput.value  = '';
-  if (filterSelect) filterSelect.value = 'all';
+    var searchInput = document.getElementById('rsdAccountSearch');
+    var filterSelect = document.getElementById('rsdUsageFilter');
+    if (searchInput) searchInput.value = '';
+    if (filterSelect) filterSelect.value = 'all';
 
-  // Reset no-results state
-  var noResults = document.getElementById('rsdNoResults');
-  if (noResults) noResults.classList.add('hidden');
+    var noResults = document.getElementById('rsdNoResults');
+    if (noResults) noResults.classList.add('hidden');
 
-  backdrop.style.display = 'flex';
-  backdrop.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('rsd-drawer-open');
+    backdrop.style.display = 'flex';
+    backdrop.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('rsd-drawer-open');
 
-  // Focus the close button for accessibility
-  var closeBtn = document.getElementById('rsdCloseBtn');
-  if (closeBtn) closeBtn.focus();
+    var closeBtn = document.getElementById('rsdCloseBtn');
+    if (closeBtn) closeBtn.focus();
+
+    // Fetch real accounts for this reading sheet
+    try {
+        var accounts = await loadDataAsync('/ReadingSheet/GetReadingSheetAccounts?readingSheetId=' + id);
+        if (tbody) tbody.innerHTML = renderAccountRows(accounts);
+    } catch (err) {
+        console.error('[ReadingSheet] Failed to load accounts for sheet', id, err);
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:#9aa4b2;">Failed to load accounts.</td></tr>';
+        }
+    }
 }
 
 /**
- * Build placeholder account rows for the drawer.
- * Replace this with a real fetch to your reading sheet accounts endpoint.
+ * Render account rows fetched from the server for a given reading sheet.
  *
- * @param {Object} row - The reading sheet row.
+ * @param {Array} accounts
  * @returns {string} HTML string of <tr> elements.
  */
-function renderSampleAccountRows(row) {
-  // Placeholder accounts — replace with data from your API/controller
-  var placeholderAccounts = [
-    { name: 'Maria Santos',      code: '03-050001', number: '260700001', prev: 1120, pres: 1198, usage: 78,  trend: 'up',     balance: 120.00, amount: 312.00, total: 432.00,  status: 'For Posting', category: 'normal'   },
-    { name: 'Roberto Reyes',     code: '03-050002', number: '260700002', prev: 840,  pres: 895,  usage: 55,  trend: 'down',   balance: 0.00,   amount: 220.00, total: 220.00,  status: 'Posted',      category: 'normal'   },
-    { name: 'Carlo Mendoza',     code: '03-050003', number: '260700003', prev: 560,  pres: 730,  usage: 170, trend: 'up',     balance: 480.00, amount: 680.00, total: 1160.00, status: 'Abnormal',    category: 'abnormal' },
-    { name: 'Dante Villanueva',  code: '03-050004', number: '260700004', prev: 2200, pres: 2265, usage: 65,  trend: 'normal', balance: 0.00,   amount: 260.00, total: 260.00,  status: 'Posted',      category: 'normal'   },
-    { name: 'Noel Castillo',     code: '03-050005', number: '260700005', prev: 410,  pres: 475,  usage: 65,  trend: 'up',     balance: 95.00,  amount: 260.00, total: 355.00,  status: 'For Posting', category: 'normal'   },
-    { name: 'Rachel Domingo',    code: '03-050006', number: '260700006', prev: 990,  pres: 1045, usage: 55,  trend: 'down',   balance: 0.00,   amount: 220.00, total: 220.00,  status: 'Posted',      category: 'normal'   },
-    { name: 'Samuel Ong',        code: '03-050007', number: '260700007', prev: 310,  pres: 500,  usage: 190, trend: 'up',     balance: 700.00, amount: 760.00, total: 1460.00, status: 'Abnormal',    category: 'abnormal' },
-    { name: 'Teresa Padilla',    code: '03-050008', number: '260700008', prev: 1500, pres: 1558, usage: 58,  trend: 'normal', balance: 0.00,   amount: 232.00, total: 232.00,  status: 'Posted',      category: 'normal'   },
-    { name: 'Eduardo Flores',    code: '03-050009', number: '260700009', prev: 720,  pres: 788,  usage: 68,  trend: 'up',     balance: 140.00, amount: 272.00, total: 412.00,  status: 'For Posting', category: 'remarks'  },
-    { name: 'Ligaya Ramos',      code: '03-050010', number: '260700010', prev: 880,  pres: 910,  usage: 30,  trend: 'down',   balance: 0.00,   amount: 120.00, total: 120.00,  status: 'Posted',      category: 'remarks'  }
-  ];
-
-  if (placeholderAccounts.length === 0) {
-    return '<tr><td colspan="9" style="text-align:center;padding:32px;color:#9aa4b2;">No accounts found for this reading sheet.</td></tr>';
-  }
-
-  return placeholderAccounts.map(function(acct) {
-    var trendIcon = '';
-    if (acct.trend === 'up') {
-      trendIcon = '<svg class="trend-icon trend-up" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
-    } else if (acct.trend === 'down') {
-      trendIcon = '<svg class="trend-icon trend-down" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
+function renderAccountRows(accounts) {
+    if (!accounts || accounts.length === 0) {
+        return '<tr><td colspan="9" style="text-align:center;padding:32px;color:#9aa4b2;">No accounts found for this reading sheet.</td></tr>';
     }
-    var statusClass = 'status-' + acct.status.toLowerCase().replace(/ /g, '-');
-    return (
-      '<tr data-account-name="' + acct.name.toLowerCase() + '"' +
-          ' data-account-number="' + acct.number + '"' +
-          ' data-usage-category="' + acct.category + '">' +
-        '<td class="col-account">' +
-          '<div class="acct-name">' + acct.name + '</div>' +
-          '<div class="acct-code">' + acct.code + '</div>' +
-          '<div class="acct-number">' + acct.number + '</div>' +
-        '</td>' +
-        '<td class="col-num">' + acct.prev.toLocaleString() + '</td>' +
-        '<td class="col-num">' + acct.pres.toLocaleString() + '</td>' +
-        '<td class="col-num usage-cell"><span>' + acct.usage.toLocaleString() + '</span>' + trendIcon + '</td>' +
-        '<td class="col-num">' + acct.balance.toFixed(2) + '</td>' +
-        '<td class="col-num">' + acct.amount.toFixed(2) + '</td>' +
-        '<td class="col-num">' + acct.total.toFixed(2) + '</td>' +
-        '<td class="col-status"><span class="status-text ' + statusClass + '">' + acct.status + '</span></td>' +
-        '<td class="col-action">' +
-          '<button type="button" class="row-print-btn" title="Print account details" aria-label="Print account details">' +
+
+    return accounts.map(function (acct) {
+        var trendIcon = '';
+        if (acct.trend === 'up') {
+            trendIcon = '<svg class="trend-icon trend-up" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
+        } else if (acct.trend === 'down') {
+            trendIcon = '<svg class="trend-icon trend-down" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
+        }
+        var statusClass = 'status-' + (acct.status || '').toLowerCase().replace(/ /g, '-');
+        return (
+            '<tr data-account-name="' + (acct.name || '').toLowerCase() + '"' +
+            ' data-account-number="' + (acct.number || '') + '"' +
+            ' data-usage-category="' + (acct.category || 'normal') + '">' +
+            '<td class="col-account">' +
+            '<div class="acct-name">' + (acct.name || '—') + '</div>' +
+            '<div class="acct-code">' + (acct.code || '') + '</div>' +
+            '<div class="acct-number">' + (acct.number || '') + '</div>' +
+            '</td>' +
+            '<td class="col-num">' + (acct.prev ?? 0).toLocaleString() + '</td>' +
+            '<td class="col-num">' + (acct.pres ?? 0).toLocaleString() + '</td>' +
+            '<td class="col-num usage-cell"><span>' + (acct.usage ?? 0).toLocaleString() + '</span>' + trendIcon + '</td>' +
+            '<td class="col-num">' + (acct.balance ?? 0).toFixed(2) + '</td>' +
+            '<td class="col-num">' + (acct.amount ?? 0).toFixed(2) + '</td>' +
+            '<td class="col-num">' + (acct.total ?? 0).toFixed(2) + '</td>' +
+            '<td class="col-status"><span class="status-text ' + statusClass + '">' + (acct.status || '—') + '</span></td>' +
+            '<td class="col-action">' +
+            '<button type="button" class="row-print-btn" title="Print account details" aria-label="Print account details">' +
             '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>' +
-          '</button>' +
-        '</td>' +
-      '</tr>'
-    );
-  }).join('');
+            '</button>' +
+            '</td>' +
+            '</tr>'
+        );
+    }).join('');
 }
 
 /**
@@ -1751,6 +1750,13 @@ function initReadingSheetPage() {
         // Single delegated click handler for both edit and delete buttons
         tbody.addEventListener('click', function (event) {
             console.log('[ReadingSheet] tbody click detected', event.target);
+
+            // Check for view button
+            var viewBtn = event.target.closest('.action-btn--view');
+            if (viewBtn) {
+                handleViewClick(event);
+                return;
+            }
 
             // Check for edit button first
             var editBtn = event.target.closest('.action-btn--edit');

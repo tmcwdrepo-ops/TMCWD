@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography.X509Certificates;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
-
+using TMCWD.Model.Billing.Responses;
 namespace TMCWD.Data.Controllers
 {
     [ApiController]
@@ -83,6 +83,14 @@ namespace TMCWD.Data.Controllers
             var readingSheet = await _readingSheetService.GetCurrentByAssignedTo(zone, book, assignedTo);
             if(readingSheet == null) return NotFound();
             return Ok(readingSheet);
+        }
+
+        [HttpGet]
+        [Route("GetReadingSheetAccounts")]
+        public async Task<IActionResult> GetReadingSheetAccounts(int readingSheetId)
+        {
+            var accounts = await _readingSheetService.GetAccountsForReadingSheet(readingSheetId);
+            return Ok(accounts);
         }
 
         #endregion

@@ -416,6 +416,17 @@ namespace TMCWD.Application.Controllers
             return readings.Where(x => x.ReadingSheetId == readingSheetId).Count();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetReadingSheetAccounts(int readingSheetId)
+        {
+            var accounts = await _readingSheetTrans.GetReadingSheetAccounts(readingSheetId);
+
+            if (accounts == null)
+                return Ok(new List<object>());
+
+            return Ok(accounts);
+        }
+
         #endregion
 
     }

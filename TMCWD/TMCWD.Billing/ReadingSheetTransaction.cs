@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Xml;
 using TMCWD.Model.Billing;
 using TMCWD.Services;
+using TMCWD.Model.Billing.Responses;
 
 namespace TMCWD.Billing
 {
@@ -169,6 +170,21 @@ namespace TMCWD.Billing
             return ConvertJsonToReadingSheets(data);
         }
 
+
+        public async Task<List<ReadingSheetAccountDto>> GetReadingSheetAccounts(int readingSheetId)
+        {
+            var response = await _webService.Client.GetAsync($"api/ReadingSheet/GetReadingSheetAccounts?readingSheetId={readingSheetId}");
+            var data = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode) return null;
+
+            var serializerOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            return JsonSerializer.Deserialize<List<ReadingSheetAccountDto>>(data, serializerOptions) ?? new();
+        }
         #endregion
 
     }

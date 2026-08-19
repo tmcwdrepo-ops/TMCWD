@@ -1,4 +1,5 @@
 ﻿using TMCWD.Data.Entities;
+using TMCWD.Model.Billing.Responses;
 
 namespace TMCWD.Data.Services
 {
@@ -31,5 +32,6 @@ namespace TMCWD.Data.Services
 
         Task<IEnumerable<ReadingSheet>> UpdateReadingSheetsStatus(IEnumerable<long> ids,int userId,int status);
 
+        Task<List<ReadingSheetAccountDto>> GetAccountsForReadingSheet(int readingSheetId);
     }
 }
