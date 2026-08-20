@@ -99,6 +99,20 @@ namespace TMCWD.Application.Controllers
         public async Task<IActionResult> UpdateReadingSheet(
             [FromBody] ReadingSheet request)
         {
+            // DEBUG: Log what we received
+            try
+            {
+                System.IO.File.AppendAllText(
+                    @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] UpdateReadingSheet - Received request:\n" +
+                    $"  ID: {request?.Id}\n" +
+                    $"  AssignedTo: {request?.AssignedTo}\n" +
+                    $"  Name: {request?.Name}\n" +
+                    $"  Status: {request?.Status}\n"
+                );
+            }
+            catch { }
+
             if (request == null || request.Id <= 0)
                 return BadRequest("Invalid reading sheet.");
 
@@ -107,8 +121,33 @@ namespace TMCWD.Application.Controllers
             if (existing == null)
                 return NotFound("Reading sheet not found.");
 
+            // DEBUG: Log before update
+            try
+            {
+                System.IO.File.AppendAllText(
+                    @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] UpdateReadingSheet - Before update:\n" +
+                    $"  Existing AssignedTo: {existing.AssignedTo}\n" +
+                    $"  New AssignedTo: {request.AssignedTo}\n"
+                );
+            }
+            catch { }
+
+            // Get the meter reader name for updating the Name field
+            var meterReader = await _userTrans.Get((int)request.AssignedTo);
+            var meterReaderName = meterReader?.Name ?? $"User {request.AssignedTo}";
+
+            // Get the zone book for zone information
+            var zoneBook = await _zoneBookTrans.Get(request.ZoneBookId.ToString());
+            var zoneName = zoneBook != null ? $"Zone {zoneBook.Zone}" : "Unknown Zone";
+
+            // Generate the new Name in format: "MM-DD-YYYY - Zone X - Meter Reader Name"
+            var billingDate = request.BillingDate ?? existing.BillingDate ?? DateTime.Now;
+            var formattedDate = billingDate.ToString("MM-dd-yyyy");
+            var newName = $"{formattedDate} - {zoneName} - {meterReaderName}";
+
             // Update the editable fields
-            existing.Name = request.Name;
+            existing.Name = newName;  // Auto-generate name
             existing.BillingDate = request.BillingDate;
             existing.DueDate = request.DueDate;
             existing.DisconnectionDate = request.DisconnectionDate;
@@ -126,6 +165,18 @@ namespace TMCWD.Application.Controllers
                 _user.User.Id,
                 existing
             );
+
+            // DEBUG: Log after save
+            try
+            {
+                System.IO.File.AppendAllText(
+                    @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] UpdateReadingSheet - After save:\n" +
+                    $"  Saved AssignedTo: {saved?.AssignedTo}\n" +
+                    $"  Saved Name: {saved?.Name}\n"
+                );
+            }
+            catch { }
 
             if (saved == null)
                 return BadRequest("Failed to update reading sheet.");

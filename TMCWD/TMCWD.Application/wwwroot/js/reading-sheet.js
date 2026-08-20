@@ -889,7 +889,7 @@ function handleViewClick(event) {
  *
  * @param {number} id - Row id to edit.
  */
-function openEditModal(id) {
+async function openEditModal(id) {
   console.log('[ReadingSheet] openEditModal called with id:', id);
   
   var row = readingSheetState.rows.find(function(r) { return r.id === id; });
@@ -906,29 +906,81 @@ function openEditModal(id) {
     return;
   }
 
-  console.log('[ReadingSheet] Backdrop element found, opening modal');
+  console.log('[ReadingSheet] Backdrop element found, loading meter readers');
+  console.log('[ReadingSheet] Current row assignedTo:', row.assignedTo, 'meterReader:', row.meterReader);
 
-  // Convert display date format "Jul 01, 2025" to input format "yyyy-MM-dd"
-  var isoDate = '';
+  // Load meter readers for the dropdown
   try {
-    var d = new Date(row.billingDate);
-    if (!isNaN(d)) {
-      var year = d.getFullYear();
-      var month = String(d.getMonth() + 1).padStart(2, '0');
-      var day = String(d.getDate()).padStart(2, '0');
-      isoDate = year + '-' + month + '-' + day;
+    var response = await fetch('/ReadingSheet/GetReaders');
+    console.log('[ReadingSheet] GetReaders response status:', response.status);
+    
+    if (response.ok) {
+      var readers = await response.json();
+      console.log('[ReadingSheet] Loaded readers:', readers);
+      
+      var readerSelect = document.getElementById('editMeterReader');
+      console.log('[ReadingSheet] Meter reader select element:', readerSelect);
+      
+      if (readerSelect) {
+        readerSelect.innerHTML = '<option value="">Select meter reader...</option>';
+        
+        // Check if current assigned user is in the readers list
+        var currentUserInList = readers.some(function(r) { return r.id === row.assignedTo; });
+        console.log('[ReadingSheet] Current user in list?', currentUserInList);
+        
+        // If current user is NOT in the list, add them first
+        if (!currentUserInList && row.assignedTo) {
+          console.log('[ReadingSheet] Adding current user to dropdown');
+          var currentOption = document.createElement('option');
+          currentOption.value = row.assignedTo;
+          currentOption.textContent = row.meterReader + ' (Current)';
+          readerSelect.appendChild(currentOption);
+        }
+        
+        // Add all meter readers from the API
+        readers.forEach(function(reader) {
+          var option = document.createElement('option');
+          option.value = reader.id;
+          option.textContent = reader.name;
+          readerSelect.appendChild(option);
+        });
+        
+        console.log('[ReadingSheet] Dropdown populated with', readerSelect.options.length, 'options');
+      } else {
+        console.error('[ReadingSheet] Could not find editMeterReader select element');
+      }
+    } else {
+      console.error('[ReadingSheet] GetReaders failed with status:', response.status);
     }
   } catch (e) {
-    console.error('Date conversion error:', e);
+    console.error('[ReadingSheet] Failed to load meter readers:', e);
+  }
+
+  // Convert raw ISO dates to input format "yyyy-MM-dd"
+  function formatDateForInput(dateStr) {
+    if (!dateStr) return '';
+    try {
+      var d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        var year = d.getFullYear();
+        var month = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        return year + '-' + month + '-' + day;
+      }
+    } catch (e) {
+      console.error('Date conversion error:', e);
+    }
+    return '';
   }
 
   // Populate fields
-  document.getElementById('editRowId').value        = row.id;
-  document.getElementById('editMeterReader').value  = row.meterReader;
-  document.getElementById('editBillingDate').value  = isoDate;
-  document.getElementById('editZone').value         = row.zone;
-  document.getElementById('editForPosting').value   = row.forPosting;
-  document.getElementById('editStatus').value       = row.status;
+  document.getElementById('editRowId').value = row.id;
+  document.getElementById('editMeterReader').value = row.assignedTo;  // Use assignedTo ID
+  document.getElementById('editBillingDate').value = formatDateForInput(row.billingDateRaw);
+  document.getElementById('editDueDate').value = formatDateForInput(row.dueDate);
+  document.getElementById('editDisconnectionDate').value = formatDateForInput(row.disconnectionDate);
+  document.getElementById('editBillingPeriodStart').value = formatDateForInput(row.billingPeriodStart);
+  document.getElementById('editStatus').value = row.status;
 
   backdrop.hidden = false;
   backdrop.setAttribute('aria-hidden', 'false');
@@ -970,18 +1022,15 @@ async function handleEditSave() {
         return;
     }
 
-    var meterReader = document.getElementById('editMeterReader').value.trim();
+    var meterReaderId = parseInt(document.getElementById('editMeterReader').value, 10);
     var billingDateRaw = document.getElementById('editBillingDate').value.trim();
-    var zone = document.getElementById('editZone').value.trim();
-    var forPosting = parseInt(
-        document.getElementById('editForPosting').value,
-        10
-    ) || 0;
-
+    var dueDateRaw = document.getElementById('editDueDate').value.trim();
+    var disconnectionDateRaw = document.getElementById('editDisconnectionDate').value.trim();
+    var billingPeriodStartRaw = document.getElementById('editBillingPeriodStart').value.trim();
     var statusText = document.getElementById('editStatus').value;
 
-    if (!meterReader || !billingDateRaw || !zone) {
-        alert('Please complete all required fields.');
+    if (!meterReaderId || !billingDateRaw) {
+        alert('Please complete all required fields (Meter Reader and Billing Date).');
         return;
     }
 
@@ -1014,11 +1063,12 @@ async function handleEditSave() {
     }
 
     /*
-     * Convert yyyy-MM-dd into an ISO date.
+     * Convert yyyy-MM-dd dates into ISO format.
      */
-    var billingDate = billingDateRaw
-        ? new Date(billingDateRaw).toISOString()
-        : null;
+    var billingDate = billingDateRaw ? new Date(billingDateRaw).toISOString() : null;
+    var dueDate = dueDateRaw ? new Date(dueDateRaw).toISOString() : null;
+    var disconnectionDate = disconnectionDateRaw ? new Date(disconnectionDateRaw).toISOString() : null;
+    var billingPeriodStart = billingPeriodStartRaw ? new Date(billingPeriodStartRaw).toISOString() : null;
 
     /*
      * Build the object expected by the ASP.NET controller.
@@ -1031,12 +1081,11 @@ async function handleEditSave() {
         id: row.id,
         name: row.name || '',
         billingDate: billingDate,
+        dueDate: dueDate,
+        disconnectionDate: disconnectionDate,
+        billingPeriodStart: billingPeriodStart,
 
-        dueDate: row.dueDate || null,
-        disconnectionDate: row.disconnectionDate || null,
-        billingPeriodStart: row.billingPeriodStart || null,
-
-        assignedTo: row.assignedTo,
+        assignedTo: meterReaderId,  // Use the selected meter reader ID
         zoneBookId: row.zoneBookId,
 
         seqFrom: row.seqFrom || null,
@@ -1050,8 +1099,11 @@ async function handleEditSave() {
     };
 
     console.log(
-        '[ReadingSheet] Saving update:',
-        payload
+        '[ReadingSheet] Saving update - Payload details:',
+        '\n  ID:', payload.id,
+        '\n  AssignedTo (meter reader ID):', payload.assignedTo,
+        '\n  Original AssignedTo:', row.assignedTo,
+        '\n  Full payload:', payload
     );
 
     try {
@@ -1601,14 +1653,15 @@ function mapReadingSheetRows(data) {
   }
 
   return data.map(function (sheet) {
-    var billingDate = sheet.billingDate || '';
+    var billingDateRaw = sheet.billingDate || '';
+    var billingDateDisplay = '';
 
-    if (billingDate) {
+    if (billingDateRaw) {
       try {
-        var d = new Date(billingDate);
+        var d = new Date(billingDateRaw);
 
         if (!isNaN(d.getTime())) {
-          billingDate = d.toLocaleDateString('en-US', {
+          billingDateDisplay = d.toLocaleDateString('en-US', {
             month: 'short',
             day: '2-digit',
             year: 'numeric'
@@ -1617,7 +1670,7 @@ function mapReadingSheetRows(data) {
       } catch (e) {
         console.warn(
           '[ReadingSheet] Could not format billing date:',
-          billingDate
+          billingDateRaw
         );
       }
     }
@@ -1631,7 +1684,8 @@ function mapReadingSheetRows(data) {
               sheet.meterReader ||
               String(sheet.assignedTo || '—'),
 
-          billingDate: billingDate,
+          billingDate: billingDateDisplay,
+          billingDateRaw: billingDateRaw,
 
           dueDate: sheet.dueDate || null,
 

@@ -23,6 +23,319 @@
         </div>
     </div>
 
+    <!-- =========================================================
+         DELETE CONFIRMATION MODAL
+    ========================================================== -->
+
+    <div class="modal-backdrop"
+         id="deleteModalBackdrop"
+         hidden
+         aria-hidden="true">
+
+        <div class="modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="deleteModalTitle">
+
+            <div class="modal__icon modal__icon--danger"
+                 aria-hidden="true">
+
+                <svg viewBox="0 0 24 24" fill="none">
+
+                    <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                          stroke-linecap="round"
+                          stroke-linejoin="round" />
+
+                    <path d="M10 11v5M14 11v5"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                          stroke-linecap="round" />
+
+                </svg>
+
+            </div>
+
+            <h2 class="modal__title"
+                id="deleteModalTitle">
+
+                Delete Record
+
+            </h2>
+
+            <p class="modal__body">
+                Are you sure you want to delete this record?
+                This action cannot be undone.
+            </p>
+
+            <div class="modal__actions">
+
+                <button class="btn btn--ghost"
+                        type="button"
+                        id="deleteModalCancel">
+
+                    Cancel
+
+                </button>
+
+                <button class="btn btn--danger"
+                        type="button"
+                        id="deleteModalConfirm">
+
+                    Delete
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         EDIT RECORD MODAL
+    ========================================================== -->
+
+    <div class="modal-backdrop"
+         id="editModalBackdrop"
+         hidden
+         aria-hidden="true">
+
+        <div class="modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="editModalTitle"
+             style="max-width: 500px;">
+
+            <h2 class="modal__title"
+                id="editModalTitle">
+
+                Edit Reading Sheet
+
+            </h2>
+
+            <div class="modal__body"
+                 style="width: 100%; max-width: 100%; text-align: left;">
+
+                <input type="hidden"
+                       id="editRowId" />
+
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+
+                    <!-- Meter Reader -->
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+
+                        <label for="editMeterReader"
+                               style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">
+
+                            Meter Reader
+
+                        </label>
+
+                        <input type="text"
+                               id="editMeterReader"
+                               style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />
+
+                    </div>
+
+
+                    <!-- Billing Date -->
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+
+                        <label for="editBillingDate"
+                               style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">
+
+                            Billing Date
+
+                        </label>
+
+                        <input type="date"
+                               id="editBillingDate"
+                               style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />
+
+                    </div>
+
+
+                    <!-- Zone -->
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+
+                        <label for="editZone"
+                               style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">
+
+                            Zone
+
+                        </label>
+
+                        <input type="text"
+                               id="editZone"
+                               style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />
+
+                    </div>
+
+
+                    <!-- For Posting -->
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+
+                        <label for="editForPosting"
+                               style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">
+
+                            For Posting
+
+                        </label>
+
+                        <input type="number"
+                               id="editForPosting"
+                               style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />
+
+                    </div>
+
+
+                    <!-- Status -->
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+
+                        <label for="editStatus"
+                               style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">
+
+                            Status
+
+                        </label>
+
+                        <select id="editStatus"
+                                style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);">
+
+                            <option value="In-Progress">
+                                In Progress
+                            </option>
+
+                            <option value="Completed">
+                                Completed
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal__actions">
+
+                <button class="btn btn--ghost"
+                        type="button"
+                        id="editModalCancel">
+
+                    Cancel
+
+                </button>
+
+                <button class="btn btn--green"
+                        type="button"
+                        id="editModalSave">
+
+                    Save Changes
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         BULK DELETE CONFIRMATION MODAL
+    ========================================================== -->
+
+    <div class="modal-backdrop"
+         id="bulkDeleteModalBackdrop"
+         hidden
+         aria-hidden="true">
+
+        <div class="modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="bulkDeleteModalTitle">
+
+            <div class="modal__icon modal__icon--danger"
+                 aria-hidden="true">
+
+                <svg viewBox="0 0 24 24"
+                     fill="none">
+
+                    <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                          stroke-linecap="round"
+                          stroke-linejoin="round" />
+
+                    <path d="M10 11v5M14 11v5"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                          stroke-linecap="round" />
+
+                </svg>
+
+            </div>
+
+            <h2 class="modal__title"
+                id="bulkDeleteModalTitle">
+
+                Delete Selected Records
+
+            </h2>
+
+            <p class="modal__body"
+               id="bulkDeleteModalBody">
+
+                You are about to delete
+                <strong id="bulkDeleteCount">0</strong>
+                record(s). This cannot be undone.
+
+            </p>
+
+            <p class="modal__body">
+
+                Type <strong>delete all</strong> to confirm.
+
+            </p>
+
+            <input class="modal__confirm-input"
+                   type="text"
+                   id="bulkDeleteConfirmInput"
+                   placeholder="delete all"
+                   aria-label="Type delete all to confirm"
+                   autocomplete="off"
+                   spellcheck="false" />
+
+            <div class="modal__actions">
+
+                <button class="btn btn--ghost"
+                        type="button"
+                        id="bulkDeleteModalCancel">
+
+                    Cancel
+
+                </button>
+
+                <button class="btn btn--danger"
+                        type="button"
+                        id="bulkDeleteModalConfirm"
+                        disabled>
+
+                    Delete All
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function(event) {
             const accordion = document.getElementById('accordion-collapse-readingsheet');
