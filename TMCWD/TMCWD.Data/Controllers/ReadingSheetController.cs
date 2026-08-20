@@ -131,6 +131,25 @@ namespace TMCWD.Data.Controllers
             return Ok(updatedSheets);
         }
 
+        [HttpPost]
+        [Route("PartialPostReadingSheet")]
+        public async Task<IActionResult> PartialPostReadingSheet(int readingSheetId, int userId)
+        {
+            var postedCount = await _readingSheetService.PartialPost(readingSheetId, userId);
+            return Ok(new { postedCount });
+        }
+
+        [HttpPost]
+        [Route("CompleteReadingSheet")]
+        public async Task<IActionResult> CompleteReadingSheet(int readingSheetId, int userId)
+        {
+            var sheet = await _readingSheetService.CompleteReadingSheet(readingSheetId, userId);
+
+            if (sheet == null)
+                return BadRequest("Cannot complete — some accounts are still pending, or the reading sheet was not found.");
+
+            return Ok(sheet);
+        }
         #endregion
     }
 

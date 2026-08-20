@@ -185,6 +185,34 @@ namespace TMCWD.Billing
 
             return JsonSerializer.Deserialize<List<ReadingSheetAccountDto>>(data, serializerOptions) ?? new();
         }
+
+        public async Task<int> PartialPostReadingSheet(int readingSheetId, int userId)
+        {
+            var response = await _webService.Client.PostAsync(
+                $"api/ReadingSheet/PartialPostReadingSheet?readingSheetId={readingSheetId}&userId={userId}",
+                null);
+
+            if (!response.IsSuccessStatusCode) return -1;
+
+            var data = await response.Content.ReadAsStringAsync();
+            var serializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var result = JsonSerializer.Deserialize<JsonElement>(data, serializerOptions);
+
+            return result.GetProperty("postedCount").GetInt32();
+        }
+
+        public async Task<ReadingSheet> CompleteReadingSheet(int readingSheetId, int userId)
+        {
+            var response = await _webService.Client.PostAsync(
+                $"api/ReadingSheet/CompleteReadingSheet?readingSheetId={readingSheetId}&userId={userId}",
+                null);
+
+            var data = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode) return null;
+
+            return ConvertJsonToReadingSheet(data);
+        }
         #endregion
 
     }

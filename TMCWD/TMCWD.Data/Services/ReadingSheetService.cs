@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 using TMCWD.Model.Billing.Responses;
+
 namespace TMCWD.Data.Services
 {
     public class ReadingSheetService : IReadingSheetService
@@ -9,14 +10,21 @@ namespace TMCWD.Data.Services
         #region fields
 
         private readonly UserDbContext _context;
+        private readonly IBillingService _billingService;
+        private readonly IWaterRateService _waterRateService;
 
         #endregion
 
         #region constructor
 
-        public ReadingSheetService(UserDbContext context)
+        public ReadingSheetService(
+            UserDbContext context,
+            IBillingService billingService,
+            IWaterRateService waterRateService)
         {
             _context = context;
+            _billingService = billingService;
+            _waterRateService = waterRateService;
         }
 
         #endregion
@@ -211,10 +219,10 @@ namespace TMCWD.Data.Services
                 .ToListAsync();
         }
 
-       public async Task<IEnumerable<ReadingSheet>> UpdateReadingSheetsStatus(
-        IEnumerable<long> ids,
-        int userId,
-        int status)
+        public async Task<IEnumerable<ReadingSheet>> UpdateReadingSheetsStatus(
+         IEnumerable<long> ids,
+         int userId,
+         int status)
         {
             var idsList = ids.ToList();
 
@@ -232,102 +240,41 @@ namespace TMCWD.Data.Services
             return sheets;
         }
 
+        public async Task<bool> UpdateZoneProgress(
+    int readingSheetId,
+    int completedCount,
+    int totalCount)
+        {
+            var readingSheet = await _context.ReadingSheets
+                .FirstOrDefaultAsync(x => x.Id == readingSheetId);
+
+            if (readingSheet == null)
+                return false;
+
+            // Prevent invalid progress values
+            if (completedCount < 0)
+                completedCount = 0;
+
+            if (totalCount < 0)
+                totalCount = 0;
+
+            if (completedCount > totalCount)
+                completedCount = totalCount;
+
+            // If your ReadingSheet entity has progress fields,
+            // update them here.
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
         public async Task<ReadingSheet?> GetCurrentByAssignedTo(int assignedTo)
         {
             return await _context.ReadingSheets
                 .Where(x => x.AssignedTo == assignedTo)
                 .OrderByDescending(x => x.BillingDate)
                 .FirstOrDefaultAsync();
-        }
-
-        public async Task<bool> UpdateZoneProgress(int readingSheetId, int completedCount, int totalCount)
-        {
-            // Get all readings for this reading sheet
-            var readings = await _context.Readings
-                .Where(r => r.ReadingSheetId == readingSheetId)
-                .OrderBy(r => r.Id)
-                .ToListAsync();
-
-            if (!readings.Any())
-            {
-                return false;
-            }
-
-            // DEBUG: Log before update
-            try
-            {
-                System.IO.File.AppendAllText(
-                    @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
-                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] UpdateZoneProgress - Sheet {readingSheetId}: Setting {completedCount}/{totalCount}\n"
-                );
-            }
-            catch { }
-
-            // Update the first N readings to Completed, rest to InProgress
-            for (int i = 0; i < readings.Count; i++)
-            {
-                if (i < completedCount)
-                {
-                    readings[i].Status = ReadingStatus.Completed;
-                    readings[i].IsCompleted = true;
-                }
-                else
-                {
-                    readings[i].Status = ReadingStatus.InProgress;
-                    readings[i].IsCompleted = false;
-                }
-            }
-
-            // Check if this sheet is now fully complete
-            var readingSheet = await _context.ReadingSheets
-                .FirstOrDefaultAsync(rs => rs.Id == readingSheetId);
-
-            if (readingSheet != null)
-            {
-                bool allComplete = completedCount >= totalCount;
-                
-                // DEBUG: Log status change
-                try
-                {
-                    System.IO.File.AppendAllText(
-                        @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
-                        $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Sheet {readingSheetId} allComplete={allComplete}, current status={(int)readingSheet.Status}\n"
-                    );
-                }
-                catch { }
-                
-                if (allComplete && readingSheet.Status != ReadingStatus.Completed)
-                {
-                    readingSheet.Status = ReadingStatus.Completed;
-                    
-                    // DEBUG
-                    try
-                    {
-                        System.IO.File.AppendAllText(
-                            @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
-                            $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Setting sheet {readingSheetId} to Completed\n"
-                        );
-                    }
-                    catch { }
-                }
-                else if (!allComplete && readingSheet.Status == ReadingStatus.Completed)
-                {
-                    readingSheet.Status = ReadingStatus.InProgress;
-                    
-                    // DEBUG
-                    try
-                    {
-                        System.IO.File.AppendAllText(
-                            @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
-                            $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Setting sheet {readingSheetId} to InProgress\n"
-                        );
-                    }
-                    catch { }
-                }
-            }
-
-            await _context.SaveChangesAsync();
-            return true;
         }
 
         public async Task<List<ReadingSheetAccountDto>> GetAccountsForReadingSheet(int readingSheetId)
@@ -354,10 +301,10 @@ namespace TMCWD.Data.Services
 
                 var fullName = string.Join(" ", new[]
                 {
-            item.Customer.Firstname,
-            item.Customer.Middlename,
-            item.Customer.Lastname
-        }.Where(n => !string.IsNullOrWhiteSpace(n)));
+                    item.Customer.Firstname,
+                    item.Customer.Middlename,
+                    item.Customer.Lastname
+                }.Where(n => !string.IsNullOrWhiteSpace(n)));
 
                 result.Add(new ReadingSheetAccountDto
                 {
@@ -368,11 +315,11 @@ namespace TMCWD.Data.Services
                     Pres = pres,
                     Usage = usage,
                     Trend = usage > 0 ? "up" : usage < 0 ? "down" : "normal",
-                    Balance = 0,   // TODO: wire to billing table once available
-                    Amount = 0,    // TODO: wire to billing table once available
-                    Total = 0,     // TODO: wire to billing table once available
+                    Balance = 0,
+                    Amount = 0,   // computed in TMCWD.Application
+                    Total = 0,    // computed in TMCWD.Application
                     Status = item.Reading.Status.ToString(),
-                    Category = "normal",// TODO: derive from usage thresholds or billing status once defined
+                    Category = "normal",
                     Classification = (int)item.Account.Classification,
                     MeterSize = item.Account.MeterSize > 0 ? item.Account.MeterSize : 0.5m
                 });
@@ -380,6 +327,147 @@ namespace TMCWD.Data.Services
 
             return result;
         }
+
+        /// <summary>
+        /// Posts every account on this reading sheet that still has a
+        /// pending reading (Created/InProgress) and a real reading entered.
+        /// For each: computes the bill via the tiered water rate, creates
+        /// a Billing record, and marks the Reading as Completed.
+        /// Returns the number of accounts posted.
+        /// </summary>
+        public async Task<int> PartialPost(int readingSheetId, int userId)
+        {
+            var pendingReadings = await _context.Readings
+                .Where(r => r.ReadingSheetId == readingSheetId
+                         && (r.Status == ReadingStatus.Created
+                             || r.Status == ReadingStatus.InProgress)
+                         && r.CurrentReading > 0)
+                .ToListAsync();
+
+            if (!pendingReadings.Any())
+                return 0;
+
+            var accountIds = pendingReadings.Select(r => r.AccountId).Distinct().ToList();
+            var accounts = await _context.Accounts
+                .Where(a => accountIds.Contains(a.Id))
+                .ToListAsync();
+
+            int postedCount = 0;
+
+            foreach (var reading in pendingReadings)
+            {
+                var account = accounts.FirstOrDefault(a => a.Id == reading.AccountId);
+                if (account == null) continue;
+
+                var meterSize = account.MeterSize > 0 ? account.MeterSize : 0.5m;
+
+                var rate = await _waterRateService.GetByClassificationAndMeterSize(
+                    (int)account.Classification,
+                    meterSize);
+
+                if (rate == null)
+                    continue; // no rate configured — skip rather than fail the whole batch
+
+                var amount = ComputeWaterCharge(
+                    (int)reading.PreviousReading,
+                    (int)reading.CurrentReading,
+                    rate);
+
+                if (amount < 0) continue; // present < previous — invalid, skip
+
+                var billing = new Billing
+                {
+                    AccountId = account.Id,
+                    ReadingId = reading.Id,
+                    BillingReferenceId = Guid.NewGuid().ToString("N").Substring(0, 12).ToUpper(),
+                    BillingPeriod = DateTime.Now,
+                    TotalBillAmount = amount,
+                    RemainingAmount = amount,
+                    PaymentStatus = (int)PaymentStatus.Unpaid,
+                    CreatedBy = userId,
+                    DateCreated = DateTime.Now,
+                    UpdatedBy = userId,
+                    DateUpdated = DateTime.Now
+                };
+
+                await _billingService.SaveUpdate(userId, billing);
+
+                reading.Status = ReadingStatus.Completed;
+                reading.UpdatedBy = userId;
+                reading.DateUpdated = DateTime.Now;
+
+                postedCount++;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return postedCount;
+        }
+
+        /// <summary>
+        /// Marks a reading sheet as Completed — only allowed once every
+        /// reading on it has already been posted (no Created/InProgress
+        /// readings remain). Returns null if the sheet doesn't exist or
+        /// still has pending readings.
+        /// </summary>
+        public async Task<ReadingSheet> CompleteReadingSheet(int readingSheetId, int userId)
+        {
+            var sheet = await _context.ReadingSheets
+                .FirstOrDefaultAsync(x => x.Id == readingSheetId);
+
+            if (sheet == null)
+                return null;
+
+            var pendingCount = await _context.Readings
+                .Where(r => r.ReadingSheetId == readingSheetId
+                         && (r.Status == ReadingStatus.Created
+                             || r.Status == ReadingStatus.InProgress))
+                .CountAsync();
+
+            if (pendingCount > 0)
+                return null; // caller should treat null as "cannot complete yet"
+
+            sheet.Status = ReadingStatus.Completed;
+            sheet.DateUpload = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return sheet;
+        }
+
+        /// <summary>
+        /// Pure tiered water-rate calculation. Duplicated from
+        /// TMCWD.Billing.WaterChargeCalculator by necessity — that class
+        /// works against TMCWD.Model.Billing.WaterRate via an HTTP
+        /// transaction, while this runs directly against the DB-backed
+        /// TMCWD.Data.Entities.WaterRate. Keep both in sync if the rate
+        /// formula ever changes.
+        /// </summary>
+        private static decimal ComputeWaterCharge(
+            int previousReading,
+            int presentReading,
+            WaterRate rate)
+        {
+            if (presentReading < previousReading) return -1;
+
+            int usage = presentReading - previousReading;
+            const decimal WaterMeterMaintenanceFee = 20.00m;
+            decimal total;
+
+            if (usage <= 10)
+                total = rate.MinimumCharge;
+            else if (usage <= 20)
+                total = rate.MinimumCharge + ((usage - 10) * rate.Rate11To20);
+            else if (usage <= 30)
+                total = rate.MinimumCharge + (10 * rate.Rate11To20) + ((usage - 20) * rate.Rate21To30);
+            else if (usage <= 40)
+                total = rate.MinimumCharge + (10 * rate.Rate11To20) + (10 * rate.Rate21To30) + ((usage - 30) * rate.Rate31To40);
+            else
+                total = rate.MinimumCharge + (10 * rate.Rate11To20) + (10 * rate.Rate21To30) + (10 * rate.Rate31To40) + ((usage - 40) * rate.Rate41Up);
+
+            return total + WaterMeterMaintenanceFee;
+        }
+
         #endregion
     }
 }

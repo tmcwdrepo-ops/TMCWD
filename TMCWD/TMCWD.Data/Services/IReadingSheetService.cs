@@ -35,5 +35,8 @@ namespace TMCWD.Data.Services
         Task<bool> UpdateZoneProgress(int readingSheetId, int completedCount, int totalCount);
 
         Task<List<ReadingSheetAccountDto>> GetAccountsForReadingSheet(int readingSheetId);
+
+        Task<int> PartialPost(int readingSheetId, int userId);
+        Task<ReadingSheet> CompleteReadingSheet(int readingSheetId, int userId);
     }
 }

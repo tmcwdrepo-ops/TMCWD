@@ -14,6 +14,7 @@
 
 /** Number of rows shown per page. */
 var PAGE_SIZE = 10;
+var currentDrawerReadingSheetId = null;
 
 
 /* ============================================================
@@ -665,7 +666,20 @@ async function openViewPanel(id) {
     var row = readingSheetState.rows.find(function (r) { return r.id === id; });
     if (!row) return;
 
+    currentDrawerReadingSheetId = id;
+
+
     ensureDrawerExists();
+
+    var partialPostBtn = document.getElementById('rsdPartialPostBtn');
+    if (partialPostBtn) {
+        partialPostBtn.addEventListener('click', handlePartialPostClick);
+    }
+
+    var completeBtn = document.getElementById('rsdCompleteBtn');
+    if (completeBtn) {
+        completeBtn.addEventListener('click', handleCompleteClick);
+    }
 
     var backdrop = document.getElementById('rsdDrawerBackdrop');
     if (!backdrop) return;
@@ -761,6 +775,84 @@ function renderAccountRows(accounts) {
             '</tr>'
         );
     }).join('');
+}
+
+async function handlePartialPostClick() {
+    if (!currentDrawerReadingSheetId) return;
+
+    var btn = document.getElementById('rsdPartialPostBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; }
+
+    try {
+        var response = await fetch('/ReadingSheet/PartialPostReadingSheet?readingSheetId=' + currentDrawerReadingSheetId, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error('Partial post failed: ' + response.status);
+        }
+
+        var result = await response.json();
+
+        alert((result.postedCount || 0) + ' account(s) posted successfully.');
+
+        // Refresh the drawer's account table
+        var tbody = document.getElementById('rsdAccountsTableBody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:#9aa4b2;">Loading accounts…</td></tr>';
+        var accounts = await loadDataAsync('/ReadingSheet/GetReadingSheetAccounts?readingSheetId=' + currentDrawerReadingSheetId);
+        if (tbody) tbody.innerHTML = renderAccountRows(accounts);
+
+        // Refresh the main table so "For Posting" count updates
+        var freshData = await loadDataAsync('/ReadingSheet/GetAllReadingSheet');
+        readingSheetState.rows = mapReadingSheetRows(freshData);
+        applyAllFilters();
+        applyAndRender();
+        generateZoneProgressInputs();
+
+    } catch (err) {
+        console.error('[ReadingSheet] Partial post failed:', err);
+        alert('Failed to post accounts. Please try again.');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Partial Post'; }
+    }
+}
+
+async function handleCompleteClick() {
+    if (!currentDrawerReadingSheetId) return;
+
+    var btn = document.getElementById('rsdCompleteBtn');
+    if (btn) { btn.disabled = true; }
+
+    try {
+        var response = await fetch('/ReadingSheet/CompleteReadingSheet?readingSheetId=' + currentDrawerReadingSheetId, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) {
+            var msg = await response.text();
+            alert('Cannot complete this reading sheet.\n\n' + msg);
+            return;
+        }
+
+        alert('Reading sheet marked as Completed.');
+
+        closeViewPanel();
+
+        // Refresh the main table
+        var freshData = await loadDataAsync('/ReadingSheet/GetAllReadingSheet');
+        readingSheetState.rows = mapReadingSheetRows(freshData);
+        applyAllFilters();
+        applyAndRender();
+        generateZoneProgressInputs();
+
+    } catch (err) {
+        console.error('[ReadingSheet] Complete failed:', err);
+        alert('Failed to complete the reading sheet. Please try again.');
+    } finally {
+        if (btn) { btn.disabled = false; }
+    }
 }
 
 /**

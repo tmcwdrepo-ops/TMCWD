@@ -224,78 +224,81 @@ namespace TMCWD.Application.Controllers
 
             var result = new List<object>();
 
-            foreach (var sheet in readingSheets)
-            {
-                var reader = users.FirstOrDefault(
-                    x => x.Id == sheet.AssignedTo
-                );
-
-                var zoneBook = zoneBooks.FirstOrDefault(
-                    x => x.Id == sheet.ZoneBookId
-                );
-
-                // Readings belonging to this reading sheet
-                var sheetReadings = readings
-                    .Where(x => x.ReadingSheetId == sheet.Id)
-                    .ToList();
-
-                var totalAccounts = sheetReadings.Count;
-
-                var totalCompleted = sheetReadings.Count(
-                    x => x.Status == ReadingStatus.Completed
-                );
-
-                var totalInProgress = sheetReadings.Count(
-                    x => x.Status == ReadingStatus.InProgress
-                );
-
-                // DEBUG: Log per sheet to file
-                try
+                foreach (var sheet in readingSheets)
                 {
-                    System.IO.File.AppendAllText(
-                        @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
-                        $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Sheet {sheet.Id}: {sheetReadings.Count} readings, {totalCompleted} completed, {totalInProgress} in progress\n"
+                    var reader = users.FirstOrDefault(
+                        x => x.Id == sheet.AssignedTo
                     );
+
+                    var zoneBook = zoneBooks.FirstOrDefault(
+                        x => x.Id == sheet.ZoneBookId
+                    );
+
+                    // Readings belonging to this reading sheet
+                    var sheetReadings = readings
+                        .Where(x => x.ReadingSheetId == sheet.Id)
+                        .ToList();
+
+                    // Total distinct accounts with a reading row on this sheet
+                    var totalAccounts = sheetReadings
+                        .Select(x => x.AccountId)
+                        .Distinct()
+                        .Count();
+
+                    var totalCompleted = sheetReadings.Count(
+                        x => x.Status == ReadingStatus.Completed
+                    );
+
+                    var totalInProgress = sheetReadings.Count(
+                        x => x.Status == ReadingStatus.InProgress
+                    );
+
+                    // Accounts still pending — Created or InProgress, not yet Completed.
+                    // Distinct by AccountId so a duplicate reading row for the same account
+                    // doesn't inflate the count.
+                    var totalForPosting = sheetReadings
+                        .Where(x => x.Status == ReadingStatus.Created
+                                 || x.Status == ReadingStatus.InProgress)
+                        .Select(x => x.AccountId)
+                        .Distinct()
+                        .Count();
+
+                    result.Add(new
+                    {
+                        id = sheet.Id,
+                        name = sheet.Name,
+
+                        meterReader = reader?.Name ?? "—",
+
+                        billingDate = sheet.BillingDate,
+                        dueDate = sheet.DueDate,
+                        disconnectionDate = sheet.DisconnectionDate,
+                        billingPeriodStart = sheet.BillingPeriodStart,
+
+                        zone = zoneBook?.Zone ?? 0,
+                        book = zoneBook?.Book ?? 0,
+
+                        seqFrom = sheet.SeqFrom,
+                        seqTo = sheet.SeqTo,
+
+                        assignedTo = sheet.AssignedTo,
+                        zoneBookId = sheet.ZoneBookId,
+
+                        // IMPORTANT
+                        totalAccounts = totalAccounts,
+                        totalCompleted = totalCompleted,
+                        totalInProgress = totalInProgress,
+
+                        forPosting = totalForPosting,   // was: totalCompleted
+
+                        status = sheet.Status,
+
+                        createdBy = sheet.CreatedBy,
+                        dateCreated = sheet.DateCreated,
+                        dateUpload = sheet.DateUpload
+                    });
                 }
-                catch { }
-
-                result.Add(new
-                {
-                    id = sheet.Id,
-                    name = sheet.Name,
-
-                    meterReader = reader?.Name ?? $"User {sheet.AssignedTo}",
-
-                    billingDate = sheet.BillingDate,
-                    dueDate = sheet.DueDate,
-                    disconnectionDate = sheet.DisconnectionDate,
-                    billingPeriodStart = sheet.BillingPeriodStart,
-
-                    zone = zoneBook?.Zone ?? 0,
-                    book = zoneBook?.Book ?? 0,
-
-                    seqFrom = sheet.SeqFrom,
-                    seqTo = sheet.SeqTo,
-
-                    assignedTo = sheet.AssignedTo,
-                    zoneBookId = sheet.ZoneBookId,
-
-                    // IMPORTANT
-                    totalAccounts = totalAccounts,
-                    totalCompleted = totalCompleted,
-                    totalInProgress = totalInProgress,
-
-                    forPosting = totalCompleted,
-
-                    status = sheet.Status,
-
-                    createdBy = sheet.CreatedBy,
-                    dateCreated = sheet.DateCreated,
-                    dateUpload = sheet.DateUpload
-                });
-            }
-
-            return Ok(result);
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -564,6 +567,27 @@ namespace TMCWD.Application.Controllers
             }
 
             return Ok(accounts);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PartialPostReadingSheet(int readingSheetId)
+        {
+            var postedCount = await _readingSheetTrans.PartialPostReadingSheet(readingSheetId, _user.User.Id);
+
+            if (postedCount < 0)
+                return BadRequest("Failed to post reading sheet.");
+
+            return Ok(new { postedCount });
+        }
+        [HttpPost]
+        public async Task<IActionResult> CompleteReadingSheet(int readingSheetId)
+        {
+            var sheet = await _readingSheetTrans.CompleteReadingSheet(readingSheetId, _user.User.Id);
+
+            if (sheet == null)
+                return BadRequest("Cannot complete this reading sheet — some accounts are still pending.");
+
+            return Ok(sheet);
         }
     }
 

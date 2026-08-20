@@ -1,0 +1,195 @@
+﻿## SIGNATURES OF RELEVANT TYPES REFERENCED IN THE CODE:
+
+```csharp
+
+public class ReadingSheetService : IReadingSheetService
+{
+  private readonly UserDbContext _context;
+  private readonly IBillingService _billingService;
+  private readonly IWaterRateService _waterRateService;
+  public Task<ReadingSheet> Get(int id);
+  public Task<List<ReadingSheet>> GetAll();
+  public Task<List<ReadingSheet>> GetByAssignedTo(int assignedTo);
+  public Task<List<ReadingSheet>> GetByZoneAndBook(int zone, int book);
+  public Task<List<ReadingSheet>> GetByZoneBookAndAssignedTo(int zone, int book, int assignedTo);
+  public Task<List<ReadingSheet>> GetByBillingDate(int zone, int book, DateTime billingDate);
+  public Task<ReadingSheet?> GetByBillingDateAndAssignedTo(int zone, int book, DateTime billingDate, int assignedTo);
+  public Task<ReadingSheet> SaveUpdate(int userId, ReadingSheet readingSheet);
+  public Task<List<ReadingSheet>> GetByZoneBookId(int zoneBookId);
+  public Task<ReadingSheet?> GetByBillingPeriodStart(int zone, int book, DateTime billingPeriodStart);
+  public Task<ReadingSheet?> GetCurrentByAssignedTo(int zone, int book, int assignedTo);
+  public Task<IEnumerable<ReadingSheet>> GetRangeReadingSheets(IEnumerable<long> ids);
+  public Task<IEnumerable<ReadingSheet>> UpdateReadingSheetsStatus(IEnumerable<long> ids, int userId, int status);
+  public Task<ReadingSheet?> GetCurrentByAssignedTo(int assignedTo);
+  public Task<List<ReadingSheetAccountDto>> GetAccountsForReadingSheet(int readingSheetId);
+  public Task<int> PartialPost(int readingSheetId, int userId);
+  private static decimal ComputeWaterCharge(int previousReading, int presentReading, WaterRate rate);
+}
+
+public interface IReadingSheetService
+{
+  Task<ReadingSheet> Get(int id);
+  Task<List<ReadingSheet>> GetAll();
+  Task<List<ReadingSheet>> GetByAssignedTo(int assignedTo);
+  Task<List<ReadingSheet>> GetByZoneAndBook(int zone, int book);
+  Task<List<ReadingSheet>> GetByZoneBookAndAssignedTo(int zone, int book, int assignedTo);
+  Task<List<ReadingSheet>> GetByZoneBookId(int zoneBookId);
+  Task<List<ReadingSheet>> GetByBillingDate(int zone, int book, DateTime billingDate);
+  Task<ReadingSheet> GetByBillingDateAndAssignedTo(int zone, int book, DateTime billingDate, int assignedTo);
+  Task<ReadingSheet> GetByBillingPeriodStart(int zone, int book, DateTime billingPeriodStart);
+  Task<ReadingSheet> GetCurrentByAssignedTo(int zone, int book, int assignedTo);
+  Task<IEnumerable<ReadingSheet>> GetRangeReadingSheets(IEnumerable<long> ids);
+  Task<ReadingSheet> SaveUpdate(int userId, ReadingSheet readingSheet);
+  Task<IEnumerable<ReadingSheet>> UpdateReadingSheetsStatus(IEnumerable<long> ids, int userId, int status);
+  Task<bool> UpdateZoneProgress(int readingSheetId, int completedCount, int totalCount);
+  Task<List<ReadingSheetAccountDto>> GetAccountsForReadingSheet(int readingSheetId);
+  Task<int> PartialPost(int readingSheetId, int userId);
+}
+
+public class UserDbContext : DbContext, IInfrastructure<IServiceProvider>, IDbContextDependencies, IDbSetCache, IDbContextPoolable, IResettableService, IDisposable, IAsyncDisposable
+{
+  private string connectionString;
+  public DbSet<User> Users { get; set; }
+  public DbSet<InspectionType> InspectionTypes { get; set; }
+  public DbSet<Customer> Customers { get; set; }
+  public DbSet<InspectionTypeDetail> InspectonTypeDetails { get; set; }
+  public DbSet<Account> Accounts { get; set; }
+  public DbSet<Request> Requests { get; set; }
+  public DbSet<RequestDetail> RequestDetails { get; set; }
+  public DbSet<InspectionReport> InspectionReports { get; set; }
+  public DbSet<Recommendation> Recommendations { get; set; }
+  public DbSet<Inventory> Inventories { get; set; }
+  public DbSet<Material> Materials { get; set; }
+  public DbSet<OtherFeeType> OtherFeeTypes { get; set; }
+  public DbSet<Workflow> Workflows { get; set; }
+  public DbSet<JobOrder> JobOrders { get; set; }
+  public DbSet<Finding> Findings { get; set; }
+  public DbSet<ApprovalHistory> ApprovalHistories { get; set; }
+  public DbSet<RequestFile> Files { get; set; }
+  public DbSet<Billing> Billings { get; set; }
+  public DbSet<ReadingSheet> ReadingSheets { get; set; }
+  public DbSet<Penalty> Penalties { get; set; }
+  public DbSet<ChargeType> ChargeTypes { get; set; }
+  public DbSet<OtherCharge> OtherCharges { get; set; }
+  public DbSet<BillingAdjustment> BillingAdjustments { get; set; }
+  public DbSet<PaymentCheck> PaymentChecks { get; set; }
+  public DbSet<AdvancePayment> AdvancePayments { get; set; }
+  public DbSet<WebHook> WebHooks { get; set; }
+  public DbSet<Payment> Payments { get; set; }
+  public DbSet<EWalletTransaction> EWalletTransactions { get; set; }
+  public DbSet<Endpoint> Endpoints { get; set; }
+  public DbSet<Reading> Readings { get; set; }
+  public DbSet<Tariff> Tariffs { get; set; }
+  public DbSet<WaterRate> WaterRates { get; set; }
+  public DbSet<ZoneBook> ZoneBooks { get; set; }
+  public DbSet<ReadingSheetTemplate> ReadingSheetTemplates { get; set; }
+  protected override void OnModelCreating(ModelBuilder modelBuilder);
+  protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder);
+}
+
+public class DbContext : IInfrastructure<IServiceProvider>, IDbContextDependencies, IDbSetCache, IDbContextPoolable, IResettableService, IDisposable, IAsyncDisposable
+{
+  public virtual DbSet<TEntity> Set<TEntity>() where TEntity : class;
+  public virtual DbSet<TEntity> Set<TEntity>(string name) where TEntity : class;
+  protected internal virtual void OnConfiguring(DbContextOptionsBuilder optionsBuilder);
+  protected internal virtual void ConfigureConventions(ModelConfigurationBuilder configurationBuilder);
+  protected internal virtual void OnModelCreating(ModelBuilder modelBuilder);
+  public virtual int SaveChanges();
+  public virtual int SaveChanges(bool acceptAllChangesOnSuccess);
+  public virtual Task<int> SaveChangesAsync([CancellationToken cancellationToken = default]);
+  public virtual Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, [CancellationToken cancellationToken = default]);
+  public virtual void Dispose();
+  public virtual ValueTask DisposeAsync();
+  public virtual EntityEntry<TEntity> Entry<TEntity>(TEntity entity) where TEntity : class;
+  public virtual EntityEntry Entry(object entity);
+  public virtual EntityEntry<TEntity> Add<TEntity>(TEntity entity) where TEntity : class;
+  public virtual ValueTask<EntityEntry<TEntity>> AddAsync<TEntity>(TEntity entity, [CancellationToken cancellationToken = default]) where TEntity : class;
+  public virtual EntityEntry<TEntity> Attach<TEntity>(TEntity entity) where TEntity : class;
+  public virtual EntityEntry<TEntity> Update<TEntity>(TEntity entity) where TEntity : class;
+  public virtual EntityEntry<TEntity> Remove<TEntity>(TEntity entity) where TEntity : class;
+  public virtual EntityEntry Add(object entity);
+  public virtual ValueTask<EntityEntry> AddAsync(object entity, [CancellationToken cancellationToken = default]);
+  public virtual EntityEntry Attach(object entity);
+  public virtual EntityEntry Update(object entity);
+  public virtual EntityEntry Remove(object entity);
+  public virtual void AddRange(params object[] entities);
+  public virtual Task AddRangeAsync(params object[] entities);
+  public virtual void AttachRange(params object[] entities);
+  public virtual void UpdateRange(params object[] entities);
+  public virtual void RemoveRange(params object[] entities);
+  public virtual void AddRange(IEnumerable<object> entities);
+  public virtual Task AddRangeAsync(IEnumerable<object> entities, [CancellationToken cancellationToken = default]);
+  public virtual void AttachRange(IEnumerable<object> entities);
+  public virtual void UpdateRange(IEnumerable<object> entities);
+  public virtual void RemoveRange(IEnumerable<object> entities);
+  public virtual object? Find(Type entityType, params object?[]? keyValues);
+  public virtual ValueTask<object?> FindAsync(Type entityType, params object?[]? keyValues);
+  public virtual ValueTask<object?> FindAsync(Type entityType, object?[]? keyValues, CancellationToken cancellationToken);
+  public virtual TEntity? Find<TEntity>(params object?[]? keyValues) where TEntity : class;
+  public virtual ValueTask<TEntity?> FindAsync<TEntity>(params object?[]? keyValues) where TEntity : class;
+  public virtual ValueTask<TEntity?> FindAsync<TEntity>(object?[]? keyValues, CancellationToken cancellationToken) where TEntity : class;
+  public virtual IQueryable<TResult> FromExpression<TResult>(Expression<Func<IQueryable<TResult>>> expression);
+  public override string? ToString();
+  public override bool Equals(object? obj);
+  public override int GetHashCode();
+  public virtual DatabaseFacade Database { get; }
+  public virtual ChangeTracker ChangeTracker { get; }
+  public virtual IModel Model { get; }
+  public virtual DbContextId ContextId { get; }
+  public event EventHandler<SavingChangesEventArgs>? SavingChanges;
+  public event EventHandler<SavedChangesEventArgs>? SavedChanges;
+  public event EventHandler<SaveChangesFailedEventArgs>? SaveChangesFailed;
+}
+
+public interface IInfrastructure<T>
+{
+  T Instance { get; }
+}
+
+public interface IDbContextDependencies
+{
+  IDbSetSource SetSource { get; }
+  IEntityFinderFactory EntityFinderFactory { get; }
+  IAsyncQueryProvider QueryProvider { get; }
+  IStateManager StateManager { get; }
+  IChangeDetector ChangeDetector { get; }
+  IEntityGraphAttacher EntityGraphAttacher { get; }
+  IExceptionDetector ExceptionDetector { get; }
+  IDiagnosticsLogger<DbLoggerCategory.Update> UpdateLogger { get; }
+  IDiagnosticsLogger<DbLoggerCategory.Infrastructure> InfrastructureLogger { get; }
+}
+
+public interface IDbSetCache
+{
+  object GetOrAddSet(IDbSetSource source, Type type);
+  object GetOrAddSet(IDbSetSource source, string entityTypeName, Type type);
+  IEnumerable<object> GetSets();
+}
+
+public interface IDbContextPoolable : IResettableService, IDisposable, IAsyncDisposable
+{
+  void SetLease(DbContextLease lease);
+  Task SetLeaseAsync(DbContextLease lease, CancellationToken cancellationToken);
+  void ClearLease();
+  void SnapshotConfiguration();
+}
+
+public interface IResettableService
+{
+  void ResetState();
+  Task ResetStateAsync([CancellationToken cancellationToken = default]);
+}
+
+public interface IBillingService
+{
+  Task<Billing> Get(int id);
+  Task<List<Billing>> GetAll();
+  Task<List<Billing>> GetByAccountId(int accountId);
+  Task<List<Billing>> GetByJobOrderId(int jobOrderId);
+  Task<Billing> GetByBillingReference(string billingReferenceId);
+  Task<Billing> GetByPaymentTransactionId(string paymentTransactionId);
+  Task<Billing> GetByReadingId(int readingId);
+  Task<List<Billing>> GetByReadings(int[] readingIds);
+  Task<Billing> SaveUpdate(int userId, Billing billing);
+}
+```

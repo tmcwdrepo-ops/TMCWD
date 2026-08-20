@@ -37,6 +37,7 @@ namespace TMCWD.Data.Services
         Task<List<Reading>> GetByReadingSheetIds(List<long> readingSheetIds);
 
         public Task<List<ReadingWithBillingDate>> GetByAccountWithBillingDate(int accountId);
+        Task<List<Reading>> GetRangeByReadingSheetIds(List<int> readingSheetIds);
 
     }
 
