@@ -71,7 +71,7 @@
                     </el-menu> *@
                 </div>
                 <div class="flex items-center mb-4">
-                    @Html.CheckBoxFor(x => x.AddEditUser.IsActive, new { @class = "w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft", required = "required" })
+                    @Html.CheckBoxFor(x => x.AddEditUser.IsActive ?? false, new { @class = "w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft", required = "required" })
                     @Html.LabelFor(x => x.AddEditUser.IsActive, new { @class = "block mb-2.5 text-sm font-medium text-heading" })
                 </div>
             </div>

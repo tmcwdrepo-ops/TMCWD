@@ -1,4 +1,4 @@
-﻿using TMCWD.Data.Entities;
+using TMCWD.Data.Entities;
 using TMCWD.Model.Billing.Responses;
 
 namespace TMCWD.Data.Services
@@ -31,6 +31,8 @@ namespace TMCWD.Data.Services
         public Task<ReadingSheet> SaveUpdate(int userId, ReadingSheet readingSheet);
 
         Task<IEnumerable<ReadingSheet>> UpdateReadingSheetsStatus(IEnumerable<long> ids,int userId,int status);
+
+        Task<bool> UpdateZoneProgress(int readingSheetId, int completedCount, int totalCount);
 
         Task<List<ReadingSheetAccountDto>> GetAccountsForReadingSheet(int readingSheetId);
     }

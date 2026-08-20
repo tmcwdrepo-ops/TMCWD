@@ -28,28 +28,28 @@ namespace TMCWD.Model.Administrator
         [DisplayName("Id")]
         public int Id { get; set; }
         [DisplayName("Name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
         [DisplayName("Email")]
-        public string Email { get; set; }
+        public string? Email { get; set; }
         [DisplayName("Role")]
-        public int Role { get; set; }
+        public int? Role { get; set; }
         [DisplayName("Date Verified")]
-        public DateTime DateVerified { get; set; }
+        public DateTime? DateVerified { get; set; }
         [DisplayName("Password")]
-        public string Password { get; set; }
+        public string? Password { get; set; }
         [DisplayName("Remember Token")]
-        public string RememberToken { get; set; }
+        public string? RememberToken { get; set; }
         [DisplayName("Created")]
-        public DateTime DateCreated { get; set; }
+        public DateTime? DateCreated { get; set; }
         [DisplayName("Enrolled By")]
-        public int CreatedBy { get; set; }
+        public int? CreatedBy { get; set; }
         [DisplayName("Updated")]
-        public DateTime DateUpdated { get; set; }
+        public DateTime? DateUpdated { get; set; }
         [DisplayName("Updated By")]
-        public int UpdatedBy { get; set; }
-        public bool IsVerified { get; set; }
+        public int? UpdatedBy { get; set; }
+        public bool? IsVerified { get; set; }
         [DisplayName("Active")]
-        public bool IsActive { get; set; }
+        public bool? IsActive { get; set; }
         #endregion
     }
 }

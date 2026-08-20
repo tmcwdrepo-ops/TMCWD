@@ -93,6 +93,52 @@ namespace TMCWD.Data.Controllers
             return Ok(accounts);
         }
 
+        [HttpPost("UpdateZoneProgress")]
+        public async Task<IActionResult> UpdateZoneProgress([FromBody] UpdateZoneProgressRequest request)
+        {
+            if (request == null || request.ReadingSheetId <= 0)
+            {
+                return BadRequest(new { message = "Invalid request data" });
+            }
+
+            var result = await _readingSheetService.UpdateZoneProgress(
+                request.ReadingSheetId, 
+                request.CompletedCount, 
+                request.TotalCount);
+
+            if (!result)
+            {
+                return NotFound(new { message = "Reading sheet not found or no readings exist" });
+            }
+
+            return Ok(new { message = "Zone progress updated successfully" });
+        }
+
+        [HttpPatch("UpdateReadingSheetsStatus/{userId}/{status}")]
+        public async Task<IActionResult> UpdateReadingSheetsStatus(int userId, int status, [FromQuery] long[] ids)
+        {
+            if (ids == null || !ids.Any())
+            {
+                return BadRequest(new { message = "Sheet IDs are required" });
+            }
+
+            var updatedSheets = await _readingSheetService.UpdateReadingSheetsStatus(
+                ids,
+                userId,
+                status
+            );
+
+            return Ok(updatedSheets);
+        }
+
         #endregion
+    }
+
+    // Request model for UpdateZoneProgress
+    public class UpdateZoneProgressRequest
+    {
+        public int ReadingSheetId { get; set; }
+        public int CompletedCount { get; set; }
+        public int TotalCount { get; set; }
     }
 }

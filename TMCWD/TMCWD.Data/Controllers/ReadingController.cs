@@ -98,6 +98,13 @@ namespace TMCWD.Data.Controllers
             return Ok(savedReadings);
         }
 
+        [HttpPost("GetRangeByReadingSheetIds")]
+        public async Task<IActionResult> GetRangeByReadingSheetIds([FromBody] List<long> readingSheetIds)
+        {
+            var readings = await _service.GetByReadingSheetIds(readingSheetIds);
+            return Ok(readings ?? new List<Reading>());
+        }
+
         #endregion
 
     }

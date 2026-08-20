@@ -70,8 +70,20 @@ namespace TMCWD.Data.Services
 
         public async Task<IEnumerable<User>> GetUsersByIds(IEnumerable<int> ids)
         {
-            var users = await _dbContext.Users.Where(x => ids.Contains((int)x.Id)).ToListAsync();
-            return users;
+            try
+            {
+                var longIds = ids.Select(id => (long)id).ToList();
+                var users = await _dbContext.Users.Where(x => longIds.Contains(x.Id)).ToListAsync();
+                return users;
+            }
+            catch (Exception ex)
+            {
+                System.IO.File.AppendAllText(
+                    @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] ERROR in GetUsersByIds: {ex.Message}\n"
+                );
+                return new List<User>();
+            }
         }
     }
 }

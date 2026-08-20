@@ -8,6 +8,17 @@
 
     // Add services to the container.
 
+    // Add CORS policy
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowApplication", policy =>
+        {
+            policy.WithOrigins("http://localhost:5054")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+    });
+
     builder.Services.AddControllers();
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();
@@ -55,6 +66,9 @@
     }
 
     app.UseHttpsRedirection();
+
+    // Use CORS
+    app.UseCors("AllowApplication");
 
     app.UseAuthorization();
 

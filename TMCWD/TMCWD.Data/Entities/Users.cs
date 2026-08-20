@@ -16,41 +16,41 @@ namespace TMCWD.Data.Entities
         [Key, Column("Id")]
         public System.Int64 Id { get; set; }
 
-        [Required, MaxLength(100), Column("Name")]
-        public string Name { get; set; } = string.Empty;
+        [MaxLength(100), Column("Name")]
+        public string? Name { get; set; }
 
-        [Required, MaxLength(100), Column("Email")]
-        public string Email { get; set; } = string.Empty;
+        [MaxLength(100), Column("Email")]
+        public string? Email { get; set; }
 
-        [Required, Column("Role")]
-        public int Role { get; set; }
+        [Column("Role")]
+        public int? Role { get; set; }
 
         [Column("DateVerified")]
-        public DateTime DateVerified { get; set; }
+        public DateTime? DateVerified { get; set; }
 
-        [Required, MaxLength(100), Column("Password")]
-        public string Password { get; set; } = string.Empty;
+        [MaxLength(100), Column("Password")]
+        public string? Password { get; set; }
 
         [Column("RememberToken"), MaxLength(100)]
-        public string RememberToken { get; set; } = string.Empty;
+        public string? RememberToken { get; set; }
 
         [Column("DateCreated")]
-        public DateTime DateCreated { get; set; }
+        public DateTime? DateCreated { get; set; }
 
         [Column("CreatedBy")]
-        public System.Int64 CreatedBy { get; set; }
+        public System.Int64? CreatedBy { get; set; }
 
         [Column("DateUpdated")]
-        public DateTime DateUpdated { get; set; }
+        public DateTime? DateUpdated { get; set; }
 
         [Column("UpdatedBy")]
-        public System.Int64 UpdatedBy { get; set; }
+        public System.Int64? UpdatedBy { get; set; }
 
         [Column("IsVerified")]
-        public bool IsVerified { get; set; }
+        public bool? IsVerified { get; set; }
 
         [Column("IsActive")]
-        public bool IsActive { get; set; }
+        public bool? IsActive { get; set; }
         #endregion
 
     }
