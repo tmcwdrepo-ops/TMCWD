@@ -301,10 +301,19 @@ namespace TMCWD.Data.Services
 
                 var fullName = string.Join(" ", new[]
                 {
-                    item.Customer.Firstname,
-                    item.Customer.Middlename,
-                    item.Customer.Lastname
-                }.Where(n => !string.IsNullOrWhiteSpace(n)));
+        item.Customer.Firstname,
+        item.Customer.Middlename,
+        item.Customer.Lastname
+    }.Where(n => !string.IsNullOrWhiteSpace(n)));
+
+                var address = string.Join(" ", new[]
+                {
+        item.Account.UnitNumber,
+        item.Account.Building,
+        item.Account.HouseNumber,
+        item.Account.Street,
+        item.Account.Barangay
+    }.Where(a => !string.IsNullOrWhiteSpace(a)));
 
                 result.Add(new ReadingSheetAccountDto
                 {
@@ -316,15 +325,16 @@ namespace TMCWD.Data.Services
                     Usage = usage,
                     Trend = usage > 0 ? "up" : usage < 0 ? "down" : "normal",
                     Balance = 0,
-                    Amount = 0,   // computed in TMCWD.Application
-                    Total = 0,    // computed in TMCWD.Application
+                    Amount = 0,
+                    Total = 0,
                     Status = item.Reading.Status.ToString(),
                     Category = "normal",
                     Classification = (int)item.Account.Classification,
-                    MeterSize = item.Account.MeterSize > 0 ? item.Account.MeterSize : 0.5m
+                    MeterSize = item.Account.MeterSize > 0 ? item.Account.MeterSize : 0.5m,
+                    Address = address,
+                    MeterNo = item.Account.MeterNumber
                 });
             }
-
             return result;
         }
 

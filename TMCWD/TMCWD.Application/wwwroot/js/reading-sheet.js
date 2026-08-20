@@ -15,6 +15,8 @@
 /** Number of rows shown per page. */
 var PAGE_SIZE = 10;
 var currentDrawerReadingSheetId = null;
+var currentDrawerAccounts = [];
+var currentDrawerRow = null;
 
 
 /* ============================================================
@@ -547,115 +549,129 @@ function handleStatusToggle(event) {
  * Creates it once on first call so it is never clipped by overflow containers.
  */
 function ensureDrawerExists() {
-  if (document.getElementById('rsdDrawerBackdrop')) return;
+    if (document.getElementById('rsdDrawerBackdrop')) return;
 
-      var html =
+    var html =
         '<div class="rsd-drawer-backdrop" id="rsdDrawerBackdrop" aria-hidden="true" style="display:none;">' +
-          '<div class="rsd-drawer" role="dialog" aria-modal="true">' +
-            '<div class="rsd-topbar">' +
-              '<div class="rsd-topbar-actions">' +
-                '<button type="button" id="rsdCompleteBtn" class="btn btn-complete">' +
-                  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
-                  ' Complete' +
-                '</button>' +
-                '<button type="button" id="rsdPartialPostBtn" class="btn btn-partial">' +
-                  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
-                  ' Partial Post' +
-                '</button>' +
-              '</div>' +
-              '<button type="button" id="rsdCloseBtn" class="icon-btn rsd-close" aria-label="Close details panel">' +
-                '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
-              '</button>' +
-            '</div>' +
-            '<div class="rsd-info">' +
-              '<div class="rsd-info-group">' +
-                '<div class="rsd-info-item"><span class="rsd-label">Billing Date</span><span class="rsd-value" id="rsdBillingDate">—</span></div>' +
-                '<div class="rsd-info-item"><span class="rsd-label">Due Date</span><span class="rsd-value" id="rsdDueDate">—</span></div>' +
-                '<div class="rsd-info-item"><span class="rsd-label">Discon Date</span><span class="rsd-value" id="rsdDisconDate">—</span></div>' +
-                '<div class="rsd-info-item"><span class="rsd-label">Meter Reader</span><span class="rsd-value" id="rsdMeterReader">—</span></div>' +
-              '</div>' +
-              '<div class="rsd-info-status"><span class="rsd-label">Posting Status</span><span class="rsd-value" id="rsdPostingStatus">— of —</span></div>' +
-              '<div class="rsd-info-ref"><span class="rsd-label">Sheet Reference</span><span class="rsd-value rsd-ref-code" id="rsdSheetRef">—</span></div>' +
-              '<div class="rsd-info-export">' +
-                '<span class="rsd-label">Save</span>' +
-                '<div class="rsd-export-icons">' +
-                  '<button type="button" id="rsdExportPdfBtn" class="export-icon-btn export-pdf" title="Save as PDF" aria-label="Save as PDF">' +
-                    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="9" y2="17"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="15" y1="13" x2="15" y2="17"/></svg>' +
-                    '<span class="export-icon-btn__label">PDF</span>' +
-                  '</button>' +
-                  '<button type="button" id="rsdExportExcelBtn" class="export-icon-btn export-excel" title="Save as Excel" aria-label="Save as Excel">' +
-                    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/><path d="M13 12l2 3M15 12l-2 3" stroke-linecap="round"/></svg>' +
-                    '<span class="export-icon-btn__label">Excel</span>' +
-                  '</button>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-            '<div class="rsd-toolbar">' +
-              '<div class="search-wrap"><input type="text" id="rsdAccountSearch" placeholder="Search accounts..." autocomplete="off"/></div>' +
-              '<div class="filter-wrap">' +
-                '<select id="rsdUsageFilter">' +
-                  '<option value="all">All</option>' +
-                  '<option value="normal">Normal Usage</option>' +
-                  '<option value="remarks">With Remarks</option>' +
-                  '<option value="abnormal">Abnormal Usage</option>' +
-                '</select>' +
-              '</div>' +
-            '</div>' +
-            '<div class="rsd-table-wrap">' +
-              '<table id="rsdAccountsTable">' +
-                '<thead><tr>' +
-                  '<th class="col-account">Account</th>' +
-                  '<th class="col-num">Prev</th>' +
-                  '<th class="col-num">Pres</th>' +
-                  '<th class="col-num">Usage</th>' +
-                  '<th class="col-num">Balance</th>' +
-                  '<th class="col-num">Amount</th>' +
-                  '<th class="col-num">Total</th>' +
-                  '<th class="col-status">Status</th>' +
-                  '<th class="col-action"></th>' +
-                '</tr></thead>' +
-                '<tbody id="rsdAccountsTableBody"></tbody>' +
-              '</table>' +
-              '<div id="rsdNoResults" class="no-results hidden"><p>No accounts match your search or filter.</p></div>' +
-            '</div>' +
-          '</div>' +
+        '<div class="rsd-drawer" role="dialog" aria-modal="true">' +
+        '<div class="rsd-topbar">' +
+        '<div class="rsd-topbar-actions">' +
+        '<button type="button" id="rsdCompleteBtn" class="btn btn-complete">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+        ' Complete' +
+        '</button>' +
+        '<button type="button" id="rsdPartialPostBtn" class="btn btn-partial">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
+        ' Partial Post' +
+        '</button>' +
+        '</div>' +
+        '<button type="button" id="rsdCloseBtn" class="icon-btn rsd-close" aria-label="Close details panel">' +
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+        '</button>' +
+        '</div>' +
+        '<div class="rsd-info">' +
+        '<div class="rsd-info-group">' +
+        '<div class="rsd-info-item"><span class="rsd-label">Billing Date</span><span class="rsd-value" id="rsdBillingDate">—</span></div>' +
+        '<div class="rsd-info-item"><span class="rsd-label">Due Date</span><span class="rsd-value" id="rsdDueDate">—</span></div>' +
+        '<div class="rsd-info-item"><span class="rsd-label">Discon Date</span><span class="rsd-value" id="rsdDisconDate">—</span></div>' +
+        '<div class="rsd-info-item"><span class="rsd-label">Meter Reader</span><span class="rsd-value" id="rsdMeterReader">—</span></div>' +
+        '</div>' +
+        '<div class="rsd-info-status"><span class="rsd-label">Posting Status</span><span class="rsd-value" id="rsdPostingStatus">— of —</span></div>' +
+        '<div class="rsd-info-ref"><span class="rsd-label">Sheet Reference</span><span class="rsd-value rsd-ref-code" id="rsdSheetRef">—</span></div>' +
+        '<div class="rsd-info-export">' +
+        '<span class="rsd-label">Save</span>' +
+        '<div class="rsd-export-icons">' +
+        '<button type="button" id="rsdExportPdfBtn" class="export-icon-btn export-pdf" title="Save as PDF" aria-label="Save as PDF">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="9" y2="17"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="15" y1="13" x2="15" y2="17"/></svg>' +
+        '<span class="export-icon-btn__label">PDF</span>' +
+        '</button>' +
+        '<button type="button" id="rsdExportExcelBtn" class="export-icon-btn export-excel" title="Save as Excel" aria-label="Save as Excel">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/><path d="M13 12l2 3M15 12l-2 3" stroke-linecap="round"/></svg>' +
+        '<span class="export-icon-btn__label">Excel</span>' +
+        '</button>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="rsd-toolbar">' +
+        '<div class="search-wrap"><input type="text" id="rsdAccountSearch" placeholder="Search accounts..." autocomplete="off"/></div>' +
+        '<div class="filter-wrap">' +
+        '<select id="rsdUsageFilter">' +
+        '<option value="all">All</option>' +
+        '<option value="normal">Normal Usage</option>' +
+        '<option value="remarks">With Remarks</option>' +
+        '<option value="abnormal">Abnormal Usage</option>' +
+        '</select>' +
+        '</div>' +
+        '</div>' +
+        '<div class="rsd-table-wrap">' +
+        '<table id="rsdAccountsTable">' +
+        '<thead><tr>' +
+        '<th class="col-account">Account</th>' +
+        '<th class="col-num">Prev</th>' +
+        '<th class="col-num">Pres</th>' +
+        '<th class="col-num">Usage</th>' +
+        '<th class="col-num">Balance</th>' +
+        '<th class="col-num">Amount</th>' +
+        '<th class="col-num">Total</th>' +
+        '<th class="col-status">Status</th>' +
+        '<th class="col-action"></th>' +
+        '</tr></thead>' +
+        '<tbody id="rsdAccountsTableBody"></tbody>' +
+        '</table>' +
+        '<div id="rsdNoResults" class="no-results hidden"><p>No accounts match your search or filter.</p></div>' +
+        '</div>' +
+        '</div>' +
         '</div>';
 
-  document.body.insertAdjacentHTML('beforeend', html);
+    document.body.insertAdjacentHTML('beforeend', html);
 
-  // Wire close button and backdrop click
-  var closeBtn = document.getElementById('rsdCloseBtn');
-  var backdrop = document.getElementById('rsdDrawerBackdrop');
-  if (closeBtn) closeBtn.addEventListener('click', closeViewPanel);
-  if (backdrop) {
-    backdrop.addEventListener('click', function(e) {
-      if (e.target === backdrop) closeViewPanel();
-    });
-  }
+    // Wire close button and backdrop click
+    var closeBtn = document.getElementById('rsdCloseBtn');
+    var backdrop = document.getElementById('rsdDrawerBackdrop');
+    if (closeBtn) closeBtn.addEventListener('click', closeViewPanel);
+    if (backdrop) {
+        backdrop.addEventListener('click', function (e) {
+            if (e.target === backdrop) closeViewPanel();
+        });
+    }
 
-  // Wire live search and filter
-  var rsdSearch = document.getElementById('rsdAccountSearch');
-  var rsdFilter = document.getElementById('rsdUsageFilter');
-  function applyDrawerFilters() {
-    var term     = rsdSearch ? rsdSearch.value.trim().toLowerCase() : '';
-    var category = rsdFilter ? rsdFilter.value : 'all';
-    var rows     = document.querySelectorAll('#rsdAccountsTableBody tr');
-    var visible  = 0;
-    rows.forEach(function(row) {
-      var name   = (row.dataset.accountName   || '').toLowerCase();
-      var number = (row.dataset.accountNumber || '');
-      var cat    = (row.dataset.usageCategory || 'normal');
-      var show = (term === '' || name.indexOf(term) !== -1 || number.indexOf(term) !== -1) &&
-                 (category === 'all' || cat === category);
-      row.style.display = show ? '' : 'none';
-      if (show) visible++;
-    });
-    var noResults = document.getElementById('rsdNoResults');
-    if (noResults) noResults.classList.toggle('hidden', visible !== 0);
-  }
-  if (rsdSearch) rsdSearch.addEventListener('input', applyDrawerFilters);
-  if (rsdFilter) rsdFilter.addEventListener('change', applyDrawerFilters);
+    // Wire Partial Post / Complete / Excel — once, right here, now that the DOM exists
+    var partialPostBtn = document.getElementById('rsdPartialPostBtn');
+    if (partialPostBtn) partialPostBtn.addEventListener('click', handlePartialPostClick);
+
+    var completeBtn = document.getElementById('rsdCompleteBtn');
+    if (completeBtn) completeBtn.addEventListener('click', handleCompleteClick);
+
+    var exportExcelBtn = document.getElementById('rsdExportExcelBtn');
+    if (exportExcelBtn) exportExcelBtn.addEventListener('click', handleExportExcelClick);
+    
+    var exportPdfBtn = document.getElementById('rsdExportPdfBtn');
+    if (exportPdfBtn) exportPdfBtn.addEventListener('click', handleExportPdfClick);
+
+    // Wire live search and filter
+    var rsdSearch = document.getElementById('rsdAccountSearch');
+    var rsdFilter = document.getElementById('rsdUsageFilter');
+    function applyDrawerFilters() {
+        var term = rsdSearch ? rsdSearch.value.trim().toLowerCase() : '';
+        var category = rsdFilter ? rsdFilter.value : 'all';
+        var rows = document.querySelectorAll('#rsdAccountsTableBody tr');
+        var visible = 0;
+        rows.forEach(function (row) {
+            var name = (row.dataset.accountName || '').toLowerCase();
+            var number = (row.dataset.accountNumber || '');
+            var cat = (row.dataset.usageCategory || 'normal');
+            var show = (term === '' || name.indexOf(term) !== -1 || number.indexOf(term) !== -1) &&
+                (category === 'all' || cat === category);
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        var noResults = document.getElementById('rsdNoResults');
+        if (noResults) noResults.classList.toggle('hidden', visible !== 0);
+    }
+    if (rsdSearch) rsdSearch.addEventListener('input', applyDrawerFilters);
+    if (rsdFilter) rsdFilter.addEventListener('change', applyDrawerFilters);
 }
+
 
 /**
  * Open the details drawer and populate it with data from the row.
@@ -667,19 +683,9 @@ async function openViewPanel(id) {
     if (!row) return;
 
     currentDrawerReadingSheetId = id;
-
+    currentDrawerRow = row;
 
     ensureDrawerExists();
-
-    var partialPostBtn = document.getElementById('rsdPartialPostBtn');
-    if (partialPostBtn) {
-        partialPostBtn.addEventListener('click', handlePartialPostClick);
-    }
-
-    var completeBtn = document.getElementById('rsdCompleteBtn');
-    if (completeBtn) {
-        completeBtn.addEventListener('click', handleCompleteClick);
-    }
 
     var backdrop = document.getElementById('rsdDrawerBackdrop');
     if (!backdrop) return;
@@ -699,7 +705,6 @@ async function openViewPanel(id) {
     if (postingEl) postingEl.textContent = row.forPosting + ' of ' + row.forPosting;
     if (sheetRefEl) sheetRefEl.textContent = 'RS-' + String(row.id).padStart(5, '0');
 
-    // Show the drawer immediately with a loading state
     var tbody = document.getElementById('rsdAccountsTableBody');
     if (tbody) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:#9aa4b2;">Loading accounts…</td></tr>';
@@ -720,18 +725,19 @@ async function openViewPanel(id) {
     var closeBtn = document.getElementById('rsdCloseBtn');
     if (closeBtn) closeBtn.focus();
 
-    // Fetch real accounts for this reading sheet
+    // Fetch real accounts for this reading sheet — once
     try {
         var accounts = await loadDataAsync('/ReadingSheet/GetReadingSheetAccounts?readingSheetId=' + id);
+        currentDrawerAccounts = accounts || [];
         if (tbody) tbody.innerHTML = renderAccountRows(accounts);
     } catch (err) {
         console.error('[ReadingSheet] Failed to load accounts for sheet', id, err);
+        currentDrawerAccounts = [];
         if (tbody) {
             tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:#9aa4b2;">Failed to load accounts.</td></tr>';
         }
     }
 }
-
 /**
  * Render account rows fetched from the server for a given reading sheet.
  *
@@ -801,6 +807,7 @@ async function handlePartialPostClick() {
         var tbody = document.getElementById('rsdAccountsTableBody');
         if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:#9aa4b2;">Loading accounts…</td></tr>';
         var accounts = await loadDataAsync('/ReadingSheet/GetReadingSheetAccounts?readingSheetId=' + currentDrawerReadingSheetId);
+        currentDrawerAccounts = accounts || [];
         if (tbody) tbody.innerHTML = renderAccountRows(accounts);
 
         // Refresh the main table so "For Posting" count updates
@@ -853,6 +860,145 @@ async function handleCompleteClick() {
     } finally {
         if (btn) { btn.disabled = false; }
     }
+}
+
+function handleExportExcelClick() {
+    if (!currentDrawerAccounts.length) {
+        alert('No accounts to export.');
+        return;
+    }
+
+    var row = currentDrawerRow || {};
+    var now = new Date();
+    var dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    var timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+
+    var sheetData = [
+        ['TRECE MARTIRES CITY WATER DISTRICT'],
+        ['Trece Martires City, Cavite'],
+        [],
+        ['Meter Reading Sheet'],
+        [row.billingDate || ''],
+        [],
+        ['Zone', row.zone || '', '', '', 'Date', dateStr],
+        ['Book', row.book || '', '', '', 'Time', timeStr],
+        [],
+        ['Seq', 'Account No', 'Name & Address', 'Meter No', 'Arrears', 'Previous', 'Current']
+    ];
+
+    currentDrawerAccounts.forEach(function (acct, idx) {
+        sheetData.push([
+            idx + 1,
+            acct.number || '',
+            (acct.name || '') + (acct.address ? ' ' + acct.address : ''),
+            acct.meterNo || '',
+            acct.balance || 0,
+            acct.prev || 0,
+            acct.pres || 0
+        ]);
+    });
+
+    var ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+    // Merge title/subtitle rows across columns A–G
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } },
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 6 } },
+        { s: { r: 4, c: 0 }, e: { r: 4, c: 6 } }
+    ];
+
+    ws['!cols'] = [
+        { wch: 6 },  // Seq
+        { wch: 14 }, // Account No
+        { wch: 35 }, // Name & Address
+        { wch: 14 }, // Meter No
+        { wch: 10 }, // Arrears
+        { wch: 10 }, // Previous
+        { wch: 10 }  // Current
+    ];
+
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Reading Sheet');
+
+    var filename = 'Reading-Sheet-' + (row.zone || '') + '-' + (row.book || '') + '-' +
+        (now.getMonth() + 1) + '-' + now.getDate() + '-' + now.getFullYear() + '.xlsx';
+
+    XLSX.writeFile(wb, filename);
+}
+function handleExportPdfClick() {
+    if (!currentDrawerAccounts.length) {
+        alert('No accounts to export.');
+        return;
+    }
+
+    var row = currentDrawerRow || {};
+    var now = new Date();
+    var dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    var timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+
+    var jsPDFCtor = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+    var doc = new jsPDFCtor({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+
+    var pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('TRECE MARTIRES CITY WATER DISTRICT', pageWidth / 2, 40, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('Trece Martires City, Cavite', pageWidth / 2, 56, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('Meter Reading Sheet', pageWidth / 2, 76, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(String(row.billingDate || ''), pageWidth / 2, 92, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.text('Zone: ' + (row.zone || ''), 40, 112);
+    doc.text('Book: ' + (row.book || ''), 40, 126);
+    doc.text('Date: ' + dateStr, pageWidth - 160, 112);
+    doc.text('Time: ' + timeStr, pageWidth - 160, 126);
+
+    var head = [['Seq', 'Account No', 'Name & Address', 'Meter No', 'Arrears', 'Previous', 'Current']];
+    var body = currentDrawerAccounts.map(function (acct, idx) {
+        return [
+            idx + 1,
+            acct.number || '',
+            (acct.name || '') + (acct.address ? ' ' + acct.address : ''),
+            acct.meterNo || '',
+            (acct.balance || 0).toFixed(2),
+            (acct.prev || 0).toString(),
+            (acct.pres || 0).toString()
+        ];
+    });
+
+    doc.autoTable({
+        head: head,
+        body: body,
+        startY: 140,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: [40, 60, 90], textColor: 255, fontStyle: 'bold' },
+        columnStyles: {
+            0: { cellWidth: 30 },
+            1: { cellWidth: 70 },
+            2: { cellWidth: 220 },
+            3: { cellWidth: 70 },
+            4: { cellWidth: 60, halign: 'right' },
+            5: { cellWidth: 60, halign: 'right' },
+            6: { cellWidth: 60, halign: 'right' }
+        }
+    });
+
+    var filename = 'Reading-Sheet-' + (row.zone || '') + '-' + (row.book || '') + '-' +
+        (now.getMonth() + 1) + '-' + now.getDate() + '-' + now.getFullYear() + '.pdf';
+
+    doc.save(filename);
 }
 
 /**

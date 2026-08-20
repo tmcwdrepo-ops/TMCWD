@@ -304,7 +304,7 @@ textarea.ba-input {
   width: 40px;
   border: none;
   border-radius: 6px;
-  background: #16233d;
+  background: var(--color-accent, #3f7d5c);
   color: #fff;
   display: flex;
   align-items: center;
@@ -313,7 +313,9 @@ textarea.ba-input {
   transition: background 0.15s;
 }
 
-.ba-date-btn:hover { background: #223259; }
+.ba-date-btn:hover {
+  background: var(--color-accent-hover, #326449);
+}
 .ba-date-btn svg { width: 17px; height: 17px; }
 
 /* ── Adjustment grid ── */
@@ -445,7 +447,7 @@ textarea.ba-input {
     width: 1000px;
     max-height: 80vh;
     overflow: auto;
-    background: #1e2335;
+    background: var(--color-panel);
     border-radius: 10px;
     padding: 20px;
 }
@@ -462,9 +464,9 @@ textarea.ba-input {
 }
 
     #billingHistoryTable tr:hover {
-        background: #2b3350;
+        background: var(--color-panel-alt);
     }
 
     #billingHistoryTable tr.selected {
-        background: #335cff66;
+        background: var(--color-blue-soft);
     }
