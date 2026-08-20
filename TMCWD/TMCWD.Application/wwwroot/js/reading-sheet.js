@@ -1714,6 +1714,14 @@ function initReadingSheetPage() {
                 return;
             }
 
+            // Check for view button
+            var viewBtn = event.target.closest('.action-btn--view');
+            if (viewBtn) {
+                console.log('[ReadingSheet] View button found in delegation');
+                handleViewClick(event);
+                return;
+            }
+
             // Check for edit button
             var editBtn = event.target.closest('.action-btn--edit');
             if (editBtn) {
