@@ -372,7 +372,9 @@ namespace TMCWD.Data.Services
                     Amount = 0,    // TODO: wire to billing table once available
                     Total = 0,     // TODO: wire to billing table once available
                     Status = item.Reading.Status.ToString(),
-                    Category = "normal" // TODO: derive from usage thresholds or billing status once defined
+                    Category = "normal",// TODO: derive from usage thresholds or billing status once defined
+                    Classification = (int)item.Account.Classification,
+                    MeterSize = item.Account.MeterSize > 0 ? item.Account.MeterSize : 0.5m
                 });
             }
 

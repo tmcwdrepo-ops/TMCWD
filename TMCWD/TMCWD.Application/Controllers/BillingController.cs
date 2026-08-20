@@ -452,13 +452,12 @@ namespace TMCWD.Application.Controllers
 
                 if (reading != null)
                 {
-                    amount = await ComputeWaterCharge(
+                    amount = await WaterChargeCalculator.ComputeWaterCharge(
+                        _waterRateTrans,
                         (int)previous,
                         (int)present,
                         account.Classification,
-                        account.MeterSize > 0
-                            ? account.MeterSize
-                            : 0.5m);
+                        account.MeterSize > 0 ? account.MeterSize : 0.5m);
                 }
 
                 result.Add(new PresentReadingViewModel
@@ -480,72 +479,7 @@ namespace TMCWD.Application.Controllers
             return Ok(result);
         }
 
-        #region Water Charge Computation 
 
-        private const decimal WaterMeterMaintenanceFee = 20.00m;
-            private async Task<decimal> ComputeWaterCharge(
-    int previousReading,
-    int presentReading,
-    AccountClassification classification,
-    decimal meterSize)
-        {
-            if (presentReading < previousReading)
-                return -1;
-
-            var rate = await _waterRateTrans.GetByClassificationAndMeterSize(
-                classification,
-                meterSize);
-
-            if (rate == null)
-            {
-                throw new InvalidOperationException(
-                    $"No active water rate found for " +
-                    $"classification '{classification}' " +
-                    $"and meter size {meterSize}.");
-            }
-
-            int usage = presentReading - previousReading;
-
-            decimal total;
-
-            if (usage <= 10)
-            {
-                total = rate.MinimumCharge;
-            }
-            else if (usage <= 20)
-            {
-                total = rate.MinimumCharge
-                      + ((usage - 10) * rate.Rate11To20);
-            }
-            else if (usage <= 30)
-            {
-                total = rate.MinimumCharge
-                      + (10 * rate.Rate11To20)
-                      + ((usage - 20) * rate.Rate21To30);
-            }
-            else if (usage <= 40)
-            {
-                total = rate.MinimumCharge
-                      + (10 * rate.Rate11To20)
-                      + (10 * rate.Rate21To30)
-                      + ((usage - 30) * rate.Rate31To40);
-            }
-            else
-            {
-                total = rate.MinimumCharge
-                      + (10 * rate.Rate11To20)
-                      + (10 * rate.Rate21To30)
-                      + (10 * rate.Rate31To40)
-                      + ((usage - 40) * rate.Rate41Up);
-            }
-
-            // Always charged
-            total += WaterMeterMaintenanceFee;
-
-            return total;
-        }
-
-        #endregion
 
         /// <summary>
         /// Live search â€” returns matching accounts (by account number, meter number, or address)
@@ -585,13 +519,12 @@ namespace TMCWD.Application.Controllers
 
                 if (current != null)
                 {
-                    amount = await ComputeWaterCharge(
+                    amount = await WaterChargeCalculator.ComputeWaterCharge(
+                        _waterRateTrans,
                         (int)previousVal,
                         (int)present,
                         account.Classification,
-                        account.MeterSize > 0
-                            ? account.MeterSize
-                            : 0.5m);
+                        account.MeterSize > 0 ? account.MeterSize : 0.5m);
                 }
 
                 var usage = Math.Max(0, present - previousVal);
@@ -641,14 +574,12 @@ namespace TMCWD.Application.Controllers
                     0,
                     reading.CurrentReading - reading.PreviousReading);
 
-                var amount = await ComputeWaterCharge(
+                var amount = await WaterChargeCalculator.ComputeWaterCharge(
+                    _waterRateTrans,
                     (int)reading.PreviousReading,
                     (int)reading.CurrentReading,
                     account.Classification,
-                    account.MeterSize > 0
-                        ? account.MeterSize
-                        : 0.5m);
-
+                    account.MeterSize > 0 ? account.MeterSize : 0.5m);
                 result.Add(new PresentReadingViewModel
                 {
                     ReadingId = reading.Id,

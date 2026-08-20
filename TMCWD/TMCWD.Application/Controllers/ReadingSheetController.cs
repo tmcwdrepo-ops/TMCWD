@@ -22,6 +22,7 @@ namespace TMCWD.Application.Controllers
         private readonly AccountTransaction _accountTransaction;
         private readonly ReadingTransaction _readingTransaction;
         private readonly ReadingSheetTemplateTransaction _readingSheetTemplateTrans;
+        private readonly WaterRateTransaction _waterRateTrans;
 
         #endregion
 
@@ -33,16 +34,18 @@ namespace TMCWD.Application.Controllers
             ZoneBookTransaction zoneBookTrans,
             AccountTransaction accountTransaction,
             ReadingTransaction readingTransaction,
-            ReadingSheetTemplateTransaction readingSheetTemplateTrans)
-        {
-            _user = user;
-            _readingSheetTrans = readingSheetTrans;
-            _userTrans = userTrans;
-            _zoneBookTrans = zoneBookTrans;
-            _accountTransaction = accountTransaction;
-            _readingTransaction = readingTransaction;
-            _readingSheetTemplateTrans = readingSheetTemplateTrans;
-        }
+            ReadingSheetTemplateTransaction readingSheetTemplateTrans,
+            WaterRateTransaction waterRateTrans)
+{
+    _user = user;
+    _readingSheetTrans = readingSheetTrans;
+    _userTrans = userTrans;
+    _zoneBookTrans = zoneBookTrans;
+    _accountTransaction = accountTransaction;
+    _readingTransaction = readingTransaction;
+    _readingSheetTemplateTrans = readingSheetTemplateTrans;
+    _waterRateTrans = waterRateTrans;
+}
 
         #endregion
 
@@ -476,16 +479,6 @@ namespace TMCWD.Application.Controllers
             return readings.Where(x => x.ReadingSheetId == readingSheetId).Count();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetReadingSheetAccounts(int readingSheetId)
-        {
-            var accounts = await _readingSheetTrans.GetReadingSheetAccounts(readingSheetId);
-
-            if (accounts == null)
-                return Ok(new List<object>());
-
-            return Ok(accounts);
-        }
 
         #endregion
 
@@ -539,6 +532,38 @@ namespace TMCWD.Application.Controllers
             {
                 return StatusCode(500, new { message = "Error updating sheets", error = ex.Message });
             }
+        }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetReadingSheetAccounts(int readingSheetId)
+        {
+            var accounts = await _readingSheetTrans.GetReadingSheetAccounts(readingSheetId);
+
+            if (accounts == null)
+                return Ok(new List<object>());
+
+            foreach (var acct in accounts)
+            {
+                if (acct.Pres <= 0 && acct.Prev <= 0)
+                    continue; // no reading yet — leave amount at 0
+
+                var amount = await WaterChargeCalculator.ComputeWaterCharge(
+                    _waterRateTrans,
+                    (int)acct.Prev,
+                    (int)acct.Pres,
+                    (AccountClassification)acct.Classification,
+                    acct.MeterSize);
+
+                if (amount >= 0)
+                {
+                    acct.Amount = amount;
+                    acct.Total = acct.Balance + amount;
+                }
+            }
+
+            return Ok(accounts);
         }
     }
 

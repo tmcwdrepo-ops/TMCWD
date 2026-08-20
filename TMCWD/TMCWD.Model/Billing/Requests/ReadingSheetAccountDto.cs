@@ -18,5 +18,7 @@ namespace TMCWD.Model.Billing.Responses
         public decimal Total { get; set; }
         public string Status { get; set; }
         public string Category { get; set; }
+        public int Classification { get; set; }
+        public decimal MeterSize { get; set; }
     }
 }
