@@ -527,39 +527,88 @@
 
 
     <!-- =========================================================
-         ZONE PROGRESS CONTROLS
+         READING SHEET TABLE
     ========================================================== -->
 
-    <div class="panel zone-progress-input-panel"
-         id="zoneProgressPanel">
+    <!-- =========================================================
+         PROGRESS UPDATE MODAL
+    ========================================================== -->
 
-        <div class="zone-progress-input-header">
+    <div class="modal-backdrop"
+         id="progressModalBackdrop"
+         hidden
+         aria-hidden="true">
 
-            <h3>
-                Zone Progress Controls
-            </h3>
+        <div class="modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="progressModalTitle"
+             style="max-width: 400px;">
 
-            <div class="zone-progress-toggle">
+            <h2 class="modal__title"
+                id="progressModalTitle">
 
-                <label class="toggle-switch">
+                Update Progress
 
-                    <input type="checkbox"
-                           id="manualProgressToggle" />
+            </h2>
 
-                    <span class="toggle-slider"></span>
+            <div class="modal__body"
+                 style="width: 100%; max-width: 100%; text-align: left;">
 
-                    <span class="toggle-label">
-                        Manual Progress Control
-                    </span>
+                <input type="hidden"
+                       id="progressSheetId" />
 
-                </label>
+                <p style="margin-bottom: 20px; color: var(--color-text-dim); font-size: 14px;">
+                    <strong id="progressSheetName"></strong>
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+
+                    <!-- Completed Count -->
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+
+                        <label for="progressCompleted"
+                               style="font-size: 13px; font-weight: 600; color: var(--color-text-dim);">
+
+                            Completed Readings
+
+                        </label>
+
+                        <input type="number"
+                               id="progressCompleted"
+                               min="0"
+                               style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel-alt); color: var(--color-text); font-size: 14px; font-family: var(--font-sans);" />
+
+                        <span style="font-size: 12px; color: var(--color-text-faint);">
+                            Total readings: <strong id="progressTotal">0</strong>
+                        </span>
+
+                    </div>
+
+                </div>
 
             </div>
 
-        </div>
+            <div class="modal__actions">
 
-        <div class="zone-progress-inputs"
-             id="zoneProgressInputs">
+                <button class="btn btn--ghost"
+                        type="button"
+                        id="progressModalCancel">
+
+                    Cancel
+
+                </button>
+
+                <button class="btn btn--green"
+                        type="button"
+                        id="progressModalSave">
+
+                    Update Progress
+
+                </button>
+
+            </div>
+
         </div>
 
     </div>

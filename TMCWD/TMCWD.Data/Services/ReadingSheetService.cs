@@ -239,6 +239,96 @@ namespace TMCWD.Data.Services
                 .OrderByDescending(x => x.BillingDate)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<bool> UpdateZoneProgress(int readingSheetId, int completedCount, int totalCount)
+        {
+            // Get all readings for this reading sheet
+            var readings = await _context.Readings
+                .Where(r => r.ReadingSheetId == readingSheetId)
+                .OrderBy(r => r.Id)
+                .ToListAsync();
+
+            if (!readings.Any())
+            {
+                return false;
+            }
+
+            // DEBUG: Log before update
+            try
+            {
+                System.IO.File.AppendAllText(
+                    @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] UpdateZoneProgress - Sheet {readingSheetId}: Setting {completedCount}/{totalCount}\n"
+                );
+            }
+            catch { }
+
+            // Update the first N readings to Completed, rest to InProgress
+            for (int i = 0; i < readings.Count; i++)
+            {
+                if (i < completedCount)
+                {
+                    readings[i].Status = ReadingStatus.Completed;
+                    readings[i].IsCompleted = true;
+                }
+                else
+                {
+                    readings[i].Status = ReadingStatus.InProgress;
+                    readings[i].IsCompleted = false;
+                }
+            }
+
+            // Check if this sheet is now fully complete
+            var readingSheet = await _context.ReadingSheets
+                .FirstOrDefaultAsync(rs => rs.Id == readingSheetId);
+
+            if (readingSheet != null)
+            {
+                bool allComplete = completedCount >= totalCount;
+                
+                // DEBUG: Log status change
+                try
+                {
+                    System.IO.File.AppendAllText(
+                        @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                        $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Sheet {readingSheetId} allComplete={allComplete}, current status={(int)readingSheet.Status}\n"
+                    );
+                }
+                catch { }
+                
+                if (allComplete && readingSheet.Status != ReadingStatus.Completed)
+                {
+                    readingSheet.Status = ReadingStatus.Completed;
+                    
+                    // DEBUG
+                    try
+                    {
+                        System.IO.File.AppendAllText(
+                            @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                            $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Setting sheet {readingSheetId} to Completed\n"
+                        );
+                    }
+                    catch { }
+                }
+                else if (!allComplete && readingSheet.Status == ReadingStatus.Completed)
+                {
+                    readingSheet.Status = ReadingStatus.InProgress;
+                    
+                    // DEBUG
+                    try
+                    {
+                        System.IO.File.AppendAllText(
+                            @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                            $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Setting sheet {readingSheetId} to InProgress\n"
+                        );
+                    }
+                    catch { }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
         #endregion
     }
 }

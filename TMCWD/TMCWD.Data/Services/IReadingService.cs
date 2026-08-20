@@ -32,7 +32,9 @@ namespace TMCWD.Data.Services
 
         public Task<List<Reading>> GetReadingsByBillingPeriod(int zone, int book, DateTime billingPeriod);
 
-        public Task<List<Reading>> GetRangeByReadingSheetIds(IEnumerable<int> ids);
+        public Task<List<Reading>> GetRangeByReadingSheetIds(IEnumerable<long> ids);
+
+        Task<List<Reading>> GetByReadingSheetIds(List<long> readingSheetIds);
 
         public Task<List<ReadingWithBillingDate>> GetByAccountWithBillingDate(int accountId);
 

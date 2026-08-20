@@ -31,5 +31,7 @@ namespace TMCWD.Data.Services
 
         Task<IEnumerable<ReadingSheet>> UpdateReadingSheetsStatus(IEnumerable<long> ids,int userId,int status);
 
+        Task<bool> UpdateZoneProgress(int readingSheetId, int completedCount, int totalCount);
+
     }
 }

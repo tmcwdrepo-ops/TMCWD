@@ -133,7 +133,7 @@ namespace TMCWD.Billing
             return ConvertJsonToReadings(data);
         }
 
-        public async Task<List<Reading>> GetRangeByReadingSheetIds(List<int> readingSheetIds)
+        public async Task<List<Reading>> GetRangeByReadingSheetIds(List<long> readingSheetIds)
         {
             var content = JsonContent.Create(readingSheetIds);
             var response = await _service.Client.PostAsync("api/Reading/GetRangeByReadingSheetIds", content);

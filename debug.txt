@@ -1,0 +1,1123 @@
+[2026-08-20 08:45:26] Total readings loaded: 25
+[2026-08-20 08:45:26] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:45:26] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:45:26] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:45:26] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:45:26] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:45:26] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:45:26] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:45:26] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:45:26] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:45:26] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:45:26] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:03] Total readings loaded: 25
+[2026-08-20 08:46:03] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:46:03] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:46:03] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:46:03] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:03] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:03] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:03] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:03] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:03] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:46:03] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:03] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:55] Total readings loaded: 25
+[2026-08-20 08:46:55] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:46:55] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:46:55] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:46:55] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:55] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:55] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:55] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:55] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:55] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:46:55] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:55] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:56] Total readings loaded: 25
+[2026-08-20 08:46:56] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:46:56] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:46:56] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:46:56] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:56] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:56] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:56] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:56] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:56] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:46:56] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:46:56] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:35] Total readings loaded: 25
+[2026-08-20 08:47:35] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:47:35] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:47:35] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:47:35] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:35] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:35] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:35] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:35] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:35] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:47:35] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:35] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:37] Total readings loaded: 25
+[2026-08-20 08:47:37] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:47:37] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:47:37] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:47:37] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:37] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:37] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:37] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:37] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:37] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:47:37] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:47:37] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Total readings loaded: 25
+[2026-08-20 08:48:13] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:48:13] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:48:13] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:48:13] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Total readings loaded: 25
+[2026-08-20 08:48:13] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:48:13] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:48:13] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:48:13] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:13] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:40] Total readings loaded: 25
+[2026-08-20 08:48:40] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:48:40] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:48:40] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:48:40] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:40] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:40] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:40] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:40] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:40] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:48:40] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:48:40] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:08] Total readings loaded: 25
+[2026-08-20 08:56:08] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:56:08] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:56:08] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:56:08] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:08] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:08] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:08] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:08] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:08] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:56:08] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:08] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:36] Total readings loaded: 25
+[2026-08-20 08:56:36] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:56:36] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:56:36] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:56:36] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:36] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:36] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:36] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:36] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:36] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:56:36] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:36] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:37] Total readings loaded: 25
+[2026-08-20 08:56:37] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:56:37] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:56:37] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:56:37] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:37] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:37] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:37] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:37] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:37] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:56:37] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:56:37] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:44] Total readings loaded: 25
+[2026-08-20 08:59:44] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:59:44] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:59:44] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:59:44] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:44] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:44] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:44] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:44] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:44] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:59:44] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:44] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:49] Total readings loaded: 25
+[2026-08-20 08:59:49] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:59:49] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:59:49] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:49] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:49] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:49] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:49] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:49] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:49] Sheet 177: 2 readings, 1 completed, 1 in progress
+[2026-08-20 08:59:49] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:49] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:57] Total readings loaded: 25
+[2026-08-20 08:59:57] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 08:59:57] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 08:59:57] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:57] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:57] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:57] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:57] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:57] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:57] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:57] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 08:59:57] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:01:54] Total readings loaded: 25
+[2026-08-20 09:01:54] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:01:54] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:01:54] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:01:54] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:01:54] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:01:54] Sheet 174: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:01:54] Sheet 175: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:01:54] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:01:54] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:01:54] Sheet 178: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:01:54] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:05:55] Total readings loaded: 25
+[2026-08-20 09:05:55] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:05:55] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:05:55] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:05:55] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:05:55] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:05:55] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:05:55] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:05:55] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:05:55] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:05:55] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:05:55] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:11:17] User IDs requested: 56, 57
+[2026-08-20 09:11:17] Total readings loaded: 25
+[2026-08-20 09:11:17] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:11:17] Users loaded: 0 - IDs: 
+[2026-08-20 09:11:17] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:11:17] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:11:17] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:11:17] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:11:17] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:11:17] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:11:17] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:11:17] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:11:17] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:11:17] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:12:24] User IDs requested: 56, 57
+[2026-08-20 09:12:24] Total readings loaded: 25
+[2026-08-20 09:12:24] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:12:24] Users loaded: 0 - IDs: 
+[2026-08-20 09:12:24] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:12:24] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:12:24] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:12:24] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:12:24] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:12:24] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:12:24] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:12:24] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:12:24] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:12:24] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:13:33] User IDs requested: 56, 57
+[2026-08-20 09:13:33] Total readings loaded: 25
+[2026-08-20 09:13:33] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:13:33] Users loaded: 0 - IDs: 
+[2026-08-20 09:13:33] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:13:33] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:13:33] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:13:33] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:13:33] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:13:33] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:13:33] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:13:33] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:13:33] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:13:33] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:15:20] User IDs requested: 56, 57
+[2026-08-20 09:15:20] GetUsersByIds called with IDs: 56, 57
+[2026-08-20 09:15:20] Converted to long IDs: 56, 57
+[2026-08-20 09:15:20] Total readings loaded: 25
+[2026-08-20 09:15:20] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:15:20] Users loaded: 0 - IDs: 
+[2026-08-20 09:15:20] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:15:20] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:15:20] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:15:20] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:15:20] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:15:20] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:15:20] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:15:20] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:15:20] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:15:20] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:16:59] User IDs requested: 56, 57
+[2026-08-20 09:16:59] GetUsersByIds called with IDs: 56, 57
+[2026-08-20 09:16:59] ERROR in GetUsersByIds: Unable to cast object of type 'System.DBNull' to type 'System.DateTime'.
+[2026-08-20 09:16:59] Total readings loaded: 25
+[2026-08-20 09:16:59] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:16:59] Users loaded: 0 - IDs: 
+[2026-08-20 09:16:59] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:16:59] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:16:59] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:16:59] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:16:59] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:16:59] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:16:59] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:16:59] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:16:59] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:16:59] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:17:42] User IDs requested: 56, 57
+[2026-08-20 09:17:42] GetUsersByIds called with IDs: 56, 57
+[2026-08-20 09:17:42] ERROR in GetUsersByIds: Unable to cast object of type 'System.DBNull' to type 'System.Boolean'.
+[2026-08-20 09:17:42] Total readings loaded: 25
+[2026-08-20 09:17:42] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:17:42] Users loaded: 0 - IDs: 
+[2026-08-20 09:17:42] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:17:42] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:17:42] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:17:42] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:17:42] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:17:42] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:17:42] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:17:42] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:17:42] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:17:42] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:18:27] User IDs requested: 56, 57
+[2026-08-20 09:18:27] GetUsersByIds called with IDs: 56, 57
+[2026-08-20 09:18:27] ERROR in GetUsersByIds: Unable to cast object of type 'System.DBNull' to type 'System.String'.
+[2026-08-20 09:18:27] Total readings loaded: 25
+[2026-08-20 09:18:27] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:18:27] Users loaded: 0 - IDs: 
+[2026-08-20 09:18:27] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:18:27] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:18:27] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:18:27] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:18:27] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:18:27] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:18:27] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:18:27] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:18:27] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:18:27] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:19:08] User IDs requested: 56, 57
+[2026-08-20 09:19:08] GetUsersByIds called with IDs: 56, 57
+[2026-08-20 09:19:08] Total users in DB: 12
+[2026-08-20 09:19:08] All user IDs: 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 56, 57
+[2026-08-20 09:19:08] Filtered users: 2 - 56:Juan Dela Cruz, 57:Maria Santos
+[2026-08-20 09:20:26] User IDs requested: 56, 57
+[2026-08-20 09:21:49] User IDs requested: 56, 57
+[2026-08-20 09:21:56] User IDs requested: 56, 57
+[2026-08-20 09:26:41] User IDs requested: 56, 57
+[2026-08-20 09:26:41] Users loaded: 2
+[2026-08-20 09:26:41] Readings loaded: 25
+[2026-08-20 09:26:41] ZoneBooks loaded: 5
+[2026-08-20 09:26:41] Total readings loaded: 25
+[2026-08-20 09:26:41] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:26:41] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:26:41] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:26:41] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:26:41] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:26:41] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:26:41] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:26:41] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:26:41] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:26:41] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:26:41] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:26:41] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:28:05] User IDs requested: 56, 57
+[2026-08-20 09:28:05] Users loaded: 2
+[2026-08-20 09:28:05] Readings loaded: 25
+[2026-08-20 09:28:05] ZoneBooks loaded: 5
+[2026-08-20 09:28:05] Total readings loaded: 25
+[2026-08-20 09:28:05] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:28:05] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:28:05] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:28:05] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:28:05] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:28:05] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:28:05] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:28:05] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:28:05] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:28:05] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:28:05] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:28:05] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:28:11] User IDs requested: 56, 57
+[2026-08-20 09:28:11] Users loaded: 2
+[2026-08-20 09:28:11] Readings loaded: 25
+[2026-08-20 09:28:11] ZoneBooks loaded: 5
+[2026-08-20 09:28:11] Total readings loaded: 25
+[2026-08-20 09:28:11] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:28:11] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:28:11] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:28:11] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:28:11] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:28:11] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:28:11] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:28:11] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:28:11] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:28:11] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:28:11] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:28:11] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:29:47] User IDs requested: 56, 57
+[2026-08-20 09:29:47] Users loaded: 2
+[2026-08-20 09:29:47] Readings loaded: 25
+[2026-08-20 09:29:47] ZoneBooks loaded: 5
+[2026-08-20 09:29:47] Total readings loaded: 25
+[2026-08-20 09:29:47] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:29:47] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:29:47] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:29:47] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:29:47] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:29:47] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:29:47] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:29:47] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:29:47] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:29:47] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:29:47] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:29:47] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:30:31] User IDs requested: 56, 57
+[2026-08-20 09:30:31] Users loaded: 2
+[2026-08-20 09:30:31] Readings loaded: 25
+[2026-08-20 09:30:31] ZoneBooks loaded: 5
+[2026-08-20 09:30:31] Total readings loaded: 25
+[2026-08-20 09:30:31] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:30:31] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:30:31] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:30:31] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:30:31] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:30:31] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:30:31] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:30:31] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:30:31] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:30:31] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:30:31] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:30:31] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:31:41] User IDs requested: 56, 57
+[2026-08-20 09:31:41] Users loaded: 2
+[2026-08-20 09:31:41] Readings loaded: 25
+[2026-08-20 09:31:41] ZoneBooks loaded: 5
+[2026-08-20 09:31:41] Total readings loaded: 25
+[2026-08-20 09:31:41] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:31:41] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:31:41] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:31:41] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:31:41] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:31:41] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:31:41] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:31:41] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:31:41] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:31:41] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:31:41] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:31:41] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:32:27] User IDs requested: 56, 57
+[2026-08-20 09:32:27] Users loaded: 2
+[2026-08-20 09:32:27] Readings loaded: 25
+[2026-08-20 09:32:27] ZoneBooks loaded: 5
+[2026-08-20 09:32:27] Total readings loaded: 25
+[2026-08-20 09:32:27] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:32:27] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:32:27] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:32:27] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:32:27] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:32:27] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:32:27] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:32:27] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:32:27] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:32:27] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:32:27] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:32:27] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:34:40] User IDs requested: 56, 57
+[2026-08-20 09:34:40] Users loaded: 2
+[2026-08-20 09:34:40] Readings loaded: 25
+[2026-08-20 09:34:40] ZoneBooks loaded: 5
+[2026-08-20 09:34:40] Total readings loaded: 25
+[2026-08-20 09:34:40] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:34:40] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:34:40] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:34:40] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:34:40] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:34:40] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:34:40] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:34:40] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:34:40] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:34:40] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:34:40] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:34:40] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:20] User IDs requested: 56, 57
+[2026-08-20 09:38:20] Users loaded: 2
+[2026-08-20 09:38:20] Readings loaded: 25
+[2026-08-20 09:38:20] ZoneBooks loaded: 5
+[2026-08-20 09:38:20] Total readings loaded: 25
+[2026-08-20 09:38:20] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:38:20] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:38:20] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:38:20] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:20] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:20] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:38:20] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:38:20] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:38:20] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:20] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:20] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:20] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:25] UpdateZoneProgress - Sheet 170: Setting 7/7
+[2026-08-20 09:38:25] Sheet 171 allComplete=True, current status=2
+[2026-08-20 09:38:25] Setting sheet 170 to Completed
+[2026-08-20 09:38:25] User IDs requested: 56, 57
+[2026-08-20 09:38:25] Users loaded: 2
+[2026-08-20 09:38:25] Readings loaded: 25
+[2026-08-20 09:38:25] ZoneBooks loaded: 5
+[2026-08-20 09:38:25] Total readings loaded: 25
+[2026-08-20 09:38:25] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:38:25] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:38:25] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:38:25] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:25] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:25] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:38:25] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:38:25] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:38:25] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:25] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:25] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:25] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:29] User IDs requested: 56, 57
+[2026-08-20 09:38:29] Users loaded: 2
+[2026-08-20 09:38:29] Readings loaded: 25
+[2026-08-20 09:38:29] ZoneBooks loaded: 5
+[2026-08-20 09:38:29] Total readings loaded: 25
+[2026-08-20 09:38:29] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:38:29] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:38:29] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:38:29] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:29] Sheet 172: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:29] Sheet 173: 2 readings, 0 completed, 2 in progress
+[2026-08-20 09:38:29] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:38:29] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:38:29] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:29] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:29] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:29] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:36] UpdateZoneProgress - Sheet 172: Setting 2/2
+[2026-08-20 09:38:36] Sheet 172 allComplete=True, current status=2
+[2026-08-20 09:38:36] Setting sheet 172 to Completed
+[2026-08-20 09:38:36] User IDs requested: 56, 57
+[2026-08-20 09:38:36] Users loaded: 2
+[2026-08-20 09:38:36] Readings loaded: 25
+[2026-08-20 09:38:36] ZoneBooks loaded: 5
+[2026-08-20 09:38:36] Total readings loaded: 25
+[2026-08-20 09:38:36] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:38:36] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:38:36] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:38:36] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:36] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:36] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:36] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:38:36] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:38:36] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:36] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:36] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:36] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:42] UpdateZoneProgress - Sheet 170: Setting 7/7
+[2026-08-20 09:38:42] Sheet 171 allComplete=False, current status=3
+[2026-08-20 09:38:42] Setting sheet 171 to InProgress
+[2026-08-20 09:38:42] User IDs requested: 56, 57
+[2026-08-20 09:38:42] Users loaded: 2
+[2026-08-20 09:38:42] Readings loaded: 25
+[2026-08-20 09:38:42] ZoneBooks loaded: 5
+[2026-08-20 09:38:42] Total readings loaded: 25
+[2026-08-20 09:38:42] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:38:42] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:38:42] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:38:42] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:42] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:42] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:42] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:38:42] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:38:42] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:42] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:42] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:42] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:51] UpdateZoneProgress - Sheet 171: Setting 1/2
+[2026-08-20 09:38:51] Sheet 170 allComplete=True, current status=3
+[2026-08-20 09:38:51] User IDs requested: 56, 57
+[2026-08-20 09:38:51] Users loaded: 2
+[2026-08-20 09:38:51] Readings loaded: 25
+[2026-08-20 09:38:51] ZoneBooks loaded: 5
+[2026-08-20 09:38:51] Total readings loaded: 25
+[2026-08-20 09:38:51] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:38:51] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:38:51] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:38:51] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:51] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:51] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:51] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:38:51] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:38:51] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:51] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:51] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:51] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:52] User IDs requested: 56, 57
+[2026-08-20 09:38:52] Users loaded: 2
+[2026-08-20 09:38:52] Readings loaded: 25
+[2026-08-20 09:38:52] ZoneBooks loaded: 5
+[2026-08-20 09:38:52] Total readings loaded: 25
+[2026-08-20 09:38:52] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:38:52] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:38:52] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:38:52] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:52] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:52] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:52] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:38:52] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:38:52] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:52] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:38:52] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:38:52] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:03] UpdateZoneProgress - Sheet 173: Setting 1/2
+[2026-08-20 09:39:03] Sheet 172 allComplete=True, current status=3
+[2026-08-20 09:39:03] Setting sheet 173 to InProgress
+[2026-08-20 09:39:03] User IDs requested: 56, 57
+[2026-08-20 09:39:03] Users loaded: 2
+[2026-08-20 09:39:03] Readings loaded: 25
+[2026-08-20 09:39:03] ZoneBooks loaded: 5
+[2026-08-20 09:39:03] Total readings loaded: 25
+[2026-08-20 09:39:03] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:39:03] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:39:03] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:39:03] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:39:03] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:03] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:39:03] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:39:03] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:39:03] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:03] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:03] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:39:03] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:06] User IDs requested: 56, 57
+[2026-08-20 09:39:06] Users loaded: 2
+[2026-08-20 09:39:06] Readings loaded: 25
+[2026-08-20 09:39:06] ZoneBooks loaded: 5
+[2026-08-20 09:39:06] Total readings loaded: 25
+[2026-08-20 09:39:06] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:39:06] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:39:06] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:39:06] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:39:06] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:06] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:39:06] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:39:06] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:39:06] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:06] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:06] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:39:06] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:35] UpdateZoneProgress - Sheet 171: Setting 1/2
+[2026-08-20 09:39:35] Sheet 170 allComplete=True, current status=3
+[2026-08-20 09:39:35] Sheet 171 allComplete=False, current status=2
+[2026-08-20 09:39:35] User IDs requested: 56, 57
+[2026-08-20 09:39:35] Users loaded: 2
+[2026-08-20 09:39:35] Readings loaded: 25
+[2026-08-20 09:39:35] ZoneBooks loaded: 5
+[2026-08-20 09:39:35] Total readings loaded: 25
+[2026-08-20 09:39:35] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:39:35] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:39:35] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:39:35] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:39:35] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:35] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:39:35] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:39:35] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:39:35] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:35] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:39:35] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:39:35] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:37] User IDs requested: 56, 57
+[2026-08-20 09:44:37] Users loaded: 2
+[2026-08-20 09:44:37] Readings loaded: 25
+[2026-08-20 09:44:37] ZoneBooks loaded: 5
+[2026-08-20 09:44:37] Total readings loaded: 25
+[2026-08-20 09:44:37] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:44:37] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:44:37] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:44:37] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:44:37] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:37] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:44:37] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:44:37] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:44:37] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:37] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:37] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:44:37] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:44] UpdateZoneProgress - Sheet 170: Setting 7/7
+[2026-08-20 09:44:44] Sheet 171 allComplete=False, current status=2
+[2026-08-20 09:44:44] User IDs requested: 56, 57
+[2026-08-20 09:44:44] Users loaded: 2
+[2026-08-20 09:44:44] Readings loaded: 25
+[2026-08-20 09:44:44] ZoneBooks loaded: 5
+[2026-08-20 09:44:44] Total readings loaded: 25
+[2026-08-20 09:44:44] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:44:44] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:44:44] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:44:44] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:44:44] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:44] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:44:44] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:44:44] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:44:44] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:44] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:44] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:44:44] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:49] UpdateZoneProgress - Sheet 170: Setting 7/7
+[2026-08-20 09:44:49] Sheet 170 allComplete=True, current status=3
+[2026-08-20 09:44:49] User IDs requested: 56, 57
+[2026-08-20 09:44:49] Users loaded: 2
+[2026-08-20 09:44:49] Readings loaded: 25
+[2026-08-20 09:44:49] ZoneBooks loaded: 5
+[2026-08-20 09:44:49] Total readings loaded: 25
+[2026-08-20 09:44:49] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:44:49] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:44:49] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:44:49] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:44:49] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:49] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:44:49] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:44:49] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:44:49] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:49] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:44:49] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:44:49] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:46:05] User IDs requested: 56, 57
+[2026-08-20 09:46:05] Users loaded: 2
+[2026-08-20 09:46:05] Readings loaded: 25
+[2026-08-20 09:46:05] ZoneBooks loaded: 5
+[2026-08-20 09:46:05] Total readings loaded: 25
+[2026-08-20 09:46:05] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:46:05] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:46:05] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:46:05] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:46:05] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:46:05] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:46:05] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:46:05] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:46:05] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:46:05] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:46:05] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:46:05] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:46:10] UpdateZoneProgress - Sheet 171: Setting 1/2
+[2026-08-20 09:46:10] Sheet 171 allComplete=False, current status=2
+[2026-08-20 09:46:10] User IDs requested: 56, 57
+[2026-08-20 09:46:10] Users loaded: 2
+[2026-08-20 09:46:10] Readings loaded: 25
+[2026-08-20 09:46:10] ZoneBooks loaded: 5
+[2026-08-20 09:46:10] Total readings loaded: 25
+[2026-08-20 09:46:10] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:46:10] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:46:10] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:46:10] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:46:10] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:46:10] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:46:10] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:46:10] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:46:10] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:46:10] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:46:10] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:46:10] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:47:37] User IDs requested: 56, 57
+[2026-08-20 09:47:37] Users loaded: 2
+[2026-08-20 09:47:37] Readings loaded: 25
+[2026-08-20 09:47:37] ZoneBooks loaded: 5
+[2026-08-20 09:47:37] Total readings loaded: 25
+[2026-08-20 09:47:37] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:47:37] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:47:37] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:47:37] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:47:37] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:47:37] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:47:37] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:47:37] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:47:37] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:47:37] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:47:37] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:47:37] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:48:53] User IDs requested: 56, 57
+[2026-08-20 09:48:53] Users loaded: 2
+[2026-08-20 09:48:53] Readings loaded: 25
+[2026-08-20 09:48:53] ZoneBooks loaded: 5
+[2026-08-20 09:48:53] Total readings loaded: 25
+[2026-08-20 09:48:53] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:48:53] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:48:53] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:48:53] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:48:53] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:48:53] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:48:53] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:48:53] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:48:53] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:48:53] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:48:53] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:48:53] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:50:59] User IDs requested: 56, 57
+[2026-08-20 09:50:59] Users loaded: 2
+[2026-08-20 09:50:59] Readings loaded: 25
+[2026-08-20 09:50:59] ZoneBooks loaded: 5
+[2026-08-20 09:50:59] Total readings loaded: 25
+[2026-08-20 09:50:59] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:50:59] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:50:59] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:50:59] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:50:59] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:50:59] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:50:59] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:50:59] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:50:59] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:50:59] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:50:59] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:50:59] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:05] UpdateZoneProgress - Sheet 170: Setting 7/7
+[2026-08-20 09:51:05] Sheet 170 allComplete=True, current status=3
+[2026-08-20 09:51:05] User IDs requested: 56, 57
+[2026-08-20 09:51:05] Users loaded: 2
+[2026-08-20 09:51:05] Readings loaded: 25
+[2026-08-20 09:51:05] ZoneBooks loaded: 5
+[2026-08-20 09:51:05] Total readings loaded: 25
+[2026-08-20 09:51:05] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:51:05] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:51:05] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:51:05] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:05] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:05] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:05] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:51:05] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:51:05] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:05] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:05] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:05] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:09] UpdateZoneProgress - Sheet 170: Setting 7/7
+[2026-08-20 09:51:09] Sheet 170 allComplete=True, current status=3
+[2026-08-20 09:51:09] Setting sheet 171 to Completed
+[2026-08-20 09:51:09] User IDs requested: 56, 57
+[2026-08-20 09:51:09] Users loaded: 2
+[2026-08-20 09:51:09] Readings loaded: 25
+[2026-08-20 09:51:09] ZoneBooks loaded: 5
+[2026-08-20 09:51:09] Total readings loaded: 25
+[2026-08-20 09:51:09] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:51:09] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:51:09] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:51:09] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:09] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:09] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:09] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:51:09] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:51:09] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:09] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:09] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:09] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:12] UpdateZoneProgress - Sheet 173: Setting 2/2
+[2026-08-20 09:51:12] Sheet 173 allComplete=True, current status=2
+[2026-08-20 09:51:12] Setting sheet 173 to Completed
+[2026-08-20 09:51:12] User IDs requested: 56, 57
+[2026-08-20 09:51:12] Users loaded: 2
+[2026-08-20 09:51:12] Readings loaded: 25
+[2026-08-20 09:51:12] ZoneBooks loaded: 5
+[2026-08-20 09:51:12] Total readings loaded: 25
+[2026-08-20 09:51:12] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:51:12] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:51:12] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:51:12] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:12] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:12] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:12] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:51:12] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:51:12] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:12] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:12] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:12] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:16] UpdateZoneProgress - Sheet 171: Setting 1/2
+[2026-08-20 09:51:16] Sheet 170 allComplete=True, current status=3
+[2026-08-20 09:51:16] Setting sheet 171 to InProgress
+[2026-08-20 09:51:16] User IDs requested: 56, 57
+[2026-08-20 09:51:16] Users loaded: 2
+[2026-08-20 09:51:16] Readings loaded: 25
+[2026-08-20 09:51:16] ZoneBooks loaded: 5
+[2026-08-20 09:51:16] Total readings loaded: 25
+[2026-08-20 09:51:16] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:51:16] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:51:16] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:51:16] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:16] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:16] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:16] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:51:16] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:51:16] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:16] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:16] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:16] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:19] User IDs requested: 56, 57
+[2026-08-20 09:51:19] Users loaded: 2
+[2026-08-20 09:51:19] Readings loaded: 25
+[2026-08-20 09:51:19] ZoneBooks loaded: 5
+[2026-08-20 09:51:19] Total readings loaded: 25
+[2026-08-20 09:51:19] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:51:19] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:51:19] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:51:19] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:19] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:19] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:19] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:51:19] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:51:19] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:19] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:19] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:19] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:41] UpdateZoneProgress - Sheet 171: Setting 1/2
+[2026-08-20 09:51:41] Sheet 171 allComplete=False, current status=2
+[2026-08-20 09:51:41] Sheet 170 allComplete=True, current status=3
+[2026-08-20 09:51:41] User IDs requested: 56, 57
+[2026-08-20 09:51:41] Users loaded: 2
+[2026-08-20 09:51:41] Readings loaded: 25
+[2026-08-20 09:51:41] ZoneBooks loaded: 5
+[2026-08-20 09:51:41] Total readings loaded: 25
+[2026-08-20 09:51:41] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:51:41] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:51:41] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:51:41] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:41] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:41] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:41] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:51:41] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:51:41] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:41] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:51:41] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:51:41] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:00] User IDs requested: 56, 57
+[2026-08-20 09:59:00] Users loaded: 2
+[2026-08-20 09:59:00] Readings loaded: 25
+[2026-08-20 09:59:00] ZoneBooks loaded: 5
+[2026-08-20 09:59:00] Total readings loaded: 25
+[2026-08-20 09:59:00] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:59:00] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:59:00] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:59:00] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:59:00] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:00] Sheet 173: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:00] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:59:00] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:59:00] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:00] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:00] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:59:00] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:11] UpdateZoneProgress - Sheet 172: Setting 2/2
+[2026-08-20 09:59:11] Sheet 172 allComplete=True, current status=3
+[2026-08-20 09:59:11] Setting sheet 173 to InProgress
+[2026-08-20 09:59:11] User IDs requested: 56, 57
+[2026-08-20 09:59:11] Users loaded: 2
+[2026-08-20 09:59:11] Readings loaded: 25
+[2026-08-20 09:59:11] ZoneBooks loaded: 5
+[2026-08-20 09:59:11] Total readings loaded: 25
+[2026-08-20 09:59:11] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:59:11] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:59:11] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:59:11] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:59:11] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:11] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:59:11] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:59:11] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:59:11] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:11] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:11] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:59:11] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:14] UpdateZoneProgress - Sheet 173: Setting 1/2
+[2026-08-20 09:59:14] Sheet 172 allComplete=True, current status=3
+[2026-08-20 09:59:14] User IDs requested: 56, 57
+[2026-08-20 09:59:14] Users loaded: 2
+[2026-08-20 09:59:14] Readings loaded: 25
+[2026-08-20 09:59:14] ZoneBooks loaded: 5
+[2026-08-20 09:59:14] Total readings loaded: 25
+[2026-08-20 09:59:14] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 09:59:14] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 09:59:14] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 09:59:14] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:59:14] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:14] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:59:14] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 09:59:14] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 09:59:14] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:14] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 09:59:14] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 09:59:14] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:03:55] User IDs requested: 56, 57
+[2026-08-20 10:03:55] Users loaded: 2
+[2026-08-20 10:03:55] Readings loaded: 25
+[2026-08-20 10:03:55] ZoneBooks loaded: 5
+[2026-08-20 10:03:55] Total readings loaded: 25
+[2026-08-20 10:03:55] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 10:03:55] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 10:03:55] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 10:03:55] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:03:55] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:03:55] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:03:55] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 10:03:55] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 10:03:55] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:03:55] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:03:55] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:03:55] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:04:00] UpdateZoneProgress - Sheet 171: Setting 1/2
+[2026-08-20 10:04:00] Sheet 170 allComplete=True, current status=3
+[2026-08-20 10:04:00] Sheet 171 allComplete=False, current status=2
+[2026-08-20 10:04:00] User IDs requested: 56, 57
+[2026-08-20 10:04:00] Users loaded: 2
+[2026-08-20 10:04:00] Readings loaded: 25
+[2026-08-20 10:04:00] ZoneBooks loaded: 5
+[2026-08-20 10:04:00] Total readings loaded: 25
+[2026-08-20 10:04:00] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 10:04:00] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 10:04:00] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 10:04:00] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:04:00] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:04:00] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:04:00] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 10:04:00] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 10:04:00] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:04:00] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:04:00] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:04:00] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:17] User IDs requested: 56, 57
+[2026-08-20 10:07:17] Users loaded: 2
+[2026-08-20 10:07:17] Readings loaded: 25
+[2026-08-20 10:07:17] ZoneBooks loaded: 5
+[2026-08-20 10:07:17] Total readings loaded: 25
+[2026-08-20 10:07:17] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 10:07:17] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 10:07:17] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 10:07:17] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:07:17] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:17] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:07:17] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 10:07:17] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 10:07:17] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:17] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:17] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:07:17] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:25] UpdateZoneProgress - Sheet 170: Setting 7/7
+[2026-08-20 10:07:25] Sheet 171 allComplete=False, current status=2
+[2026-08-20 10:07:25] User IDs requested: 56, 57
+[2026-08-20 10:07:25] Users loaded: 2
+[2026-08-20 10:07:25] Readings loaded: 25
+[2026-08-20 10:07:25] ZoneBooks loaded: 5
+[2026-08-20 10:07:25] Total readings loaded: 25
+[2026-08-20 10:07:25] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 10:07:25] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 10:07:25] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 10:07:25] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:07:25] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:25] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:07:25] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 10:07:25] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 10:07:25] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:25] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:25] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:07:25] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:34] UpdateZoneProgress - Sheet 171: Setting 1/2
+[2026-08-20 10:07:34] Sheet 171 allComplete=False, current status=2
+[2026-08-20 10:07:34] User IDs requested: 56, 57
+[2026-08-20 10:07:34] Users loaded: 2
+[2026-08-20 10:07:34] Readings loaded: 25
+[2026-08-20 10:07:34] ZoneBooks loaded: 5
+[2026-08-20 10:07:34] Total readings loaded: 25
+[2026-08-20 10:07:34] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 10:07:34] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 10:07:34] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 10:07:34] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:07:34] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:34] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:07:34] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 10:07:34] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 10:07:34] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:34] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:07:34] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:07:34] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:13] User IDs requested: 56, 57
+[2026-08-20 10:09:13] Users loaded: 2
+[2026-08-20 10:09:13] Readings loaded: 25
+[2026-08-20 10:09:13] ZoneBooks loaded: 5
+[2026-08-20 10:09:13] Total readings loaded: 25
+[2026-08-20 10:09:13] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 10:09:13] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 10:09:13] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 10:09:13] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:09:13] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:13] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:09:13] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 10:09:13] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 10:09:13] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:13] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:13] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:09:13] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:23] UpdateZoneProgress - Sheet 171: Setting 1/2
+[2026-08-20 10:09:23] Sheet 171 allComplete=False, current status=2
+[2026-08-20 10:09:23] User IDs requested: 56, 57
+[2026-08-20 10:09:23] Users loaded: 2
+[2026-08-20 10:09:23] Readings loaded: 25
+[2026-08-20 10:09:23] ZoneBooks loaded: 5
+[2026-08-20 10:09:23] Total readings loaded: 25
+[2026-08-20 10:09:23] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 10:09:23] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 10:09:23] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 10:09:23] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:09:23] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:23] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:09:23] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 10:09:23] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 10:09:23] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:23] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:23] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:09:23] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:27] UpdateZoneProgress - Sheet 173: Setting 1/2
+[2026-08-20 10:09:27] Sheet 172 allComplete=True, current status=3
+[2026-08-20 10:09:27] User IDs requested: 56, 57
+[2026-08-20 10:09:27] Users loaded: 2
+[2026-08-20 10:09:27] Readings loaded: 25
+[2026-08-20 10:09:27] ZoneBooks loaded: 5
+[2026-08-20 10:09:27] Total readings loaded: 25
+[2026-08-20 10:09:27] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 10:09:27] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 10:09:27] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 10:09:27] Sheet 171: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:09:27] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:27] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:09:27] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 10:09:27] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 10:09:27] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:27] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:27] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:09:27] Sheet 179: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:35] UpdateZoneProgress - Sheet 171: Setting 2/2
+[2026-08-20 10:09:35] Sheet 171 allComplete=True, current status=2
+[2026-08-20 10:09:35] Setting sheet 170 to Completed
+[2026-08-20 10:09:35] Setting sheet 171 to Completed
+[2026-08-20 10:09:36] User IDs requested: 56, 57
+[2026-08-20 10:09:36] Users loaded: 2
+[2026-08-20 10:09:36] Readings loaded: 25
+[2026-08-20 10:09:36] ZoneBooks loaded: 5
+[2026-08-20 10:09:36] Total readings loaded: 25
+[2026-08-20 10:09:36] Reading sheet IDs requested: 170, 171, 172, 173, 174, 175, 176, 177, 178, 179
+[2026-08-20 10:09:36] Users loaded: 2 - IDs: 56, 57
+[2026-08-20 10:09:36] Sheet 170: 7 readings, 7 completed, 0 in progress
+[2026-08-20 10:09:36] Sheet 171: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:36] Sheet 172: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:36] Sheet 173: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:09:36] Sheet 174: 2 readings, 1 completed, 0 in progress
+[2026-08-20 10:09:36] Sheet 175: 2 readings, 0 completed, 0 in progress
+[2026-08-20 10:09:36] Sheet 176: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:36] Sheet 177: 2 readings, 2 completed, 0 in progress
+[2026-08-20 10:09:36] Sheet 178: 2 readings, 1 completed, 1 in progress
+[2026-08-20 10:09:36] Sheet 179: 2 readings, 2 completed, 0 in progress

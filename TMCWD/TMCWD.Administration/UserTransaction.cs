@@ -142,7 +142,7 @@ namespace TMCWD.Administration
 
         public async Task<List<User>> GetUsersById(List<int> ids)
         {
-            string queryParam = string.Join("&", ids.Select(x => $"&ids={x}"));
+            string queryParam = string.Join("&", ids.Select(x => $"ids={x}"));
             var response = await _webService.Client.GetAsync($"api/Users/GetUsersById?{queryParam}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;

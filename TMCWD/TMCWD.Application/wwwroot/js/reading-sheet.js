@@ -27,9 +27,7 @@ var readingSheetState = {
   currentPage:   1,
   sortColumn:    null,
   sortDirection: 'asc',
-  statusFilter:  'in-progress',  // 'in-progress' | 'completed'
-  manualProgress: false,
-  zoneProgressOverrides: {}  // { 'ZN-01': { done: 5, total: 10 }, ... }
+  statusFilter:  'in-progress'  // 'in-progress' | 'completed'
 };
 
 /* ============================================================
@@ -144,15 +142,14 @@ function renderReadingSheetTable(rows, emptyMessage) {
     readingSheetState.rows.forEach(function (r) {
         if (!zoneStats[r.zone]) {
             zoneStats[r.zone] = {
-                total: r.totalAccounts,
-                done: r.totalCompleted
+                total: 0,
+                done: 0
             };
         }
 
-        zoneStats[r.zone].total += 1;
-
-        if (r.status === 'Completed')
-            zoneStats[r.zone].done += 1;
+        // Add the actual counts from each sheet
+        zoneStats[r.zone].total += (r.totalAccounts || 0);
+        zoneStats[r.zone].done += (r.totalCompleted || 0);
     });
 
     function formatShortDate(value) {
@@ -189,33 +186,19 @@ function renderReadingSheetTable(rows, emptyMessage) {
 
 
         // --------------------------------------------------------
-        // Zone progress
+        // Zone progress - just show completed/total
         // --------------------------------------------------------
 
         var zoneStat = zoneStats[row.zone] || {
-            total: 0,
-            done: 0
+            total: row.totalAccounts,
+            done: row.totalCompleted
         };
 
-        var override =
-            readingSheetState.manualProgress &&
-            readingSheetState.zoneProgressOverrides[row.zone];
-
-        var actualDone =
-            override ? override.done : zoneStat.done;
-
-        var actualTotal =
-            override ? override.total : zoneStat.total;
+        var actualDone = zoneStat.done;
+        var actualTotal = zoneStat.total;
 
         var isCompleted =
             readingSheetState.statusFilter === 'completed';
-
-        var zonePct =
-            isCompleted
-                ? 100
-                : actualTotal > 0
-                    ? Math.round((actualDone / actualTotal) * 100)
-                    : 0;
 
         var barLabel =
             (isCompleted ? actualTotal : actualDone) +
@@ -224,22 +207,7 @@ function renderReadingSheetTable(rows, emptyMessage) {
 
 
         // --------------------------------------------------------
-        // Progress bar color
-        // --------------------------------------------------------
-
-        var colorClass = '';
-
-        if (zonePct >= 80) {
-            colorClass = 'zone-mini-bar__fill--green';
-        } else if (zonePct >= 31) {
-            colorClass = 'zone-mini-bar__fill--yellow';
-        } else if (zonePct >= 1) {
-            colorClass = 'zone-mini-bar__fill--red';
-        }
-
-
-        // --------------------------------------------------------
-        // Zone cell
+        // Zone cell - clickable to update zone progress
         // --------------------------------------------------------
 
         var zoneCell =
@@ -247,25 +215,9 @@ function renderReadingSheetTable(rows, emptyMessage) {
             '<span class="zone-cell__label">' +
             row.zone +
             '</span>' +
-
-            '<div class="zone-mini-bar" title="' +
-            barLabel +
-            '">' +
-
-            '<div class="zone-mini-bar__track">' +
-            '<div class="zone-mini-bar__fill ' +
-            colorClass +
-            '" style="width:' +
-            zonePct +
-            '%">' +
-            '</div>' +
-            '</div>' +
-
-            '<span class="zone-mini-bar__text">' +
+            '<span class="zone-mini-bar__text zone-progress-clickable" data-zone="' + row.zone + '" style="cursor: pointer;">' +
             barLabel +
             '</span>' +
-
-            '</div>' +
             '</div>';
 
 
@@ -308,9 +260,9 @@ function renderReadingSheetTable(rows, emptyMessage) {
             zoneCell +
             '</td>' +
 
-            // For Posting
+            // For Posting (completed count only)
             '<td>' +
-            (row.forPosting ?? 0) +
+            (row.totalCompleted ?? 0) +
             '</td>' +
 
             // Status
@@ -1710,8 +1662,9 @@ function initReadingSheetPage() {
       applyAndRender('Unable to load reading sheets.');
     });
 
-  // Initialize zone progress input controls
-  generateZoneProgressInputs();
+  // Initialize zone progress input controls - REMOVED
+  // generateZoneProgressInputs();
+  // bindZoneInputEvents();
 
   // Search — capture value immediately, pass string into debounced handler
   var searchInput = document.querySelector('.search-input');
@@ -1748,11 +1701,20 @@ function initReadingSheetPage() {
     if (selectAll) selectAll.addEventListener('change', handleSelectAll);
     if (tbody) {
         tbody.addEventListener('change', handleRowSelect);
-        // Single delegated click handler for both edit and delete buttons
+        // Single delegated click handler for edit, delete, and zone progress update
         tbody.addEventListener('click', function (event) {
             console.log('[ReadingSheet] tbody click detected', event.target);
 
-            // Check for edit button first
+            // Check for ZONE progress cell click
+            var zoneProgressCell = event.target.closest('.zone-progress-clickable');
+            if (zoneProgressCell) {
+                console.log('[ReadingSheet] Zone progress clicked');
+                var zone = zoneProgressCell.dataset.zone;
+                openZoneProgressModal(zone);
+                return;
+            }
+
+            // Check for edit button
             var editBtn = event.target.closest('.action-btn--edit');
             if (editBtn) {
                 console.log('[ReadingSheet] Edit button found in delegation');
@@ -1813,12 +1775,40 @@ function initReadingSheetPage() {
         });
     }
 
+    // Progress modal
+    var progressSave = document.getElementById('progressModalSave');
+    var progressCancel = document.getElementById('progressModalCancel');
+    var progressBackdrop = document.getElementById('progressModalBackdrop');
+    var progressCompleted = document.getElementById('progressCompleted');
+
+    if (progressSave) progressSave.addEventListener('click', handleProgressSave);
+    if (progressCancel) progressCancel.addEventListener('click', closeProgressModal);
+    if (progressBackdrop) {
+        progressBackdrop.addEventListener('click', function (event) {
+            if (event.target === progressBackdrop) closeProgressModal();
+        });
+    }
+    // Validate completed count doesn't exceed total
+    if (progressCompleted) {
+        progressCompleted.addEventListener('input', function() {
+            var total = parseInt(document.getElementById('progressTotal').textContent) || 0;
+            var completed = parseInt(this.value) || 0;
+            if (completed > total) {
+                this.value = total;
+            }
+            if (completed < 0) {
+                this.value = 0;
+            }
+        });
+    }
+
     // Escape closes whichever modal is open
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') {
             closeEditModal();
             closeDeleteModal();
             closeBulkDeleteModal();
+            closeProgressModal();
         }
     });
 
@@ -1963,16 +1953,20 @@ function generateZoneProgressInputs() {
   var zoneInputsContainer = document.getElementById('zoneProgressInputs');
   if (!zoneInputsContainer) return;
 
-  // Get unique zones from data
+  // Get unique zones from data and track ALL reading sheet IDs per zone
   var zones = {};
   readingSheetState.rows.forEach(function(row) {
     if (!zones[row.zone]) {
-      zones[row.zone] = { total: 0, done: 0 };
+      zones[row.zone] = { 
+        total: 0, 
+        done: 0,
+        readingSheetIds: []  // Store ALL reading sheet IDs for this zone
+      };
     }
-    zones[row.zone].total += 1;
-    if (row.status === 'Completed') {
-      zones[row.zone].done += 1;
-    }
+    zones[row.zone].readingSheetIds.push(row.id);
+    // Count actual readings, not reading sheets
+    zones[row.zone].total += (row.totalAccounts || 0);
+    zones[row.zone].done += (row.totalCompleted || 0);
   });
 
   var html = Object.keys(zones).sort().map(function(zone) {
@@ -1983,7 +1977,7 @@ function generateZoneProgressInputs() {
     var percentage = currentTotal > 0 ? Math.round((currentDone / currentTotal) * 100) : 0;
 
     return (
-      '<div class="zone-input-card" data-zone="' + zone + '">' +
+      '<div class="zone-input-card" data-zone="' + zone + '" data-reading-sheet-ids="' + stats.readingSheetIds.join(',') + '">' +
         '<div class="zone-input-header">' +
           '<span class="zone-input-label">Zone ' + zone + '</span>' +
           '<span class="zone-input-current">Current: ' + currentDone + '/' + currentTotal + ' (' + percentage + '%)</span>' +
@@ -1998,9 +1992,11 @@ function generateZoneProgressInputs() {
               'min="1" value="' + currentTotal + '" ' +
               'data-zone="' + zone + '" data-type="total" />' +
           '</div>' +
-          '<input type="range" class="zone-input-slider" ' +
-            'min="0" max="' + currentTotal + '" value="' + currentDone + '" ' +
-            'data-zone="' + zone + '" />' +
+          '<div class="zone-progress-bar-wrapper">' +
+            '<div class="zone-progress-bar">' +
+              '<div class="zone-progress-bar-fill" style="width: ' + percentage + '%"></div>' +
+            '</div>' +
+          '</div>' +
           '<button type="button" class="zone-input-apply" data-zone="' + zone + '">Apply</button>' +
         '</div>' +
       '</div>'
@@ -2009,8 +2005,7 @@ function generateZoneProgressInputs() {
 
   zoneInputsContainer.innerHTML = html;
 
-  // Add event listeners
-  bindZoneInputEvents();
+  // Note: Event listeners are bound once at page init, not here
 }
 
 /**
@@ -2022,9 +2017,15 @@ function bindZoneInputEvents() {
 
   // Toggle manual progress mode
   if (manualToggle) {
+    // Remove old listener if exists
+    manualToggle.onchange = null;
     manualToggle.addEventListener('change', function() {
+      console.log('[ReadingSheet] Manual toggle changed:', this.checked);
       readingSheetState.manualProgress = this.checked;
-      zoneInputsContainer.classList.toggle('is-active', this.checked);
+      if (zoneInputsContainer) {
+        zoneInputsContainer.classList.toggle('is-active', this.checked);
+        console.log('[ReadingSheet] Zone inputs active:', this.checked);
+      }
       if (!this.checked) {
         // Reset overrides when disabling manual mode
         readingSheetState.zoneProgressOverrides = {};
@@ -2032,12 +2033,13 @@ function bindZoneInputEvents() {
       }
       applyAndRender(); // Re-render table to update progress bars
     });
+  } else {
+    console.warn('[ReadingSheet] Manual progress toggle not found!');
   }
 
-  // Zone input changes
+  // Zone input changes - using event delegation
   document.addEventListener('input', function(e) {
-    if (!e.target.classList.contains('zone-input-number') && 
-        !e.target.classList.contains('zone-input-slider')) return;
+    if (!e.target.classList.contains('zone-input-number')) return;
 
     var zone = e.target.dataset.zone;
     var card = document.querySelector('[data-zone="' + zone + '"]');
@@ -2045,25 +2047,22 @@ function bindZoneInputEvents() {
 
     var doneInput = card.querySelector('.zone-done-input');
     var totalInput = card.querySelector('.zone-total-input');
-    var slider = card.querySelector('.zone-input-slider');
 
-    if (e.target.classList.contains('zone-input-slider')) {
-      // Slider changed, update done input
-      doneInput.value = e.target.value;
-    } else if (e.target.dataset.type === 'done') {
-      // Done input changed, update slider
-      slider.value = e.target.value;
-      slider.max = totalInput.value;
+    if (e.target.dataset.type === 'done') {
+      // Done input changed, validate
+      var currentDone = parseInt(doneInput.value) || 0;
+      var currentTotal = parseInt(totalInput.value) || 1;
+      if (currentDone > currentTotal) {
+        doneInput.value = currentTotal;
+      }
     } else if (e.target.dataset.type === 'total') {
-      // Total input changed, update slider max and adjust done if needed
+      // Total input changed, adjust done if needed
       var newTotal = parseInt(e.target.value) || 1;
       var currentDone = parseInt(doneInput.value) || 0;
       
       if (currentDone > newTotal) {
         doneInput.value = newTotal;
-        slider.value = newTotal;
       }
-      slider.max = newTotal;
     }
 
     // Update current display
@@ -2071,7 +2070,7 @@ function bindZoneInputEvents() {
   });
 
   // Apply button clicks
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', async function(e) {
     if (!e.target.classList.contains('zone-input-apply')) return;
 
     var zone = e.target.dataset.zone;
@@ -2082,6 +2081,10 @@ function bindZoneInputEvents() {
     var totalInput = card.querySelector('.zone-total-input');
     var done = parseInt(doneInput.value) || 0;
     var total = parseInt(totalInput.value) || 1;
+    var readingSheetIds = card.dataset.readingSheetIds.split(',').map(id => parseInt(id));
+
+    // Convert zone to number for comparison
+    var zoneNumber = parseInt(zone);
 
     // Validate inputs
     if (done > total) {
@@ -2089,20 +2092,102 @@ function bindZoneInputEvents() {
       doneInput.value = done;
     }
 
-    // Store override
-    readingSheetState.zoneProgressOverrides[zone] = { done: done, total: total };
-
-    // Update display and re-render table
-    updateZoneCurrentDisplay(zone, card);
-    applyAndRender();
-
-    // Visual feedback
-    e.target.textContent = 'Applied!';
+    // Show loading state
+    e.target.textContent = 'Saving...';
     e.target.disabled = true;
-    setTimeout(function() {
-      e.target.textContent = 'Apply';
-      e.target.disabled = false;
-    }, 1000);
+
+    try {
+      // Get reading sheets for this zone to calculate per-sheet progress
+      var zoneSheets = readingSheetState.rows.filter(function(row) {
+        // Compare as both string and number to handle type mismatches
+        return row.zone == zoneNumber || row.zone === zone;
+      });
+
+      console.log('[ReadingSheet] Zone:', zoneNumber, 'Type:', typeof zoneNumber);
+      console.log('[ReadingSheet] All rows:', readingSheetState.rows.map(r => ({ id: r.id, zone: r.zone, zoneType: typeof r.zone })));
+      console.log('[ReadingSheet] Sheets in zone:', zoneSheets.length);
+      console.log('[ReadingSheet] Sheet details:', zoneSheets.map(s => ({ id: s.id, zone: s.zone, zoneType: typeof s.zone, total: s.totalAccounts })));
+
+      // Calculate how many readings to mark as completed per sheet
+      var remainingDone = done;
+      var promises = [];
+
+      for (var i = 0; i < zoneSheets.length; i++) {
+        var sheet = zoneSheets[i];
+        var sheetTotal = sheet.totalAccounts || 0;
+        
+        console.log('[ReadingSheet] Processing sheet', sheet.id, 'total:', sheetTotal, 'remaining:', remainingDone);
+        
+        // Skip sheets with no readings
+        if (sheetTotal === 0) {
+          console.log('[ReadingSheet] Skipping sheet with 0 readings');
+          continue;
+        }
+        
+        var sheetDone = Math.min(remainingDone, sheetTotal);
+        
+        console.log('[ReadingSheet] Marking', sheetDone, '/', sheetTotal, 'for sheet', sheet.id);
+        
+        promises.push(
+          fetch('http://localhost:5178/api/ReadingSheet/UpdateZoneProgress', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              readingSheetId: sheet.id,
+              completedCount: sheetDone,
+              totalCount: sheetTotal
+            })
+          })
+        );
+
+        remainingDone -= sheetDone;
+        console.log('[ReadingSheet] Remaining after sheet', sheet.id, ':', remainingDone);
+        if (remainingDone <= 0) break;
+      }
+
+      var responses = await Promise.all(promises);
+      
+      // Check if all requests succeeded
+      var allSucceeded = responses.every(r => r.ok);
+      
+      if (!allSucceeded) {
+        throw new Error('Some requests failed');
+      }
+
+      console.log('[ReadingSheet] Zone progress saved for', promises.length, 'reading sheets');
+
+      // Reload data from database to get updated totals
+      var freshData = await loadDataAsync('/ReadingSheet/GetAllReadingSheet');
+      readingSheetState.rows = mapReadingSheetRows(freshData);
+      
+      // Clear overrides since we now have fresh data
+      readingSheetState.zoneProgressOverrides = {};
+
+      // Regenerate zone controls with fresh data
+      generateZoneProgressInputs();
+
+      // Update display and re-render table
+      applyAndRender();
+
+      // Success feedback
+      e.target.textContent = 'Saved!';
+      setTimeout(function() {
+        e.target.textContent = 'Apply';
+        e.target.disabled = false;
+      }, 1500);
+
+    } catch (error) {
+      console.error('[ReadingSheet] Failed to save zone progress:', error);
+      
+      // Error feedback
+      e.target.textContent = 'Error!';
+      setTimeout(function() {
+        e.target.textContent = 'Apply';
+        e.target.disabled = false;
+      }, 2000);
+    }
   });
 }
 
@@ -2113,12 +2198,18 @@ function updateZoneCurrentDisplay(zone, card) {
   var doneInput = card.querySelector('.zone-done-input');
   var totalInput = card.querySelector('.zone-total-input');
   var currentDisplay = card.querySelector('.zone-input-current');
+  var progressFill = card.querySelector('.zone-progress-bar-fill');
   
   var done = parseInt(doneInput.value) || 0;
   var total = parseInt(totalInput.value) || 1;
   var percentage = Math.round((done / total) * 100);
   
   currentDisplay.textContent = 'Preview: ' + done + '/' + total + ' (' + percentage + '%)';
+  
+  // Update progress bar width
+  if (progressFill) {
+    progressFill.style.width = percentage + '%';
+  }
 }
 
 /**
@@ -2126,4 +2217,177 @@ function updateZoneCurrentDisplay(zone, card) {
  */
 function renderFilteredTable() {
   applyAndRender();
+}
+
+
+/* ============================================================
+   PROGRESS MODAL
+   ============================================================ */
+
+/**
+ * Open the progress update modal for a zone
+ */
+function openZoneProgressModal(zone) {
+  // Get all sheets in this zone
+  var zoneSheets = readingSheetState.rows.filter(function(r) { 
+    return String(r.zone) === String(zone); 
+  });
+  
+  if (zoneSheets.length === 0) return;
+
+  // Calculate zone totals
+  var zoneTotalAccounts = 0;
+  var zoneTotalCompleted = 0;
+  
+  zoneSheets.forEach(function(sheet) {
+    zoneTotalAccounts += (sheet.totalAccounts || 0);
+    zoneTotalCompleted += (sheet.totalCompleted || 0);
+  });
+
+  // Store zone info in hidden fields
+  document.getElementById('progressSheetId').value = zone; // Store zone number instead
+  document.getElementById('progressSheetName').textContent = 'Zone ' + zone;
+  document.getElementById('progressCompleted').value = zoneTotalCompleted;
+  document.getElementById('progressTotal').textContent = zoneTotalAccounts;
+  document.getElementById('progressCompleted').max = zoneTotalAccounts;
+
+  var backdrop = document.getElementById('progressModalBackdrop');
+  if (backdrop) {
+    backdrop.removeAttribute('hidden');
+    backdrop.setAttribute('aria-hidden', 'false');
+  }
+}
+
+/**
+ * Close the progress update modal
+ */
+function closeProgressModal() {
+  var backdrop = document.getElementById('progressModalBackdrop');
+  if (backdrop) {
+    backdrop.setAttribute('hidden', '');
+    backdrop.setAttribute('aria-hidden', 'true');
+  }
+}
+
+/**
+ * Handle progress save - update all sheets in the zone
+ */
+async function handleProgressSave() {
+  var zone = document.getElementById('progressSheetId').value; // This is the zone number now
+  var completedCount = parseInt(document.getElementById('progressCompleted').value) || 0;
+  var totalCount = parseInt(document.getElementById('progressTotal').textContent) || 0;
+
+  var saveBtn = document.getElementById('progressModalSave');
+  var originalText = saveBtn.textContent;
+  saveBtn.textContent = 'Saving...';
+  saveBtn.disabled = true;
+
+  try {
+    // Get all sheets in this zone
+    var zoneSheets = readingSheetState.rows.filter(function(r) { 
+      return String(r.zone) === String(zone); 
+    });
+
+    console.log('[ReadingSheet] Updating zone', zone, 'with', zoneSheets.length, 'sheets');
+
+    // Distribute the completed count across sheets
+    var remainingCompleted = completedCount;
+    var promises = [];
+
+    for (var i = 0; i < zoneSheets.length; i++) {
+      var sheet = zoneSheets[i];
+      var sheetTotal = sheet.totalAccounts || 0;
+      
+      if (sheetTotal === 0) continue;
+      
+      var sheetCompleted = Math.min(remainingCompleted, sheetTotal);
+      
+      console.log('[ReadingSheet] Sheet', sheet.id, '- setting', sheetCompleted, '/', sheetTotal);
+      
+      promises.push(
+        fetch('http://localhost:5178/api/ReadingSheet/UpdateZoneProgress', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            readingSheetId: sheet.id,
+            completedCount: sheetCompleted,
+            totalCount: sheetTotal
+          })
+        })
+      );
+
+      remainingCompleted -= sheetCompleted;
+      if (remainingCompleted <= 0) break;
+    }
+
+    var responses = await Promise.all(promises);
+    
+    var allSucceeded = responses.every(function(r) { return r.ok; });
+    
+    if (!allSucceeded) {
+      throw new Error('Some requests failed');
+    }
+
+    console.log('[ReadingSheet] Zone progress updated successfully');
+
+    // Determine zone-wide status: Completed only if zone is 100% done
+    var zoneIsComplete = completedCount >= totalCount;
+    var zoneStatus = zoneIsComplete ? 3 : 2; // 3=Completed, 2=InProgress
+
+    console.log('[ReadingSheet] Setting zone status:', zoneIsComplete ? 'Completed' : 'InProgress', 'for', zoneSheets.length, 'sheets');
+
+    // Update all sheets in the zone to have the same status
+    var sheetIds = zoneSheets.map(function(s) { return s.id; });
+    
+    if (sheetIds.length > 0) {
+      console.log('[ReadingSheet] Updating status for sheet IDs:', sheetIds);
+      
+      var statusResponse = await fetch('/ReadingSheet/BulkUpdateStatus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ids: sheetIds,
+          status: zoneStatus
+        })
+      });
+      
+      if (!statusResponse.ok) {
+        console.error('[ReadingSheet] Failed to update status:', statusResponse.status);
+        var errorText = await statusResponse.text();
+        console.error('[ReadingSheet] Error details:', errorText);
+      } else {
+        console.log('[ReadingSheet] Status updated successfully');
+      }
+    }
+
+    // Reload data from server
+    var freshData = await loadDataAsync('/ReadingSheet/GetAllReadingSheet');
+    readingSheetState.rows = mapReadingSheetRows(freshData);
+
+    // Close modal
+    closeProgressModal();
+
+    // Re-apply filters and render
+    applyAllFilters();
+    applyAndRender();
+
+    // Show success message briefly
+    saveBtn.textContent = 'Updated!';
+    setTimeout(function() {
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    }, 1500);
+
+  } catch (error) {
+    console.error('[ReadingSheet] Failed to update progress:', error);
+    saveBtn.textContent = 'Error!';
+    setTimeout(function() {
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    }, 2000);
+  }
 }

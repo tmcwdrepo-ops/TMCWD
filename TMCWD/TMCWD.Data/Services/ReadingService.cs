@@ -193,9 +193,17 @@ namespace TMCWD.Data.Services
             return readings;
         }
 
-        public async Task<List<Reading>> GetRangeByReadingSheetIds(IEnumerable<int> ids)
+        public async Task<List<Reading>> GetRangeByReadingSheetIds(IEnumerable<long> ids)
         {
-            var readings = await _context.Readings.Where(x => ids.Contains((int)x.ReadingSheetId)).ToListAsync();
+            var readings = await _context.Readings.Where(x => ids.Contains(x.ReadingSheetId)).ToListAsync();
+            return readings;
+        }
+
+        public async Task<List<Reading>> GetByReadingSheetIds(List<long> readingSheetIds)
+        {
+            var readings = await _context.Readings
+                .Where(x => readingSheetIds.Contains(x.ReadingSheetId))
+                .ToListAsync();
             return readings;
         }
 

@@ -73,8 +73,8 @@ namespace TMCWD.Application.Controllers
             AdminViewModel model = new()
             {
                 AddEditUser = editUser,
-                ConfirmPassword = editUser?.Id > 0 ? editUser.Password : string.Empty,
-                Password = editUser?.Id > 0 ? editUser.Password : string.Empty
+                ConfirmPassword = editUser?.Id > 0 ? (editUser.Password ?? string.Empty) : string.Empty,
+                Password = editUser?.Id > 0 ? (editUser.Password ?? string.Empty) : string.Empty
             };
 
 

@@ -148,40 +148,76 @@ namespace TMCWD.Application.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllReadingSheet()
         {
-            var readingSheets = await _readingSheetTrans.GetAll();
+            try
+            {
+                var readingSheets = await _readingSheetTrans.GetAll();
 
-            if (readingSheets == null || !readingSheets.Any())
-                return Ok(new List<object>());
+                if (readingSheets == null || !readingSheets.Any())
+                    return Ok(new List<object>());
 
-            // Get all required IDs
-            var userIds = readingSheets
-                .Select(x => x.AssignedTo)
-                .Distinct()
-                .ToList();
+                // Get all required IDs
+                var userIds = readingSheets
+                    .Select(x => (int)x.AssignedTo)  // Convert long to int
+                    .Distinct()
+                    .ToList();
 
-            var readingSheetIds = readingSheets
-                .Select(x => x.Id)
-                .ToList();
+                var readingSheetIds = readingSheets
+                    .Select(x => (long)x.Id)
+                    .ToList();
 
-            var zoneBookIds = readingSheets
-                .Select(x => x.ZoneBookId)
-                .Distinct()
-                .ToList();
+                var zoneBookIds = readingSheets
+                    .Select(x => x.ZoneBookId)
+                    .Distinct()
+                    .ToList();
 
-            // Load related data
-            var usersTask = _userTrans.GetUsersById(userIds);
-            var readingsTask = _readingTransaction.GetRangeByReadingSheetIds(readingSheetIds);
-            var zoneBooksTask = _zoneBookTrans.GetByIds(zoneBookIds);
+                // DEBUG: Log user IDs being requested
+                try
+                {
+                    System.IO.File.AppendAllText(
+                        @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                        $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] User IDs requested: {string.Join(", ", userIds)}\n"
+                    );
+                }
+                catch { }
 
-            await Task.WhenAll(
-                usersTask,
-                readingsTask,
-                zoneBooksTask
-            );
+                // Load related data
+                var usersTask = _userTrans.GetUsersById(userIds);
+                var readingsTask = _readingTransaction.GetRangeByReadingSheetIds(readingSheetIds);
+                var zoneBooksTask = _zoneBookTrans.GetByIds(zoneBookIds);
 
-            var users = usersTask.Result ?? new List<User>();
-            var readings = readingsTask.Result ?? new List<Reading>();
-            var zoneBooks = zoneBooksTask.Result ?? new List<ZoneBook>();
+                await Task.WhenAll(
+                    usersTask,
+                    readingsTask,
+                    zoneBooksTask
+                );
+
+                var users = usersTask.Result ?? new List<User>();
+                var readings = readingsTask.Result ?? new List<Reading>();
+                var zoneBooks = zoneBooksTask.Result ?? new List<ZoneBook>();
+
+                // DEBUG: Log loaded data
+                try
+                {
+                    System.IO.File.AppendAllText(
+                        @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                        $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Users loaded: {users.Count}\n" +
+                        $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Readings loaded: {readings.Count}\n" +
+                        $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] ZoneBooks loaded: {zoneBooks.Count}\n"
+                    );
+                }
+                catch { }
+
+            // DEBUG: Log the readings count and users loaded
+            try
+            {
+                System.IO.File.AppendAllText(
+                    @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Total readings loaded: {readings.Count}\n" +
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Reading sheet IDs requested: {string.Join(", ", readingSheetIds)}\n" +
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Users loaded: {users.Count()} - IDs: {string.Join(", ", users.Select(u => u.Id))}\n"
+                );
+            }
+            catch { }
 
             var result = new List<object>();
 
@@ -210,12 +246,22 @@ namespace TMCWD.Application.Controllers
                     x => x.Status == ReadingStatus.InProgress
                 );
 
+                // DEBUG: Log per sheet to file
+                try
+                {
+                    System.IO.File.AppendAllText(
+                        @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                        $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Sheet {sheet.Id}: {sheetReadings.Count} readings, {totalCompleted} completed, {totalInProgress} in progress\n"
+                    );
+                }
+                catch { }
+
                 result.Add(new
                 {
                     id = sheet.Id,
                     name = sheet.Name,
 
-                    meterReader = reader?.Name ?? "—",
+                    meterReader = reader?.Name ?? $"User {sheet.AssignedTo}",
 
                     billingDate = sheet.BillingDate,
                     dueDate = sheet.DueDate,
@@ -247,6 +293,20 @@ namespace TMCWD.Application.Controllers
             }
 
             return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // DEBUG: Log error
+                try
+                {
+                    System.IO.File.AppendAllText(
+                        @"C:\Users\DESKTOP GSO-6\TMCWD\debug.txt",
+                        $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] ERROR in GetAllReadingSheet: {ex.Message}\n{ex.StackTrace}\n"
+                    );
+                }
+                catch { }
+                return StatusCode(500, "Internal server error");
+            }
         }
 
 
@@ -418,7 +478,62 @@ namespace TMCWD.Application.Controllers
 
         #endregion
 
+        [HttpPost]
+        public async Task<IActionResult> UpdateReadingSheetsStatus([FromBody] UpdateSheetsStatusRequest request)
+        {
+            if (request == null || request.Ids == null || !request.Ids.Any())
+            {
+                return BadRequest(new { message = "Invalid request - sheet IDs required" });
+            }
+
+            var updatedSheets = await _readingSheetTrans.UpdateReadingSheetsStatus(
+                request.Ids.Select(id => (int)id).ToList(),
+                _user.User.Id,
+                (ReadingStatus)request.Status
+            );
+
+            return Ok(new { 
+                message = "Sheets status updated successfully", 
+                count = updatedSheets.Count() 
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BulkUpdateStatus([FromBody] UpdateSheetsStatusRequest request)
+        {
+            if (request == null || request.Ids == null || !request.Ids.Any())
+            {
+                return BadRequest(new { message = "Invalid request - sheet IDs required" });
+            }
+
+            try
+            {
+                var updatedSheets = await _readingSheetTrans.UpdateReadingSheetsStatus(
+                    request.Ids.Select(id => (int)id).ToList(),
+                    _user.User.Id,
+                    (ReadingStatus)request.Status
+                );
+
+                if (updatedSheets == null)
+                {
+                    return StatusCode(500, new { message = "Failed to update sheets - returned null" });
+                }
+
+                return Ok(new { 
+                    message = "Sheets status updated successfully", 
+                    count = updatedSheets.Count 
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error updating sheets", error = ex.Message });
+            }
+        }
     }
 
-    
+    public class UpdateSheetsStatusRequest
+    {
+        public List<long> Ids { get; set; } = new List<long>();
+        public int Status { get; set; }
+    }
 }
