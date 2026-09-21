@@ -72,14 +72,21 @@ namespace TMCWD.Application.Controllers
             if (zoneBook == null)
                 return BadRequest("Zone/Book combination not found.");
 
+            if (!readingSheet.BillingPeriodStart.HasValue)
+                return BadRequest("Reading date is required.");
+
+            var readingDate = readingSheet.BillingPeriodStart.Value.Date;
+            var billingDate = readingDate.AddDays(1);
+            var dueDate = billingDate.AddDays(15);
+
             var sheet = new ReadingSheet
             {
                 Name = $"{DateTime.Now:MM - dd - yyyy} - {assignedToUser.Name}",
                 AssignedTo = readingSheet.AssignedTo,
-                BillingDate = readingSheet.BillingDate,
-                DueDate = readingSheet.DueDate,
+                BillingDate = billingDate,
+                DueDate = dueDate,
                 DisconnectionDate = readingSheet.DisconnectionDate,
-                BillingPeriodStart = readingSheet.BillingPeriodStart,
+                BillingPeriodStart = readingDate,
                 SeqFrom = readingSheet.SeqFrom,
                 SeqTo = readingSheet.SeqTo,
                 ZoneBookId = zoneBook.Id
@@ -189,6 +196,33 @@ namespace TMCWD.Application.Controllers
         {
             var sheet = await _readingSheetTrans.GetCurrentByAssignedTo(zone, book, assignedTo);
             return Ok(sheet);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetActiveForManualReading(int zone, int book, int assignedTo)
+        {
+            if (zone <= 0 || book <= 0 || assignedTo <= 0)
+                return BadRequest("Zone, book, and meter reader are required.");
+
+            var sheets = await _readingSheetTrans.GetByZoneBookAndAssignedTo(zone, book, assignedTo);
+            var sheet = sheets?
+                .Where(x => x.Status == ReadingStatus.Created || x.Status == ReadingStatus.InProgress)
+                .Where(x => x.BillingPeriodStart.HasValue
+                         && x.BillingDate.HasValue
+                         && x.DueDate.HasValue)
+                .OrderByDescending(x => x.BillingDate)
+                .FirstOrDefault();
+
+            if (sheet == null)
+                return NotFound("No active reading sheet matches the selected zone, book, and meter reader.");
+
+            return Ok(new
+            {
+                id = sheet.Id,
+                readingDate = sheet.BillingPeriodStart,
+                billingDate = sheet.BillingDate,
+                dueDate = sheet.DueDate
+            });
         }
 
         [HttpGet]
@@ -618,6 +652,36 @@ namespace TMCWD.Application.Controllers
             }
 
             return Ok(accounts);
+        }
+
+        [HttpPost]
+        public IActionResult DownloadExcel(string fileName, string contentBase64)
+        {
+            if (string.IsNullOrWhiteSpace(contentBase64))
+                return BadRequest("Excel content is required.");
+
+            try
+            {
+                var content = Convert.FromBase64String(contentBase64);
+                if (content.Length == 0 || content.Length > 10 * 1024 * 1024)
+                    return BadRequest("The Excel file size is invalid.");
+
+                var safeFileName = Path.GetFileName(fileName);
+                if (string.IsNullOrWhiteSpace(safeFileName) ||
+                    !safeFileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+                {
+                    safeFileName = $"Reading-Sheet-{DateTime.Now:yyyyMMdd-HHmmss}.xlsx";
+                }
+
+                return File(
+                    content,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    safeFileName);
+            }
+            catch (FormatException)
+            {
+                return BadRequest("The Excel content is invalid.");
+            }
         }
 
         [HttpPost]

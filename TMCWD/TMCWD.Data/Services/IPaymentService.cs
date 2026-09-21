@@ -19,5 +19,9 @@ namespace TMCWD.Data.Services
 
         public Task<Payment> SaveUpdate(int userId, Payment payment);
 
+        public Task<List<Payment>> ProcessCollectionPayment(
+            int userId,
+            TMCWD.Model.Billing.Requests.CollectionPaymentRequest request);
+
     }
 }

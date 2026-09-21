@@ -13,7 +13,7 @@
   (function populateCollectorDropdown() {
     var select = document.getElementById('crCollector');
     if (!select) return;
-    var collectors = (typeof SAMPLE_COLLECTORS !== 'undefined') ? SAMPLE_COLLECTORS : [];
+    var collectors = [];
     collectors.forEach(function (name) {
       var opt = document.createElement('option');
       opt.value = name;
@@ -302,7 +302,7 @@
   // Collector list \u2014 stub array.
   // Collectors sourced from collection_sample.js
   // TODO: replace with a real API call to load active collectors.
-  const COLLECTORS = (typeof SAMPLE_COLLECTORS !== 'undefined') ? SAMPLE_COLLECTORS : [];
+  const COLLECTORS = [];
 
   // ----------------------------------------------------------
   // Central state object \u2014 single source of truth for the modal.

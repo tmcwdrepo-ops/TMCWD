@@ -651,9 +651,8 @@ namespace TMCWD.Application.Controllers
                 if (request.Zone <= 0 || request.Book <= 0)
                     return BadRequest("Zone and book are required.");
 
-                if (request.ReadingDate.Date >= request.BillingDate.Date)
-                    return BadRequest(
-                        "Billing date must be after the reading date.");
+                if (request.ReadingSheetId <= 0)
+                    return BadRequest("An active reading sheet is required.");
 
                 // ============================================================
                 // 1. GET ACCOUNT
@@ -672,39 +671,29 @@ namespace TMCWD.Application.Controllers
                     await _readingSheetTrans.GetByZoneAndBook(request.Zone, request.Book);
 
                 var readingSheet = existingSheets?
-                    .Where(s => s.Status == ReadingStatus.InProgress)
-                    .OrderByDescending(s => s.BillingDate)
+                    .Where(s => s.Id == request.ReadingSheetId
+                             && s.AssignedTo == request.ReaderId
+                             && (s.Status == ReadingStatus.Created
+                                 || s.Status == ReadingStatus.InProgress))
                     .FirstOrDefault();
 
-                // ============================================================
-                // 3. CREATE READING SHEET IF NONE EXISTS
-                // ============================================================
-
                 if (readingSheet == null)
-                {
-                    var billingDate = request.BillingDate.Date;
+                    return BadRequest("The selected reading sheet is not active or does not match the zone, book, and meter reader.");
 
-                    readingSheet = new TMCWD.Model.Billing.ReadingSheet
-                    {
-                        ZoneBookId = account.ZoneBookId,
-                        BillingDate = billingDate,
-                        DueDate = billingDate.AddDays(15),
-                        Status = ReadingStatus.InProgress,
-                        AssignedTo = request.ReaderId > 0
-                            ? request.ReaderId
-                            : 0
-                    };
+                if (account.ZoneBookId != readingSheet.ZoneBookId)
+                    return BadRequest("The account does not belong to the selected reading sheet.");
 
-                    readingSheet =
-                        await _readingSheetTrans.SaveUpdate(
-                            _user.User.Id,
-                            readingSheet);
+                if (!readingSheet.BillingPeriodStart.HasValue
+                    || !readingSheet.BillingDate.HasValue
+                    || !readingSheet.DueDate.HasValue)
+                    return BadRequest("The reading sheet schedule is incomplete. Reading, billing, and due dates are required.");
 
-                    if (readingSheet == null)
-                        return StatusCode(
-                            500,
-                            "Failed to create reading sheet.");
-                }
+                if (request.BillingDate.Date != readingSheet.BillingDate.Value.Date
+                    || request.DueDate.Date != readingSheet.DueDate.Value.Date)
+                    return BadRequest("The billing and due dates do not match the selected reading sheet.");
+
+                if (request.ReadingDate.Date >= readingSheet.BillingDate.Value.Date)
+                    return BadRequest("The reading date must be before the reading sheet billing date.");
 
                 // ============================================================
                 // 4. GET THE LATEST READING
@@ -755,6 +744,9 @@ namespace TMCWD.Application.Controllers
 
                     // New value entered by the meter reader
                     CurrentReading = request.PresentReading,
+
+                    // Manual reading date selected by the user.
+                    DateCreated = request.ReadingDate.Date,
 
                     Status = ReadingStatus.InProgress,
 

@@ -5,11 +5,10 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/collections.css?v=14"/>
+    <link rel="stylesheet" href="~/css/collections.css?v=15"/>
 }
 
 @section Scripts {
-    <script src="~/js/collection_sample.js?v=15"></script>
     <script src="~/js/collections/oc-modal.js?v=1"></script>
     <script src="~/js/collections/remittance.js?v=2"></script>
     <script src="~/js/collections/collection-report.js?v=1"></script>
@@ -20,7 +19,7 @@
     <script src="~/js/collections/reprint-invoice.js?v=1"></script>
     <script src="~/js/collections/cancel-invoice.js?v=1"></script>
     <script src="~/js/collections/ledger-modal.js?v=2"></script>
-    <script src="~/js/collections.js?v=15"></script>
+    <script src="~/js/collections.js?v=21"></script>
 }
 
 <div class="page">
@@ -49,7 +48,7 @@
               <span class="teller-meta-label">Teller / Collector</span>
               <div class="teller-select-wrap">
                 <select id="tellerName" class="teller-name-select">
-                  <!-- populated by initTellerWidget() from SAMPLE_TELLERS -->
+                  <!-- populated with the authenticated collection user -->
                 </select>
                 <svg class="teller-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
               </div>
@@ -421,6 +420,41 @@
 </div>
 <!-- END of page -->
 
+<!-- ===== Payment Summary Modal ===== -->
+<div class="ps-overlay" id="paymentSummaryOverlay" hidden aria-modal="true" role="dialog" aria-labelledby="paymentSummaryTitle">
+  <div class="ps-modal">
+    <div class="ps-header">
+      <h2 id="paymentSummaryTitle">Payment Summary</h2>
+      <div class="ps-customer" id="psCustomer">—</div>
+    </div>
+
+    <div class="ps-section-heading">
+      <span>Bills</span>
+      <span class="mono" id="psInvoice">—</span>
+    </div>
+    <div class="ps-bills" id="psBills"></div>
+
+    <div class="ps-breakdown">
+      <div class="ps-breakdown-title">Cost Breakdown</div>
+      <div class="ps-line"><span>Total Bills</span><span class="mono" id="psTotalBills">₱0.00</span></div>
+      <div class="ps-line"><span>Power Cost Adjustment</span><span class="mono" id="psPca">₱0.00</span></div>
+      <div class="ps-line"><span>Meter Maintenance</span><span class="mono" id="psMmf">₱0.00</span></div>
+      <div class="ps-line" id="psPenaltyRow"><span>Penalty</span><span class="mono" id="psPenalty">₱0.00</span></div>
+      <div class="ps-line" id="psDiscountRow" hidden><span id="psDiscountLabel">Discount</span><span class="mono" id="psDiscount">-₱0.00</span></div>
+      <div class="ps-line ps-total"><span>Total</span><span class="mono" id="psTotal">₱0.00</span></div>
+      <div class="ps-line"><span>Advanced</span><span class="mono">₱0.00</span></div>
+      <div class="ps-line ps-subtotal"><span>Sub-Total</span><span class="mono" id="psSubTotal">₱0.00</span></div>
+      <div class="ps-line"><span id="psTenderedLabel">Cash</span><span class="mono" id="psTendered">₱0.00</span></div>
+      <div class="ps-line"><span>Change</span><span class="mono" id="psChange">₱0.00</span></div>
+    </div>
+
+    <div class="ps-actions">
+      <button type="button" class="ps-btn ps-btn-proceed" id="psProceedBtn">Proceed</button>
+      <button type="button" class="ps-btn ps-btn-cancel" id="psCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== Collection Remittance Modal ===== -->
 <div class="cr-overlay" id="crOverlay" style="display:none;" aria-modal="true" role="dialog" aria-labelledby="crModalTitle">
   <div class="cr-modal">
@@ -448,7 +482,7 @@
         <label class="cr-label" for="crCollector">Collector</label>
         <div class="cr-select-wrap">
           <select class="cr-select" id="crCollector">
-            <!-- populated from SAMPLE_COLLECTORS in remittance.js -->
+            <!-- populated from live collection data when available -->
           </select>
           <svg class="cr-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
             <path d="M6 9l6 6 6-6"/>
@@ -1446,7 +1480,7 @@
         <div class="ci-select-wrap">
           <select class="ci-select" id="ciReasonSelect">
             <option value="">— Select a reason —</option>
-            <!-- Options populated by JS from SAMPLE_CANCEL_INVOICE_REASONS -->
+            <!-- Options populated by the invoice cancellation module -->
           </select>
           <svg class="ci-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14" aria-hidden="true">
             <path d="M6 9l6 6 6-6"/>

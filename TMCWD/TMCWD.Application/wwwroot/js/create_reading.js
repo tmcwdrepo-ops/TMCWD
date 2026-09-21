@@ -18,6 +18,7 @@ var toggleThemeBtn = document.getElementById('toggleThemeBtn'); // dev harness
    ============================================================ */
 
 function openCreateModal() {
+   initializeCrSchedule();
    crBackdrop.hidden = false;
    crBackdrop.setAttribute('aria-hidden', 'false');
    loadCrTemplatesOnce();
@@ -65,6 +66,48 @@ if (toggleThemeBtn) {
 
 var crOverrideStart      = document.getElementById('crOverrideStart');
 var crBillingPeriodStart = document.getElementById('crBillingPeriodStart');
+var crBillingDate        = document.getElementById('crBillingDate');
+var crDueDate            = document.getElementById('crDueDate');
+var crDisconnectionDate  = document.getElementById('crDisconnectionDate');
+
+function crDateValue(date) {
+  return date.getFullYear() + '-' +
+    String(date.getMonth() + 1).padStart(2, '0') + '-' +
+    String(date.getDate()).padStart(2, '0');
+}
+
+function addCrDays(value, days) {
+  if (!value) return '';
+  var parts = value.split('-').map(Number);
+  var date = new Date(parts[0], parts[1] - 1, parts[2]);
+  date.setDate(date.getDate() + days);
+  return crDateValue(date);
+}
+
+function syncCrSchedule() {
+  if (!crBillingPeriodStart || !crBillingDate || !crDueDate) return;
+
+  var readingDate = crBillingPeriodStart.value;
+  crBillingDate.value = addCrDays(readingDate, 1);
+  crDueDate.value = addCrDays(crBillingDate.value, 15);
+
+  if (crDisconnectionDate && crDisconnectionDate.value &&
+      crDisconnectionDate.value < crDueDate.value) {
+    crDisconnectionDate.value = '';
+  }
+
+  syncCrDateMins();
+}
+
+function initializeCrSchedule() {
+  if (!crBillingPeriodStart) return;
+
+  if (!crOverrideStart || !crOverrideStart.checked || !crBillingPeriodStart.value) {
+    crBillingPeriodStart.value = crDateValue(new Date());
+  }
+
+  syncCrSchedule();
+}
 
 /**
  * Sync the disabled state of Billing Period Start with the checkbox.
@@ -72,12 +115,20 @@ var crBillingPeriodStart = document.getElementById('crBillingPeriodStart');
 function syncOverrideStart() {
   if (!crOverrideStart || !crBillingPeriodStart) return;
   crBillingPeriodStart.disabled = !crOverrideStart.checked;
+  if (!crOverrideStart.checked) {
+    crBillingPeriodStart.value = crDateValue(new Date());
+  }
+  syncCrSchedule();
 }
 
 if (crOverrideStart) {
   crOverrideStart.addEventListener('change', syncOverrideStart);
   // Set initial state (unchecked → disabled)
   syncOverrideStart();
+}
+
+if (crBillingPeriodStart) {
+  crBillingPeriodStart.addEventListener('change', syncCrSchedule);
 }
 
 /* ============================================================
@@ -843,11 +894,6 @@ function loadCrTemplatesOnce() {
             crTemplatesLoaded = true;
         });
 }
-
-/* Re-grab elements (they were declared in Phase 5 but we need them here) */
-var crBillingDate = document.getElementById('crBillingDate');
-var crDueDate = document.getElementById('crDueDate');
-var crDisconnectionDate = document.getElementById('crDisconnectionDate');
 
 /* ============================================================
    Date validation — Due >= Billing, Disconnection >= Due

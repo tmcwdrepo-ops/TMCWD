@@ -73,7 +73,9 @@ namespace TMCWD.Data.Services
             if (reading.Id == 0)
             {
                 reading.CreatedBy = userId;
-                reading.DateCreated = DateTime.Now;
+                reading.DateCreated = reading.DateCreated == default
+                    ? DateTime.Now
+                    : reading.DateCreated;
                 _context.Readings.Add(reading);
             }
             else

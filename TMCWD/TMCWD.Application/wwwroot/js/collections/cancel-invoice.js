@@ -75,9 +75,7 @@
     // Remove all options except the placeholder
     while (reasonSelect.options.length > 1) reasonSelect.remove(1);
 
-    var reasons = (typeof SAMPLE_CANCEL_INVOICE_REASONS !== 'undefined')
-      ? SAMPLE_CANCEL_INVOICE_REASONS
-      : ['Other'];
+    var reasons = ['Other'];
 
     reasons.forEach(function (r) {
       var opt = document.createElement('option');
@@ -109,10 +107,8 @@
   function showSuggestions(term) {
     if (!suggestionsEl || term.length < 1) { hideSuggestions(); return; }
 
-    // Search COLLECTION_ACCOUNTS by account number or account name only
-    var data = (typeof COLLECTION_ACCOUNTS !== 'undefined')
-      ? COLLECTION_ACCOUNTS
-      : [];
+    // Account suggestions remain empty until cancellation has a live endpoint.
+    var data = [];
 
     var lower   = term.toLowerCase();
     var matches = data.filter(function (entry) {

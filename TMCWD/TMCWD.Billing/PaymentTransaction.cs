@@ -98,6 +98,38 @@ namespace TMCWD.Billing
             return ConvertJsonToPaymentBase(data);
         }
 
+        public async Task<(bool Success, string Message)> ProcessCollectionPayment(
+            int userId,
+            TMCWD.Model.Billing.Requests.CollectionPaymentRequest request)
+        {
+            var response = await _service.Client.PostAsJsonAsync(
+                $"api/Payment/ProcessCollection/{userId}", request);
+
+            if (response.IsSuccessStatusCode)
+                return (true, string.Empty);
+
+            var data = await response.Content.ReadAsStringAsync();
+            try
+            {
+                using var json = JsonDocument.Parse(data);
+                if (json.RootElement.TryGetProperty("message", out var message))
+                    return (false, message.GetString() ?? "Payment could not be completed.");
+                if (json.RootElement.TryGetProperty("detail", out var detail) &&
+                    !string.IsNullOrWhiteSpace(detail.GetString()))
+                    return (false, detail.GetString()!);
+                if (json.RootElement.TryGetProperty("title", out var title) &&
+                    !string.IsNullOrWhiteSpace(title.GetString()))
+                    return (false, title.GetString()!);
+            }
+            catch (JsonException)
+            {
+                // Fall through to the user-safe response below.
+            }
+
+            return (false,
+                $"Payment service returned {(int)response.StatusCode} ({response.ReasonPhrase}).");
+        }
+
         #endregion
 
     }

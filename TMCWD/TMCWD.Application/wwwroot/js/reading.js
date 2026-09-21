@@ -13,6 +13,8 @@
   let currentPage   = 1;
   let pageSize      = 5;
   let debounceTimer = null;
+  let currentReadingSheetId = 0;
+  let scheduleRequestSequence = 0;
 
   // ─── Boot ─────────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
@@ -100,104 +102,115 @@
   }
 
   // ─── Default dates ────────────────────────────────────────────────────────────
-    function initFormDefaults() {
-        const today = new Date();
+  function initFormDefaults() {
+    ['billingDate', 'dueDate'].forEach(id => {
+      const input = document.getElementById(id);
+      if (!input) return;
+      input.value = '';
+      input.readOnly = true;
+      input.title = 'This date is supplied by the selected reading sheet.';
+    });
 
-        const iso = (d) => {
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-
-            return `${year}-${month}-${day}`;
-        };
-
-        const billing = document.getElementById('billingDate');
-        const due = document.getElementById('dueDate');
-        const reading = document.getElementById('readingDate');
-
-        // ------------------------------------------------------------
-        // Default values
-        // ------------------------------------------------------------
-
-        // Reading Date can be any date.
-        // Default to today.
-        if (reading && !reading.value) {
-            reading.value = iso(today);
-        }
-
-        // Billing Date defaults to today.
-        if (billing && !billing.value) {
-            billing.value = iso(today);
-        }
-
-        // Due Date = Billing Date + 15 days
-        if (due && billing.value) {
-            const billingDate = new Date(billing.value + 'T00:00:00');
-            billingDate.setDate(billingDate.getDate() + 15);
-
-            due.value = iso(billingDate);
-        }
-
-        // ------------------------------------------------------------
-        // Billing Date must be AFTER Reading Date
-        // ------------------------------------------------------------
-
-        function updateDateRules() {
-            if (!billing || !reading) return;
-
-            if (reading.value) {
-                const readingDate = new Date(reading.value + 'T00:00:00');
-
-                // Billing must be at least 1 day after Reading
-                readingDate.setDate(readingDate.getDate() + 1);
-
-                billing.min = iso(readingDate);
-
-                // If billing is currently invalid, automatically correct it
-                if (
-                    billing.value &&
-                    billing.value < billing.min
-                ) {
-                    billing.value = billing.min;
-                }
-            }
-
-            // ----------------------------------------------------------
-            // Due Date = Billing Date + 15 days
-            // ----------------------------------------------------------
-
-            if (due && billing.value) {
-                const billingDate = new Date(billing.value + 'T00:00:00');
-
-                billingDate.setDate(billingDate.getDate() + 15);
-
-                due.value = iso(billingDate);
-            }
-        }
-
-        // ------------------------------------------------------------
-        // Reading Date changed
-        // ------------------------------------------------------------
-
-        if (reading) {
-            reading.addEventListener('change', function () {
-                updateDateRules();
-            });
-        }
-
-        // ------------------------------------------------------------
-        // Billing Date changed
-        // ------------------------------------------------------------
-
-        if (billing) {
-            billing.addEventListener('change', function () {
-                updateDateRules();
-            });
-        }
-
-        // Initial validation
-        updateDateRules();
+    const readingDate = document.getElementById('readingDate');
+    if (readingDate) {
+      readingDate.value = '';
+      readingDate.readOnly = false;
+      readingDate.title = 'Choose the actual date the meter reading was taken.';
     }
+  }
+
+  function dateInputValue(value) {
+    if (!value) return '';
+    const match = String(value).match(/^\d{4}-\d{2}-\d{2}/);
+    if (match) return match[0];
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return [
+      parsed.getFullYear(),
+      String(parsed.getMonth() + 1).padStart(2, '0'),
+      String(parsed.getDate()).padStart(2, '0')
+    ].join('-');
+  }
+
+  function clearReadingSheetSchedule() {
+    currentReadingSheetId = 0;
+    ['readingDate', 'billingDate', 'dueDate'].forEach(id => {
+      const input = document.getElementById(id);
+      if (input) input.value = '';
+    });
+    const readingDate = document.getElementById('readingDate');
+    if (readingDate) readingDate.max = '';
+  }
+
+  async function loadReadingSheetSchedule() {
+    const zone = parseInt(document.getElementById('zoneSelect')?.value) || 0;
+    const book = parseInt(document.getElementById('bookSelect')?.value) || 0;
+    const assignedTo = parseInt(document.getElementById('readerSelect')?.value) || 0;
+    const requestSequence = ++scheduleRequestSequence;
+
+    clearReadingSheetSchedule();
+    if (!zone || !book || !assignedTo) return;
+
+    try {
+      const sheet = await fetchActiveReadingSheet(zone, book, assignedTo);
+      if (requestSequence !== scheduleRequestSequence) return;
+      if (!sheet) return;
+      const readingDate = dateInputValue(sheet.readingDate);
+      const billingDate = dateInputValue(sheet.billingDate);
+      const dueDate = dateInputValue(sheet.dueDate);
+      if (!sheet.id || !readingDate || !billingDate || !dueDate) return;
+
+      currentReadingSheetId = Number(sheet.id);
+      document.getElementById('readingDate').value = readingDate;
+      document.getElementById('readingDate').max = addDaysToInputDate(billingDate, -1);
+      document.getElementById('billingDate').value = billingDate;
+      document.getElementById('dueDate').value = dueDate;
+    } catch (err) {
+      if (requestSequence === scheduleRequestSequence) clearReadingSheetSchedule();
+      console.error('Failed to load the reading-sheet schedule:', err);
+    }
+  }
+
+  async function fetchActiveReadingSheet(zone, book, assignedTo) {
+    const response = await fetch(
+      `/ReadingSheet/GetActiveForManualReading?zone=${zone}&book=${book}&assignedTo=${assignedTo}`
+    );
+    if (response.ok) return response.json();
+
+    // Compatibility fallback for a web process that has not yet restarted
+    // with GetActiveForManualReading. GetAllReadingSheet is already available.
+    const fallbackResponse = await fetch('/ReadingSheet/GetAllReadingSheet');
+    if (!fallbackResponse.ok) return null;
+
+    const sheets = await fallbackResponse.json();
+    const active = sheets
+      .filter(sheet => Number(sheet.zone) === zone
+        && Number(sheet.book) === book
+        && Number(sheet.assignedTo) === assignedTo
+        && (Number(sheet.status) === 1 || Number(sheet.status) === 2)
+        && sheet.billingPeriodStart
+        && sheet.billingDate
+        && sheet.dueDate)
+      .sort((left, right) => new Date(right.billingDate) - new Date(left.billingDate))[0];
+
+    return active ? {
+      id: active.id,
+      readingDate: active.billingPeriodStart,
+      billingDate: active.billingDate,
+      dueDate: active.dueDate
+    } : null;
+  }
+
+  function addDaysToInputDate(value, days) {
+    const parts = value.split('-').map(Number);
+    const date = new Date(parts[0], parts[1] - 1, parts[2]);
+    date.setDate(date.getDate() + days);
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0')
+    ].join('-');
+  }
 
   // ─── Live account search ──────────────────────────────────────────────────────
   function bindAccountSearch() {
@@ -216,7 +229,7 @@
       performSearch(q);
     });
 
-    input.addEventListener('input', function () {
+    input.addEventListener('input', async function () {
       clearTimeout(debounceTimer);
       const q = this.value.trim();
 
@@ -225,8 +238,16 @@
       calculateUsageAndAmount();
 
       if (!q) {
-        readingsList = [];
         currentPage  = 1;
+        const zone = document.getElementById('zoneSelect')?.value;
+        const book = document.getElementById('bookSelect')?.value;
+
+        if (zone && book) {
+          await loadReadingsByZoneBook();
+        } else {
+          readingsList = [];
+        }
+
         renderTable();
         return;
       }
@@ -333,9 +354,11 @@
   function bindZoneBookFilters() {
     const zone = document.getElementById('zoneSelect');
     const book = document.getElementById('bookSelect');
+    const reader = document.getElementById('readerSelect');
 
     if (zone) {
       zone.addEventListener('change', async function () {
+        clearReadingSheetSchedule();
         await loadBooksByZone(this.value);
         currentPage = 1;
         readingsList = [];
@@ -345,11 +368,13 @@
 
     const onChange = async () => {
       currentPage = 1;
+      await loadReadingSheetSchedule();
       await loadReadingsByZoneBook();
       renderTable();
     };
 
     if (book) book.addEventListener('change', onChange);
+    if (reader) reader.addEventListener('change', loadReadingSheetSchedule);
   }
 
   async function loadReadingsByZoneBook() {
@@ -469,12 +494,25 @@
       const zone      = parseInt(document.getElementById('zoneSelect')?.value)  || 0;
       const book      = parseInt(document.getElementById('bookSelect')?.value)   || 0;
       const readerId  = parseInt(document.getElementById('readerSelect')?.value) || 0;
-      const billing   = document.getElementById('billingDate')?.value || new Date().toISOString().split('T')[0];
+      const readingDate = document.getElementById('readingDate')?.value || '';
+      const billingDate = document.getElementById('billingDate')?.value || '';
+      const dueDate = document.getElementById('dueDate')?.value || '';
 
-      // Validate: billing date must not be earlier than today
-      const today = new Date().toISOString().split('T')[0];
-      if (billing < today) {
-        showPopup({ title: 'Invalid Billing Date', message: 'Billing Date cannot be earlier than today.', type: 'warning', focusId: 'billingDate' });
+      if (!currentReadingSheetId || !readingDate || !billingDate || !dueDate) {
+        showPopup({
+          title: 'Reading Sheet Required',
+          message: 'Select a Zone, Book, and Reader with an active reading sheet and a complete date schedule.',
+          type: 'warning'
+        });
+        return;
+      }
+      if (readingDate >= billingDate) {
+        showPopup({
+          title: 'Invalid Reading Date',
+          message: 'Reading Date must be before the reading sheet Billing Date.',
+          type: 'warning',
+          focusId: 'readingDate'
+        });
         return;
       }
       if (zone === 0 || book === 0) {
@@ -489,7 +527,17 @@
         const res = await fetch('/Billing/SaveReading', {
           method : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body   : JSON.stringify({ accountNumber: accountNo, presentReading: present, zone, book, billingDate: billing, readerId })
+          body   : JSON.stringify({
+            accountNumber: accountNo,
+            presentReading: present,
+            zone,
+            book,
+            readerId,
+            readingSheetId: currentReadingSheetId,
+            readingDate,
+            billingDate,
+            dueDate
+          })
         });
 
         if (res.ok) {
@@ -504,36 +552,16 @@
           const cu = document.getElementById('calculatedUsage');  if (cu) cu.value = '';
           const ca = document.getElementById('calculatedAmount'); if (ca) ca.value = '';
 
-          // Re-fetch from server so the table shows the actual database values
-          // (previous reading shift happens server-side, not in the browser)
-          const prevInput = document.getElementById('previousReading');
-          const refreshRes = await fetch(`/Billing/SearchAccounts?q=${encodeURIComponent(accountNo)}`);
-          if (refreshRes.ok) {
-            const refreshData = await refreshRes.json();
-            readingsList = refreshData.map(item => ({
-              accountId   : item.accountId,
-              accountNo   : item.accountNumber,
-              name        : item.name,
-              meterNumber : item.meterNumber,
-              address     : item.address,
-              rateClass   : item.classification,
-              meterSize   : item.meterSize || 0.5,
-              present     : item.presentReading,
-              previous    : item.previousReading,
-              usage       : item.usage,
-              amount      : typeof item.amount === 'number'
-                              ? item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                              : item.amount,
-              zone        : '',
-              book        : ''
-            }));
-            // Update previous reading field to match what the server now has
-            const updated = readingsList.find(r => r.accountNo === accountNo);
-            if (updated && prevInput) prevInput.value = updated.previous;
-          }
+          // Prepare for the next account and reload the complete Zone/Book
+          // list, including the reading that was just saved.
+          const accountInput = document.getElementById('accountNumber');
+          if (accountInput) accountInput.value = '';
+          clearFormFields();
+          await loadReadingsByZoneBook();
 
           currentPage = 1;
           renderTable();
+          accountInput?.focus();
         } else {
           const msg = await res.text();
           showPopup({ title: 'Save Failed', message: 'Failed to save reading: ' + (msg || res.statusText), type: 'warning' });

@@ -15,7 +15,7 @@ namespace TMCWD.Data.Entities
         [Required, MaxLength(200), Column("BillingReference")]
         public string BillingReference { get; set; } = string.Empty;
 
-        [Required, MaxLength(200), Column("PaymentReferencef")]
+        [Required, MaxLength(200), Column("PaymentReference")]
         public string PaymentReference { get; set; } = string.Empty;
 
         [Required, MaxLength(100), Column("MacAddress")]

@@ -6,6 +6,12 @@
 
     var builder = WebApplication.CreateBuilder(args);
 
+    // Keep local development logging self-contained. The Windows Event Log
+    // provider can require elevated permissions when its source is missing.
+    builder.Logging.ClearProviders();
+    builder.Logging.AddConsole();
+    builder.Logging.AddDebug();
+
     // Add services to the container.
 
     // Add CORS policy
@@ -23,7 +29,9 @@
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();
 
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException(
+            "ConnectionStrings:DefaultConnection is not configured. Configure it with .NET user-secrets for local development.");
     builder.Services.AddDbContext<UserDbContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
     builder.Services.AddScoped<IRequestService, RequestService>();
     builder.Services.AddScoped<IUserService, UserService>();
@@ -65,7 +73,10 @@
         app.MapOpenApi();
     }
 
-    app.UseHttpsRedirection();
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHttpsRedirection();
+    }
 
     // Use CORS
     app.UseCors("AllowApplication");

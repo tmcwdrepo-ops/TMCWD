@@ -22,5 +22,7 @@ namespace TMCWD.Model.Billing.Responses
         public decimal MeterSize { get; set; }
         public string Address { get; set; }
         public string MeterNo { get; set; }
+        public string ReferenceNumber { get; set; }
+        public DateTime? ReadingDate { get; set; }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using TMCWD.Model.Billing;
-using TMCWD.Model.CustomerSupport;
 
 namespace TMCWD.Billing
 {
@@ -45,7 +44,12 @@ namespace TMCWD.Billing
         {
             var rate = await waterRateTrans.GetByClassificationAndMeterSize(classification, meterSize);
             if (rate == null)
-                throw new InvalidOperationException($"No active water rate found for classification '{classification}' and meter size {meterSize}.");
+            {
+                // A missing rate must not prevent recovered accounts/readings
+                // from being viewed. Keep the amount at zero until an active
+                // rate is configured for this classification and meter size.
+                return 0m;
+            }
 
             return ComputeFromRate(previousReading, presentReading, rate);
         }

@@ -1,6 +1,6 @@
 // ============================================================
 //  Ledger Modal  (ldg-*)
-//  Reads LEDGER_DATA from collection_sample.js (plain global array).
+//  Remains empty until the real ledger endpoint is available.
 //  Opens when the user clicks the "Ledger" link-chip on the receipt card,
 //  using the account number that is currently loaded in the Collections page.
 // ============================================================
@@ -11,7 +11,7 @@
   // TODO: replace with fetch('/api/Billing/Ledger?accountNo=' + encodeURIComponent(accountNo))
   function getLedgerByAccountNo(accountNo) {
     if (!accountNo) return null;
-    var data = (typeof LEDGER_DATA !== 'undefined') ? LEDGER_DATA : [];
+    var data = [];
     var term = String(accountNo).trim();
     for (var i = 0; i < data.length; i++) {
       if (data[i].accountNo === term) return data[i];

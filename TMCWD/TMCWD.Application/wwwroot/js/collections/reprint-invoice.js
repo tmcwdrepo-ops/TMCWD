@@ -99,9 +99,7 @@
       return;
     }
 
-    var data = (typeof reprintInvoiceSampleData !== 'undefined')
-      ? reprintInvoiceSampleData
-      : [];
+    var data = [];
 
     var term = searchTerm.toUpperCase();
     var matches = data.filter(function (record) {
@@ -221,9 +219,7 @@
     //
     // Also mark findInvoiceByNumber as async (or have it return the Promise)
     // \u2014 handlePrintInvoice() already awaits its result, so no other change needed.
-    var data = (typeof reprintInvoiceSampleData !== 'undefined')
-      ? reprintInvoiceSampleData
-      : [];
+    var data = [];
 
     var match = null;
     for (var i = 0; i < data.length; i++) {

@@ -1,11 +1,7 @@
 // collections.js
 // Interactivity for the TMCWD Collections page.
-// Expects COLLECTION_ACCOUNTS to already be defined (loaded from collection_sample.js).
 
 document.addEventListener('DOMContentLoaded', function () {
-
-  const accountsData = (typeof COLLECTION_ACCOUNTS !== 'undefined') ? COLLECTION_ACCOUNTS : null;
-  const defaultAccount = accountsData ? accountsData[0] : null;
 
   const billsBody      = document.getElementById('billsBody');
   const invoiceInput    = document.getElementById('invoiceInput');
@@ -42,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let multipleAccountsMode = false;
   let selectedAccounts = [];
   let currentSelectedAccountIndex = -1;
+  let currentAccountData = null;
 
   // ---------- Senior Citizen Discount state ----------
   // Populated by initDiscountModal when the user applies a discount.
@@ -77,16 +74,12 @@ document.addEventListener('DOMContentLoaded', function () {
     activeDiscount = null;
     sDiscountLine.style.display = 'none';
     sDiscount.textContent = '-\u20B10.00';
-    // Re-run bill row display so sub-total reverts
-    const selectedRow = billsBody.querySelector('.bill-row.selected');
-    if (selectedRow) selectBillRow(selectedRow);
+    updateSelectedBillsSummary();
   }
 
   function applyDiscount(rate, label) {
     activeDiscount = { rate, label };
-    // Re-run bill row display to show discount
-    const selectedRow = billsBody.querySelector('.bill-row.selected');
-    if (selectedRow) selectBillRow(selectedRow);
+    updateSelectedBillsSummary();
   }
 
   // Remove button on the discount row
@@ -106,35 +99,32 @@ document.addEventListener('DOMContentLoaded', function () {
     return suffix ? `CR00${suffix}` : '';
   }
 
-  // ---------- Initial render from default account ----------
-  function renderFromSample() {
-    // Start with cleared state instead of showing default account
+  // ---------- Initial empty state ----------
+  function initializePage() {
     forceClearAccountData();
   }
 
-  // ---------- Bill row selection ----------
-  function selectBillRow(row, opts) {
-    document.querySelectorAll('.bill-row').forEach(r => {
-      r.classList.remove('selected');
-      r.querySelector('.radio').classList.remove('on');
-    });
-    row.classList.add('selected');
-    row.querySelector('.radio').classList.add('on');
+  // ---------- Bill checkbox selection ----------
+  function getSelectedBillTotals() {
+    return Array.from(billsBody.querySelectorAll('.bill-row.selected')).reduce((totals, row) => {
+      totals.amount += parseFloat(row.dataset.amount) || 0;
+      totals.penalty += parseFloat(row.dataset.penalty) || 0;
+      totals.pca += parseFloat(row.dataset.pca) || 0;
+      totals.mmf += parseFloat(row.dataset.mmf) || 0;
+      return totals;
+    }, { amount: 0, penalty: 0, pca: 0, mmf: 0 });
+  }
 
-    const amount  = parseFloat(row.dataset.amount)  || 0;
-    const penalty = parseFloat(row.dataset.penalty) || 0;
-    const pca     = parseFloat(row.dataset.pca);
-    const mmf     = parseFloat(row.dataset.mmf);
-    const pcaVal  = isNaN(pca) ? 0 : pca;
-    const mmfVal  = isNaN(mmf) ? 0 : mmf;
-    const totalDue = amount + pcaVal + mmfVal;
-    const subTotal = totalDue + penalty;
+  function updateSelectedBillsSummary() {
+    const totals = getSelectedBillTotals();
+    const totalDue = totals.amount + totals.pca + totals.mmf;
+    const subTotal = totalDue + totals.penalty;
 
-    sTotalBill.textContent = fmt(amount);
-    sPCA.textContent       = fmt(pcaVal);
-    sMMF.textContent       = fmt(mmfVal);
+    sTotalBill.textContent = fmt(totals.amount);
+    sPCA.textContent       = fmt(totals.pca);
+    sMMF.textContent       = fmt(totals.mmf);
     sTotalDue.textContent  = fmt(totalDue);
-    sPenalty.textContent   = fmt(penalty);
+    sPenalty.textContent   = fmt(totals.penalty);
 
     // Apply senior citizen discount if active
     const discountAmt = activeDiscount ? parseFloat((subTotal * activeDiscount.rate).toFixed(2)) : 0;
@@ -153,9 +143,26 @@ document.addEventListener('DOMContentLoaded', function () {
     updateTotalBalance();
   }
 
+  function setBillRowSelected(row, selected) {
+    row.classList.toggle('selected', selected);
+    const checkbox = row.querySelector('.bill-checkbox');
+    if (checkbox) checkbox.checked = selected;
+
+    const billIndex = parseInt(row.dataset.billIndex, 10);
+    if (currentAccountData && currentAccountData.bills[billIndex]) {
+      currentAccountData.bills[billIndex].selected = selected;
+    }
+  }
+
+  function toggleBillRow(row) {
+    setBillRowSelected(row, !row.classList.contains('selected'));
+    updateSelectedBillsSummary();
+    if (multipleAccountsMode) renderMultipleAccountsList();
+  }
+
   billsBody.addEventListener('click', function (e) {
     const row = e.target.closest('.bill-row');
-    if (row) selectBillRow(row);
+    if (row) toggleBillRow(row);
   });
 
   // ---------- Payment method ----------
@@ -171,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function currentPayMode() {
     const active = document.querySelector('.pay-opt.active');
-    return active ? active.dataset.mode : 'cash';
+    return active ? active.dataset.mode : null;
   }
 
   // ---------- Amount to pay / tendered ----------
@@ -297,19 +304,20 @@ document.addEventListener('DOMContentLoaded', function () {
     return {
       account: {
         accountNumber: apiAccount.accountNumber,
-        meterNumber: '',
+        meterNumber: apiAccount.meterNumber || '',
         name: apiAccount.accountName,
         address: apiAccount.address,
-        type: '',
+        type: apiAccount.classification || '',
         status: apiAccount.unpaidCount > 0 ? 'Unpaid' : 'Paid',
         otherChargesBalance: 0
       },
       bills: apiAccount.bills.map(bill => ({
+        billingReferenceId: bill.billingReferenceId,
         billMonth: bill.billingPeriod,
         dueDate: bill.dueDate,
         amount: bill.billAmount,
         pca: 0,
-        mmf: 20.00,
+        mmf: bill.meterMaintenanceFee,
         penalty: bill.penalty,
         subTotal: bill.billAmount + bill.penalty,
         selected: false
@@ -427,6 +435,8 @@ document.addEventListener('DOMContentLoaded', function () {
       return; // already in list \u2014 silently ignore
     }
     
+    accountData.bills.forEach(bill => { bill.selected = true; });
+    accountData._billSelectionInitialized = true;
     selectedAccounts.push(accountData);
     
     // If this is the first account added, load its details automatically
@@ -478,16 +488,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const rowsHTML = selectedAccounts.map((accountData, index) => {
       const acc = accountData.account;
       
-      const selectedBill = accountData.bills.find(bill => bill.selected);
-      let accountTotal = 0;
-      
-      if (selectedBill) {
-        const amount  = selectedBill.amount;
-        const pca     = selectedBill.pca != null ? selectedBill.pca : (selectedBill.pcaMmf || 0);
-        const mmf     = selectedBill.mmf || 0;
-        const penalty = selectedBill.penalty;
-        accountTotal = amount + pca + mmf + penalty;
-      }
+      const accountTotal = accountData.bills
+        .filter(bill => bill.selected)
+        .reduce((sum, bill) => {
+          const pca = bill.pca != null ? bill.pca : (bill.pcaMmf || 0);
+          return sum + bill.amount + pca + (bill.mmf || 0) + bill.penalty;
+        }, 0);
       
       totalAmount += accountTotal;
       
@@ -579,12 +585,13 @@ document.addEventListener('DOMContentLoaded', function () {
       multipleToggle.classList.add('active');
       
       // If we have a current account loaded and no accounts in the list yet, add it
-      if (fAccNo.textContent !== '\u2014' && fAccNo.textContent !== '' && selectedAccounts.length === 0) {
-        const currentAccount = COLLECTION_ACCOUNTS.find(acc => 
-          acc.account.accountNumber === fAccNo.textContent
-        );
-        if (currentAccount) {
-          selectedAccounts.push(currentAccount);
+      if (currentAccountData && selectedAccounts.length === 0) {
+        if (!currentAccountData._billSelectionInitialized) {
+          currentAccountData.bills.forEach(bill => { bill.selected = true; });
+          currentAccountData._billSelectionInitialized = true;
+        }
+        if (currentAccountData.account.accountNumber === fAccNo.textContent) {
+          selectedAccounts.push(currentAccountData);
           currentSelectedAccountIndex = 0;
           // Keep the current account details visible
         }
@@ -619,6 +626,12 @@ document.addEventListener('DOMContentLoaded', function () {
   // Function to load account data into the interface
   function loadAccountData(accountData) {
     const acc = accountData.account;
+    currentAccountData = accountData;
+
+    if (!accountData._billSelectionInitialized) {
+      accountData.bills.forEach(bill => { bill.selected = true; });
+      accountData._billSelectionInitialized = true;
+    }
 
     // Enable amount tendered now that an account is loaded
     setTenderedEnabled(true);
@@ -648,7 +661,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('acctCountNum').textContent = acctCount;
     document.getElementById('acctCountLabel').textContent = acctCount === 1 ? 'ACCOUNT' : 'ACCOUNTS';
     
-    // Load bills (selectBillRow handles receipt PCA/MMF display)
+    // Load bills and summarize every checked row in the receipt.
     loadBills(accountData.bills);
   }
   
@@ -665,6 +678,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Function to force clear account data regardless of mode
   function forceClearAccountData() {
     window._ocCurrentAccount = null;  // reset Other Charges popover reference
+    currentAccountData = null;
     document.getElementById('fAccNo').textContent = '\u2014';
     document.getElementById('fMeter').textContent = '\u2014';
     document.getElementById('fName').textContent = '\u2014';
@@ -697,25 +711,26 @@ document.addEventListener('DOMContentLoaded', function () {
   // Function to load bills into the table
   function loadBills(bills) {
     billsBody.innerHTML = '';
-    bills.forEach(bill => {
+    bills.forEach((bill, billIndex) => {
       const row = document.createElement('tr');
-      row.className = 'bill-row';
-      if (bill.selected) row.classList.add('selected');
+      row.className = `bill-row${bill.selected ? ' selected' : ''}`;
       const pca = bill.pca != null ? bill.pca : 0;
       const mmf = bill.mmf != null ? bill.mmf : 0;
+      const billMonth = bill.billMonth || bill.month || '—';
       row.setAttribute('data-amount', bill.amount.toFixed(2));
       row.setAttribute('data-penalty', bill.penalty.toFixed(2));
       row.setAttribute('data-pca', pca.toFixed(2));
       row.setAttribute('data-mmf', mmf.toFixed(2));
-      row.setAttribute('data-month', bill.month);
+      row.setAttribute('data-month', billMonth);
+      row.setAttribute('data-bill-index', billIndex);
       
       const penaltyCell = bill.penalty > 0
         ? `${fmt(bill.penalty)} <span class="tag">PENALTY</span>`
         : '\u2014';
       
       row.innerHTML = `
-        <td><span class="radio ${bill.selected ? 'on' : ''}"></span></td>
-        <td><b>${bill.month}</b></td>
+        <td><input class="bill-checkbox" type="checkbox" ${bill.selected ? 'checked' : ''} aria-label="Select bill for ${billMonth}"></td>
+        <td><b>${billMonth}</b></td>
         <td class="muted">${bill.dueDate}</td>
         <td class="mono">${fmt(bill.amount)}</td>
         <td class="mono muted">${fmt(pca + mmf)}</td>
@@ -724,24 +739,14 @@ document.addEventListener('DOMContentLoaded', function () {
       `;
       
       billsBody.appendChild(row);
-      
-      // Add click handler for row selection (using existing selectBillRow function)
-      row.addEventListener('click', function() {
-        selectBillRow(this);
-      });
     });
-    
-    // Select the first selected bill or the first bill
-    const selectedRow = billsBody.querySelector('.bill-row.selected') || billsBody.querySelector('.bill-row');
-    if (selectedRow) selectBillRow(selectedRow);
+
+    updateSelectedBillsSummary();
   }
   
   // Function to recalculate totals
   function recalcTotals() {
-    const selectedRow = billsBody.querySelector('.bill-row.selected');
-    if (selectedRow) {
-      selectBillRow(selectedRow, { skipRecalcTendered: true });
-    }
+    updateSelectedBillsSummary();
   }
 
   // Function to calculate combined total for multiple accounts
@@ -753,17 +758,10 @@ document.addEventListener('DOMContentLoaded', function () {
     let grandTotal = 0;
     
     selectedAccounts.forEach(accountData => {
-      // Find the selected bill for this account, or use the first selected bill
-      const selectedBill = accountData.bills.find(bill => bill.selected);
-      
-      if (selectedBill) {
-        const amount  = selectedBill.amount;
-        const pca     = selectedBill.pca != null ? selectedBill.pca : (selectedBill.pcaMmf || 0);
-        const mmf     = selectedBill.mmf || 0;
-        const penalty = selectedBill.penalty;
-        const subTotal = amount + pca + mmf + penalty;
-        grandTotal += subTotal;
-      }
+      accountData.bills.filter(bill => bill.selected).forEach(bill => {
+        const pca = bill.pca != null ? bill.pca : (bill.pcaMmf || 0);
+        grandTotal += bill.amount + pca + (bill.mmf || 0) + bill.penalty;
+      });
     });
     
     return grandTotal;
@@ -779,14 +777,10 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       // Single account mode - use existing logic
       totalBalanceLabel.textContent = 'Total Balance';
-      const selectedRow = billsBody.querySelector('.bill-row.selected');
-      if (selectedRow) {
-        const amount  = parseFloat(selectedRow.dataset.amount)  || 0;
-        const penalty = parseFloat(selectedRow.dataset.penalty) || 0;
-        const pca     = parseFloat(selectedRow.dataset.pca)     || 0;
-        const mmf     = parseFloat(selectedRow.dataset.mmf)     || 0;
-        const totalDue = amount + pca + mmf;
-        const subTotal = totalDue + penalty;
+      const selectedRows = billsBody.querySelectorAll('.bill-row.selected');
+      if (selectedRows.length) {
+        const totals = getSelectedBillTotals();
+        const subTotal = totals.amount + totals.pca + totals.mmf + totals.penalty;
         const discountAmt = activeDiscount ? parseFloat((subTotal * activeDiscount.rate).toFixed(2)) : 0;
         const finalTotal  = subTotal - discountAmt;
         totalBalance.textContent = fmt(finalTotal);
@@ -822,9 +816,8 @@ document.addEventListener('DOMContentLoaded', function () {
     amountTendered.value = '';
     amountToPay.value = '0.00';
     
-    // Reset payment method to cash (first option)
+    // Clear the payment method so the cashier must explicitly select one.
     document.querySelectorAll('.pay-opt').forEach(opt => opt.classList.remove('active'));
-    document.querySelector('.pay-opt[data-mode="cash"]').classList.add('active');
     document.getElementById('checkPanel').style.display  = 'none';
     document.getElementById('onlinePanel').style.display = 'none';
     document.getElementById('checkBank').value    = '';
@@ -870,12 +863,178 @@ document.addEventListener('DOMContentLoaded', function () {
     console.error('multipleToggle element not found in DOM');
   }
 
+  // ---------- Payment summary ----------
+  const paymentSummaryOverlay = document.getElementById('paymentSummaryOverlay');
+  const psProceedBtn = document.getElementById('psProceedBtn');
+  const psCancelBtn = document.getElementById('psCancelBtn');
+  let pendingPayment = null;
+
+  function formatSummaryBillMonth(value) {
+    const match = /^(\d{4})-(\d{2})$/.exec(String(value || ''));
+    if (!match) return value || '\u2014';
+    return new Date(Number(match[1]), Number(match[2]) - 1, 1)
+      .toLocaleDateString('en-PH', { month: 'short', year: 'numeric' });
+  }
+
+  function getBillsForPaymentSummary() {
+    const accounts = multipleAccountsMode ? selectedAccounts : (currentAccountData ? [currentAccountData] : []);
+    return accounts.flatMap(accountData => accountData.bills
+      .filter(bill => bill.selected)
+      .map(bill => ({
+        billingReferenceId: bill.billingReferenceId,
+        accountNumber: accountData.account.accountNumber,
+        customerName: accountData.account.name,
+        month: formatSummaryBillMonth(bill.billMonth || bill.month),
+        amount: Number(bill.amount) || 0,
+        pca: Number(bill.pca) || 0,
+        mmf: Number(bill.mmf) || 0,
+        penalty: Number(bill.penalty) || 0
+      })));
+  }
+
+  function closePaymentSummary() {
+    paymentSummaryOverlay.hidden = true;
+    document.body.classList.remove('ps-modal-open');
+    pendingPayment = null;
+  }
+
+  function openPaymentSummary(invoiceNo, tendered, payMode) {
+    const bills = getBillsForPaymentSummary();
+    const totals = bills.reduce((sum, bill) => {
+      sum.amount += bill.amount;
+      sum.pca += bill.pca;
+      sum.mmf += bill.mmf;
+      sum.penalty += bill.penalty;
+      return sum;
+    }, { amount: 0, pca: 0, mmf: 0, penalty: 0 });
+
+    const grossTotal = totals.amount + totals.pca + totals.mmf + totals.penalty;
+    const discount = activeDiscount ? Number((grossTotal * activeDiscount.rate).toFixed(2)) : 0;
+    const subTotal = grossTotal - discount;
+    const change = Math.max(0, tendered - subTotal);
+    const customerNames = [...new Set(bills.map(bill => bill.customerName).filter(Boolean))];
+
+    document.getElementById('psCustomer').textContent = customerNames.length === 1
+      ? customerNames[0]
+      : `${customerNames.length} customer accounts`;
+    document.getElementById('psInvoice').textContent = invoiceNo;
+
+    const billsContainer = document.getElementById('psBills');
+    billsContainer.innerHTML = '';
+    bills.forEach(bill => {
+      const row = document.createElement('div');
+      row.className = 'ps-bill-row';
+
+      const label = document.createElement('span');
+      label.textContent = multipleAccountsMode ? `${bill.accountNumber} · ${bill.month}` : bill.month;
+
+      const value = document.createElement('span');
+      value.className = 'mono';
+      value.textContent = fmt(bill.amount);
+
+      row.append(label, value);
+      billsContainer.appendChild(row);
+    });
+
+    document.getElementById('psTotalBills').textContent = fmt(totals.amount);
+    document.getElementById('psPca').textContent = fmt(totals.pca);
+    document.getElementById('psMmf').textContent = fmt(totals.mmf);
+    document.getElementById('psPenalty').textContent = fmt(totals.penalty);
+    document.getElementById('psPenaltyRow').hidden = totals.penalty === 0;
+    document.getElementById('psTotal').textContent = fmt(grossTotal);
+
+    const discountRow = document.getElementById('psDiscountRow');
+    discountRow.hidden = discount === 0;
+    document.getElementById('psDiscountLabel').textContent = activeDiscount?.label || 'Discount';
+    document.getElementById('psDiscount').textContent = '-' + fmt(discount);
+
+    document.getElementById('psSubTotal').textContent = fmt(subTotal);
+    document.getElementById('psTenderedLabel').textContent =
+      payMode === 'check' ? 'Check' : payMode === 'online' ? 'Online Payment' : 'Cash';
+    document.getElementById('psTendered').textContent = fmt(tendered);
+    document.getElementById('psChange').textContent = fmt(change);
+
+    const paymentBills = [];
+    let allocatedAmount = 0;
+    bills.forEach((bill, index) => {
+      const billGross = bill.amount + bill.pca + bill.mmf + bill.penalty;
+      const paidAmount = index === bills.length - 1
+        ? Number((subTotal - allocatedAmount).toFixed(2))
+        : Number((billGross * (subTotal / grossTotal)).toFixed(2));
+      allocatedAmount += paidAmount;
+      paymentBills.push({
+        billingReferenceId: bill.billingReferenceId,
+        paidAmount
+      });
+    });
+
+    pendingPayment = { invoiceNo, amount: subTotal, amountTendered: tendered, payMode, bills: paymentBills };
+    paymentSummaryOverlay.hidden = false;
+    document.body.classList.add('ps-modal-open');
+    psProceedBtn.focus();
+  }
+
+  psCancelBtn.addEventListener('click', closePaymentSummary);
+  paymentSummaryOverlay.addEventListener('click', function (event) {
+    if (event.target === paymentSummaryOverlay) closePaymentSummary();
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !paymentSummaryOverlay.hidden) closePaymentSummary();
+  });
+  psProceedBtn.addEventListener('click', async function () {
+    if (!pendingPayment) return;
+    const payment = pendingPayment;
+    const methodIds = { cash: 1, check: 2, online: 3 };
+
+    psProceedBtn.disabled = true;
+    psProceedBtn.textContent = 'Processing...';
+
+    try {
+      const response = await fetch('/Collections/Pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceNumber: payment.invoiceNo,
+          method: methodIds[payment.payMode],
+          amountTendered: payment.amountTendered,
+          bills: payment.bills
+        })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Payment could not be completed.');
+      }
+
+      closePaymentSummary();
+      resetBtn.click();
+      showToast(`Payment of ${fmt(payment.amount)} recorded via ${payment.payMode.toUpperCase()} \u2014 Invoice ${payment.invoiceNo}.`);
+    } catch (error) {
+      showToast(error.message || 'Payment could not be completed.', true);
+    } finally {
+      psProceedBtn.disabled = false;
+      psProceedBtn.textContent = 'Proceed';
+    }
+  });
+
   // ---------- Action buttons ----------
   document.getElementById('payBtn').addEventListener('click', function () {
     const toPay    = parseAmount(amountToPay.value);
     const tendered = parseAmount(amountTendered.value);
     const invoiceNo = getFullInvoiceNo();
+    const payMode = currentPayMode();
 
+    const hasSelectedBills = multipleAccountsMode
+      ? selectedAccounts.some(accountData => accountData.bills.some(bill => bill.selected))
+      : Boolean(billsBody.querySelector('.bill-row.selected'));
+    if (!hasSelectedBills) {
+      showToast('Please select at least one bill before proceeding.', true);
+      return;
+    }
+
+    if (!payMode) {
+      showToast('Please select a payment method.', true);
+      return;
+    }
     if (!invoiceNo) {
       showToast('Please enter an invoice number before proceeding.', true);
       invoiceInput.focus();
@@ -885,7 +1044,7 @@ document.addEventListener('DOMContentLoaded', function () {
       showToast('Amount tendered is less than amount to pay.', true);
       return;
     }
-    showToast(`Payment of ${fmt(toPay)} recorded via ${currentPayMode().toUpperCase()} \u2014 Invoice ${invoiceNo}.`);
+    openPaymentSummary(invoiceNo, tendered, payMode);
   });
 
   document.getElementById('reprintBtn').addEventListener('click', function () {
@@ -1291,13 +1450,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function getCurrentSubTotal() {
       // Read from the page receipt sub-total before discount
-      const selectedRow = document.querySelector('#billsBody .bill-row.selected');
-      if (!selectedRow) return 0;
-      const amount  = parseFloat(selectedRow.dataset.amount)  || 0;
-      const penalty = parseFloat(selectedRow.dataset.penalty) || 0;
-      const pca     = parseFloat(selectedRow.dataset.pca)     || 0;
-      const mmf     = parseFloat(selectedRow.dataset.mmf)     || 0;
-      return amount + pca + mmf + penalty;
+      return Array.from(document.querySelectorAll('#billsBody .bill-row.selected')).reduce((sum, row) => {
+        return sum + (parseFloat(row.dataset.amount) || 0)
+          + (parseFloat(row.dataset.penalty) || 0)
+          + (parseFloat(row.dataset.pca) || 0)
+          + (parseFloat(row.dataset.mmf) || 0);
+      }, 0);
     }
 
     function updatePreview() {
@@ -1845,21 +2003,25 @@ document.addEventListener('DOMContentLoaded', function () {
   }());
 
   // ---------- Teller Widget ----------
-  (function initTellerWidget() {
+  (async function initTellerWidget() {
     const tellerDate   = document.getElementById('tellerDate');
     const tellerCash   = document.getElementById('tellerCash');
     const tellerName   = document.getElementById('tellerName');
     const tellerAvatar = document.getElementById('tellerAvatar');
 
-    // Populate teller dropdown from SAMPLE_TELLERS (collection_sample.js)
-    // TODO: replace with fetch('/api/Billing/Tellers').then(r => r.json())
-    const tellers = (typeof SAMPLE_TELLERS !== 'undefined') ? SAMPLE_TELLERS : [];
-    tellers.forEach(function (name) {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      tellerName.appendChild(opt);
-    });
+    // The collector shown here is the authenticated application user.
+    try {
+      const response = await fetch('/Collections/CurrentCollector');
+      if (response.ok && response.status !== 204) {
+        const collector = await response.json();
+        const opt = document.createElement('option');
+        opt.value = collector.id;
+        opt.textContent = collector.name;
+        tellerName.appendChild(opt);
+      }
+    } catch (error) {
+      console.error('Unable to load the current collector:', error);
+    }
 
     // Seed today's date into the date picker
     const today = new Date();
@@ -1867,7 +2029,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Avatar initials from selected teller name
     function updateAvatar() {
-      const name  = tellerName.value.trim();
+      const name  = tellerName.selectedOptions[0]?.textContent.trim() || '';
       const parts = name.split(' ').filter(Boolean);
       tellerAvatar.textContent = parts.length >= 2
         ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
@@ -1905,7 +2067,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }());
 
   // ---------- Kick things off ----------
-  renderFromSample();
+  initializePage();
 
 });
 

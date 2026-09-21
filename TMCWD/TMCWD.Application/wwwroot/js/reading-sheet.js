@@ -648,6 +648,18 @@ function ensureDrawerExists() {
     var exportPdfBtn = document.getElementById('rsdExportPdfBtn');
     if (exportPdfBtn) exportPdfBtn.addEventListener('click', handleExportPdfClick);
 
+    var accountsTbody = document.getElementById('rsdAccountsTableBody');
+    if (accountsTbody) {
+        accountsTbody.addEventListener('click', function (e) {
+            if (e.target.closest('.row-print-btn')) return;
+            var tr = e.target.closest('tr[data-account-number]');
+            if (!tr) return;
+            var acctNumber = tr.dataset.accountNumber;
+            var acct = currentDrawerAccounts.find(function (a) { return a.number === acctNumber; });
+            if (acct) openAccountDetailModal(acct);
+        });
+    }
+
     // Wire live search and filter
     var rsdSearch = document.getElementById('rsdAccountSearch');
     var rsdFilter = document.getElementById('rsdUsageFilter');
@@ -670,6 +682,90 @@ function ensureDrawerExists() {
     }
     if (rsdSearch) rsdSearch.addEventListener('input', applyDrawerFilters);
     if (rsdFilter) rsdFilter.addEventListener('change', applyDrawerFilters);
+}
+
+function ensureAccountDetailModalExists() {
+    if (document.getElementById('radModalBackdrop')) return;
+
+    var html =
+        '<div class="rad-modal-backdrop" id="radModalBackdrop" aria-hidden="true" style="display:none;">' +
+        '<div class="rad-modal" role="dialog" aria-modal="true">' +
+        '<button type="button" id="radCloseBtn" class="icon-btn rad-close" aria-label="Close">' +
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+        '</button>' +
+        '<div class="rad-grid">' +
+
+        '<div class="rad-field"><label>Account Number</label><div class="rad-value" id="radAccountNumber">—</div></div>' +
+        '<div class="rad-field"><label>Account Name</label><div class="rad-value" id="radAccountName">—</div></div>' +
+
+        '<div class="rad-field"><label>Reference Number</label><div class="rad-value" id="radReferenceNumber">—</div></div>' +
+        '<div class="rad-field"><label>Reading Date</label><div class="rad-value" id="radReadingDate">—</div></div>' +
+
+        '<div class="rad-field"><label>Meter Number</label><div class="rad-value" id="radMeterNumber">—</div></div>' +
+        '<div class="rad-field"></div>' +
+
+        '<div class="rad-field"><label>Billing Date</label><div class="rad-value" id="radBillingDate">—</div></div>' +
+        '<div class="rad-field"><label>Due Date</label><div class="rad-value" id="radDueDate">—</div></div>' +
+
+        '<div class="rad-field"><label>Previous</label><div class="rad-value" id="radPrevious">—</div></div>' +
+        '<div class="rad-field"><label>Present</label><div class="rad-value" id="radPresent">—</div></div>' +
+
+        '<div class="rad-field"><label>Consumption</label><div class="rad-value" id="radConsumption">—</div></div>' +
+        '<div class="rad-field"><label>Amount</label><div class="rad-value" id="radAmount">—</div></div>' +
+
+        '<div class="rad-field"><label>Status</label><div class="rad-value" id="radStatus">—</div></div>' +
+        '<div class="rad-field"><label>Total</label><div class="rad-value" id="radTotal">—</div></div>' +
+
+        '</div>' +
+        '</div>' +
+        '</div>';
+
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    var closeBtn = document.getElementById('radCloseBtn');
+    var backdrop = document.getElementById('radModalBackdrop');
+    if (closeBtn) closeBtn.addEventListener('click', closeAccountDetailModal);
+    if (backdrop) {
+        backdrop.addEventListener('click', function (e) {
+            if (e.target === backdrop) closeAccountDetailModal();
+        });
+    }
+}
+
+function openAccountDetailModal(acct) {
+    ensureAccountDetailModalExists();
+
+    var set = function (id, val) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = (val === null || val === undefined || val === '') ? '—' : val;
+    };
+
+    set('radAccountNumber', acct.number);
+    set('radAccountName', acct.name);
+    set('radReferenceNumber', acct.referenceNumber);
+    set('radReadingDate', acct.readingDate ? formatShortDate(acct.readingDate) : '—');
+    set('radMeterNumber', acct.meterNo);
+    set('radBillingDate', currentDrawerRow ? currentDrawerRow.billingDate : '—');
+    set('radDueDate', currentDrawerRow && currentDrawerRow.dueDate ? formatShortDate(currentDrawerRow.dueDate) : '—');
+    set('radPrevious', acct.prev);
+    set('radPresent', acct.pres);
+    set('radConsumption', acct.usage);
+    set('radAmount', (acct.amount || 0).toFixed(2));
+    set('radStatus', acct.status);
+    set('radTotal', (acct.total || 0).toFixed(2));
+
+    var backdrop = document.getElementById('radModalBackdrop');
+    if (backdrop) {
+        backdrop.style.display = 'flex';
+        backdrop.setAttribute('aria-hidden', 'false');
+    }
+}
+
+function closeAccountDetailModal() {
+    var backdrop = document.getElementById('radModalBackdrop');
+    if (!backdrop) return;
+    backdrop.style.display = 'none';
+    backdrop.setAttribute('aria-hidden', 'true');
 }
 
 
@@ -921,10 +1017,60 @@ function handleExportExcelClick() {
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Reading Sheet');
 
+    var timeSuffix =
+        String(now.getHours()).padStart(2, '0') +
+        String(now.getMinutes()).padStart(2, '0') +
+        String(now.getSeconds()).padStart(2, '0');
     var filename = 'Reading-Sheet-' + (row.zone || '') + '-' + (row.book || '') + '-' +
-        (now.getMonth() + 1) + '-' + now.getDate() + '-' + now.getFullYear() + '.xlsx';
+        (now.getMonth() + 1) + '-' + now.getDate() + '-' + now.getFullYear() + '-' +
+        timeSuffix + '.xlsx';
 
-    XLSX.writeFile(wb, filename);
+    try {
+        var workbookBytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        var byteArray = new Uint8Array(workbookBytes);
+        var binary = '';
+        var chunkSize = 0x8000;
+        for (var offset = 0; offset < byteArray.length; offset += chunkSize) {
+            binary += String.fromCharCode.apply(null, byteArray.subarray(offset, offset + chunkSize));
+        }
+
+        // Submit to the server as a regular file response. Unlike a blob URL,
+        // Edge finishes writing this attachment before offering it to Excel.
+        var targetName = 'excelDownload_' + Date.now();
+        var targetFrame = document.createElement('iframe');
+        targetFrame.name = targetName;
+        targetFrame.style.display = 'none';
+
+        var downloadForm = document.createElement('form');
+        downloadForm.method = 'post';
+        downloadForm.action = '/ReadingSheet/DownloadExcel';
+        downloadForm.target = targetName;
+        downloadForm.style.display = 'none';
+
+        var fileNameInput = document.createElement('input');
+        fileNameInput.type = 'hidden';
+        fileNameInput.name = 'fileName';
+        fileNameInput.value = filename;
+
+        var contentInput = document.createElement('input');
+        contentInput.type = 'hidden';
+        contentInput.name = 'contentBase64';
+        contentInput.value = btoa(binary);
+
+        downloadForm.appendChild(fileNameInput);
+        downloadForm.appendChild(contentInput);
+        document.body.appendChild(targetFrame);
+        document.body.appendChild(downloadForm);
+        downloadForm.submit();
+
+        window.setTimeout(function () {
+            downloadForm.remove();
+            targetFrame.remove();
+        }, 60000);
+    } catch (error) {
+        console.error('[ReadingSheet] Excel export failed:', error);
+        alert('Failed to download the Excel file. Please try again.');
+    }
 }
 function handleExportPdfClick() {
     if (!currentDrawerAccounts.length) {

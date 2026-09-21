@@ -3,7 +3,9 @@ using TMCWD.CustomerSupport;
 using TMCWD.Engineering;
 using TMCWD.Services;
 using TMCWD.Billing;
-
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -26,6 +28,7 @@ builder.Services.AddTransient<RequestFileTransaction>();
 builder.Services.AddTransient<BillingAdjustmentTransaction>();
 builder.Services.AddTransient<BillingTransaction>();
 builder.Services.AddTransient<PenaltyTransaction>();
+builder.Services.AddTransient<PaymentTransaction>();
 builder.Services.AddTransient<WaterRateTransaction>(); 
 builder.Services.AddTransient<ReadingSheetTransaction>();
 builder.Services.AddTransient<ZoneBookTransaction>();
@@ -51,6 +54,22 @@ builder.Services.AddSession(options =>
     options.Cookie.Name = "TMCWD.Session";
 });
 
+// Add JWT authentication 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -65,6 +84,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseSession();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

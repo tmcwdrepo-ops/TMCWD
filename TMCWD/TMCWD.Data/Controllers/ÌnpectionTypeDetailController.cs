@@ -9,26 +9,29 @@ namespace TMCWD.Data.Controllers
     [Route("api/[controller]")]
     public class ÌnpectionTypeDetailController : Controller
     {
+        private readonly UserDbContext _dbContext;
+
+        public ÌnpectionTypeDetailController(UserDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
 
         [HttpPost("SaveUpdate")]
         public ActionResult<bool> SaveUpdate([FromBody] InspectionTypeDetail inspectionTypeDetail)
         {
             try
             {
-                using (var dbContext = new UserDbContext())
+                if(inspectionTypeDetail.Id == 0)
                 {
-                    if(inspectionTypeDetail.Id == 0)
-                    {
-                        dbContext.InspectonTypeDetails.Add(inspectionTypeDetail);
-                    }
-                    else
-                    {
-                        dbContext.InspectonTypeDetails.Update(inspectionTypeDetail);
-                    }
+                    _dbContext.InspectonTypeDetails.Add(inspectionTypeDetail);
+                }
+                else
+                {
+                    _dbContext.InspectonTypeDetails.Update(inspectionTypeDetail);
+                }
 
-                    int res = dbContext.SaveChanges();
-                    if (res > 0) return Ok(true);
-                } 
+                int res = _dbContext.SaveChanges();
+                if (res > 0) return Ok(true);
             }
             catch(Exception ex)
             {
@@ -46,11 +49,8 @@ namespace TMCWD.Data.Controllers
 
             try
             {
-                using(var dbContext = new UserDbContext())
-                {
-                    detail = dbContext.InspectonTypeDetails.Where(x => x.Id == inspectionTypeId).FirstOrDefault() ?? new InspectionTypeDetail();
-                    if (detail == null) return NotFound($"Inspection type detail with inspection type id {inspectionTypeId} not found.");
-                }
+                detail = _dbContext.InspectonTypeDetails.Where(x => x.Id == inspectionTypeId).FirstOrDefault() ?? new InspectionTypeDetail();
+                if (detail == null) return NotFound($"Inspection type detail with inspection type id {inspectionTypeId} not found.");
             }
             catch(Exception ex)
             {

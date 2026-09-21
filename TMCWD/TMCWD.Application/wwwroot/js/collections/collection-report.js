@@ -24,9 +24,7 @@
   if (!overlay || !openBtn || !closeBtn) return;
 
   // TODO: replace with fetch('/api/Billing/Collectors').then(r => r.json())
-  const REPORT_COLLECTORS = (typeof SAMPLE_REPORT_COLLECTORS !== 'undefined')
-    ? SAMPLE_REPORT_COLLECTORS
-    : [];
+  const REPORT_COLLECTORS = [];
 
   //  Central state object 
   // Single source of truth \u2014 all field listeners write here;

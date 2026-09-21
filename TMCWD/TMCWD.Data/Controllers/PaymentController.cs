@@ -81,6 +81,22 @@ namespace TMCWD.Data.Controllers
             return Ok(savedPayment);
         }
 
+        [HttpPost("ProcessCollection/{userId}")]
+        public async Task<IActionResult> ProcessCollection(
+            int userId,
+            [FromBody] TMCWD.Model.Billing.Requests.CollectionPaymentRequest request)
+        {
+            try
+            {
+                var payments = await _service.ProcessCollectionPayment(userId, request);
+                return Ok(new { success = true, paymentCount = payments.Count });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
         #endregion
 
     }

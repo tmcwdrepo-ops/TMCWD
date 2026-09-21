@@ -51,9 +51,7 @@
   //     });
   // Expected item shape: { invoiceNo, account, totalAmount, transactionType }
   function loadCollectionListData(date) {
-    var sample = (typeof SAMPLE_COLLECTION_LIST !== 'undefined')
-      ? SAMPLE_COLLECTION_LIST
-      : [];
+    var sample = [];
     // When a real API is wired the date parameter will be sent as a query filter.
     // For now every date returns the full sample set.
     return Promise.resolve(sample);

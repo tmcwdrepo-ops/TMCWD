@@ -13,8 +13,8 @@
 
 @section Scripts {
   <script src="~/js/reading-sheet-sample.js"></script>
-  <script src="~/js/reading-sheet.js"></script>
-  <script src="~/js/create_reading.js"></script>
+  <script src="~/js/reading-sheet.js" asp-append-version="true"></script>
+  <script src="~/js/create_reading.js" asp-append-version="true"></script>
   <script src="~/js/create_temp.js"></script>
 
     <script>
@@ -1231,7 +1231,7 @@
                                 <input class="cr-input"
                                        type="date"
                                        id="crBillingDate"
-                                       value="2025-07-01" />
+                                       readonly />
 
                                 <svg class="cr-input__icon"
                                      viewBox="0 0 16 16"
@@ -1272,7 +1272,7 @@
                                 <input class="cr-input"
                                        type="date"
                                        id="crDueDate"
-                                       value="2025-07-15" />
+                                       readonly />
 
                                 <svg class="cr-input__icon"
                                      viewBox="0 0 16 16"
@@ -1318,8 +1318,7 @@
 
                                 <input class="cr-input"
                                        type="date"
-                                       id="crDisconnectionDate"
-                                       value="2025-08-01" />
+                                       id="crDisconnectionDate" />
 
                                 <svg class="cr-input__icon"
                                      viewBox="0 0 16 16"
@@ -1348,7 +1347,7 @@
                     </div>
 
 
-                    <!-- Billing Period Start -->
+                    <!-- Reading Date (stored as Billing Period Start) -->
 
                     <div class="cr-row cr-row--2col cr-row--valign">
 
@@ -1357,7 +1356,7 @@
                             <label class="cr-field__label"
                                    for="crBillingPeriodStart">
 
-                                Billing Period Start
+                                Reading Date
 
                             </label>
 
@@ -1366,7 +1365,6 @@
                                 <input class="cr-input"
                                        type="date"
                                        id="crBillingPeriodStart"
-                                       value="2025-07-01"
                                        disabled />
 
                                 <svg class="cr-input__icon"
@@ -1407,7 +1405,7 @@
                                       aria-hidden="true">
                                 </span>
 
-                                Override Start Date
+                                Override Reading Date
 
                             </label>
 

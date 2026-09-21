@@ -4,3 +4,7 @@ TMCWD/TMCWD.Application/Controllers/BillingController.cs
 TMCWD/TMCWD.Application/Views/Billing/BillAdjustment.cshtml
 
 TMCWD/TMCWD.Application/Models/BillAdjustmentViewModel.cs
+
+/recovery/
+
+/tmp/

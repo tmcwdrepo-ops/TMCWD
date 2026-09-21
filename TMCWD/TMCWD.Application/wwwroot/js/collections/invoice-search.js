@@ -16,11 +16,11 @@
   if (!overlay || !openBtn || !closeBtn) return;
 
   //  Data source 
-  // Reference sample data from collection_sample.js
+  // Remain empty until the real invoice-search endpoint is available.
   // TODO: replace with fetch('/api/Billing/InvoiceSearch?query=<term>')
   //       .then(function (r) { if (!r.ok) throw new Error(r.statusText); return r.json(); })
   //       when backend endpoint is ready.
-  var invoiceData = (typeof SAMPLE_INVOICE_SEARCH !== 'undefined') ? SAMPLE_INVOICE_SEARCH : [];
+  var invoiceData = [];
 
   //  In-flight guard 
   // Prevents double-triggering while a search is active.

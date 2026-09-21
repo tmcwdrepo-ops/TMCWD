@@ -53,9 +53,7 @@
   // The returned array must contain objects shaped as:
   //   { collector, orFrom, orTo, cashOnHand }
   function loadCollectionMonitoringData() {
-    return Promise.resolve(
-      (typeof SAMPLE_COLLECTION_MONITORING !== 'undefined') ? SAMPLE_COLLECTION_MONITORING : []
-    );
+    return Promise.resolve([]);
   }
 
   //  Total collection 

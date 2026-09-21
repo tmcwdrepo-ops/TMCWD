@@ -50,7 +50,7 @@
   //  Phase 1: Populate charge type dropdown 
   function populateChargeTypeDropdown() {
     if (!chargeTypeSelect || chargeTypeSelect.dataset.populated === '1') return;
-    var data = (typeof OC_CHARGE_TYPES !== 'undefined') ? OC_CHARGE_TYPES : [];
+    var data = [];
     data.forEach(function (ct) {
       var opt = document.createElement('option');
       opt.value = ct.id; opt.textContent = ct.label;
@@ -249,7 +249,7 @@
       return false;
     }
 
-    var types  = (typeof OC_CHARGE_TYPES !== 'undefined') ? OC_CHARGE_TYPES : [];
+    var types  = [];
     var rec    = types.find(function (ct) { return ct.id === chargeTypeId; });
     var row    = { chargeType: rec ? rec.label : chargeTypeId,
                    chargeTypeId: chargeTypeId, amount: amount };
@@ -380,10 +380,10 @@
   var _othSuggIdx       = -1;
   var _othSearchTimer   = null;
 
-  // Populate Others charge type dropdown from same OC_CHARGE_TYPES data
+  // Populate charge types when a real API is available.
   function populateOthChargeTypeDropdown() {
     if (!othChargeType || othChargeType.dataset.populated === '1') return;
-    var data = (typeof OC_CHARGE_TYPES !== 'undefined') ? OC_CHARGE_TYPES : [];
+    var data = [];
     data.forEach(function (ct) {
       var opt = document.createElement('option');
       opt.value = ct.id; opt.textContent = ct.label;
@@ -480,7 +480,7 @@
       var amount = othAmount     ? parseFloat(othAmount.value) : NaN;
       if (!typeId) { if (othChargeType) othChargeType.focus(); return; }
       if (!amount || amount <= 0) { if (othAmount) othAmount.focus(); return; }
-      var types = (typeof OC_CHARGE_TYPES !== 'undefined') ? OC_CHARGE_TYPES : [];
+      var types = [];
       var rec   = types.find(function (ct) { return ct.id === typeId; });
       _ocOthCharges.push({ chargeType: rec ? rec.label : typeId, chargeTypeId: typeId, amount: amount });
       if (othChargeType) othChargeType.value = '';
@@ -777,7 +777,7 @@
 
 // ── Check Payment toggle (both views) ────────────────────────────────────────
 (function initOcCheckPayment() {
-  var BANKS = (typeof SAMPLE_BANKS !== 'undefined') ? SAMPLE_BANKS : [];
+  var BANKS = [];
 
   function populateBankDropdown(selectId) {
     var sel = document.getElementById(selectId);
@@ -838,11 +838,11 @@
   var _searchTimer = null;
   var _suggIdx     = -1;
 
-  // Populate dropdowns from collection_sample.js
+  // Populate dropdowns only from live API data when available.
   function populateDropdowns() {
     // Charge types
     if (chargeType && chargeType.dataset.populated !== '1') {
-      var types = (typeof OC_CHARGE_TYPES !== 'undefined') ? OC_CHARGE_TYPES : [];
+      var types = [];
       types.forEach(function (ct) {
         var opt = document.createElement('option');
         opt.value = ct.id; opt.textContent = ct.label;
@@ -852,7 +852,7 @@
     }
     // Payable In
     if (payableIn && payableIn.dataset.populated !== '1') {
-      var opts = (typeof SAMPLE_PAYABLE_IN !== 'undefined') ? SAMPLE_PAYABLE_IN : [];
+      var opts = [];
       opts.forEach(function (o) {
         var opt = document.createElement('option');
         opt.value = o; opt.textContent = o;
@@ -944,8 +944,8 @@
       _charges = []; renderTable();
       if (!val) { hideSugg(); return; }
       _searchTimer = setTimeout(function () {
-        var lu = (typeof OC_ACCOUNT_LOOKUP !== 'undefined') ? OC_ACCOUNT_LOOKUP : [];
-        var ca = (typeof COLLECTION_ACCOUNTS !== 'undefined') ? COLLECTION_ACCOUNTS : [];
+        var lu = [];
+        var ca = [];
         var t  = val.toLowerCase();
         var results = [];
         var seen = {};
@@ -991,7 +991,7 @@
       }
       if (!valid) return;
 
-      var types = (typeof OC_CHARGE_TYPES !== 'undefined') ? OC_CHARGE_TYPES : [];
+      var types = [];
       var rec   = types.find(function (ct) { return ct.id === typeId; });
       _charges.push({
         description: rec ? rec.label : (typeId || '\u2014'),

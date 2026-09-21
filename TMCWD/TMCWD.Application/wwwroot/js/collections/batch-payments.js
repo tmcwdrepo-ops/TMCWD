@@ -71,9 +71,7 @@
   // TODO: replace with fetch('/api/Billing/BatchPayments').then(r => r.json())
   // Expected item shape: { id, filename, channel, status, dateUploaded }
   function loadBatchPaymentsData() {
-    return Promise.resolve(
-      (typeof SAMPLE_BATCH_PAYMENTS !== 'undefined') ? SAMPLE_BATCH_PAYMENTS : []
-    );
+    return Promise.resolve([]);
   }
 
   //  2. CSV upload stub 

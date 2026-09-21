@@ -291,6 +291,11 @@ namespace TMCWD.Data.Services
                     (ra, c) => new { ra.Reading, ra.Account, Customer = c })
                 .ToListAsync();
 
+            var readingIds = currentReadings.Select(x => x.Reading.Id).ToList();
+            var billings = await _context.Billings
+                .Where(b => readingIds.Contains(b.ReadingId))
+                .ToListAsync();
+
             var result = new List<ReadingSheetAccountDto>();
 
             foreach (var item in currentReadings)
@@ -299,21 +304,23 @@ namespace TMCWD.Data.Services
                 decimal pres = item.Reading.CurrentReading;
                 decimal usage = pres - prev;
 
+                var billing = billings.FirstOrDefault(b => b.ReadingId == item.Reading.Id);
+
                 var fullName = string.Join(" ", new[]
                 {
-        item.Customer.Firstname,
-        item.Customer.Middlename,
-        item.Customer.Lastname
-    }.Where(n => !string.IsNullOrWhiteSpace(n)));
+            item.Customer.Firstname,
+            item.Customer.Middlename,
+            item.Customer.Lastname
+            }.Where(n => !string.IsNullOrWhiteSpace(n)));
 
-                var address = string.Join(" ", new[]
-                {
-        item.Account.UnitNumber,
-        item.Account.Building,
-        item.Account.HouseNumber,
-        item.Account.Street,
-        item.Account.Barangay
-    }.Where(a => !string.IsNullOrWhiteSpace(a)));
+                    var address = string.Join(" ", new[]
+                    {
+                item.Account.UnitNumber,
+                item.Account.Building,
+                item.Account.HouseNumber,
+                item.Account.Street,
+                item.Account.Barangay
+            }.Where(a => !string.IsNullOrWhiteSpace(a)));
 
                 result.Add(new ReadingSheetAccountDto
                 {
@@ -332,12 +339,14 @@ namespace TMCWD.Data.Services
                     Classification = (int)item.Account.Classification,
                     MeterSize = item.Account.MeterSize > 0 ? item.Account.MeterSize : 0.5m,
                     Address = address,
-                    MeterNo = item.Account.MeterNumber
+                    MeterNo = item.Account.MeterNumber,
+                    ReferenceNumber = billing?.BillingReferenceId,
+                    ReadingDate = item.Reading.DateCreated
                 });
             }
+
             return result;
         }
-
         /// <summary>
         /// Posts every account on this reading sheet that still has a
         /// pending reading (Created/InProgress) and a real reading entered.
@@ -347,6 +356,12 @@ namespace TMCWD.Data.Services
         /// </summary>
         public async Task<int> PartialPost(int readingSheetId, int userId)
         {
+            var readingSheet = await _context.ReadingSheets
+                .FirstOrDefaultAsync(x => x.Id == readingSheetId);
+
+            if (readingSheet?.BillingDate == null)
+                return 0;
+
             var pendingReadings = await _context.Readings
                 .Where(r => r.ReadingSheetId == readingSheetId
                          && (r.Status == ReadingStatus.Created
@@ -376,21 +391,21 @@ namespace TMCWD.Data.Services
                     meterSize);
 
                 if (rate == null)
-                    continue; // no rate configured — skip rather than fail the whole batch
+                    continue; // no rate configured â€” skip rather than fail the whole batch
 
                 var amount = ComputeWaterCharge(
                     (int)reading.PreviousReading,
                     (int)reading.CurrentReading,
                     rate);
 
-                if (amount < 0) continue; // present < previous — invalid, skip
+                if (amount < 0) continue; // present < previous â€” invalid, skip
 
                 var billing = new Billing
                 {
                     AccountId = account.Id,
                     ReadingId = reading.Id,
                     BillingReferenceId = Guid.NewGuid().ToString("N").Substring(0, 12).ToUpper(),
-                    BillingPeriod = DateTime.Now,
+                    BillingPeriod = readingSheet.BillingDate.Value.Date,
                     TotalBillAmount = amount,
                     RemainingAmount = amount,
                     PaymentStatus = (int)PaymentStatus.Unpaid,
@@ -415,7 +430,7 @@ namespace TMCWD.Data.Services
         }
 
         /// <summary>
-        /// Marks a reading sheet as Completed — only allowed once every
+        /// Marks a reading sheet as Completed â€” only allowed once every
         /// reading on it has already been posted (no Created/InProgress
         /// readings remain). Returns null if the sheet doesn't exist or
         /// still has pending readings.
@@ -447,7 +462,7 @@ namespace TMCWD.Data.Services
 
         /// <summary>
         /// Pure tiered water-rate calculation. Duplicated from
-        /// TMCWD.Billing.WaterChargeCalculator by necessity — that class
+        /// TMCWD.Billing.WaterChargeCalculator by necessity â€” that class
         /// works against TMCWD.Model.Billing.WaterRate via an HTTP
         /// transaction, while this runs directly against the DB-backed
         /// TMCWD.Data.Entities.WaterRate. Keep both in sync if the rate
