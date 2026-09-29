@@ -1,5 +1,32 @@
-// Simple Debit/Credit Memo Form
-// Fixed: DCM Type input readonly issue - multiple safeguards ensure input remains editable
+// Debit/Credit Memo form backed by the BillingController API.
+const dcmTypes = [
+    'BOUNCED CHECK', 'CANCELLED OFFICIAL RECEIPT', 'DEFECTIVE SC AND WATER METER',
+    'DEFECTIVE SERVICE CONNECTION', 'DEFECTIVE WATER METER', 'DEPOSIT APPLICATION',
+    'DISCOUNT', 'DOUBLE ENTRY OF ACCOUNT', 'ERRONEOUS READING', 'ERROR ON PREVIOUS BALANCE',
+    'INVALID ACCOUNT PAYMENT', 'INVALID CHARGES', 'LATE PENALTY', 'OTHERS', 'OVER PAYMENT REFUND',
+    'RECLASSIFICATION OF CATEGORY', 'SPECIAL PRIVILEGE ACCOUNT', 'TRANSFER OF PAYMENT',
+    'WAIVE PENALTY', 'WITHOLDING TAX'
+];
+
+function searchDCMTypes(searchTerm) {
+    const term = searchTerm.trim().toLowerCase();
+    return dcmTypes.filter(type => !term || type.toLowerCase().includes(term));
+}
+
+function escapeDCMHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, function(character) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+    });
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-PH', {
+        style: 'currency',
+        currency: 'PHP',
+        minimumFractionDigits: 2
+    }).format(amount);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('dcmForm');
     const resetBtn = document.getElementById('dcmResetBtn');
@@ -29,123 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedIndex = -1;
     let searchResults = [];
     const searchDropdown = document.getElementById('dcmSearchDropdown');
-
-    // DCM Type lookup with dropdown
-    let dcmTypeTimeout;
-    let dcmSelectedIndex = -1;
-    let dcmTypeResults = [];
-    const dcmTypeDropdown = document.getElementById('dcmTypeDropdown');
-
-    // Ensure DCM Type input is not readonly and is fully functional
-    dcmTypeInput.removeAttribute('readonly');
-    dcmTypeInput.removeAttribute('disabled');
-    dcmTypeInput.style.pointerEvents = 'auto';
-    dcmTypeInput.style.cursor = 'text';
-
-    // DCM Type search functionality
-    dcmTypeInput.addEventListener('click', function() {
-        // Ensure input is focusable and editable
-        this.removeAttribute('readonly');
-        this.focus();
-        if (!this.value) {
-            showDCMTypeResults('');
-        }
-    });
-
-    dcmTypeInput.addEventListener('focus', function() {
-        // Ensure input is not readonly when focused
-        this.removeAttribute('readonly');
-        if (!this.value) {
-            showDCMTypeResults('');
-        }
-    });
-
-    dcmTypeInput.addEventListener('input', function() {
-        // Ensure input continues to work
-        this.removeAttribute('readonly');
-        clearTimeout(dcmTypeTimeout);
-        const searchTerm = this.value.trim();
-        dcmSelectedIndex = -1;
-        
-        dcmTypeTimeout = setTimeout(() => {
-            showDCMTypeResults(searchTerm);
-        }, 200);
-    });
-
-    // Add keydown event to catch any typing attempts
-    dcmTypeInput.addEventListener('keydown', function(e) {
-        // Ensure input is editable before processing keydown
-        this.removeAttribute('readonly');
-        this.removeAttribute('disabled');
-        
-        const items = dcmTypeDropdown.querySelectorAll('.dcm-search-item');
-        
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            dcmSelectedIndex = Math.min(dcmSelectedIndex + 1, items.length - 1);
-            updateDCMTypeHighlight(items);
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            dcmSelectedIndex = Math.max(dcmSelectedIndex - 1, -1);
-            updateDCMTypeHighlight(items);
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (dcmSelectedIndex >= 0 && items[dcmSelectedIndex]) {
-                selectDCMType(dcmTypeResults[dcmSelectedIndex]);
-            }
-        } else if (e.key === 'Escape') {
-            hideDCMTypeDropdown();
-        }
-    });
-
-    // Add keypress event to ensure typing is always allowed
-    dcmTypeInput.addEventListener('keypress', function(e) {
-        // Remove any readonly/disabled attributes immediately
-        this.removeAttribute('readonly');
-        this.removeAttribute('disabled');
-    });
-
-    function showDCMTypeResults(searchTerm) {
-        dcmTypeResults = searchDCMTypes(searchTerm);
-        
-        if (dcmTypeResults.length > 0) {
-            const html = dcmTypeResults.map((type, index) => `
-                <div class="dcm-search-item" data-index="${index}">
-                    <div class="dcm-search-item-main">${type}</div>
-                </div>
-            `).join('');
-            
-            dcmTypeDropdown.innerHTML = html;
-            dcmTypeDropdown.classList.add('show');
-            
-            // Add click listeners
-            dcmTypeDropdown.querySelectorAll('.dcm-search-item').forEach((item, index) => {
-                item.addEventListener('click', () => selectDCMType(dcmTypeResults[index]));
-            });
-        } else {
-            dcmTypeDropdown.innerHTML = '<div class="dcm-search-no-results">No DCM types found</div>';
-            dcmTypeDropdown.classList.add('show');
-        }
-    }
-
-    function updateDCMTypeHighlight(items) {
-        items.forEach((item, index) => {
-            item.classList.toggle('highlighted', index === dcmSelectedIndex);
-        });
-    }
-
-    function selectDCMType(dcmType) {
-        dcmTypeInput.value = dcmType;
-        dcmTypeInput.dataset.selectedType = dcmType;
-        // Ensure input remains editable after selection
-        dcmTypeInput.removeAttribute('readonly');
-        hideDCMTypeDropdown();
-    }
-
-    function hideDCMTypeDropdown() {
-        dcmTypeDropdown.classList.remove('show');
-        dcmSelectedIndex = -1;
-    }
 
     // Account search functionality  
     accountNumberInput.addEventListener('input', function() {
@@ -189,18 +99,27 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.dcm-search-container')) {
             hideSearchDropdown();
-            hideDCMTypeDropdown();
         }
     });
 
-    function showSearchResults(searchTerm) {
-        searchResults = searchAccounts(searchTerm);
+    async function showSearchResults(searchTerm) {
+        try {
+            const response = await fetch(`/Billing/SearchAccounts?q=${encodeURIComponent(searchTerm)}`);
+            if (!response.ok) throw new Error('Account lookup failed.');
+            const results = await response.json();
+            searchResults = Array.isArray(results) ? results : [];
+        } catch (error) {
+            searchResults = [];
+            searchDropdown.innerHTML = '<div class="dcm-search-no-results">Unable to search accounts</div>';
+            searchDropdown.classList.add('show');
+            return;
+        }
         
         if (searchResults.length > 0) {
             const html = searchResults.map((account, index) => `
                 <div class="dcm-search-item" data-index="${index}">
-                    <div class="dcm-search-item-main">${account.accountNumber} - ${account.accountName}</div>
-                    <div class="dcm-search-item-sub">${account.address} | ${account.connectionType}</div>
+                    <div class="dcm-search-item-main">${escapeDCMHtml(account.accountNumber)} - ${escapeDCMHtml(account.name)}</div>
+                    <div class="dcm-search-item-sub">${escapeDCMHtml(account.address || '')}</div>
                 </div>
             `).join('');
             
@@ -225,13 +144,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function selectAccount(account) {
         accountNumberInput.value = account.accountNumber;
-        accountNameInput.value = account.accountName;
+        accountNameInput.value = account.name;
         
         // Store additional account info
         accountNumberInput.dataset.fullAccountNumber = account.accountNumber;
         accountNameInput.dataset.address = account.address;
         accountNameInput.dataset.meterNumber = account.meterNumber;
-        accountNameInput.dataset.connectionType = account.connectionType;
         
         hideSearchDropdown();
     }
@@ -254,40 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function clearDCMType() {
         dcmTypeInput.value = '';
-        delete dcmTypeInput.dataset.selectedType;
-        // Ensure input is editable
-        dcmTypeInput.removeAttribute('readonly');
-        dcmTypeInput.removeAttribute('disabled');
-        hideDCMTypeDropdown();
     }
-
-    // Function to ensure DCM Type input is always editable
-    function ensureDCMTypeEditable() {
-        dcmTypeInput.removeAttribute('readonly');
-        dcmTypeInput.removeAttribute('disabled');
-        dcmTypeInput.style.pointerEvents = 'auto';
-        dcmTypeInput.style.cursor = 'text';
-        dcmTypeInput.classList.remove('dcm-input-readonly');
-    }
-
-    // Call on page load to ensure DCM Type is editable
-    ensureDCMTypeEditable();
-    
-    // Debug: Log DCM Type input state
-    console.log('DCM Type input initialized:', {
-        readonly: dcmTypeInput.hasAttribute('readonly'),
-        disabled: dcmTypeInput.hasAttribute('disabled'),
-        value: dcmTypeInput.value,
-        classList: dcmTypeInput.classList.toString()
-    });
-
-    // Periodic check to ensure DCM Type remains editable (debugging)
-    setInterval(() => {
-        if (dcmTypeInput.hasAttribute('readonly') || dcmTypeInput.hasAttribute('disabled')) {
-            console.warn('DCM Type input became readonly/disabled, fixing...');
-            ensureDCMTypeEditable();
-        }
-    }, 1000);
 
     // Reset form
     resetBtn.addEventListener('click', function() {
@@ -296,12 +181,9 @@ document.addEventListener('DOMContentLoaded', function() {
         clearAccountName();
         clearDCMType();
         remarksInput.value = '';
-        // Ensure DCM Type remains editable after reset
-        ensureDCMTypeEditable();
     });
 
-    // Form submission with sample data integration
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         // Basic validation
@@ -311,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        if (!dcmTypeInput.value.trim() || !dcmTypeInput.dataset.selectedType) {
+        if (!dcmTypeInput.value) {
             toastSystem.error('Please select a DCM type');
             dcmTypeInput.focus();
             return;
@@ -335,63 +217,44 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Prepare DCM data
+        const token = document.querySelector('input[name="__RequestVerificationToken"]');
+        const memoDate = document.getElementById('dcmDate').value;
+        const billMonthBasis = document.getElementById('dcmBillMonthBasis').value;
         const dcmData = {
-            accountNumber: accountNumberInput.dataset.fullAccountNumber || accountNumberInput.value,
-            accountName: accountNameInput.value,
-            dcmType: dcmTypeInput.dataset.selectedType || dcmTypeInput.value,
+            accountNumber: accountNumberInput.dataset.fullAccountNumber || accountNumberInput.value.trim(),
+            dcmType: dcmTypeInput.value,
             memoType: document.querySelector('input[name="dcmMemoType"]:checked').value,
             amount: parseFloat(document.getElementById('dcmAmount').value),
-            dcmDate: document.getElementById('dcmDate').value,
-            billMonthBasis: document.getElementById('dcmBillMonthBasis').value,
+            dcmDate: memoDate || today,
+            billMonthBasis: billMonthBasis || null,
             explanation: explanationInput.value.trim(),
             remarks: remarksInput.value.trim()
         };
 
-        // Disable submit button
         submitBtn.disabled = true;
         submitBtn.textContent = 'Creating...';
-
-        // Simulate server submission
-        setTimeout(() => {
-            try {
-                // Add to sample data
-                const newRecord = addDCMRecord(dcmData);
-                
-                // Show success notification
-                const successMessage = `DCM created successfully for ${newRecord.accountName}`;
-                const details = `DCM ID: ${newRecord.id}\nAmount: ${formatCurrency(newRecord.amount)}\nType: ${newRecord.memoType.toUpperCase()} MEMO`;
-                
-                toastSystem.success(successMessage, details);
-                
-                // Reset form
-                form.reset();
-                document.getElementById('dcmDate').value = today;
-                clearAccountName();
-                clearDCMType();
-                remarksInput.value = '';
-                
-                // Ensure DCM Type remains editable after form submission
-                ensureDCMTypeEditable();
-                
-                console.log('DCM Records:', getSampleDCMRecords());
-                
-            } catch (error) {
-                toastSystem.error('Error creating DCM', error.message);
-            } finally {
-                // Re-enable submit button
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit';
-            }
-        }, 1000);
+        try {
+            const response = await fetch('/Billing/SaveDebitCreditMemo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token ? token.value : ''
+                },
+                body: JSON.stringify(dcmData)
+            });
+            if (!response.ok) throw new Error(await response.text() || 'The memo could not be saved.');
+            const saved = await response.json();
+            toastSystem.success(`DCM ${saved.id} created successfully`, `Amount: ${formatCurrency(saved.amount)}\nType: ${saved.memoType.toUpperCase()} MEMO`);
+            form.reset();
+            document.getElementById('dcmDate').value = today;
+            clearAccountName();
+            clearDCMType();
+            remarksInput.value = '';
+        } catch (error) {
+            toastSystem.error('Error creating DCM', error.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit';
+        }
     });
-
-    // Display sample account hints
-    function showAccountHints() {
-        const hints = sampleAccounts.map(acc => `${acc.accountNumber} - ${acc.accountName}`).join('\n');
-        console.log('Sample Accounts Available:\n' + hints);
-    }
-
-    // Show hints on page load
-    showAccountHints();
 });

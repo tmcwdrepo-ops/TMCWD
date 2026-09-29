@@ -337,7 +337,7 @@
 }
 
 .oc-confirm-card {
-    background: var(--color-surface, #1e2530);
+    background: var(--color-panel);
     padding: 24px;
     border-radius: 8px;
     max-width: 360px;
@@ -360,8 +360,8 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--color-surface, #1e2530);
-    border: 1px solid var(--color-border, #333);
+    background: var(--color-panel);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     max-height: 220px;
     overflow-y: auto;
@@ -377,7 +377,7 @@
 
     .oc-autocomplete-item:hover,
     .oc-autocomplete-item.is-active {
-        background: var(--color-hover, rgba(255,255,255,0.08));
+        background: var(--color-panel-alt);
     }
 
     .oc-autocomplete-item .oc-ac-number {
@@ -385,7 +385,7 @@
     }
 
     .oc-autocomplete-item .oc-ac-name {
-        color: var(--color-text-faint, #888);
+        color: var(--color-text-faint);
         font-size: 0.9em;
     }
 

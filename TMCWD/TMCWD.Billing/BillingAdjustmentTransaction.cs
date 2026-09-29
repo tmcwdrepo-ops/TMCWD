@@ -55,5 +55,17 @@ namespace TMCWD.Billing
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToAdjustment(data);
         }
+
+        public async Task<List<BillingAdjustment>?> SaveBatch(
+            int userId,
+            List<BillingAdjustment> adjustments)
+        {
+            var response = await _service.Client.PostAsJsonAsync(
+                $"api/BillingAdjustment/SaveBatch/{userId}", adjustments);
+            if (!response.IsSuccessStatusCode) return null;
+
+            var data = await response.Content.ReadAsStringAsync();
+            return ConvertJsonToAdjustments(data);
+        }
     }
 }

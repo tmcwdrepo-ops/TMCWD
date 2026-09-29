@@ -57,12 +57,34 @@ namespace TMCWD.Billing
             return ConvertJsonToPaymentBases(data);
         }
 
+        public async Task<List<PaymentHistoryRecord>> GetPaymentHistoryByBillingReference(string referenceId)
+        {
+            var response = await _service.Client.GetAsync($"api/Payment/GetByBillingReference/{referenceId}");
+            if (!response.IsSuccessStatusCode) return new List<PaymentHistoryRecord>();
+
+            var data = await response.Content.ReadAsStringAsync();
+            var serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<List<PaymentHistoryRecord>>(data, serializerOptions)
+                   ?? new List<PaymentHistoryRecord>();
+        }
+
         public async Task<List<PaymentBase>> GetByCashier(int userId)
         {
             var response = await _service.Client.GetAsync($"api/Payment/GetByCashier/{userId}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToPaymentBases(data);
+        }
+
+        public async Task<List<PaymentHistoryRecord>> GetPaymentHistoryByCashier(int userId)
+        {
+            var response = await _service.Client.GetAsync($"api/Payment/GetByCashier/{userId}");
+            if (!response.IsSuccessStatusCode) return new List<PaymentHistoryRecord>();
+
+            var data = await response.Content.ReadAsStringAsync();
+            var serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<List<PaymentHistoryRecord>>(data, serializerOptions)
+                   ?? new List<PaymentHistoryRecord>();
         }
 
         public async Task<List<PaymentBase>> GetByMethod(PaymentMethod method)
@@ -128,6 +150,55 @@ namespace TMCWD.Billing
 
             return (false,
                 $"Payment service returned {(int)response.StatusCode} ({response.ReasonPhrase}).");
+        }
+
+        public async Task<List<InvoiceRecord>> SearchInvoices(string query)
+        {
+            var response = await _service.Client.GetAsync(
+                $"api/Payment/SearchInvoices?q={Uri.EscapeDataString(query)}");
+            if (!response.IsSuccessStatusCode) return new();
+            return await response.Content.ReadFromJsonAsync<List<InvoiceRecord>>() ?? new();
+        }
+
+        public async Task<List<PaymentHistoryRecord>> GetByDateRange(
+            DateTime from, DateTime to, int cashierId = 0)
+        {
+            var url = $"api/Payment/GetByDateRange" +
+                      $"?from={Uri.EscapeDataString(from.ToString("yyyy-MM-dd"))}" +
+                      $"&to={Uri.EscapeDataString(to.ToString("yyyy-MM-dd"))}" +
+                      (cashierId > 0 ? $"&cashierId={cashierId}" : "");
+
+            var response = await _service.Client.GetAsync(url);
+            if (!response.IsSuccessStatusCode) return new();
+
+            var opts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return await response.Content.ReadFromJsonAsync<List<PaymentHistoryRecord>>(opts) ?? new();
+        }
+
+        public async Task<InvoiceRecord?> GetInvoice(string invoiceNumber)
+        {
+            var response = await _service.Client.GetAsync(
+                $"api/Payment/Invoice/{Uri.EscapeDataString(invoiceNumber)}");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<InvoiceRecord>();
+        }
+
+        public async Task<(bool Success, string Message)> CancelInvoice(
+            int userId,
+            CancelInvoiceRequest request)
+        {
+            var response = await _service.Client.PostAsJsonAsync(
+                $"api/Payment/CancelInvoice/{userId}", request);
+            if (response.IsSuccessStatusCode) return (true, string.Empty);
+            var data = await response.Content.ReadAsStringAsync();
+            try
+            {
+                using var json = JsonDocument.Parse(data);
+                if (json.RootElement.TryGetProperty("message", out var message))
+                    return (false, message.GetString() ?? "Invoice could not be cancelled.");
+            }
+            catch (JsonException) { }
+            return (false, "Invoice could not be cancelled.");
         }
 
         #endregion

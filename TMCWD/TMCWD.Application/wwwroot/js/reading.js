@@ -475,6 +475,7 @@
 
     btn.addEventListener('click', async function (e) {
       e.preventDefault();
+      if (btn.disabled) return;
 
       const accountNo = document.getElementById('accountNumber')?.value.trim();
       const name      = document.getElementById('accountName')?.value.trim();
@@ -486,8 +487,8 @@
         showPopup({ title: 'Account Number Required', message: 'Please enter an Account Number before saving.', type: 'warning', focusId: 'accountNumber' });
         return;
       }
-      if (isNaN(present)) {
-        showPopup({ title: 'Invalid Present Reading', message: 'Please enter a valid numeric Present Reading.', type: 'warning', focusId: 'presentReading' });
+      if (!Number.isFinite(present) || present < 0 || present < previous) {
+        showPopup({ title: 'Invalid Present Reading', message: 'Present Reading must be a nonnegative number and cannot be less than Previous Reading.', type: 'warning', focusId: 'presentReading' });
         return;
       }
 
@@ -523,6 +524,7 @@
       const usage     = Math.max(0, present - previous);
       const amountVal = document.getElementById('calculatedAmount')?.value || '0.00';
 
+      btn.disabled = true;
       try {
         const res = await fetch('/Billing/SaveReading', {
           method : 'POST',
@@ -568,7 +570,9 @@
         }
       } catch (err) {
         console.error('Save error:', err);
-        showPopup({ title: 'Error', message: 'An error occurred while saving the reading. Please try again.', type: 'warning' });
+        showPopup({ title: 'Error', message: 'An error occurred while saving the reading. Reload the sheet before retrying.', type: 'warning' });
+      } finally {
+        btn.disabled = false;
       }
     });
   }

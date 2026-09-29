@@ -135,8 +135,15 @@ namespace TMCWD.Data.Controllers
         [Route("PartialPostReadingSheet")]
         public async Task<IActionResult> PartialPostReadingSheet(int readingSheetId, int userId)
         {
-            var postedCount = await _readingSheetService.PartialPost(readingSheetId, userId);
-            return Ok(new { postedCount });
+            try
+            {
+                var postedCount = await _readingSheetService.PartialPost(readingSheetId, userId);
+                return Ok(new { postedCount });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
 
         [HttpPost]

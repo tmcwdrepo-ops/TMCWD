@@ -8,10 +8,7 @@
     <link rel="stylesheet" href="~/css/debit-credit-memo.css"/>
 }
 
-@section Scripts {
-    <script src="~/js/dcm-sample-data.js"></script>
-    <script src="~/js/debit-credit-memo.js"></script>
-}
+
 
 <div class="dcm-container">
     <div class="dcm-card">
@@ -19,7 +16,11 @@
             <h3 class="dcm-title">Debit/Credit Transaction Module</h3>
         </div>
         
+        <p role="status">Choose a debit or credit memo type, then review the transaction details.</p>
+        <div class="dcm-workspace">
         <form class="dcm-form" id="dcmForm">
+        @Html.AntiForgeryToken()
+        <fieldset style="border:0;padding:0;margin:0;min-width:0">
             <!-- Row 1: Account Number | Account Name -->
             <div class="dcm-row">
                 <div class="dcm-field">
@@ -51,13 +52,19 @@
             <div class="dcm-row">
                 <div class="dcm-field">
                     <label class="dcm-label">DCM Type</label>
-                    <div class="dcm-input-with-icon dcm-search-container">
-                        <input type="text" class="dcm-input" id="dcmType" placeholder="Select or search DCM type" autocomplete="off">
-                        <svg class="dcm-input-icon" viewBox="0 0 16 16" fill="none">
-                            <path d="M6 9l4-4 4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <div class="dcm-search-dropdown" id="dcmTypeDropdown"></div>
-                    </div>
+                    <select class="dcm-input" id="dcmType" required>
+                        <option value="">Select a type</option>
+                        @foreach (var type in new[] {
+                            "BOUNCED CHECK", "CANCELLED OFFICIAL RECEIPT", "DEFECTIVE SC AND WATER METER",
+                            "DEFECTIVE SERVICE CONNECTION", "DEFECTIVE WATER METER", "DEPOSIT APPLICATION",
+                            "DISCOUNT", "DOUBLE ENTRY OF ACCOUNT", "ERRONEOUS READING", "ERROR ON PREVIOUS BALANCE",
+                            "INVALID ACCOUNT PAYMENT", "INVALID CHARGES", "LATE PENALTY", "OTHERS", "OVER PAYMENT REFUND",
+                            "RECLASSIFICATION OF CATEGORY", "SPECIAL PRIVILEGE ACCOUNT", "TRANSFER OF PAYMENT",
+                            "WAIVE PENALTY", "WITHOLDING TAX" })
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </select>
                 </div>
                 <div class="dcm-field">
                     <label class="dcm-label">Memo Type</label>
@@ -126,9 +133,15 @@
                 <button type="button" class="dcm-btn dcm-btn-secondary" id="dcmResetBtn">Reset</button>
                 <button type="submit" class="dcm-btn dcm-btn-primary" id="dcmSubmitBtn">Submit</button>
             </div>
+        </fieldset>
         </form>
+        </div>
     </div>
 </div>
 
 <!-- Toast Notification Container -->
 <div class="toast-container" id="toastContainer"></div>
+
+@section Scripts {
+    <script src="~/js/debit-credit-memo.js" asp-append-version="true"></script>
+}

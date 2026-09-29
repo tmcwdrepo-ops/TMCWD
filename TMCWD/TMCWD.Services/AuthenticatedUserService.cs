@@ -7,6 +7,7 @@ namespace TMCWD.Services
 {
     public class AuthenticatedUserService
     {
+        public const string SessionKey = "TMCWD.AuthenticatedUser";
 
         #region fields
 

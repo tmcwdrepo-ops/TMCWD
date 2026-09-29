@@ -687,12 +687,17 @@ namespace TMCWD.Application.Controllers
         [HttpPost]
         public async Task<IActionResult> PartialPostReadingSheet(int readingSheetId)
         {
-            var postedCount = await _readingSheetTrans.PartialPostReadingSheet(readingSheetId, _user.User.Id);
-
-            if (postedCount < 0)
-                return BadRequest("Failed to post reading sheet.");
-
-            return Ok(new { postedCount });
+            try
+            {
+                var postedCount = await _readingSheetTrans.PartialPostReadingSheet(readingSheetId, _user.User.Id);
+                if (postedCount < 0)
+                    return BadRequest("Failed to post reading sheet. Reload before retrying.");
+                return Ok(new { postedCount });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
         [HttpPost]
         public async Task<IActionResult> CompleteReadingSheet(int readingSheetId)

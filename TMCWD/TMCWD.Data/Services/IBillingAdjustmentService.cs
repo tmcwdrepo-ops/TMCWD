@@ -13,5 +13,7 @@ namespace TMCWD.Data.Services
 
         public Task<BillingAdjustment> SaveUpdate(int userId, BillingAdjustment billingAdjustment);
 
+        public Task<List<BillingAdjustment>> SaveBatch(int userId, List<BillingAdjustment> billingAdjustments);
+
     }
 }

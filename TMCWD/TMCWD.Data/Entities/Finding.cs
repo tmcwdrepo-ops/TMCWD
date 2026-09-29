@@ -16,7 +16,7 @@ namespace TMCWD.Data.Entities
         [Column("JobOrderId")]
         public System.Int64 JobOrderId { get; set; }
 
-        [Required, MaxLength(255), Column("Detail")]
+        [Required, Column("Detail", TypeName = "text")]
         public string Detail { get; set; } = string.Empty;
 
         [Column("CreatedBy")]

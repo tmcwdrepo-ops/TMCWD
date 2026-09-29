@@ -111,6 +111,8 @@ namespace TMCWD.Billing
             var content = JsonContent.Create(reading);
             var response = await _service.Client.PostAsync($"api/Reading/SaveUpdate/{userId}", content);
             var data = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                throw new InvalidOperationException(data);
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToReading(data);
         }

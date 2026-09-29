@@ -38,7 +38,8 @@
             if (!adjustment || adjustment.type === "hidden") return;
             var a = parseFloat(asBilled.value);
             var b = parseFloat(shouldBe.value);
-            adjustment.value = (isNaN(a) || isNaN(b)) ? "" : (b - a).toFixed(2);
+            // Positive adjustments are credits that reduce the outstanding bill.
+            adjustment.value = (isNaN(a) || isNaN(b)) ? "" : (a - b).toFixed(2);
         }
 
         checkbox.addEventListener("change", function () { setEnabled(checkbox.checked); recalc(); });

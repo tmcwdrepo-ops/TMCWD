@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Reflection;
@@ -192,6 +192,8 @@ namespace TMCWD.Billing
                 $"api/ReadingSheet/PartialPostReadingSheet?readingSheetId={readingSheetId}&userId={userId}",
                 null);
 
+            if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                throw new InvalidOperationException(await response.Content.ReadAsStringAsync());
             if (!response.IsSuccessStatusCode) return -1;
 
             var data = await response.Content.ReadAsStringAsync();

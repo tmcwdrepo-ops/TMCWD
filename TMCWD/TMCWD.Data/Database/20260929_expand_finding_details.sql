@@ -1,0 +1,2 @@
+ALTER TABLE findings
+    MODIFY COLUMN Detail TEXT NOT NULL;

@@ -117,7 +117,10 @@ namespace TMCWD.Administration
                 { new SelectListItem(nameof(UserRole.Engineer), ((int)UserRole.Engineer).ToString()) },
                 { new SelectListItem(nameof(UserRole.SuperAdmin), ((int)UserRole.SuperAdmin).ToString()) },
                 { new SelectListItem(nameof(UserRole.Guest), ((int)UserRole.Guest).ToString()) },
-                { new SelectListItem(nameof(UserRole.CustomerRepresentative), ((int)UserRole.CustomerRepresentative).ToString()) }
+                { new SelectListItem(nameof(UserRole.CustomerRepresentative), ((int)UserRole.CustomerRepresentative).ToString()) },
+                { new SelectListItem(nameof(UserRole.CustomerServiceOic), ((int)UserRole.CustomerServiceOic).ToString()) },
+                { new SelectListItem(nameof(UserRole.Cashier), ((int)UserRole.Cashier).ToString()) },
+                { new SelectListItem(nameof(UserRole.MeterReader), ((int)UserRole.MeterReader).ToString()) }
             };
         }
 

@@ -6,10 +6,33 @@ using TMCWD.Billing;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddSingleton<AuthenticatedUserService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AuthenticatedUserService>(services =>
+{
+    var authenticatedUser = new AuthenticatedUserService();
+    var httpContext = services.GetRequiredService<IHttpContextAccessor>().HttpContext;
+    var serializedUser = httpContext?.Session.GetString(AuthenticatedUserService.SessionKey);
+
+    if (!string.IsNullOrWhiteSpace(serializedUser))
+    {
+        try
+        {
+            var user = JsonSerializer.Deserialize<TMCWD.Model.Administrator.User>(serializedUser);
+            if (user != null && user.Id > 0)
+                authenticatedUser.SetUser(user);
+        }
+        catch (JsonException)
+        {
+            httpContext?.Session.Remove(AuthenticatedUserService.SessionKey);
+        }
+    }
+
+    return authenticatedUser;
+});
 builder.Services.AddSingleton<WebService>();
 builder.Services.AddTransient<UserTransaction>();
 builder.Services.AddTransient<InspectionTypeTransaction>();
@@ -22,10 +45,12 @@ builder.Services.AddTransient<MaterialTransaction>();
 builder.Services.AddTransient<OtherFeeTypeTransaction>(); 
 builder.Services.AddTransient<FindingTransaction>();
 builder.Services.AddTransient<ApplicationLoginTransaction>();
+builder.Services.AddTransient<DashboardTransaction>();
 builder.Services.AddTransient<JobOrderTransaction>();
 builder.Services.AddTransient<ApprovalHistoryTransaction>();
 builder.Services.AddTransient<RequestFileTransaction>();
 builder.Services.AddTransient<BillingAdjustmentTransaction>();
+builder.Services.AddTransient<DebitCreditMemoTransaction>();
 builder.Services.AddTransient<BillingTransaction>();
 builder.Services.AddTransient<PenaltyTransaction>();
 builder.Services.AddTransient<PaymentTransaction>();
@@ -35,6 +60,8 @@ builder.Services.AddTransient<ZoneBookTransaction>();
 builder.Services.AddTransient<ReadingTransaction>();
 builder.Services.AddTransient<ReadingSheetTemplateTransaction>();
 builder.Services.AddTransient<OtherChargeTransaction>();
+builder.Services.AddTransient<CollectionRemittanceTransaction>();
+builder.Services.AddTransient<BatchPaymentUploadTransaction>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddDistributedMemoryCache();
@@ -50,7 +77,9 @@ builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.IsEssential = true;
-    options.Cookie.HttpOnly = false;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     options.Cookie.Name = "TMCWD.Session";
 });
 

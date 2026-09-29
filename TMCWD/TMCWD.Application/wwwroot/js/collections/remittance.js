@@ -30,6 +30,9 @@
 
   function openModal() {
     seedDate();
+    if (typeof window.loadRemittanceExpectedValues === 'function') {
+      window.loadRemittanceExpectedValues();
+    }
     // Reset remittance fields state if the fields module is already initialised
     if (typeof window.crRecalculateTotals === 'function') {
       window.crRecalculateTotals();
@@ -119,8 +122,37 @@
   // for that O.R. range from the system.
   function getExpectedCashOnHand(orStart, orEnd, collector) {
     // Stub \u2014 returns a mock value so Short/Over math can be exercised in the UI.
-    return 0;
+    return window.remittanceExpectedCashOnHand || 0;
   }
+
+  function loadRemittanceExpectedValues() {
+    var date = (document.getElementById('crDate') || {}).value || new Date().toISOString().slice(0, 10);
+    return fetch('/Collections/RemittanceExpected?date=' + encodeURIComponent(date), {
+      headers: { 'Accept': 'application/json' }
+    }).then(function (response) {
+      if (!response.ok) throw new Error(response.statusText);
+      return response.json();
+    }).then(function (data) {
+      window.remittanceExpectedCashOnHand = Number(data.cashOnHand) || 0;
+      var orStart = document.getElementById('orStart');
+      var orEnd = document.getElementById('orEnd');
+      if (orStart && data.orStart) {
+        orStart.value = data.orStart;
+        if (window.remittanceState) window.remittanceState.orStart = data.orStart;
+      }
+      if (orEnd && data.orEnd) {
+        orEnd.value = data.orEnd;
+        if (window.remittanceState) window.remittanceState.orEnd = data.orEnd;
+      }
+      var cashOnHand = document.getElementById('cashOnHand');
+      if (cashOnHand) cashOnHand.textContent = fmtAmount(window.remittanceExpectedCashOnHand);
+      if (typeof window.crRecalculateTotals === 'function') window.crRecalculateTotals();
+    }).catch(function (error) {
+      console.error('[DCR] Unable to load expected collection:', error);
+      window.remittanceExpectedCashOnHand = 0;
+    });
+  }
+  window.loadRemittanceExpectedValues = loadRemittanceExpectedValues;
 
   // Receives the already-computed subtotals from recalculateTotals() so we
   // don't re-walk the DOM a second time.
@@ -355,6 +387,27 @@
     remittanceState.collector = select.value;
   }
 
+  function loadCurrentCollector() {
+    return fetch('/Collections/CurrentCollector', {
+      headers: { 'Accept': 'application/json' }
+    }).then(function (response) {
+      if (!response.ok) throw new Error(response.statusText);
+      return response.status === 204 ? null : response.json();
+    }).then(function (collector) {
+      if (!collector) return;
+      const select = document.getElementById('crCollector');
+      if (!select) return;
+      select.innerHTML = '';
+      const option = document.createElement('option');
+      option.value = collector.id;
+      option.textContent = collector.name;
+      select.appendChild(option);
+      remittanceState.collector = String(collector.id);
+    }).catch(function (error) {
+      console.error('[DCR] Unable to load collector:', error);
+    });
+  }
+
   // ----------------------------------------------------------
   // Reset the whole modal back to a clean open state.
   // ----------------------------------------------------------
@@ -406,6 +459,9 @@
     if (crDate) {
       crDate.addEventListener('change', function () {
         remittanceState.date = this.value;
+        if (typeof window.loadRemittanceExpectedValues === 'function') {
+          window.loadRemittanceExpectedValues();
+        }
       });
     }
 
@@ -488,6 +544,7 @@
   // Initial setup on page load
   // ----------------------------------------------------------
   populateCollectorDropdown();
+  loadCurrentCollector();
   bindFields();
 
 }());
@@ -643,8 +700,22 @@
   //       }).then(r => { if (!r.ok) throw new Error(r.statusText); });
   // ----------------------------------------------------------
   function submitRemittance(payload) {
-    console.log('[submitRemittance] payload:', payload);
-    return Promise.resolve({ success: true });
+    return fetch('/Collections/SaveRemittance', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'RequestVerificationToken': (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || ''
+      },
+      body: JSON.stringify(payload)
+    }).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (result) {
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || result.detail || result.title || 'Remittance could not be saved.');
+        }
+        return result;
+      });
+    });
   }
 
   // ----------------------------------------------------------

@@ -6836,3 +6836,9 @@ body.ps-modal-open { overflow: hidden; }
   .ps-overlay { align-items: flex-end; padding: 0; }
   .ps-modal { max-height: 94vh; border-radius: 16px 16px 0 0; padding: 20px; }
 }
+.nav-item[aria-disabled="true"],
+.link-chip:disabled,
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}

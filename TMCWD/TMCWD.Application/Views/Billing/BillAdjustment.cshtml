@@ -29,7 +29,9 @@
         </div>
     }
 
-    <form method="post" asp-action="SubmitAdjustment" asp-controller="Billing">
+    <p role="status">Select a billing record, choose the bill or penalty amounts to adjust, then submit the correction.</p>
+
+    <form id="billAdjustmentForm" method="post" asp-action="SubmitAdjustment" asp-controller="Billing">
         @Html.AntiForgeryToken()
 
         <!-- ── Header fields ── -->   

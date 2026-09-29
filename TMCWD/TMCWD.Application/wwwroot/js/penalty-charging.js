@@ -1,17 +1,4 @@
-/**
- * Penalty Charging — page behavior
- *
- * Expects two server endpoints (adjust to match your routing):
- *   GET  /Billing/PenaltyCharging?handler=Entries&period=YYYY-MM
- *        -> [{ accountNo, name, usage, billAmount, discount, penalty }, ...]
- *   POST /Billing/PenaltyCharging?handler=Post
- *        body: { period: "YYYY-MM", accountNos: ["02-090030", ...] }
- *        -> { success: true, postedCount, postingDate }
- *
- * If those endpoints are not reachable (e.g. while working on the UI in
- * isolation), this falls back to local sample data so the page stays
- * fully interactive for review.
- */
+// Load real overdue water bills and post server-calculated penalties.
 (function () {
     "use strict";
 
@@ -48,11 +35,12 @@
         successOk: document.getElementById("pcSuccessOk"),
     };
 
-    /** @type {Array<{accountNo:string,name:string,usage:number,billAmount:number,discount:number,penalty:number}>} */
+    /** Entries are selected by billing reference so separate bills never share a checkbox. */
     let entries = [];
     let filteredAccountNos = null; // null = no filter applied
     const selected = new Set();
     let hasLoaded = false;
+    let busy = false;
     let currentPage = 1;
     const itemsPerPage = 10;
 
@@ -62,26 +50,30 @@
     function init() {
         setDefaultBillingPeriod();
         bindEvents();
+        loadEntries();
     }
 
     function setDefaultBillingPeriod() {
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, "0");
-        const dd = String(now.getDate()).padStart(2, "0");
-        els.billingPeriod.value = `${yyyy}-${mm}-${dd}`;
-        
-        // Set posting date to today as well
-        const postingDateEl = document.getElementById("pcPostingDate");
-        if (postingDateEl) {
-            postingDateEl.value = `${yyyy}-${mm}-${dd}`;
-        }
+        els.billingPeriod.value = ""; // All overdue billing dates by default.
+        document.getElementById("pcPostingDate").value =
+            new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
     }
 
-
+    function setBusy(value) {
+        busy = value;
+        els.loadBtn.disabled = value;
+        els.resetBtn.disabled = value;
+        els.billingPeriod.disabled = value;
+        els.confirmOk.disabled = value;
+        els.search.disabled = value || !entries.length;
+        els.selectAll.disabled = value || !entries.length;
+        els.postBtn.disabled = value || !selected.size;
+        els.tableBody.querySelectorAll(".pc-row-check").forEach(cb => { cb.disabled = value; });
+    }
 
     function bindEvents() {
         els.loadBtn.addEventListener("click", loadEntries);
+        els.billingPeriod.addEventListener("change", loadEntries);
         els.resetBtn.addEventListener("click", resetPage);
         els.postBtn.addEventListener("click", openConfirmModal);
         els.search.addEventListener("input", applySearch);
@@ -125,62 +117,35 @@
     /* ---------------------------------------------------------------- */
 
     async function loadEntries() {
-        console.log("loadEntries called");
-        
-        const period = els.billingPeriod.value;
-        if (!period) {
-            showToast("Choose a billing period first.", true);
-            return;
-        }
-
-        console.log("Setting loading state");
+        if (busy) return;
+        setBusy(true);
+        selected.clear();
+        entries = [];
+        filteredAccountNos = null;
+        currentPage = 1;
+        els.search.value = "";
         setLoadingState();
-        els.loadBtn.disabled = true;
-
-        // Small delay to show loading state, then load sample data
-        setTimeout(() => {
-            console.log("Loading sample data");
-            try {
-                entries = window.PenaltyChargingSampleData ? 
-                          window.PenaltyChargingSampleData.getSampleEntries() : 
-                          [];
-                console.log("Loaded", entries.length, "entries");
-
-                selected.clear();
-                filteredAccountNos = null;
-                els.search.value = "";
-                hasLoaded = true;
-
-                els.search.disabled = entries.length === 0;
-                els.selectAll.disabled = entries.length === 0;
-                els.selectAll.checked = false;
-                els.selectAll.indeterminate = false;
-                els.loadBtn.disabled = false;
-
-                renderTable();
-                updateSummary();
-                console.log("Table rendered");
-            } catch (error) {
-                console.error("Error loading sample data:", error);
-                els.loadBtn.disabled = false;
-            }
-        }, 500);
+        try {
+            const query = els.billingPeriod.value
+                ? "?billingPeriod=" + encodeURIComponent(els.billingPeriod.value) : "";
+            const res = await fetch("/Billing/GetPenaltyChargeEntries" + query);
+            if (!res.ok) throw new Error("Could not load overdue bills. Please try again.");
+            entries = await res.json();
+            if (!Array.isArray(entries)) throw new Error("Invalid billing response.");
+            hasLoaded = true;
+            renderTable();
+        } catch (error) {
+            entries = [];
+            hasLoaded = false;
+            els.tableBody.innerHTML = '<tr><td colspan="6">Unable to load overdue bills. Click Load entries to retry.</td></tr>';
+            els.pagination.style.display = "none";
+            showToast(error.message, true);
+        } finally {
+            syncSelectAllState();
+            updateSummary();
+            setBusy(false);
+        }
     }
-
-    async function fetchEntries(period) {
-        // For development: skip server call and go straight to sample data
-        // Replace this when the actual API endpoint is implemented
-        throw new Error("Using sample data for development");
-        
-        // Uncomment below when server endpoint is ready:
-        // const res = await fetch(`/Billing/PenaltyCharging/GetEntries?period=${encodeURIComponent(period)}`, {
-        //     headers: { Accept: "application/json" },
-        // });
-        // if (!res.ok) throw new Error(`Server responded ${res.status}`);
-        // return res.json();
-    }
-
-
 
     function setLoadingState() {
         els.tableBody.innerHTML = `
@@ -209,7 +174,7 @@
                 <tr class="pc-empty-row">
                     <td colspan="6">
                         <div class="pc-empty-state">
-                            <p>No accounts have penalties for this billing period.</p>
+                            <p>No unpaid water bills are past due and eligible for a new penalty.</p>
                         </div>
                     </td>
                 </tr>`;
@@ -236,13 +201,14 @@
 
         els.tableBody.innerHTML = pageData
             .map((entry) => {
-                const isChecked = selected.has(entry.accountNo);
+                const isChecked = selected.has(entry.billingReferenceId);
 
                 return `
-                <tr data-account="${escapeAttr(entry.accountNo)}" class="${isChecked ? "is-selected" : ""}">
+                <tr data-account="${escapeAttr(entry.billingReferenceId)}" class="${isChecked ? "is-selected" : ""}">
                     <td>
                         <span class="pc-acct-no">${escapeHtml(entry.accountNo)}</span>
                         <span class="pc-acct-name">${escapeHtml(entry.name)}</span>
+                        <small>${escapeHtml(entry.billingReferenceId)} - Due ${escapeHtml(entry.dueDate.slice(0, 10))}</small>
                     </td>
                     <td class="pc-center">${entry.usage}</td>
                     <td class="pc-num">${currency(entry.billAmount)}</td>
@@ -272,7 +238,7 @@
 
     function getVisibleEntries() {
         if (filteredAccountNos === null) return entries;
-        return entries.filter((e) => filteredAccountNos.has(e.accountNo));
+        return entries.filter((e) => filteredAccountNos.has(e.billingReferenceId));
     }
 
     /* ---------------------------------------------------------------- */
@@ -280,6 +246,7 @@
     /* ---------------------------------------------------------------- */
 
     function onRowCheckChange(e) {
+        if (busy) return;
         const row = e.target.closest("tr");
         const accountNo = row.dataset.account;
         if (e.target.checked) {
@@ -294,11 +261,12 @@
     }
 
     function onSelectAllChange() {
+        if (busy) return;
         const visible = getVisibleEntries();
         if (els.selectAll.checked) {
-            visible.forEach((e) => selected.add(e.accountNo));
+            visible.forEach((e) => selected.add(e.billingReferenceId));
         } else {
-            visible.forEach((e) => selected.delete(e.accountNo));
+            visible.forEach((e) => selected.delete(e.billingReferenceId));
         }
         renderTable();
         updateSummary();
@@ -306,7 +274,7 @@
 
     function syncSelectAllState() {
         const visible = getVisibleEntries();
-        const visibleSelectedCount = visible.filter((e) => selected.has(e.accountNo)).length;
+        const visibleSelectedCount = visible.filter((e) => selected.has(e.billingReferenceId)).length;
         els.selectAll.checked = visible.length > 0 && visibleSelectedCount === visible.length;
         els.selectAll.indeterminate = visibleSelectedCount > 0 && visibleSelectedCount < visible.length;
     }
@@ -317,15 +285,6 @@
 
     function applySearch() {
         const term = els.search.value.trim().toLowerCase();
-        
-        // Auto-load sample data if not loaded yet and user is searching
-        if (!hasLoaded && term) {
-            entries = window.PenaltyChargingSampleData ? 
-                      window.PenaltyChargingSampleData.getSampleEntries() : 
-                      [];
-            hasLoaded = true;
-            els.selectAll.disabled = entries.length === 0;
-        }
         
         // Reset to first page when searching
         currentPage = 1;
@@ -340,7 +299,7 @@
                             e.accountNo.toLowerCase().includes(term) ||
                             e.name.toLowerCase().includes(term)
                     )
-                    .map((e) => e.accountNo)
+                    .map((e) => e.billingReferenceId)
             );
         }
         renderTable();
@@ -376,7 +335,7 @@
         els.totalDiscount.textContent = entries.length ? currency(totals.discount) : "\u2014";
         els.totalPenalty.textContent = entries.length ? currency(totals.penalty) : "\u2014";
 
-        els.postBtn.disabled = selected.size === 0;
+        els.postBtn.disabled = busy || selected.size === 0;
     }
 
     /* ---------------------------------------------------------------- */
@@ -384,10 +343,10 @@
     /* ---------------------------------------------------------------- */
 
     function openConfirmModal() {
-        if (selected.size === 0) return;
+        if (busy || selected.size === 0) return;
 
         const selectedTotal = entries
-            .filter((e) => selected.has(e.accountNo))
+            .filter((e) => selected.has(e.billingReferenceId))
             .reduce((sum, e) => sum + e.penalty, 0);
 
         els.confirmCount.textContent = selected.size;
@@ -416,46 +375,40 @@
     }
 
     async function postPenalties() {
+        if (busy || selected.size === 0) return;
         const period = els.billingPeriod.value;
-        const accountNos = Array.from(selected);
-        const selectedTotal = entries
-            .filter((e) => selected.has(e.accountNo))
-            .reduce((sum, e) => sum + e.penalty, 0);
-
-        els.confirmOk.disabled = true;
-        els.confirmOk.textContent = "Posting\u2026";
-
+        const references = Array.from(selected);
+        setBusy(true);
+        els.confirmOk.textContent = "Posting...";
         try {
-            await postToServer(period, accountNos);
-            closeConfirmModal();
-            openSuccessModal(accountNos.length, selectedTotal, period);
-            await loadEntries(); // refresh so posted accounts drop off the list
-        } catch (err) {
-            console.warn("Post failed, simulating success locally:", err);
-            // Optimistic fallback so the UI stays usable while the endpoint is wired up.
-            entries = entries.filter((e) => !selected.has(e.accountNo));
+            const res = await fetch("/Billing/PostPenaltyCharges", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ billingPeriod: period || null, billingReferenceIds: references })
+            });
+            if (!res.ok) throw new Error(await res.text() || "Posting was not confirmed. Reload entries before retrying.");
+            const result = await res.json();
+            if (!Number.isInteger(result.postedCount) || result.postedCount <= 0 || !Number.isFinite(result.totalPenalty))
+                throw new Error("Posting was not confirmed. Reload entries before retrying.");
+            entries = entries.filter(e => !references.includes(e.billingReferenceId));
             selected.clear();
-            filteredAccountNos = null;
-            els.search.value = "";
+            currentPage = 1;
+            closeConfirmModal();
+            openSuccessModal(result.postedCount, result.totalPenalty, period);
+            document.getElementById("pcPostingDate").value = result.postingDate.slice(0, 10);
+        } catch (error) {
+            closeConfirmModal();
+            showToast(error.message, true);
+        } finally {
             renderTable();
             syncSelectAllState();
             updateSummary();
-            closeConfirmModal();
-            openSuccessModal(accountNos.length, selectedTotal, period);
-        } finally {
-            els.confirmOk.disabled = false;
+            setBusy(false);
             els.confirmOk.textContent = "Yes, post charges";
         }
-    }
-
-    async function postToServer(period, accountNos) {
-        const res = await fetch("?handler=Post", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ period, accountNos }),
-        });
-        if (!res.ok) throw new Error(`Server responded ${res.status}`);
-        return res.json();
     }
 
     /* ---------------------------------------------------------------- */
@@ -529,6 +482,7 @@
     /* ---------------------------------------------------------------- */
 
     function resetPage() {
+        if (busy) return;
         entries = [];
         selected.clear();
         filteredAccountNos = null;
@@ -560,7 +514,7 @@
                             <path d="M24 4 4 14v10c0 11 8.5 17.4 20 20 11.5-2.6 20-9 20-20V14L24 4z" fill="none" stroke="currentColor" stroke-width="2" />
                             <path d="M24 22v10M24 16h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
                         </svg>
-                        <p>Select a billing period and load entries to review penalty charges.</p>
+                        <p>Load entries to review unpaid bills past their due date. Leave billing date blank to show all overdue bills.</p>
                     </div>
                 </td>
             </tr>`;
@@ -571,10 +525,10 @@
     /* ---------------------------------------------------------------- */
 
     function formatPeriodLabel(value) {
-        if (!value) return "\u2014";
-        const [y, m] = value.split("-");
-        const d = new Date(Number(y), Number(m) - 1, 1);
-        return d.toLocaleString("en-PH", { month: "long", year: "numeric" });
+        if (!value) return "all billing dates";
+        const [y, m, day] = value.split("-");
+        const d = new Date(Number(y), Number(m) - 1, Number(day));
+        return d.toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" });
     }
 
     let toastTimer = null;

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Cryptography;
 using TMCWD.Services;
 using TMCWD.Utility.Encryption;
+using TMCWD.Model.Dashboard;
 
 namespace TMCWD.Application.Controllers
 {
@@ -17,16 +18,19 @@ namespace TMCWD.Application.Controllers
         private readonly UserTransaction _userTransaction;
         private readonly InspectionTypeTransaction _inspectionTypeTransaction;
         private readonly OtherFeeTypeTransaction _otherFeeTypeTransaction;
+        private readonly DashboardTransaction _dashboardTransaction;
         
         public AdminController(AuthenticatedUserService authenticatedUserService, 
             UserTransaction userTransaction, 
             InspectionTypeTransaction inspectionTypeTransaction,
-            OtherFeeTypeTransaction otherFeeTypeTransaction) 
+            OtherFeeTypeTransaction otherFeeTypeTransaction,
+            DashboardTransaction dashboardTransaction)
         {
             _authenticatedUserService = authenticatedUserService;
             _userTransaction = userTransaction;
             _inspectionTypeTransaction = inspectionTypeTransaction;
             _otherFeeTypeTransaction = otherFeeTypeTransaction;
+            _dashboardTransaction = dashboardTransaction;
         }
 
         public async Task<IActionResult> Index(string searchString = "")
@@ -36,13 +40,15 @@ namespace TMCWD.Application.Controllers
             //var userList = await _userTransaction.SearchUser(searchString);
             //if (userList == null) userList = await _userTransaction.GetUsers();
 
-            AdminViewModel model = new()
+            try
             {
-                PagedUserList = new List<User>(),
-                SearchString = searchString
-            };
-
-            return View(model);
+                return View(await _dashboardTransaction.GetServiceSummary());
+            }
+            catch (HttpRequestException)
+            {
+                ViewBag.DashboardWarning = "Live service totals are temporarily unavailable.";
+                return View(new TMCWD.Model.Dashboard.ServiceDashboard());
+            }
         }
 
         public async Task<IActionResult> GetUsers(string searchString)
@@ -51,6 +57,65 @@ namespace TMCWD.Application.Controllers
             if (userList == null) userList = await _userTransaction.GetUsers();
             if (userList == null) return NotFound();
             return Ok(userList);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetServiceApplications(string category)
+        {
+            if (string.IsNullOrWhiteSpace(category)) return BadRequest("Category is required.");
+            try { return Ok(await _dashboardTransaction.GetServiceApplications(category)); }
+            catch (HttpRequestException) { return StatusCode(502, "Could not load service applications."); }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetServiceInspection(long requestId)
+        {
+            if (requestId <= 0) return BadRequest("Service application is required.");
+            try { return Ok(await _dashboardTransaction.GetServiceInspection(requestId)); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveServiceInspection([FromBody] ServiceInspectionRecord inspection)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            try { return Ok(await _dashboardTransaction.SaveServiceInspection(_authenticatedUserService.User.Id, inspection)); }
+            catch (HttpRequestException exception) { return BadRequest(exception.Message); }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetConnectOrder(long requestId)
+        {
+            if (requestId <= 0) return BadRequest("Service application is required.");
+            try { return Ok(await _dashboardTransaction.GetConnectOrder(requestId)); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveConnectOrder([FromBody] ConnectOrderRecord order)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            try { return Ok(await _dashboardTransaction.SaveConnectOrder(_authenticatedUserService.User.Id, order)); }
+            catch (HttpRequestException exception) { return BadRequest(exception.Message); }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetWorkOrder(string type, long requestId)
+        {
+            if (requestId <= 0 || type is not ("installation" or "tapping")) return BadRequest("Valid work order information is required.");
+            try { return Ok(await _dashboardTransaction.GetWorkOrder(type, requestId)); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveWorkOrder([FromBody] ServiceWorkOrderRecord order)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            try { return Ok(await _dashboardTransaction.SaveWorkOrder(_authenticatedUserService.User.Id, order)); }
+            catch (HttpRequestException exception) { return BadRequest(exception.Message); }
         }
 
         public IActionResult Users()

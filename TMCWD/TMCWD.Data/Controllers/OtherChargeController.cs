@@ -88,6 +88,22 @@ namespace TMCWD.Data.Controllers
             if (otherCharge == null) return NotFound();
             return Ok(otherCharge);
         }
+
+        [HttpPost("ProcessPayment/{userId}")]
+        public async Task<IActionResult> ProcessPayment(
+            int userId,
+            [FromBody] TMCWD.Model.Billing.Requests.OtherChargePaymentRequest request)
+        {
+            try
+            {
+                var invoiceNumber = await _service.ProcessPayment(userId, request);
+                return Ok(new { success = true, invoiceNumber });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
         #endregion
 
     }

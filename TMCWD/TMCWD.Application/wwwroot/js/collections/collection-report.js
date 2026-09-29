@@ -23,17 +23,36 @@
   // Guard: nothing to wire if the modal markup is absent.
   if (!overlay || !openBtn || !closeBtn) return;
 
-  // TODO: replace with fetch('/api/Billing/Collectors').then(r => r.json())
-  const REPORT_COLLECTORS = [];
+  // Collectors are loaded once on first open from the backend.
+  var _collectorsLoaded = false;
+
+  function loadCollectors() {
+    if (_collectorsLoaded) return;
+    _collectorsLoaded = true;
+    fetch('/Collections/Collectors')
+      .then(function (res) { return res.ok ? res.json() : []; })
+      .then(function (list) {
+        if (!collector) return;
+        list.forEach(function (u) {
+          var opt = document.createElement('option');
+          opt.value       = u.id;   // numeric user ID → sent as collectorId
+          opt.textContent = u.name;
+          collector.appendChild(opt);
+        });
+      })
+      .catch(function (err) {
+        console.warn('[CollectionReport] Could not load collectors:', err);
+      });
+  }
 
   //  Central state object 
   // Single source of truth \u2014 all field listeners write here;
   // both export functions read from here at click time.
   window.reportState = {
-    fromDate:  '',   // ISO 'YYYY-MM-DD'
-    toDate:    '',   // ISO 'YYYY-MM-DD'
-    collector: '',   // '' = All Collectors
-    sortBy:    'OR'  // 'OR' | 'accountNo'
+    fromDate:    '',   // ISO 'YYYY-MM-DD'
+    toDate:      '',   // ISO 'YYYY-MM-DD'
+    collectorId: 0,    // 0 = All Collectors
+    sortBy:      'OR'  // 'OR' | 'accountNo'
   };
 
   //  In-flight guard 
@@ -90,19 +109,15 @@
   //  Collector dropdown 
   function populateCollectors() {
     if (!collector) return;
+    // Keep only the placeholder "All Collectors" option, then fetch the rest
     collector.innerHTML = '';
     var allOpt = document.createElement('option');
-    allOpt.value       = '';
+    allOpt.value       = '0';
     allOpt.textContent = 'All Collectors';
     collector.appendChild(allOpt);
-    REPORT_COLLECTORS.forEach(function (name) {
-      var opt = document.createElement('option');
-      opt.value       = name;
-      opt.textContent = name;
-      collector.appendChild(opt);
-    });
-    collector.value              = '';
-    window.reportState.collector = '';
+    collector.value              = '0';
+    window.reportState.collectorId = 0;
+    loadCollectors();
   }
 
   //  Date seeding 
@@ -246,7 +261,7 @@
 
   if (collector) {
     collector.addEventListener('change', function () {
-      window.reportState.collector = this.value;
+      window.reportState.collectorId = parseInt(this.value, 10) || 0;
     });
   }
 
@@ -272,25 +287,33 @@
   });
 
   //  PDF export 
-  // TODO (backend): replace stub with a real fetch/POST + blob download:
-  //
-  //   function generateCollectionReportPDF(state) {
-  //     return fetch('/api/Billing/CollectionReport/PDF', {
-  //       method: 'POST', headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify(state)
-  //     }).then(function (r) {
-  //       if (!r.ok) throw new Error(r.statusText);
-  //       return r.blob();
-  //     }).then(function (blob) {
-  //       var url = URL.createObjectURL(blob);
-  //       var a = document.createElement('a');
-  //       a.href = url; a.download = 'collection-report.pdf'; a.click();
-  //       URL.revokeObjectURL(url);
-  //     });
-  //   }
+  // Builds the request body from the current reportState and POSTs to the
+  // MVC action which returns a printable HTML file.  The browser opens it
+  // via a blob URL so the user can print-to-PDF using their OS dialog.
   function generateCollectionReportPDF(state) {
-    console.log('[CollectionReport] PDF requested \u2014 state:', JSON.stringify(state));
-    return new Promise(function (resolve) { setTimeout(resolve, 1200); });
+    var csrf = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
+    return fetch('/Collections/CollectionReportPdf', {
+      method:  'POST',
+      headers: {
+        'Content-Type':             'application/json',
+        'RequestVerificationToken': csrf
+      },
+      body: JSON.stringify({
+        fromDate:    state.fromDate,
+        toDate:      state.toDate,
+        collectorId: state.collectorId || 0,
+        sortBy:      state.sortBy || 'OR'
+      })
+    }).then(function (r) {
+      if (!r.ok) return r.json().then(function (b) { throw new Error(b.message || r.statusText); });
+      return r.blob();
+    }).then(function (blob) {
+      var url = URL.createObjectURL(blob);
+      var win = window.open(url, '_blank');
+      // Trigger browser print once the page loads
+      if (win) win.addEventListener('load', function () { win.print(); });
+      setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    });
   }
 
   if (pdfBtn) {
@@ -324,25 +347,35 @@
   }
 
   // Excel export 
-  // TODO (backend): replace stub with a real fetch/POST + blob download:
-  //
-  //   function generateCollectionReportExcel(state) {
-  //     return fetch('/api/Billing/CollectionReport/Excel', {
-  //       method: 'POST', headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify(state)
-  //     }).then(function (r) {
-  //       if (!r.ok) throw new Error(r.statusText);
-  //       return r.blob();
-  //     }).then(function (blob) {
-  //       var url = URL.createObjectURL(blob);
-  //       var a = document.createElement('a');
-  //       a.href = url; a.download = 'collection-report.xlsx'; a.click();
-  //       URL.revokeObjectURL(url);
-  //     });
-  //   }
+  // POSTs to the MVC action which returns a UTF-8 CSV blob.  Excel opens
+  // CSV files natively on double-click on all platforms.
   function generateCollectionReportExcel(state) {
-    console.log('[CollectionReport] Excel requested \u2014 state:', JSON.stringify(state));
-    return new Promise(function (resolve) { setTimeout(resolve, 1200); });
+    var csrf = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
+    return fetch('/Collections/CollectionReportExcel', {
+      method:  'POST',
+      headers: {
+        'Content-Type':             'application/json',
+        'RequestVerificationToken': csrf
+      },
+      body: JSON.stringify({
+        fromDate:    state.fromDate,
+        toDate:      state.toDate,
+        collectorId: state.collectorId || 0,
+        sortBy:      state.sortBy || 'OR'
+      })
+    }).then(function (r) {
+      if (!r.ok) return r.json().then(function (b) { throw new Error(b.message || r.statusText); });
+      return r.blob();
+    }).then(function (blob) {
+      var url = URL.createObjectURL(blob);
+      var a   = document.createElement('a');
+      a.href     = url;
+      a.download = 'collection-report-' + state.fromDate + '-' + state.toDate + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+    });
   }
 
   if (excelBtn) {

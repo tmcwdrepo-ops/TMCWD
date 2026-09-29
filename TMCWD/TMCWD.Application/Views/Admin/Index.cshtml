@@ -1,122 +1,250 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+@model TMCWD.Model.Dashboard.ServiceDashboard
 @{
     Layout = "_InsideLayout";
     ViewData["PageTitle"] = "Dashboard";
     ViewData["ActivePage"] = "dashboard";
+    var cards = new[]
+    {
+        ("applications", "Online Applications", Model.OnlineApplications),
+        ("new", "New", Model.NewRequests),
+        ("inspection", "Inspection", Model.Inspection),
+        ("charging", "Charging", Model.Charging),
+        ("payment", "Payment", Model.Payment),
+        ("installation", "Installation", Model.Installation),
+        ("connect", "Connect", Model.Connect),
+        ("tapping", "Tapping", Model.Tapping),
+        ("tickets", "Tickets", Model.Tickets)
+    };
 }
-@model TMCWD.Application.Models.AdminViewModel
 
-<!-- Search and Action Button -->
-<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm mt-1">
-    <p class="text-gray-700">
-        <div class="grid grid-cols-3 gap-4">
-            <div class="col-span-2">
-                @Html.TextBoxFor(x => x.SearchString, new { id = "txtSearchString", @class = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600",  })
-            </div>
-            <div class="grid-column">
-                        
-                    <button class="rounded-md p-2 border border-transparent text-center text-sm text-white transition-all shadow-sm hover:shadow active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-                    style="background-color:#1e3a8a;"
-                    onmouseover="this.style.backgroundColor='#1e40af'"
-                    onmouseout="this.style.backgroundColor='#1e3a8a'"
-                    type="button" id="btnSeachUser">
-                        <svg width="20px" height="20px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M17.545 15.467l-3.779-3.779a6.15 6.15 0 0 0 .898-3.21c0-3.417-2.961-6.377-6.378-6.377A6.185 6.185 0 0 0 2.1 8.287c0 3.416 2.961 6.377 6.377 6.377a6.15 6.15 0 0 0 3.115-.844l3.799 3.801a.953.953 0 0 0 1.346 0l.943-.943c.371-.371.236-.84-.135-1.211zM4.004 8.287a4.282 4.282 0 0 1 4.282-4.283c2.366 0 4.474 2.107 4.474 4.474a4.284 4.284 0 0 1-4.283 4.283c-2.366-.001-4.473-2.109-4.473-4.474z" style="fill:rgb(255, 255, 255)" />
-                        </svg>
-                    </button>
-                    <button 
-                    class="rounded-md p-2 border border-transparent text-center text-sm text-white transition-all shadow-sm hover:shadow active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none" 
-                    style="background-color:#1e3a8a;"
-                    onmouseover="this.style.backgroundColor='#1e40af'"
-                    onmouseout="this.style.backgroundColor='#1e3a8a'"
-                    type="button"
-                    onclick="location.href='@Url.Action("AddEditUser", "Admin")'">
-                        <svg width="20px" height="20px" viewBox="0 0 0.6 0.6" id="plus" data-name="Flat Color" xmlns="http://www.w3.org/2000/svg" class="icon flat-color">
-                            <path id="primary" d="M0.3 0.5a0.025 0.025 0 0 1 -0.025 -0.025v-0.15H0.125a0.025 0.025 0 0 1 0 -0.05h0.15V0.125a0.025 0.025 0 0 1 0.05 0v0.15h0.15a0.025 0.025 0 0 1 0 0.05h-0.15v0.15a0.025 0.025 0 0 1 -0.025 0.025" style="fill: rgb(255, 255, 255);" />
-                        </svg>
-                    </button>
-            </div>
-        </div>
-    </p>
-</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+}
 
-<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm mt-1">
-    <h5 class="mb-2 text-2xl font-bold text-gray-900">Users</h5>
-    <p class="text-gray-700">
-        <!-- Users Table -->
-        <table id="tblUsers" class="w-full text-sm text-left rtl:text-right text-body">
-            <thead class="text-sm text-body bg-neutral-secondary-soft border-b rounded-lg border-default">
-                <tr>
-                    <th scope="col" class="px-6 py-3 font-medium">Id #</th>
-                    <th scope="col" class="px-6 py-3 font-medium">Name</th>
-                    <th scope="col" class="px-6 py-3 font-medium">Email</th>
-                    <th scope="col" class="px-6 py-3 font-medium">Date Enrolled</th>
-                    <th scope="col" class="px-6 py-3 font-medium">Active</th>
-                    <th scope="col" class="px-6 py-3 font-medium"></th>
-                </tr>
-            </thead>
-        </table>
-    </p>
-</div>
-<input id="hdUserId" type="hidden" />
-
-<vc:modal-dialog type="deactivate"></vc:modal-dialog>
-
-<script type="text/javascript">
-
-    const table = document.getElementById("tblUsers");
-    const searchText = document.getElementById("txtSearchString");
-    //stockCheck: { srcDataMember: 'quantity', compareToDataMember: 'requiredQuantity' },
-    table.DataTable({
-        processing: true,
-        getUrl: '@Url.Action("GetUsers", "Admin")' + '?searchString=' + searchText.value,
-        columns: 
-        [
-            { dataMember: 'id', isEditable: false },
-            { dataMember: 'name', isEditable: false },
-            { dataMember: 'email', isEditable: false },
-            { dataMember: 'dateCreated', isEditable: false },
-            {
-                dataMember: 'isActive', 
-                isEditable: false,
-                displays:
-                [
-                    {
-                        value: 'True',
-                        icon: 'fa-solid fa-check text-green-500'
-                    },
-                    {
-                        value: 'False',
-                        icon: 'fa-solid fa-xmark text-red-500'
-                    }
-                ],
-                isCentered: true
-            }
-        ],
-        buttons:
-        [
-            { className: 'fa-solid fa-pencil', isEditButton: false, clickCallback: (data) => editUser(data) },
-            { className: 'fa-solid fa-trash', isSaveButton: true, clickCallback: (data) => deactivateUser(data) }
-        ]
-    });
-    
-    function editUser(data){
-        window.location.href = '@Url.Action("AddEditUser", "Admin")' + '?editUserId=' + data.id; //, editUserId = user.Id  })'
+<section class="service-dashboard" aria-labelledby="serviceApplicationsTitle">
+    @Html.AntiForgeryToken()
+    @if (ViewBag.DashboardWarning != null)
+    {
+        <div class="dashboard-alert" role="status">@ViewBag.DashboardWarning</div>
     }
 
-    function deactivateUser(data){
-        var modal = new ModalDialog({
-                type: 'deactivate',
-                title: 'Deactivate User',
-                content: 'Are you sure you want to deactivate user? All of the user data will be permanently removed. This action cannot be undone.',
-                submitCallback: () => {
-                    window.location.href = "@Url.Action("DeactivateUser", "Admin")" + "?userId=" + dataId;
+    <div class="dashboard-section-title">
+        <h2 id="serviceApplicationsTitle">Service Applications</h2>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM8 7h2M8 11h2M8 15h2M13 7h3M13 11h3M13 15h3" /></svg>
+    </div>
+
+    <div class="service-card-grid">
+        @foreach (var card in cards)
+        {
+            <button type="button" class="service-card service-card--@card.Item1" data-service-category="@card.Item1" data-service-title="@card.Item2">
+                @if (card.Item3 > 0)
+                {
+                    <span class="service-card__count" aria-label="@card.Item3 records">@card.Item3</span>
                 }
-            });
+                <div class="service-card__icon" aria-hidden="true">
+                    @switch (card.Item1)
+                    {
+                        case "applications":
+                            <svg viewBox="0 0 32 32"><path d="M8 4h12v24H8zM12 8h4M12 13h4M12 18h4M22 15a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 3v4l3 2" /></svg>
+                            break;
+                        case "new":
+                            <svg viewBox="0 0 32 32"><path d="M5 9h10M5 16h7M5 23h10M21 7l6 6M27 7l-6 6M20 20l3 3 5-6" /></svg>
+                            break;
+                        case "inspection":
+                            <svg viewBox="0 0 32 32"><path d="M5 8h12M5 15h9M5 22h7M21 17a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm4 9 4 4" /></svg>
+                            break;
+                        case "charging":
+                            <svg viewBox="0 0 32 32"><path d="M10 6h16M10 13h16M10 20h16M10 27h16M4 5h2v2H4zM4 12h2v2H4zM4 19h2v2H4zM4 26h2v2H4z" /></svg>
+                            break;
+                        case "payment":
+                            <svg viewBox="0 0 32 32"><rect x="5" y="7" width="22" height="18" rx="2"/><path d="M9 12h14M12 21h8M16 15v7" /></svg>
+                            break;
+                        case "installation":
+                            <svg viewBox="0 0 32 32"><path d="m7 25 9-9M13 7l4 4-5 5-4-4zM19 19l6 6M21 9a6 6 0 0 0 6 6l-4-4 4-4a6 6 0 0 0-6 2z" /></svg>
+                            break;
+                        case "connect":
+                            <svg viewBox="0 0 32 32"><path d="M16 4C12 10 8 14 8 19a8 8 0 0 0 16 0c0-5-4-9-8-15zM12 20a4 4 0 0 0 4 4" /></svg>
+                            break;
+                        case "tapping":
+                            <svg viewBox="0 0 32 32"><path d="M11 8h10l2 5v10l-3 5h-8l-3-5V13zM12 8V4h8v4M9 16h14M13 28v2M19 28v2" /></svg>
+                            break;
+                        default:
+                            <svg viewBox="0 0 32 32"><path d="M6 21a10 10 0 0 1 20 0v4h-4v-5M10 25H6v-4M11 16h.01M21 16h.01M13 21h6" /></svg>
+                            break;
+                    }
+                </div>
+                <h3>@card.Item2</h3>
+            </button>
+        }
+    </div>
 
-            modal.show();
-    }
+    <section class="summary-card" aria-labelledby="requestSummaryTitle">
+        <div class="summary-card__title">
+            <h2 id="requestSummaryTitle">Service Request Summary</h2>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M4 12h7M4 17h9M17 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm3 0 3 3" /></svg>
+        </div>
+        <div class="summary-table-wrap">
+            <table class="summary-table">
+                <thead><tr><th scope="col">Request</th><th scope="col">Count</th></tr></thead>
+                <tbody>
+                @if (Model.RequestSummary.Count == 0)
+                {
+                    <tr><td colspan="2" class="summary-empty">No service requests have been recorded.</td></tr>
+                }
+                else
+                {
+                    @foreach (var row in Model.RequestSummary)
+                    {
+                        <tr><td>@row.Request</td><td>@row.Count</td></tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
 
-</script>
+    <div class="dashboard-modal" id="applicationsModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="applicationsModal"></div>
+        <section class="dashboard-modal__panel dashboard-modal__panel--applications" role="dialog" aria-modal="true" aria-labelledby="applicationsModalTitle">
+            <header class="dashboard-modal__header">
+                <div><span class="dashboard-modal__eyebrow">Service queue</span><h2 id="applicationsModalTitle">Applications</h2></div>
+                <button type="button" class="dashboard-modal__close" data-close-modal="applicationsModal" aria-label="Close">&times;</button>
+            </header>
+            <div class="application-toolbar">
+                <label for="applicationSearch">Find an account or customer</label>
+                <input type="search" id="applicationSearch" placeholder="Search account, control number, or name" autocomplete="off" />
+            </div>
+            <div class="application-list" id="applicationList"><div class="dashboard-modal__state">Loading applications...</div></div>
+        </section>
+    </div>
+
+    <div class="dashboard-modal" id="chargeModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="chargeModal"></div>
+        <section class="dashboard-modal__panel dashboard-modal__panel--charge" role="dialog" aria-modal="true" aria-labelledby="chargeModalTitle">
+            <header class="dashboard-modal__header charge-header">
+                <div><span class="dashboard-modal__eyebrow">Account charge workspace</span><h2 id="chargeModalTitle">Other Charges</h2></div>
+                <div class="charge-header__total"><span>Total active charges</span><strong id="dashboardChargeTotal">₱0.00</strong></div>
+                <button type="button" class="dashboard-modal__close" data-close-modal="chargeModal" aria-label="Close">&times;</button>
+            </header>
+            <div class="selected-account">
+                <div><span>Account number</span><strong id="dashboardAccountNumber">—</strong></div>
+                <div><span>Account holder</span><strong id="dashboardAccountName">—</strong></div>
+                <div><span>Service request</span><strong id="dashboardServiceName">—</strong></div>
+            </div>
+            <div class="charge-composer">
+                <div class="charge-field charge-field--wide"><label for="dashboardChargeType">Charge type</label><select id="dashboardChargeType"><option value="">Select a charge type</option></select></div>
+                <div class="charge-field"><label for="dashboardPayableIn">Payable in</label><select id="dashboardPayableIn"><option value="Cash">Cash</option><option value="Check">Check</option><option value="Online">Online</option></select></div>
+                <div class="charge-field charge-field--wide"><label for="dashboardParticulars">Particulars</label><input id="dashboardParticulars" maxlength="255" placeholder="Purpose or notes" /></div>
+                <div class="charge-field"><label for="dashboardAmount">Amount</label><input id="dashboardAmount" type="number" min="0.01" step="0.01" placeholder="0.00" /></div>
+                <button type="button" class="charge-add-button" id="dashboardAddCharge">Add charge</button>
+            </div>
+            <div class="charge-message" id="dashboardChargeMessage" role="status"></div>
+            <div class="charge-table-wrap">
+                <table class="charge-table"><thead><tr><th>Description</th><th>Payable in</th><th>Particulars</th><th>Amount</th></tr></thead><tbody id="dashboardChargeRows"></tbody></table>
+            </div>
+        </section>
+    </div>
+
+    <div class="dashboard-modal" id="inspectionModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="inspectionModal"></div>
+        <section class="dashboard-modal__panel dashboard-modal__panel--inspection" role="dialog" aria-modal="true" aria-labelledby="inspectionModalTitle">
+            <header class="dashboard-modal__header inspection-header">
+                <div><span class="dashboard-modal__eyebrow">New connection workflow</span><h2 id="inspectionModalTitle">Service Inspection</h2></div>
+                <button type="button" class="inspection-pdf-button" id="inspectionPdfButton" title="Open printable PDF report" aria-label="Open printable PDF report">
+                    <span>PDF</span> Print report
+                </button>
+                <button type="button" class="dashboard-modal__close" data-close-modal="inspectionModal" aria-label="Close">&times;</button>
+            </header>
+            <div class="inspection-content">
+                <section class="inspection-card inspection-card--identity">
+                    <div class="inspection-field"><span>Application number</span><strong id="inspectionApplicationNumber">—</strong></div>
+                    <div class="inspection-field"><span>Applicant name</span><strong id="inspectionApplicantName">—</strong></div>
+                    <div class="inspection-field"><span>Date applied</span><strong id="inspectionDateApplied">—</strong></div>
+                    <div class="inspection-field inspection-field--address"><span>Service address</span><strong id="inspectionAddress">—</strong></div>
+                    <div class="inspection-field"><span>Classification</span><strong id="inspectionClassification">—</strong></div>
+                    <div class="inspection-field"><span>Mobile number</span><strong id="inspectionMobile">—</strong></div>
+                </section>
+
+                <section class="inspection-card">
+                    <h3>Site assessment</h3>
+                    <div class="inspection-form-grid">
+                        <label>Water service condition<select id="inspectionWaterCondition"><option value="">Select condition</option><option>High Pressure</option><option>Normal Pressure</option><option>Low Pressure</option><option>No Water</option></select></label>
+                        <label>Class of pavement<select id="inspectionPavement"><option value="">Select pavement</option><option>Unpaved</option><option>Asphalt</option><option>Natural Soil</option><option>Concrete</option></select></label>
+                        <label>Pipe size<select id="inspectionPipeSize"><option value="">Select pipe size</option><option>1/2</option><option>3/4</option><option>1</option><option>1 1/2</option><option>2</option></select></label>
+                        <label>Type of connection<select id="inspectionConnectionType"><option value="">Select connection</option><option>Standard</option><option>Cluster</option><option>Dual</option><option>Crossroad</option></select></label>
+                        <label>Distance from mainline<input id="inspectionDistance" maxlength="100" placeholder="e.g. 12 meters" /></label>
+                        <label class="inspection-check"><input type="checkbox" id="inspectionBoring" /><span>Needs underground boring</span></label>
+                        <label>Zone<select id="inspectionZone"><option value="">Select zone</option></select></label>
+                        <label>Book<select id="inspectionBook"><option value="">Select book</option></select></label>
+                        <fieldset class="inspection-nearest">
+                            <legend>Nearest connection</legend>
+                            <label>Account number<input id="inspectionNearestNumber" maxlength="50" placeholder="Nearest account number" /></label>
+                            <label>Account name<input id="inspectionNearestName" maxlength="150" placeholder="Nearest account name" /></label>
+                        </fieldset>
+                        <label class="inspection-remarks">Inspection remarks<textarea id="inspectionRemarks" maxlength="2000" placeholder="Site findings, requirements, and recommendations"></textarea></label>
+                    </div>
+                </section>
+
+                <section class="inspection-card">
+                    <h3>Review and approval</h3>
+                    <div class="inspection-form-grid inspection-form-grid--review">
+                        <label>Inspected by<select id="inspectionInspector"><option value="">Select inspector</option></select></label>
+                        <label>Approved by<select id="inspectionApprover"><option value="">Select approver</option></select></label>
+                        <label>Date inspected<input type="date" id="inspectionDate" /></label>
+                        <label>Status<select id="inspectionStatus"><option>Pending</option><option>For Approval</option><option>Approved</option><option>Returned</option></select></label>
+                        <label class="inspection-check"><input type="checkbox" id="inspectionChargeNsc" checked /><span>Charge new service connection fee</span></label>
+                    </div>
+                </section>
+                <div class="inspection-message" id="inspectionMessage" role="status"></div>
+                <div class="inspection-actions">
+                    <button type="button" class="inspection-secondary-button" data-close-modal="inspectionModal">Cancel</button>
+                    <button type="button" class="inspection-save-button" id="inspectionSaveButton">Save inspection</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="dashboard-modal" id="connectOrderModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="connectOrderModal"></div>
+        <section class="dashboard-modal__panel dashboard-modal__panel--connect" role="dialog" aria-modal="true" aria-labelledby="connectOrderTitle">
+            <header class="dashboard-modal__header">
+                <div><span class="dashboard-modal__eyebrow">Connection authorization</span><h2 id="connectOrderTitle">Connect Order</h2></div>
+                <button type="button" class="dashboard-modal__close" data-close-modal="connectOrderModal" aria-label="Close">&times;</button>
+            </header>
+            <div class="connect-order-content">
+                <section class="connect-order-identity">
+                    <div class="inspection-field"><span>Application number</span><strong id="connectApplicationNumber">—</strong></div>
+                    <div class="inspection-field"><span>Applicant name</span><strong id="connectApplicantName">—</strong></div>
+                    <div class="inspection-field"><span>Date applied</span><strong id="connectDateApplied">—</strong></div>
+                    <div class="inspection-field connect-order-address"><span>Service address</span><strong id="connectAddress">—</strong></div>
+                    <div class="inspection-field"><span>Classification</span><strong id="connectClassification">—</strong></div>
+                </section>
+                <section class="connect-order-history" aria-label="Application processing history">
+                    <div><span>Processed by</span><strong id="connectProcessedBy">—</strong><small>Customer Service Representative</small></div>
+                    <div><span>Inspected by</span><strong id="connectInspectedBy">—</strong></div>
+                    <div><span>Inspection approved by</span><strong id="connectInspectionApprovedBy">—</strong></div>
+                    <div><span>Invoice number</span><strong id="connectInvoiceNumber">—</strong></div>
+                    <div><span>Invoice date</span><strong id="connectInvoiceDate">—</strong></div>
+                </section>
+                <section class="inspection-card connect-order-approval">
+                    <h3>Connection recommendation and approval</h3>
+                    <div class="inspection-form-grid">
+                        <label>Recommended approval by<select id="connectRecommendedBy"><option value="">Select recommender</option></select></label>
+                        <label>Approved by<select id="connectApprovedBy"><option value="">Select approver</option></select></label>
+                        <label>Date recommended<input type="date" id="connectDateRecommended" /></label>
+                        <label>Date approved<input type="date" id="connectDateApproved" /></label>
+                    </div>
+                </section>
+                <div class="inspection-message" id="connectOrderMessage" role="status"></div>
+                <div class="inspection-actions">
+                    <button type="button" class="inspection-secondary-button" data-close-modal="connectOrderModal">Cancel</button>
+                    <button type="button" class="inspection-save-button" id="connectOrderSaveButton">Save connect order</button>
+                </div>
+            </div>
+        </section>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+}

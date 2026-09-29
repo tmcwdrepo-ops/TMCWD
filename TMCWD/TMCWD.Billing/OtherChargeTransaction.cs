@@ -103,6 +103,34 @@ namespace TMCWD.Billing
             return ConvertJsonToOtherCharge(data);
         }
 
+        public async Task<(bool Success, string Message, string InvoiceNumber)> ProcessPayment(
+            int userId,
+            TMCWD.Model.Billing.Requests.OtherChargePaymentRequest request)
+        {
+            var response = await _service.Client.PostAsJsonAsync(
+                $"api/OtherCharge/ProcessPayment/{userId}", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                body.TryGetProperty("invoiceNumber", out var invEl);
+                return (true, string.Empty, invEl.GetString() ?? string.Empty);
+            }
+
+            var data = await response.Content.ReadAsStringAsync();
+            try
+            {
+                using var json = System.Text.Json.JsonDocument.Parse(data);
+                if (json.RootElement.TryGetProperty("message", out var message))
+                    return (false, message.GetString() ?? "Payment could not be completed.", string.Empty);
+            }
+            catch (System.Text.Json.JsonException) { }
+
+            return (false,
+                $"Other-charge payment service returned {(int)response.StatusCode} ({response.ReasonPhrase}).",
+                string.Empty);
+        }
+
         #endregion
 
     }

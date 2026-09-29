@@ -46,11 +46,15 @@ namespace TMCWD.Data.Context
 
         public DbSet<Penalty> Penalties { get; set; }
 
+        public DbSet<PenaltyWaiverRequest> PenaltyWaiverRequests { get; set; }
+
         public DbSet<ChargeType> ChargeTypes { get; set; }
 
         public DbSet<OtherCharge> OtherCharges { get; set; }
 
         public DbSet<BillingAdjustment> BillingAdjustments { get; set; }
+
+        public DbSet<DebitCreditMemo> DebitCreditMemos { get; set; }
 
         public DbSet<PaymentCheck> PaymentChecks { get; set; }
 
@@ -59,6 +63,12 @@ namespace TMCWD.Data.Context
         public DbSet<WebHook> WebHooks { get; set; }
 
         public DbSet<Payment> Payments { get; set; }
+
+        public DbSet<CollectionRemittance> CollectionRemittances { get; set; }
+
+        public DbSet<SeniorCitizenDiscount> SeniorCitizenDiscounts { get; set; }
+
+        public DbSet<InvoiceCancellation> InvoiceCancellations { get; set; }
 
         public DbSet<EWalletTransaction> EWalletTransactions { get; set; }
 
@@ -73,6 +83,8 @@ namespace TMCWD.Data.Context
         public DbSet<ZoneBook> ZoneBooks { get; set; }
 
         public DbSet<ReadingSheetTemplate> ReadingSheetTemplates { get; set; }
+
+        public DbSet<BatchPaymentUpload> BatchPaymentUploads { get; set; }
 
         #endregion
 

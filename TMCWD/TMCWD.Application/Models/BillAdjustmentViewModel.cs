@@ -9,6 +9,7 @@ namespace TMCWD.Application.Models
         public string? MeterReader { get; set; }
         public List<SelectListItem> MeterReaders { get; set; } = new();
         public DateTime? BillingDate { get; set; }
+        public string? ReferenceNo { get; set; }
         public string? Remarks { get; set; }
         public List<SelectListItem> RemarksOptions { get; set; } = new();
         public string? Explanation { get; set; }

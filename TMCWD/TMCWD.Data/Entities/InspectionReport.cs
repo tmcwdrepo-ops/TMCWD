@@ -12,7 +12,7 @@ namespace TMCWD.Data.Entities
         public System.Int64 RequestId { get; set; }
         [Required, Column("InspectedByUserId")]
         public System.Int64 InspectedByUserId { get; set; }
-        [Required, MaxLength(255), Column("Details")]
+        [Required, Column("Details", TypeName = "text")]
         public string Details { get; set; } = string.Empty;
         [Column("DateCreated")]
         public DateTime DateCreated { get; set; }

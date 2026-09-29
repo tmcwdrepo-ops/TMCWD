@@ -10,7 +10,7 @@ namespace TMCWD.Data.Entities
         public System.Int64 Id { get; set; }
         [Required, Column("RequestId")]
         public System.Int64 RequestId { get; set; }
-        [Required, MaxLength(255), Column("Detail")]
+        [Required, Column("Detail", TypeName = "text")]
         public string Details { get; set; } = string.Empty;
         [Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }

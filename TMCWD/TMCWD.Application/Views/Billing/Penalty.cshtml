@@ -2,6 +2,8 @@
     Layout = "_InsideLayout";
     ViewData["PageTitle"] = "Penalties";
     ViewData["ActivePage"] = "penalty";
+    var canSubmitWaiver = ViewBag.CanSubmitWaiver == true;
+    var canReviewWaiver = ViewBag.CanReviewWaiver == true;
 }
 
 @section Styles {
@@ -9,12 +11,15 @@
 }
 
 @section Scripts {
-    <script src="~/js/penalties-sample.js?v=4"></script>
-    <script src="~/js/penalties.js?v=7" defer></script>
+    <script src="~/js/penalties.js" asp-append-version="true" defer></script>
 }
+
+@Html.AntiForgeryToken()
 
 <div class="pn-container">
 
+    @if (canSubmitWaiver)
+    {
     <div class="pn-card">
         <div class="pn-card-header">
             <div class="pn-card-header__inputs">
@@ -40,8 +45,12 @@
 
             <div class="pn-card-header__actions">
                 <button type="button" class="pn-btn-load" id="loadEntriesBtn">Load Entries</button>
-                <button type="button" class="pn-btn-waive" id="waivePenaltyBtn">Waive Penalty</button>
+                <button type="button" class="pn-btn-waive" id="waivePenaltyBtn">Submit Waiver Request</button>
             </div>
+        </div>
+        <div style="padding: 0 1rem 1rem;">
+            <label class="pn-label" for="waiverReason">Reason for waiver</label>
+            <textarea class="pn-input" id="waiverReason" maxlength="500" rows="3" placeholder="Required; 3 to 500 characters"></textarea>
         </div>
     </div>
 
@@ -95,6 +104,21 @@
             </div>
         </div>
     </div>
+    }
+
+    @if (canReviewWaiver)
+    {
+    <div class="pn-table-container" style="margin-top: 1.5rem;">
+        <div class="pn-table-heading">
+            <h4>Pending Penalty Waiver Requests</h4>
+            <button type="button" class="pn-btn-load" id="refreshWaiversBtn">Refresh</button>
+        </div>
+        <table class="pn-table">
+            <thead><tr><th>Account No.</th><th>Reference</th><th>Penalty</th><th>Requested By</th><th>Reason</th><th>Actions</th></tr></thead>
+            <tbody id="waiverApprovalBody"><tr><td colspan="6" class="pn-table-empty">Loading pending requests...</td></tr></tbody>
+        </table>
+    </div>
+    }
 
 </div>
 

@@ -32,19 +32,27 @@ namespace TMCWD.Application.Controllers
 
         public IActionResult Index()
         {
-            return View(new LoginViewModel() { Email = string.Empty, Password = "password123" });
+            return View(new LoginViewModel() { Email = string.Empty, Password = string.Empty });
         }
 
         [HttpPost]
         public async Task<IActionResult> Login(string email, string password)
         {
+            // Prevent a failed/repeated login from retaining an earlier identity.
+            HttpContext.Session.Clear();
             _applicationLoginTransaction.Email = email;
             _applicationLoginTransaction.Password = password;
             User currentUser = await _applicationLoginTransaction.Login();
             
             if(currentUser.Id > 0)
             {
+                // Do not retain password or remember-token material in the user's session.
+                currentUser.Password = null;
+                currentUser.RememberToken = null;
                 _authenticatedUserService.SetUser(currentUser);
+                HttpContext.Session.SetString(
+                    AuthenticatedUserService.SessionKey,
+                    JsonSerializer.Serialize(currentUser));
                 switch (currentUser.Role)
                 {
                     case (int)UserRole.CustomerRepresentative:
@@ -53,14 +61,37 @@ namespace TMCWD.Application.Controllers
                         return RedirectToAction("Index", "Admin");
                     case (int)UserRole.Engineer:
                         return RedirectToAction("Inventory", "Engineering");
+                    case (int)UserRole.CustomerServiceOic:
+                        return RedirectToAction("Penalty", "Billing");
+                    case (int)UserRole.Cashier:
+                        return RedirectToAction("Index", "Collections");
                 }
+
+                // Do not keep an authenticated session for a role that has no
+                // portal destination configured.
+                HttpContext.Session.Clear();
+                _authenticatedUserService.SetUser(new User());
+                ModelState.AddModelError(string.Empty, "Your account role does not have a portal destination.");
             }
-            return View("Index", new LoginViewModel() { Email = string.Empty, Password = string.Empty });
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Invalid email or password.");
+            }
+            return View("Index", new LoginViewModel() { Email = email ?? string.Empty, Password = string.Empty });
         }
 
         public IActionResult Privacy()
         {
             return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            _authenticatedUserService.SetUser(new User());
+            return RedirectToAction(nameof(Index));
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

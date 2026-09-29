@@ -25,7 +25,41 @@ namespace TMCWD.Data.Controllers
 
         #endregion
 
+        [HttpPost("SubmitWaiver/{userId}")]
+        public async Task<IActionResult> SubmitWaiver(int userId, [FromBody] TMCWD.Model.Billing.SubmitPenaltyWaiverRequest request)
+        {
+            try { return Ok(await _service.SubmitWaiverRequests(userId, request)); }
+            catch (UnauthorizedAccessException) { return Forbid(); }
+            catch (InvalidOperationException ex) { return Conflict(ex.Message); }
+        }
+
+        [HttpGet("PendingWaivers/{userId}")]
+        public async Task<IActionResult> PendingWaivers(int userId)
+        {
+            try { return Ok(await _service.GetPendingWaiverRequests(userId)); }
+            catch (UnauthorizedAccessException) { return Forbid(); }
+        }
+
+        [HttpPost("ReviewWaiver/{userId}")]
+        public async Task<IActionResult> ReviewWaiver(int userId, [FromBody] TMCWD.Model.Billing.ReviewPenaltyWaiverRequest request)
+        {
+            try { return Ok(await _service.ReviewWaiverRequest(userId, request)); }
+            catch (UnauthorizedAccessException) { return Forbid(); }
+            catch (InvalidOperationException ex) { return Conflict(ex.Message); }
+        }
+
         #region methods
+
+        [HttpGet("ChargeEntries")]
+        public async Task<IActionResult> ChargeEntries(DateTime? billingPeriod)
+            => Ok(await _service.GetChargeEntries(billingPeriod));
+
+        [HttpPost("PostCharges/{userId}")]
+        public async Task<IActionResult> PostCharges(int userId, [FromBody] TMCWD.Model.Billing.PostPenaltyChargesRequest request)
+        {
+            try { return Ok(await _service.PostCharges(userId, request)); }
+            catch (InvalidOperationException ex) { return Conflict(ex.Message); }
+        }
 
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)

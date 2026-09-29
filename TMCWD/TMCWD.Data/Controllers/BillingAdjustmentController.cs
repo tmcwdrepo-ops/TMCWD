@@ -46,5 +46,18 @@ namespace TMCWD.Data.Controllers
             if (saved == null) return BadRequest();
             return Ok(saved);
         }
+
+        [HttpPost("SaveBatch/{userId}")]
+        public async Task<IActionResult> SaveBatch(int userId, [FromBody] List<BillingAdjustment> billingAdjustments)
+        {
+            try
+            {
+                return Ok(await _service.SaveBatch(userId, billingAdjustments));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

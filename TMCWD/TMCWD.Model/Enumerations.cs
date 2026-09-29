@@ -4,7 +4,16 @@ public enum UserRole
     CustomerRepresentative = 2,
     Engineer = 3,
     MeterReader = 4,
-    Guest = 5
+    Guest = 5,
+    CustomerServiceOic = 6,
+    Cashier = 7
+}
+
+public enum PenaltyWaiverRequestStatus
+{
+    Pending = 1,
+    Approved = 2,
+    Rejected = 3
 }
 
 public enum ErrorType
@@ -115,7 +124,9 @@ public enum AdjustmentLineType
     CurrentBill = 2,
     Penalty = 3,
     Present = 4,
-    Previous = 5
+    Previous = 5,
+    SeniorCitizenDiscount = 6,
+    SeniorCitizenDiscountReversal = 7
 }
 
 public enum ReadingStatus

@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="~/css/penalty-charging.css" />
 }
 
+@Html.AntiForgeryToken()
+<p role="status">A one-time penalty of 10% of the water bill applies from the day after the due date while the bill remains unpaid. Load entries, select bills, then post the penalties.</p>
 <div class="pc-page">
 
     <!-- ============ TABLE CARD (toolbar + search + table) ============ -->
@@ -17,7 +19,7 @@
         <div class="pc-tablecard-toolbar" aria-label="Penalty run controls">
 
             <div class="pc-field">
-                <label for="pcBillingPeriod">Billing period</label>
+                <label for="pcBillingPeriod">Billing date (optional)</label>
                 <div class="pc-input-with-icon">
                     <svg viewBox="0 0 24 24" class="pc-input-icon" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -38,7 +40,7 @@
                         <line x1="8" y1="2" x2="8" y2="6"></line>
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
-                    <input type="date" id="pcPostingDate" name="postingDate" class="pc-input pc-input--with-icon" />
+                    <input type="date" id="pcPostingDate" name="postingDate" readonly class="pc-input pc-input--with-icon" />
                 </div>
             </div>
 
@@ -152,7 +154,7 @@
     <div class="pc-modal" role="alertdialog" aria-modal="true" aria-labelledby="pcConfirmTitle">
         <h2 id="pcConfirmTitle">Post penalty charges?</h2>
         <p>
-            This will charge penalties to <strong id="pcConfirmCount">0</strong> account(s)
+            This will charge penalties to <strong id="pcConfirmCount">0</strong> bill(s)
             totaling <strong id="pcConfirmTotal">&#8369;0.00</strong> for
             <strong id="pcConfirmPeriod">&mdash;</strong>. This action cannot be undone.
         </p>
@@ -174,7 +176,7 @@
         </div>
         <h2 id="pcSuccessTitle">Penalties posted successfully!</h2>
         <p>
-            Successfully charged penalties to <strong id="pcSuccessCount">0</strong> account(s)
+            Successfully charged penalties to <strong id="pcSuccessCount">0</strong> bill(s)
             totaling <strong id="pcSuccessTotal">&#8369;0.00</strong> for
             <strong id="pcSuccessPeriod">&mdash;</strong>.
         </p>
@@ -187,7 +189,10 @@
 <!-- ============ TOAST ============ -->
 <div class="pc-toast" id="pcToast" role="status" aria-live="polite"></div>
 
+
+
+
+
 @section Scripts {
-    <script src="~/js/penalty-charging-sample.js"></script>
-    <script src="~/js/penalty-charging.js"></script>
+    <script src="~/js/penalty-charging.js" asp-append-version="true"></script>
 }

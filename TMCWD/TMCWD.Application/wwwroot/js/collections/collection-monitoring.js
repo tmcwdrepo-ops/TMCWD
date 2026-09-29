@@ -41,19 +41,14 @@
     });
   }
 
-  //  Data loading 
-  // TODO: replace the mock below with a real API call, e.g.:
-  //
-  //   return fetch('/api/Billing/CollectionMonitoring')
-  //     .then(function (r) {
-  //       if (!r.ok) throw new Error(r.statusText);
-  //       return r.json();
-  //     });
-  //
-  // The returned array must contain objects shaped as:
-  //   { collector, orFrom, orTo, cashOnHand }
+  //  Data loading
   function loadCollectionMonitoringData() {
-    return Promise.resolve([]);
+    return fetch('/Collections/Monitoring', {
+      headers: { 'Accept': 'application/json' }
+    }).then(function (response) {
+      if (!response.ok) throw new Error(response.statusText);
+      return response.json();
+    });
   }
 
   //  Total collection 

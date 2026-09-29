@@ -47,12 +47,20 @@ namespace TMCWD.Administration
             if (String.IsNullOrEmpty(this.Email.Trim()) || String.IsNullOrEmpty(this.Password.Trim()))
                 return new User();
 
-            var response = await _webService.Client.GetAsync($"api/Users/GetByEmail/{this.Email.Trim()}");
+            var encodedEmail = Uri.EscapeDataString(this.Email.Trim());
+            using var response = await _webService.Client.GetAsync($"api/Users/GetByEmail/{encodedEmail}");
+
+            // Error responses from the API contain a JSON string/message, not a User object.
+            // Do not pass those bodies to the User deserializer.
+            if (!response.IsSuccessStatusCode)
+                return new User();
 
             var data = await response.Content.ReadAsStringAsync();
+            if (String.IsNullOrWhiteSpace(data))
+                return new User();
 
             var currentUser = ConvertJsonToUser(data);
-            if (currentUser.Id == 0) throw new Exception("User not found");
+            if (currentUser.Id == 0) return new User();
 
             if (currentUser.Password == StringEncyption.Encrypt(this.Password)) return currentUser;
 

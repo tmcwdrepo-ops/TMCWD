@@ -1,23 +1,10 @@
 // ============================================================
 //  Ledger Modal  (ldg-*)
-//  Remains empty until the real ledger endpoint is available.
 //  Opens when the user clicks the "Ledger" link-chip on the receipt card,
 //  using the account number that is currently loaded in the Collections page.
 // ============================================================
 (function initLedgerModal() {
   'use strict';
-
-  // ── Data lookup ──────────────────────────────────────────────────────────────
-  // TODO: replace with fetch('/api/Billing/Ledger?accountNo=' + encodeURIComponent(accountNo))
-  function getLedgerByAccountNo(accountNo) {
-    if (!accountNo) return null;
-    var data = [];
-    var term = String(accountNo).trim();
-    for (var i = 0; i < data.length; i++) {
-      if (data[i].accountNo === term) return data[i];
-    }
-    return null;
-  }
 
   // ── DOM refs ─────────────────────────────────────────────────────────────────
   var overlay     = document.getElementById('ledgerOverlay');
@@ -77,6 +64,83 @@
     return String(s || '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function showLedgerError(accountNo) {
+    var toastCard = document.getElementById('toast');
+    var backdrop  = document.getElementById('toastBackdrop');
+    if (!toastCard || !backdrop) return;
+
+    document.getElementById('toastTitle').textContent        = 'Ledger';
+    document.getElementById('toastMsg').textContent          =
+      'Unable to load ledger data for account ' + (accountNo || '\u2014') + '.';
+    document.getElementById('toastIconSuccess').style.display = 'none';
+    document.getElementById('toastIconDanger').style.display  = 'block';
+    toastCard.className = 'toast-card show danger';
+    backdrop.className  = 'toast-backdrop show';
+    clearTimeout(window._ldgToastTimer);
+    window._ldgToastTimer = setTimeout(function () {
+      toastCard.className = 'toast-card';
+      backdrop.className  = 'toast-backdrop';
+    }, 3000);
+  }
+
+  function getSelectedAccount(accountNo) {
+    var account = window._ocCurrentAccount;
+    if (!account || String(account.accountNumber).trim() !== String(accountNo).trim()) return {};
+
+    return {
+      accountName: account.name,
+      accountNo: account.accountNumber,
+      address: account.address,
+      rateCode: account.type,
+      meterNo: account.meterNumber,
+      status: account.status,
+      totalBalance: 0
+    };
+  }
+
+  async function getLedgerByAccountNo(accountNo) {
+    if (!accountNo) return null;
+
+    var response = await fetch('/Billing/History?accountNumber=' + encodeURIComponent(String(accountNo).trim()), {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!response.ok) throw new Error('Ledger history request failed');
+
+    var history = await response.json();
+    var rec = getSelectedAccount(accountNo);
+    var totalBalance = (Array.isArray(history) ? history : []).reduce(function (total, entry) {
+      var debit = Number(entry.debit != null ? entry.debit : entry.amount) || 0;
+      var credit = Math.min(Number(entry.credit) || 0, debit);
+      return total + debit - credit;
+    }, 0);
+    var balance = totalBalance;
+
+    rec.bills = (Array.isArray(history) ? history : []).map(function (entry) {
+      var debit = Number(entry.debit != null ? entry.debit : entry.amount) || 0;
+      var credit = Math.min(Number(entry.credit) || 0, debit);
+      var rowBalance = balance;
+      balance -= debit - credit;
+
+      return {
+        refNo: entry.referenceNo,
+        timestamp: entry.paymentDate
+          ? new Date(entry.paymentDate).toLocaleDateString('en-PH')
+          : (entry.billingDate ? new Date(entry.billingDate).toLocaleDateString('en-PH') : '\u2014'),
+        particulars: 'Water bill',
+        prev: entry.previous,
+        pres: entry.present,
+        usage: entry.usage,
+        debit: debit,
+        credit: credit,
+        balance: rowBalance,
+        processedBy: entry.processedBy || '\u2014'
+      };
+    });
+    rec.totalBalance = totalBalance;
+    rec.otherCharges = [];
+    return rec;
   }
 
   // ── Header ───────────────────────────────────────────────────────────────────
@@ -261,32 +325,23 @@
   }
 
   // ── Open ─────────────────────────────────────────────────────────────────────
-  function openModal(accountNo) {
-    var rec = getLedgerByAccountNo(accountNo);
+  async function openModal(accountNo) {
+    if (!accountNo) {
+      showLedgerError(accountNo);
+      return;
+    }
 
-    if (!rec) {
-      var toastCard = document.getElementById('toast');
-      var backdrop  = document.getElementById('toastBackdrop');
-      if (toastCard) {
-        document.getElementById('toastTitle').textContent          = 'Ledger';
-        document.getElementById('toastMsg').textContent            =
-          'No ledger data found for account ' + (accountNo || '\u2014') + '.';
-        document.getElementById('toastIconSuccess').style.display  = 'none';
-        document.getElementById('toastIconDanger').style.display   = 'block';
-        toastCard.className = 'toast-card show danger';
-        backdrop.className  = 'toast-backdrop show';
-        clearTimeout(window._ldgToastTimer);
-        window._ldgToastTimer = setTimeout(function () {
-          toastCard.className = 'toast-card';
-          backdrop.className  = 'toast-backdrop';
-        }, 3000);
-      }
+    resetState();
+    var rec;
+    try {
+      rec = await getLedgerByAccountNo(accountNo);
+    } catch (error) {
+      console.error('[Ledger] history load failed', error);
+      showLedgerError(accountNo);
       return;
     }
 
     // Always start clean so switching accounts leaves no stale data
-    resetState();
-
     _record      = rec;
     _activeTab   = 'bills';
     _currentPage = 1;

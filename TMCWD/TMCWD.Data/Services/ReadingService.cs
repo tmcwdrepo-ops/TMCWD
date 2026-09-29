@@ -70,6 +70,29 @@ namespace TMCWD.Data.Services
 
         public async Task<Reading> SaveUpdate(int userId, Reading reading)
         {
+            // Serialize entry and posting for a sheet, including requests from
+            // different application instances. The lock lasts until commit.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var sheets = await _context.ReadingSheets
+                .FromSqlInterpolated($"SELECT * FROM reading_sheets WHERE Id = {reading.ReadingSheetId} FOR UPDATE")
+                .ToListAsync();
+            var sheet = sheets.SingleOrDefault();
+            if (sheet == null || (sheet.Status != ReadingStatus.Created && sheet.Status != ReadingStatus.InProgress))
+                throw new InvalidOperationException("The reading sheet is no longer active.");
+
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == reading.AccountId);
+            if (account == null || account.ZoneBookId != sheet.ZoneBookId)
+                throw new InvalidOperationException("The account does not belong to this reading sheet.");
+
+            if (reading.CurrentReading < 0 || reading.CurrentReading < reading.PreviousReading)
+                throw new InvalidOperationException("Present reading cannot be less than the previous reading.");
+
+            var duplicates = await _context.Readings
+                .Where(r => r.AccountId == reading.AccountId && r.ReadingSheetId == reading.ReadingSheetId
+                         && r.Id != reading.Id).ToListAsync();
+            if (duplicates.Count > 0)
+                throw new InvalidOperationException("A reading already exists for this account and reading sheet. Reload the sheet before continuing.");
+
             if (reading.Id == 0)
             {
                 reading.CreatedBy = userId;
@@ -83,6 +106,12 @@ namespace TMCWD.Data.Services
                 var toUpdate = await _context.Readings.Where(x => x.Id == reading.Id).FirstOrDefaultAsync();
                 if (toUpdate != null)
                 {
+                    if (toUpdate.AccountId != reading.AccountId || toUpdate.ReadingSheetId != reading.ReadingSheetId
+                        || toUpdate.Status == ReadingStatus.Completed || toUpdate.IsCompleted
+                        || await _context.Billings.AnyAsync(b => b.ReadingId == reading.Id))
+                        throw new InvalidOperationException("A posted reading cannot be changed or moved to another account or sheet.");
+                    if (reading.CurrentReading < toUpdate.PreviousReading)
+                        throw new InvalidOperationException("Present reading cannot be less than the stored previous reading.");
                     toUpdate.AccountId = reading.AccountId;
                     toUpdate.ReadingSheetId = reading.ReadingSheetId;
                     toUpdate.CurrentReading = reading.CurrentReading;
@@ -91,9 +120,12 @@ namespace TMCWD.Data.Services
                     toUpdate.DateUpdated = DateTime.Now;
                     reading = toUpdate;
                 }
+                else
+                    throw new InvalidOperationException("Reading not found.");
             }
 
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return reading;
         }
 

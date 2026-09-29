@@ -42,19 +42,14 @@
     });
   }
 
-  //  1. Data loading 
-  // TODO: replace with a real API call, e.g.:
-  //   return fetch('/api/Billing/MyCollection?date=' + encodeURIComponent(date))
-  //     .then(function (r) {
-  //       if (!r.ok) throw new Error(r.statusText);
-  //       return r.json();
-  //     });
-  // Expected item shape: { invoiceNo, account, totalAmount, transactionType }
+  //  1. Data loading
   function loadCollectionListData(date) {
-    var sample = [];
-    // When a real API is wired the date parameter will be sent as a query filter.
-    // For now every date returns the full sample set.
-    return Promise.resolve(sample);
+    return fetch('/Collections/CollectionList?date=' + encodeURIComponent(date), {
+      headers: { 'Accept': 'application/json' }
+    }).then(function (response) {
+      if (!response.ok) throw new Error(response.statusText);
+      return response.json();
+    });
   }
 
   //  2. Table rendering 

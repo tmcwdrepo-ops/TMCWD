@@ -36,6 +36,61 @@
   color: var(--color-text);
 }
 
+.dcm-workspace {
+  display: block;
+}
+
+.dcm-type-panel {
+  border: 1px solid var(--color-border);
+  background: var(--color-panel-alt);
+  min-width: 0;
+}
+
+.dcm-type-panel__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-panel);
+}
+
+.dcm-type-panel__header h4 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+.dcm-type-panel__header span {
+  color: var(--color-text-dim);
+  font-size: var(--font-size-xs);
+}
+
+.dcm-type-list {
+  max-height: 660px;
+  overflow-y: auto;
+}
+
+.dcm-type-option {
+  display: block;
+  width: 100%;
+  padding: 13px var(--space-md);
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  font: 600 var(--font-size-xs)/1.35 var(--font-sans);
+  text-align: left;
+}
+
+.dcm-type-option:hover,
+.dcm-type-option.is-selected {
+  background: var(--color-blue-hover);
+  color: var(--color-text);
+}
+
 /* Form Grid Layout */
 .dcm-form {
   display: flex;
@@ -350,6 +405,14 @@
   .dcm-card {
     padding: var(--space-lg);
     max-width: none;
+  }
+
+  .dcm-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .dcm-type-list {
+    max-height: 280px;
   }
   
   .dcm-row {

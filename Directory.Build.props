@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);tmp/**</DefaultItemExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Local diagnostic build output must never be compiled as project source. -->
+    <Compile Remove="tmp/**/*.cs" />
+  </ItemGroup>
+</Project>

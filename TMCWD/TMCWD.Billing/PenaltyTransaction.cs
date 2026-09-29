@@ -81,6 +81,49 @@ namespace TMCWD.Billing
             return ConvertJsonToPenalty(data);
         }
 
+        public async Task<int> SubmitWaiverRequests(int userId, SubmitPenaltyWaiverRequest request)
+        {
+            using var response = await _service.Client.PostAsync($"api/Penalty/SubmitWaiver/{userId}", JsonContent.Create(request));
+            if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                throw new InvalidOperationException(await response.Content.ReadAsStringAsync());
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<int>();
+        }
+
+        public async Task<List<PenaltyWaiverRequestRecord>> GetPendingWaiverRequests(int userId)
+        {
+            using var response = await _service.Client.GetAsync($"api/Penalty/PendingWaivers/{userId}");
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<List<PenaltyWaiverRequestRecord>>() ?? new();
+        }
+
+        public async Task<int> ReviewWaiverRequest(int userId, ReviewPenaltyWaiverRequest request)
+        {
+            using var response = await _service.Client.PostAsync($"api/Penalty/ReviewWaiver/{userId}", JsonContent.Create(request));
+            if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                throw new InvalidOperationException(await response.Content.ReadAsStringAsync());
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<int>();
+        }
+
+        public async Task<List<PenaltyChargeEntry>> GetChargeEntries(DateTime? billingPeriod)
+        {
+            var query = billingPeriod.HasValue ? $"?billingPeriod={billingPeriod:yyyy-MM-dd}" : "";
+            using var response = await _service.Client.GetAsync("api/Penalty/ChargeEntries" + query);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<List<PenaltyChargeEntry>>() ?? new();
+        }
+
+        public async Task<PostPenaltyChargesResult> PostCharges(int userId, PostPenaltyChargesRequest request)
+        {
+            using var response = await _service.Client.PostAsync($"api/Penalty/PostCharges/{userId}", JsonContent.Create(request));
+            if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                throw new InvalidOperationException("A selected bill is no longer eligible. Reload entries before posting again.");
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<PostPenaltyChargesResult>()
+                ?? throw new HttpRequestException("Penalty posting was not confirmed.");
+        }
+
         #endregion
 
     }

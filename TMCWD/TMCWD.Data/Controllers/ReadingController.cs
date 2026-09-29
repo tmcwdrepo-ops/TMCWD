@@ -70,8 +70,15 @@ namespace TMCWD.Data.Controllers
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<IActionResult> SaveUpdate(int userId, [FromBody] Reading reading)
         {
-            var savedReading = await _service.SaveUpdate(userId, reading);
-            return Ok(savedReading);
+            try
+            {
+                var savedReading = await _service.SaveUpdate(userId, reading);
+                return Ok(savedReading);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
 
         [HttpGet("GetAccountPreviousReading/{accountId}")]

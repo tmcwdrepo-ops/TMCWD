@@ -356,18 +356,27 @@ namespace TMCWD.Data.Services
         /// </summary>
         public async Task<int> PartialPost(int readingSheetId, int userId)
         {
-            var readingSheet = await _context.ReadingSheets
-                .FirstOrDefaultAsync(x => x.Id == readingSheetId);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var sheets = await _context.ReadingSheets
+                .FromSqlInterpolated($"SELECT * FROM reading_sheets WHERE Id = {readingSheetId} FOR UPDATE")
+                .ToListAsync();
+            var readingSheet = sheets.SingleOrDefault();
 
             if (readingSheet?.BillingDate == null)
-                return 0;
+                throw new InvalidOperationException("The reading sheet has no billing date.");
+            if (readingSheet.Status != ReadingStatus.Created && readingSheet.Status != ReadingStatus.InProgress)
+                throw new InvalidOperationException("Only active reading sheets can be posted.");
 
-            var pendingReadings = await _context.Readings
-                .Where(r => r.ReadingSheetId == readingSheetId
-                         && (r.Status == ReadingStatus.Created
+            var sheetReadings = await _context.Readings
+                .Where(r => r.ReadingSheetId == readingSheetId).ToListAsync();
+            if (sheetReadings.GroupBy(r => r.AccountId).Any(g => g.Count() > 1))
+                throw new InvalidOperationException("This sheet contains duplicate account readings. Resolve the duplicates before posting.");
+
+            var pendingReadings = sheetReadings
+                .Where(r => (r.Status == ReadingStatus.Created
                              || r.Status == ReadingStatus.InProgress)
-                         && r.CurrentReading > 0)
-                .ToListAsync();
+                         && (r.CurrentReading > 0 || r.Status == ReadingStatus.InProgress))
+                .ToList();
 
             if (!pendingReadings.Any())
                 return 0;
@@ -379,8 +388,22 @@ namespace TMCWD.Data.Services
 
             int postedCount = 0;
 
+            var readingIds = pendingReadings.Select(r => r.Id).ToList();
+            var billedReadingIds = await _context.Billings
+                .Where(b => readingIds.Contains(b.ReadingId))
+                .Select(b => b.ReadingId).ToListAsync();
+
             foreach (var reading in pendingReadings)
             {
+                // Recover a previously persisted bill without creating it again.
+                if (billedReadingIds.Contains(reading.Id))
+                {
+                    reading.Status = ReadingStatus.Completed;
+                    reading.IsCompleted = true;
+                    reading.UpdatedBy = userId;
+                    reading.DateUpdated = DateTime.Now;
+                    continue;
+                }
                 var account = accounts.FirstOrDefault(a => a.Id == reading.AccountId);
                 if (account == null) continue;
 
@@ -415,9 +438,10 @@ namespace TMCWD.Data.Services
                     DateUpdated = DateTime.Now
                 };
 
-                await _billingService.SaveUpdate(userId, billing);
+                _context.Billings.Add(billing);
 
                 reading.Status = ReadingStatus.Completed;
+                reading.IsCompleted = true;
                 reading.UpdatedBy = userId;
                 reading.DateUpdated = DateTime.Now;
 
@@ -426,6 +450,7 @@ namespace TMCWD.Data.Services
 
             await _context.SaveChangesAsync();
 
+            await transaction.CommitAsync();
             return postedCount;
         }
 
@@ -476,7 +501,6 @@ namespace TMCWD.Data.Services
             if (presentReading < previousReading) return -1;
 
             int usage = presentReading - previousReading;
-            const decimal WaterMeterMaintenanceFee = 20.00m;
             decimal total;
 
             if (usage <= 10)
@@ -490,7 +514,7 @@ namespace TMCWD.Data.Services
             else
                 total = rate.MinimumCharge + (10 * rate.Rate11To20) + (10 * rate.Rate21To30) + (10 * rate.Rate31To40) + ((usage - 40) * rate.Rate41Up);
 
-            return total + WaterMeterMaintenanceFee;
+            return total + TMCWD.Model.Billing.BillingCharges.MeterMaintenanceFee;
         }
 
         #endregion

@@ -11,7 +11,7 @@ namespace TMCWD.Billing
     // TMCWD.Billing / WaterChargeCalculator.cs (revised)
     public static class WaterChargeCalculator
     {
-        public const decimal WaterMeterMaintenanceFee = 20.00m;
+        public const decimal WaterMeterMaintenanceFee = BillingCharges.MeterMaintenanceFee;
 
         // Pure calculation — no I/O, works anywhere given a rate.
         public static decimal ComputeFromRate(

@@ -97,6 +97,51 @@ namespace TMCWD.Data.Controllers
             }
         }
 
+        [HttpGet("SearchInvoices")]
+        public async Task<IActionResult> SearchInvoices([FromQuery] string q)
+        {
+            if (string.IsNullOrWhiteSpace(q))
+                return Ok(Array.Empty<TMCWD.Model.Billing.InvoiceRecord>());
+            return Ok(await _service.SearchInvoices(q));
+        }
+
+        /// <summary>
+        /// Returns all successful payments within an inclusive date range, optionally filtered
+        /// by the cashier who created them.  Used for collection reporting.
+        /// </summary>
+        [HttpGet("GetByDateRange")]
+        public async Task<IActionResult> GetByDateRange(
+            [FromQuery] DateTime from,
+            [FromQuery] DateTime to,
+            [FromQuery] int cashierId = 0)
+        {
+            var payments = await _service.GetByDateRange(from, to, cashierId);
+            return Ok(payments);
+        }
+
+        [HttpGet("Invoice/{invoiceNumber}")]
+        public async Task<IActionResult> Invoice(string invoiceNumber)
+        {
+            var invoice = await _service.GetInvoice(invoiceNumber);
+            return invoice == null ? NotFound() : Ok(invoice);
+        }
+
+        [HttpPost("CancelInvoice/{userId}")]
+        public async Task<IActionResult> CancelInvoice(
+            int userId,
+            [FromBody] TMCWD.Model.Billing.CancelInvoiceRequest request)
+        {
+            try
+            {
+                await _service.CancelInvoice(userId, request);
+                return Ok(new { success = true });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
         #endregion
 
     }

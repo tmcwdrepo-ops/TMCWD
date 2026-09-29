@@ -50,14 +50,18 @@
   //  Phase 1: Populate charge type dropdown 
   function populateChargeTypeDropdown() {
     if (!chargeTypeSelect || chargeTypeSelect.dataset.populated === '1') return;
-    var data = [];
-    data.forEach(function (ct) {
-      var opt = document.createElement('option');
-      opt.value = ct.id; opt.textContent = ct.label;
-      opt.dataset.defaultAmount = ct.defaultAmount;
-      chargeTypeSelect.appendChild(opt);
-    });
-    chargeTypeSelect.dataset.populated = '1';
+    fetch('/Billing/GetChargeTypes')
+      .then(function (res) { return res.ok ? res.json() : []; })
+      .then(function (data) {
+        data.forEach(function (ct) {
+          var opt = document.createElement('option');
+          opt.value = ct.value; opt.textContent = ct.label;
+          opt.dataset.defaultAmount = ct.defaultAmount || '';
+          chargeTypeSelect.appendChild(opt);
+        });
+        chargeTypeSelect.dataset.populated = '1';
+      })
+      .catch(function () { /* leave empty — user will see no options */ });
   }
 
   //  Phase 1: Fill / clear account fields 
@@ -96,7 +100,6 @@
   }
 
   //  Phase 3: searchAccount 
-  // TODO: replace body with fetch('/api/Billing/AccountLookup?q='+term)
   function searchAccount(term) {
     var t = term.trim();
     if (!t) return Promise.resolve([]);
@@ -249,11 +252,13 @@
       return false;
     }
 
-    var types  = [];
-    var rec    = types.find(function (ct) { return ct.id === chargeTypeId; });
-    var row    = { chargeType: rec ? rec.label : chargeTypeId,
-                   chargeTypeId: chargeTypeId, amount: amount };
-
+    // Resolve charge type label from the select option text
+    var chargeTypeLabel = chargeTypeId;
+    if (chargeTypeSelect) {
+      var selOpt = chargeTypeSelect.querySelector('option[value="' + chargeTypeId + '"]');
+      if (selOpt) chargeTypeLabel = selOpt.textContent;
+    }
+    var row = { chargeType: chargeTypeLabel, chargeTypeId: chargeTypeId, amount: amount };
     // Lookup mode — must have an account loaded
     var acc = window._ocCurrentAccount;
     if (!acc) {
@@ -383,13 +388,17 @@
   // Populate charge types when a real API is available.
   function populateOthChargeTypeDropdown() {
     if (!othChargeType || othChargeType.dataset.populated === '1') return;
-    var data = [];
-    data.forEach(function (ct) {
-      var opt = document.createElement('option');
-      opt.value = ct.id; opt.textContent = ct.label;
-      othChargeType.appendChild(opt);
-    });
-    othChargeType.dataset.populated = '1';
+    fetch('/Billing/GetChargeTypes')
+      .then(function (res) { return res.ok ? res.json() : []; })
+      .then(function (data) {
+        data.forEach(function (ct) {
+          var opt = document.createElement('option');
+          opt.value = ct.value; opt.textContent = ct.label;
+          othChargeType.appendChild(opt);
+        });
+        othChargeType.dataset.populated = '1';
+      })
+      .catch(function () { /* leave empty */ });
   }
 
   function setOthersView(active) {
@@ -480,10 +489,13 @@
       var amount = othAmount     ? parseFloat(othAmount.value) : NaN;
       if (!typeId) { if (othChargeType) othChargeType.focus(); return; }
       if (!amount || amount <= 0) { if (othAmount) othAmount.focus(); return; }
-      var types = [];
-      var rec   = types.find(function (ct) { return ct.id === typeId; });
-      _ocOthCharges.push({ chargeType: rec ? rec.label : typeId, chargeTypeId: typeId, amount: amount });
-      if (othChargeType) othChargeType.value = '';
+      // Resolve charge type label from the select option text
+      var othLabel = typeId;
+      if (othChargeType) {
+        var othOpt = othChargeType.querySelector('option[value="' + typeId + '"]');
+        if (othOpt) othLabel = othOpt.textContent;
+      }
+      _ocOthCharges.push({ chargeType: othLabel, chargeTypeId: typeId, amount: amount });      if (othChargeType) othChargeType.value = '';
       if (othAmount)     othAmount.value     = '';
       renderOthTable();
       if (othChargeType) othChargeType.focus();
@@ -588,25 +600,52 @@
         change:         parseFloat((tendered - due).toFixed(2)),
         charges:        _ocOthCharges.slice()
       };
-      console.log('[OC Others submitPayment] payload:', payload);
-      // TODO: replace with fetch('/api/Billing/OtherCharges/Pay', { method:'POST', body:JSON.stringify(payload) })
-      setOthersView(false);
-      var card = document.getElementById('toast');
-      var bd   = document.getElementById('toastBackdrop');
-      if (card) {
-        document.getElementById('toastTitle').textContent              = 'Success';
-        document.getElementById('toastMsg').textContent                =
-          'Other Charges (Others) payment of ' + fmtPHP(due) + ' recorded.';
-        document.getElementById('toastIconSuccess').style.display = 'block';
-        document.getElementById('toastIconDanger').style.display  = 'none';
-        card.className = 'toast-card show'; bd.className = 'toast-backdrop show';
-        clearTimeout(window._ocPayToastTimer);
-        window._ocPayToastTimer = setTimeout(function () {
-          card.className = 'toast-card'; bd.className = 'toast-backdrop';
-        }, 3000);
-      }
-      closeModal();
-    });
+      this.disabled = true;
+      this.textContent = 'Processing\u2026';
+      var csrfToken  = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
+      var invoiceNo  = 'OCO-' + Date.now();
+      var methodNum  = _ocOthPayMethod === 'check' ? 2 : _ocOthPayMethod === 'ewallet' ? 3 : 1;
+      var chargeIds  = _ocOthCharges.map(function (c) { return Number(c.chargeTypeId); }).filter(Boolean);
+      var self       = this;
+
+      fetch('/Collections/PayOtherCharges', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'RequestVerificationToken': csrfToken
+        },
+        body: JSON.stringify({
+          invoiceNumber:  invoiceNo,
+          method:         methodNum,
+          amountTendered: tendered,
+          otherChargeIds: chargeIds
+        })
+      })
+        .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+        .then(function (r) {
+          if (!r.ok) throw new Error(r.body.message || 'Payment failed.');
+          setOthersView(false);
+          var card = document.getElementById('toast');
+          var bd   = document.getElementById('toastBackdrop');
+          if (card) {
+            document.getElementById('toastTitle').textContent = 'Success';
+            document.getElementById('toastMsg').textContent   =
+              'Other Charges (Others) payment of ' + fmtPHP(due) + ' recorded. OR: ' + (r.body.invoiceNumber || invoiceNo);
+            document.getElementById('toastIconSuccess').style.display = 'block';
+            document.getElementById('toastIconDanger').style.display  = 'none';
+            card.className = 'toast-card show'; bd.className = 'toast-backdrop show';
+            clearTimeout(window._ocPayToastTimer);
+            window._ocPayToastTimer = setTimeout(function () {
+              card.className = 'toast-card'; bd.className = 'toast-backdrop';
+            }, 3000);
+          }
+          closeModal();
+        })
+        .catch(function (err) {
+          console.error('[OC Others Pay] error:', err);
+          self.disabled    = false;
+          self.textContent = 'Pay';
+        });    });
   }
 
   // "Others" / "Lookup" button — removed, no toggle needed
@@ -652,21 +691,37 @@
     payBtn.disabled    = true;
     payBtn.textContent = 'Processing\u2026';
 
-    // TODO: replace with fetch('/api/Billing/OtherCharges/Pay', { method:'POST', ... })
-    console.log('[OC submitPayment] payload:', payload);
-    Promise.resolve()
-      .then(function () {
+    var csrfToken = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
+    var invoiceNo = 'OC-' + Date.now();
+    var methodNum = _ocPayMethod === 'check' ? 2 : _ocPayMethod === 'ewallet' ? 3 : 1;
+    var chargeIds = charges.map(function (c) { return c.chargeTypeId; }).filter(Boolean);
+
+    fetch('/Collections/PayOtherCharges', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'RequestVerificationToken': csrfToken
+      },
+      body: JSON.stringify({
+        invoiceNumber:  invoiceNo,
+        method:         methodNum,
+        amountTendered: tendered,
+        otherChargeIds: chargeIds.map(Number)
+      })
+    })
+      .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.body.message || 'Payment failed.');
         closeModal();
         var card = document.getElementById('toast');
         var bd   = document.getElementById('toastBackdrop');
         if (card) {
-          document.getElementById('toastTitle').textContent              = 'Success';
-          document.getElementById('toastMsg').textContent                =
-            'Other Charges payment of ' + fmtPHP(due) + ' recorded (' + _ocPayMethod.toUpperCase() + ').';
+          document.getElementById('toastTitle').textContent = 'Success';
+          document.getElementById('toastMsg').textContent   =
+            'Other Charges payment of ' + fmtPHP(due) + ' recorded (' + _ocPayMethod.toUpperCase() + '). OR: ' + (r.body.invoiceNumber || invoiceNo);
           document.getElementById('toastIconSuccess').style.display = 'block';
           document.getElementById('toastIconDanger').style.display  = 'none';
-          card.className = 'toast-card show';
-          bd.className   = 'toast-backdrop show';
+          card.className = 'toast-card show'; bd.className = 'toast-backdrop show';
           clearTimeout(window._ocPayToastTimer);
           window._ocPayToastTimer = setTimeout(function () {
             card.className = 'toast-card'; bd.className = 'toast-backdrop';
@@ -676,7 +731,7 @@
       .catch(function (err) {
         console.error('[OC submitPayment] error:', err);
         if (payBtn) { payBtn.disabled = false; payBtn.textContent = 'Pay'; }
-        showAddError('Payment failed. Please try again.');
+        showAddError(err.message || 'Payment failed. Please try again.');
       });
   }
 
@@ -842,17 +897,21 @@
   function populateDropdowns() {
     // Charge types
     if (chargeType && chargeType.dataset.populated !== '1') {
-      var types = [];
-      types.forEach(function (ct) {
-        var opt = document.createElement('option');
-        opt.value = ct.id; opt.textContent = ct.label;
-        chargeType.appendChild(opt);
-      });
-      chargeType.dataset.populated = '1';
+      fetch('/Billing/GetChargeTypes')
+        .then(function (res) { return res.ok ? res.json() : []; })
+        .then(function (types) {
+          types.forEach(function (ct) {
+            var opt = document.createElement('option');
+            opt.value = ct.value; opt.textContent = ct.label;
+            chargeType.appendChild(opt);
+          });
+          chargeType.dataset.populated = '1';
+        })
+        .catch(function () { /* leave empty */ });
     }
-    // Payable In
+    // Payable In — static options
     if (payableIn && payableIn.dataset.populated !== '1') {
-      var opts = [];
+      var opts = ['Cash', 'Check', 'E-Wallet'];
       opts.forEach(function (o) {
         var opt = document.createElement('option');
         opt.value = o; opt.textContent = o;
@@ -944,27 +1003,10 @@
       _charges = []; renderTable();
       if (!val) { hideSugg(); return; }
       _searchTimer = setTimeout(function () {
-        var lu = [];
-        var ca = [];
-        var t  = val.toLowerCase();
-        var results = [];
-        var seen = {};
-        lu.forEach(function (r) {
-          if (seen[r.accountNumber]) return;
-          if (r.accountNumber.toLowerCase().indexOf(t) !== -1 || r.name.toLowerCase().indexOf(t) !== -1) {
-            seen[r.accountNumber] = true;
-            results.push(r);
-          }
-        });
-        ca.forEach(function (entry) {
-          var acc = entry.account;
-          if (!acc || seen[acc.accountNumber]) return;
-          if (acc.accountNumber.toLowerCase().indexOf(t) !== -1 || acc.name.toLowerCase().indexOf(t) !== -1) {
-            seen[acc.accountNumber] = true;
-            results.push(acc);
-          }
-        });
-        showSugg(results);
+        fetch('/Collections/AccountLookup?q=' + encodeURIComponent(val))
+          .then(function (res) { return res.ok ? res.json() : []; })
+          .then(function (results) { showSugg(results); })
+          .catch(function () { showSugg([]); });
       }, 300);
     });
     accNoInput.addEventListener('keydown', function (e) {
@@ -991,10 +1033,14 @@
       }
       if (!valid) return;
 
-      var types = [];
-      var rec   = types.find(function (ct) { return ct.id === typeId; });
+      // Resolve label from the select option text (populated dynamically from the API)
+      var oceLabel = typeId;
+      if (chargeType) {
+        var oceOpt = chargeType.querySelector('option[value="' + typeId + '"]');
+        if (oceOpt) oceLabel = oceOpt.textContent;
+      }
       _charges.push({
-        description: rec ? rec.label : (typeId || '\u2014'),
+        description: oceLabel || (typeId || '\u2014'),
         payableIn:   payableIn   ? payableIn.value   : '',
         particulars: particulars ? particulars.value  : '',
         amount:      amt

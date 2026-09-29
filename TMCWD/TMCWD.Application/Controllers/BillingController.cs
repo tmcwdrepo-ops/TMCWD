@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using TMCWD.Administration;
 using TMCWD.Application.Models;
@@ -28,6 +29,9 @@ namespace TMCWD.Application.Controllers
         private readonly OtherChargeTransaction _otherChargeTrans;
         private readonly OtherFeeTypeTransaction _otherFeeTypeTrans;
         private readonly WaterRateTransaction _waterRateTrans;
+        private readonly PaymentTransaction _paymentTrans;
+        private readonly BillingAdjustmentTransaction _billingAdjustmentTrans;
+        private readonly DebitCreditMemoTransaction _debitCreditMemoTrans;
         #endregion
 
         #region methods
@@ -42,7 +46,10 @@ namespace TMCWD.Application.Controllers
             OtherChargeTransaction otherChargeTrans,
             OtherFeeTypeTransaction otherFeeTypeTrans,
             UserTransaction userTrans,
-            WaterRateTransaction waterRateTrans)
+            WaterRateTransaction waterRateTrans,
+            PaymentTransaction paymentTrans,
+            BillingAdjustmentTransaction billingAdjustmentTrans,
+            DebitCreditMemoTransaction debitCreditMemoTrans)
         {
             _user = user;
             _billingTrans = billingTrans;
@@ -55,6 +62,23 @@ namespace TMCWD.Application.Controllers
             _otherFeeTypeTrans = otherFeeTypeTrans;
             _userTrans = userTrans;
             _waterRateTrans = waterRateTrans;
+            _paymentTrans = paymentTrans;
+            _billingAdjustmentTrans = billingAdjustmentTrans;
+            _debitCreditMemoTrans = debitCreditMemoTrans;
+        }
+
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            if (_user.User.Id <= 0)
+            {
+                context.Result = Request.Headers.Accept.Any(value =>
+                        value?.Contains("text/html", StringComparison.OrdinalIgnoreCase) == true)
+                    ? RedirectToAction("Index", "Home")
+                    : Unauthorized();
+                return;
+            }
+
+            base.OnActionExecuting(context);
         }
 
         public async Task<IActionResult> BillAdjustment()
@@ -78,7 +102,7 @@ namespace TMCWD.Application.Controllers
         },
                 AdjustmentLines = new List<AdjustmentLineItem>
         {
-            new AdjustmentLineItem { Key = "usage",       Label = "Usage",        HasAdjustmentColumn = true,  IsChecked = false },
+            new AdjustmentLineItem { Key = "usage",       Label = "Usage",        HasAdjustmentColumn = false, IsChecked = false },
             new AdjustmentLineItem { Key = "currentBill", Label = "Current Bill", HasAdjustmentColumn = true,  IsChecked = false },
             new AdjustmentLineItem { Key = "penalty",     Label = "Penalty",      HasAdjustmentColumn = true,  IsChecked = false },
             new AdjustmentLineItem { Key = "present",     Label = "Present",      HasAdjustmentColumn = false, IsChecked = false },
@@ -108,7 +132,8 @@ namespace TMCWD.Application.Controllers
                 .OrderBy(r => r.Id)
                 .ToList();
 
-            var result = accountBillings.Select(billing =>
+            var result = new List<object>();
+            foreach (var billing in accountBillings)
             {
                 // Prefer an explicit ReadingId link if one exists and is valid.
                 var reading = billing.ReadingId > 0
@@ -127,17 +152,32 @@ namespace TMCWD.Application.Controllers
                 var present = reading?.CurrentReading ?? 0;
                 var previous = reading?.PreviousReading ?? 0;
                 var usage = Math.Max(0, present - previous);
+                var payments = await _paymentTrans.GetPaymentHistoryByBillingReference(billing.BillingReferenceId);
+                var successfulPayments = payments
+                    .Where(payment => payment.Success)
+                    .OrderByDescending(payment => payment.DateCreated)
+                    .ToList();
+                var latestPayment = successfulPayments.FirstOrDefault();
+                var processor = latestPayment == null || latestPayment.CreatedBy <= 0
+                    ? null
+                    : await _userTrans.Get(Convert.ToInt32(latestPayment.CreatedBy));
 
-                return new
+                result.Add(new
                 {
                     referenceNo = billing.BillingReferenceId,
                     billingDate = billing.BillingPeriod,
                     previous,
                     present,
                     usage,
-                    amount = billing.TotalBillAmount
-                };
-            }).ToList();
+                    amount = billing.TotalBillAmount,
+                    debit = billing.TotalBillAmount,
+                    credit = successfulPayments.Sum(payment => payment.PaidAmount),
+                    paymentReference = latestPayment?.PaymentReference,
+                    paymentDate = latestPayment?.DateCreated,
+                    processedBy = processor?.Name,
+                    status = billing.PaymentStatus.ToString()
+                });
+            }
 
             return Ok(result);
         }
@@ -163,7 +203,7 @@ namespace TMCWD.Application.Controllers
 
             var penalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.Penalty>();
             var activePenaltyTotal = penalties
-                .Where(p => p.PaymentStatus != PaymentStatus.Waived)
+                .Where(p => p.PaymentStatus == PaymentStatus.Unpaid || p.PaymentStatus == PaymentStatus.Overdue)
                 .Sum(p => p.Amount);
 
             return Ok(new
@@ -175,16 +215,43 @@ namespace TMCWD.Application.Controllers
 
         public IActionResult Index() => View();
         public IActionResult PenaltyCharging() => View();
-        public IActionResult Penalty() => View();
+
+        [HttpGet]
+        public async Task<IActionResult> GetPenaltyChargeEntries(DateTime? billingPeriod)
+        {
+            if (!ModelState.IsValid) return BadRequest("Invalid billing date.");
+            try { return Ok(await _penaltyTrans.GetChargeEntries(billingPeriod)); }
+            catch (HttpRequestException) { return StatusCode(502, "Could not load overdue bills. Please try again."); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PostPenaltyCharges([FromBody] PostPenaltyChargesRequest request)
+        {
+            if (_user.User == null || _user.User.Id <= 0) return Unauthorized();
+            if (!ModelState.IsValid || request == null) return BadRequest("Invalid penalty posting request.");
+            try { return Ok(await _penaltyTrans.PostCharges(_user.User.Id, request)); }
+            catch (InvalidOperationException ex) { return Conflict(ex.Message); }
+            catch (HttpRequestException) { return StatusCode(502, "Posting was not confirmed. Reload entries before retrying."); }
+        }
+        public IActionResult Penalty()
+        {
+            if (!HasRole(UserRole.CustomerRepresentative, UserRole.CustomerServiceOic, UserRole.SuperAdmin))
+                return Forbid();
+            ViewBag.CanSubmitWaiver = HasRole(UserRole.CustomerRepresentative, UserRole.SuperAdmin);
+            ViewBag.CanReviewWaiver = HasRole(UserRole.CustomerServiceOic, UserRole.SuperAdmin);
+            return View();
+        }
+
+        private bool HasRole(params UserRole[] roles)
+            => _user.User?.Role != null && roles.Select(x => (int)x).Contains(_user.User.Role.Value);
 
         public IActionResult Reading() => View("Reading");
 
         [HttpGet]
-        public async Task<IActionResult> GetBillByBillPeriod(DateTime billPeriod)
+        public IActionResult GetBillByBillPeriod(DateTime billPeriod)
         {
-            // TODO: save to database
-            TempData["SuccessMessage"] = "Bill adjustment submitted successfully.";
-            return RedirectToAction(nameof(BillAdjustment));
+            return StatusCode(501, "Bill adjustment submission is not available yet. No changes were saved.");
         }
 
         public IActionResult OtherCharges()
@@ -201,7 +268,7 @@ namespace TMCWD.Application.Controllers
             //foreach (var billing in matching)
             //{
             //    var penalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.Penalty>();
-            //    var activePenalties = penalties.Where(p => p.PaymentStatus != PaymentStatus.Waived).ToList();
+            //    var activePenalties = penalties.Where(p => p.PaymentStatus == PaymentStatus.Unpaid || p.PaymentStatus == PaymentStatus.Overdue).ToList();
 
             //    if (!activePenalties.Any()) continue; // only accounts with active penalty records
 
@@ -227,32 +294,63 @@ namespace TMCWD.Application.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitAdjustment(BillAdjustmentViewModel model)
         {
-            if (!ModelState.IsValid)
+            if (_user.User == null || _user.User.Id <= 0)
+                return Unauthorized();
+
+            if (model == null || string.IsNullOrWhiteSpace(model.ReferenceNo))
+                return BadRequest("Select a billing record before submitting an adjustment.");
+
+            var selectedLines = model.AdjustmentLines?
+                .Where(line => line.IsChecked)
+                .ToList() ?? new List<AdjustmentLineItem>();
+            var monetaryLines = selectedLines
+                .Where(line => line.HasAdjustmentColumn)
+                .ToList();
+
+            if (monetaryLines.Count == 0)
+                return BadRequest("Select at least one bill or penalty amount to adjust.");
+            if (monetaryLines.Any(line => !line.AsBilled.HasValue || !line.ShouldBe.HasValue))
+                return BadRequest("As Billed and Should Be are required for each monetary adjustment.");
+
+            var billing = (await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>())
+                .FirstOrDefault(item => string.Equals(item.BillingReferenceId, model.ReferenceNo, StringComparison.OrdinalIgnoreCase));
+            if (billing == null)
+                return BadRequest("The selected billing record no longer exists. Reload billing history.");
+            if (billing.PaymentStatus == PaymentStatus.Paid || billing.PaymentStatus == PaymentStatus.Waived)
+                return Conflict("A settled bill cannot be adjusted.");
+
+            try
             {
-                // Repopulate dropdowns
-                model.MeterReaders = new List<SelectListItem>
+                var adjustments = new List<BillingAdjustment>();
+                foreach (var line in monetaryLines)
                 {
-                    new SelectListItem { Value = "MR001", Text = "Juan Dela Cruz" },
-                    new SelectListItem { Value = "MR002", Text = "Maria Santos" },
-                    new SelectListItem { Value = "MR003", Text = "Pedro Reyes" }
-                };
-                model.RemarksOptions = new List<SelectListItem>
-                {
-                    new SelectListItem { Value = "Meter Error", Text = "Meter Error" },
-                    new SelectListItem { Value = "Reading Error", Text = "Reading Error" },
-                    new SelectListItem { Value = "System Error", Text = "System Error" },
-                    new SelectListItem { Value = "Other", Text = "Other" }
-                };
-                return View("BillAdjustment", model);
+                    if (!Enum.TryParse<AdjustmentLineType>(line.Key, true, out var type))
+                        return BadRequest("The selected adjustment type is invalid.");
+
+                    var amount = line.AsBilled!.Value - line.ShouldBe!.Value;
+                    if (amount == 0)
+                        return BadRequest("Each selected adjustment must change the billed amount.");
+
+                    adjustments.Add(new BillingAdjustment
+                    {
+                        Type = (int)type,
+                        BillingReferenceId = billing.BillingReferenceId,
+                        Amount = amount
+                    });
+                }
+
+                var saved = await _billingAdjustmentTrans.SaveBatch(_user.User.Id, adjustments);
+                if (saved == null || saved.Count != adjustments.Count)
+                    return StatusCode(502, "The billing adjustment was not saved. No changes were confirmed.");
+
+                TempData["SuccessMessage"] = $"{monetaryLines.Count} billing adjustment(s) saved successfully.";
+                return RedirectToAction(nameof(BillAdjustment));
             }
-
-            // TODO: Process the adjustment data
-            // Save to database, etc.
-
-            TempData["SuccessMessage"] = "Bill adjustment submitted successfully.";
-            return RedirectToAction(nameof(BillAdjustment));
+            catch (HttpRequestException)
+            {
+                return StatusCode(502, "The billing adjustment was not saved. Please try again.");
+            }
         }
-
 
         public async Task<IActionResult> GetBillById(int id)
         {
@@ -261,27 +359,104 @@ namespace TMCWD.Application.Controllers
         public class WaivePenaltiesRequest
         {
             public List<string> BillingReferenceIds { get; set; } = new();
+            public string Reason { get; set; } = string.Empty;
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> WaivePenalties([FromBody] WaivePenaltiesRequest request)
         {
-            foreach (var refId in request.BillingReferenceIds)
-            {
-                var penalties = await _penaltyTrans.GetByReference(refId) ?? new List<Model.Billing.Penalty>();
-                foreach (var penalty in penalties.Where(p => p.PaymentStatus != PaymentStatus.Waived))
-                {
-                    penalty.PaymentStatus = PaymentStatus.Waived;
-                    await _penaltyTrans.SaveUpdate(_user.User.Id, penalty);
-                }
-            }
+            if (!HasRole(UserRole.CustomerRepresentative, UserRole.SuperAdmin)) return Forbid();
+            if (request?.BillingReferenceIds == null || request.BillingReferenceIds.Count == 0
+                || request.BillingReferenceIds.Count > 1000
+                || request.BillingReferenceIds.Any(string.IsNullOrWhiteSpace))
+                return BadRequest("Select valid billing references.");
+            if (string.IsNullOrWhiteSpace(request.Reason) || request.Reason.Trim().Length < 3 || request.Reason.Trim().Length > 500)
+                return BadRequest("Enter a waiver reason between 3 and 500 characters.");
 
-            return Ok();
+            try
+            {
+                var count = await _penaltyTrans.SubmitWaiverRequests(_user.User.Id, new SubmitPenaltyWaiverRequest
+                {
+                    BillingReferenceIds = request.BillingReferenceIds,
+                    Reason = request.Reason.Trim()
+                });
+                return Ok(new { submittedCount = count });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(502, "The penalty service did not confirm the request. Please retry.");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PendingPenaltyWaivers()
+        {
+            if (!HasRole(UserRole.CustomerServiceOic, UserRole.SuperAdmin)) return Forbid();
+            try { return Ok(await _penaltyTrans.GetPendingWaiverRequests(_user.User.Id)); }
+            catch (HttpRequestException) { return StatusCode(502, "Could not load pending waiver requests."); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReviewPenaltyWaiver([FromBody] ReviewPenaltyWaiverRequest request)
+        {
+            if (!HasRole(UserRole.CustomerServiceOic, UserRole.SuperAdmin)) return Forbid();
+            if (request == null || request.RequestId <= 0 || (request.Remarks?.Length ?? 0) > 500)
+                return BadRequest("Invalid waiver review.");
+            try
+            {
+                var waivedCount = await _penaltyTrans.ReviewWaiverRequest(_user.User.Id, request);
+                return Ok(new { approved = request.Approve, waivedCount });
+            }
+            catch (InvalidOperationException ex) { return Conflict(ex.Message); }
+            catch (HttpRequestException) { return StatusCode(502, "The penalty review was not confirmed."); }
         }
 
         public IActionResult DebitCreditMemo()
         {
             return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveDebitCreditMemo([FromBody] DebitCreditMemo memo)
+        {
+            if (_user.User == null || _user.User.Id <= 0)
+                return Unauthorized();
+
+            if (memo == null || string.IsNullOrWhiteSpace(memo.AccountNumber)
+                || string.IsNullOrWhiteSpace(memo.DcmType)
+                || (memo.MemoType != "debit" && memo.MemoType != "credit")
+                || memo.Amount <= 0 || string.IsNullOrWhiteSpace(memo.Explanation))
+                return BadRequest("A valid account, memo type, amount, and explanation are required.");
+
+            var account = await _accountTrans.GetByAccountNumber(memo.AccountNumber.Trim());
+            if (account == null)
+                return BadRequest("The selected account no longer exists.");
+
+            memo.AccountNumber = account.AccountNumber;
+            memo.DcmType = memo.DcmType.Trim();
+            memo.Explanation = memo.Explanation.Trim();
+            memo.Remarks = memo.Remarks?.Trim() ?? string.Empty;
+            memo.DcmDate = memo.DcmDate == default ? DateTime.Today : memo.DcmDate.Date;
+            memo.BillMonthBasis = memo.BillMonthBasis?.Date;
+
+            try
+            {
+                var saved = await _debitCreditMemoTrans.Save(_user.User.Id, memo);
+                if (saved == null)
+                    return StatusCode(502, "The debit/credit memo was not saved. Please try again.");
+                return Ok(new { id = saved.Id, accountNumber = saved.AccountNumber, amount = saved.Amount, memoType = saved.MemoType });
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(502, "The debit/credit memo was not saved. Please try again.");
+            }
         }
 
 
@@ -634,7 +809,6 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost]
-        [HttpPost]
         public async Task<IActionResult> SaveReading([FromBody] SaveReadingRequest request)
         {
             try
@@ -708,12 +882,18 @@ namespace TMCWD.Application.Controllers
                 var accountReadings =
                     await _readingTrans.GetByAccount(account.Id);
 
+                if (accountReadings?.Any(r => r.ReadingSheetId == readingSheet.Id) == true)
+                    return Conflict("A reading already exists for this account and reading sheet. Reload the sheet before continuing.");
+
                 var latestReading = accountReadings?
                     .OrderByDescending(r => r.Id)
                     .FirstOrDefault();
 
                 decimal previousReading =
                     latestReading?.CurrentReading ?? 0;
+
+                if (request.PresentReading < previousReading)
+                    return BadRequest("Present reading cannot be less than the previous reading.");
 
                 // ============================================================
                 // 5. DEBUG
@@ -773,6 +953,10 @@ namespace TMCWD.Application.Controllers
 
                 return Ok(savedReading);
             }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
             catch (Exception ex)
             {
                 Console.WriteLine("========== SAVE READING ERROR ==========");
@@ -797,7 +981,7 @@ namespace TMCWD.Application.Controllers
             foreach (var billing in matching)
             {
                 var penalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.Penalty>();
-                var activePenalties = penalties.Where(p => p.PaymentStatus != PaymentStatus.Waived).ToList();
+                var activePenalties = penalties.Where(p => p.PaymentStatus == PaymentStatus.Unpaid || p.PaymentStatus == PaymentStatus.Overdue).ToList();
 
                 if (!activePenalties.Any()) continue;
                 if (billing.AccountId <= 0) continue;

@@ -334,6 +334,10 @@ svg {
 }
 
 /* Logout link */
+.logout-form {
+  margin: 0;
+}
+
 .sidebar__footer {
   padding: var(--space-sm);
   border-top: 1px solid var(--color-border);
@@ -343,6 +347,11 @@ svg {
 
 .nav-link--logout {
   color: var(--color-text-faint);
+  width: 100%;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .nav-link--logout:hover {

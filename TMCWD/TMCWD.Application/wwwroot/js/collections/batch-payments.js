@@ -68,20 +68,41 @@
   }
 
   //  1. Data loading 
-  // TODO: replace with fetch('/api/Billing/BatchPayments').then(r => r.json())
-  // Expected item shape: { id, filename, channel, status, dateUploaded }
+  // Fetches batch-upload log from the server for a configurable date range.
+  // Falls back to an empty array on any error so the modal still opens cleanly.
   function loadBatchPaymentsData() {
-    return Promise.resolve([]);
+    var today   = todayISO();
+    var thirtyAgo = daysAgo(30);
+    var url = '/Collections/BatchPayments?from=' +
+              encodeURIComponent(thirtyAgo) + '&to=' + encodeURIComponent(today);
+    return fetch(url)
+      .then(function (res) {
+        if (!res.ok) throw new Error('Server returned ' + res.status);
+        return res.json();
+      })
+      .catch(function (err) {
+        console.warn('[BatchPayments] loadBatchPaymentsData error:', err);
+        return [];
+      });
   }
 
-  //  2. CSV upload stub 
-  // TODO: replace with a real multipart/form-data POST, e.g.:
-  //   var form = new FormData(); form.append('file', file);
-  //   return fetch('/api/Billing/BatchPayments/Upload', { method:'POST', body:form })
-  //     .then(function (r) { if (!r.ok) throw new Error(r.statusText); return r.json(); });
+  //  2. CSV upload 
+  // POSTs the file as multipart/form-data to the MVC action and returns
+  // the saved record so the caller can prepend a real row to the table.
   function uploadBatchCsv(file) {
-    console.log('[uploadBatchCsv] uploading:', file.name);
-    return new Promise(function (resolve) { setTimeout(resolve, 900); });
+    var csrf    = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
+    var channel = channelSelect && channelSelect.value ? channelSelect.value : 'Manual';
+    var form    = new FormData();
+    form.append('file',    file);
+    form.append('channel', channel);
+    return fetch('/Collections/BatchPaymentUpload', {
+      method:  'POST',
+      headers: { 'RequestVerificationToken': csrf },
+      body:    form
+    }).then(function (res) {
+      if (!res.ok) return res.json().then(function (b) { throw new Error(b.message || 'Upload failed.'); });
+      return res.json();
+    });
   }
 
   // Wire the invisible file <input> to the visible upload button.
@@ -109,15 +130,8 @@
         '<path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>';
 
       uploadBatchCsv(file)
-        .then(function () {
-          // Prepend a new mock row representing the uploaded file
-          var newRow = {
-            id:           'TMCWD-RAWLOGS',
-            filename:     file.name,
-            channel:      channelSelect && channelSelect.value ? channelSelect.value : 'ECPay',
-            status:       'Processed',
-            dateUploaded: todayISO()
-          };
+        .then(function (newRow) {
+          // Server returns the saved record — use it directly so the ID is real.
           batchPaymentsData.unshift(newRow);
 
           // Refresh channel dropdown in case the new row adds a novel channel
@@ -128,6 +142,19 @@
         })
         .catch(function (err) {
           console.error('[uploadBatchCsv] error:', err);
+          var card = document.getElementById('toast');
+          var bd   = document.getElementById('toastBackdrop');
+          if (card) {
+            document.getElementById('toastTitle').textContent = 'Upload Failed';
+            document.getElementById('toastMsg').textContent   = err.message || 'Could not upload the file. Please try again.';
+            document.getElementById('toastIconSuccess').style.display = 'none';
+            document.getElementById('toastIconDanger').style.display  = 'block';
+            card.className = 'toast-card show'; bd.className = 'toast-backdrop show';
+            clearTimeout(window._bpUploadErrTimer);
+            window._bpUploadErrTimer = setTimeout(function () {
+              card.className = 'toast-card'; bd.className = 'toast-backdrop';
+            }, 4000);
+          }
         })
         .finally(function () {
           uploadBtn.disabled = false;
@@ -157,11 +184,32 @@
     channelSelect.value = (current && seen[current]) ? current : '';
   }
 
-  //  4. Detail view stub 
-  // TODO: wire to real batch detail view, e.g.:
-  //   window.location.href = '/Billing/BatchDetail?id=' + encodeURIComponent(id);
+  //  4. Detail view 
+  // Opens the detail for a batch upload in a lightweight fetch → toast pattern.
   function viewBatchDetails(id, filename) {
-    console.log('[viewBatchDetails] id:', id, '| file:', filename);
+    fetch('/Collections/BatchPaymentDetail?id=' + encodeURIComponent(id))
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (detail) {
+        if (!detail) return;
+        var card = document.getElementById('toast');
+        var bd   = document.getElementById('toastBackdrop');
+        if (!card) return;
+        document.getElementById('toastTitle').textContent = 'Batch: ' + detail.filename;
+        document.getElementById('toastMsg').textContent   =
+          'Channel: ' + detail.channel + '  |  Rows: ' + detail.rowCount +
+          '  |  Status: ' + detail.status + '  |  Date: ' + detail.dateUploaded;
+        document.getElementById('toastIconSuccess').style.display = 'block';
+        document.getElementById('toastIconDanger').style.display  = 'none';
+        card.className = 'toast-card show';
+        bd.className   = 'toast-backdrop show';
+        clearTimeout(window._bpDetailTimer);
+        window._bpDetailTimer = setTimeout(function () {
+          card.className = 'toast-card'; bd.className = 'toast-backdrop';
+        }, 5000);
+      })
+      .catch(function (err) {
+        console.warn('[BatchPayments] viewBatchDetails error:', err);
+      });
   }
 
   //  5. Table rendering (accepts a page-slice) 

@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ---------- Senior Citizen Discount state ----------
   // Populated by initDiscountModal when the user applies a discount.
-  // { rate: 0.05, amount: 0, label: 'Senior Citizen (5%)' }
+  // { rate: 0.20, label: 'Senior Citizen (20%)', idNumber, name }
   let activeDiscount = null;
 
   const sDiscountLine   = document.getElementById('sDiscountLine');
@@ -55,6 +55,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function parseAmount(text) {
     return parseFloat(String(text).replace(/[\u20B1,]/g, '')) || 0;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, function (character) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+    });
   }
 
   // Enable / disable the Amount Tendered field
@@ -77,8 +83,8 @@ document.addEventListener('DOMContentLoaded', function () {
     updateSelectedBillsSummary();
   }
 
-  function applyDiscount(rate, label) {
-    activeDiscount = { rate, label };
+  function applyDiscount(rate, label, idNumber, name) {
+    activeDiscount = { rate, label, idNumber, name };
     updateSelectedBillsSummary();
   }
 
@@ -126,8 +132,8 @@ document.addEventListener('DOMContentLoaded', function () {
     sTotalDue.textContent  = fmt(totalDue);
     sPenalty.textContent   = fmt(totals.penalty);
 
-    // Apply senior citizen discount if active
-    const discountAmt = activeDiscount ? parseFloat((subTotal * activeDiscount.rate).toFixed(2)) : 0;
+    // Senior Citizen discount applies only to the water-consumption charge.
+    const discountAmt = activeDiscount ? parseFloat((totals.amount * activeDiscount.rate).toFixed(2)) : 0;
     const finalSubTotal = subTotal - discountAmt;
 
     if (activeDiscount && discountAmt > 0) {
@@ -271,9 +277,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const suggestionsHTML = matches.map((account, index) => {
         return `
           <div class="suggestion-item" data-index="${index}">
-            <div class="account-number">${account.accountNumber}</div>
-            <div class="account-name">${account.accountName || 'Unknown'}</div>
-            <div class="account-details">${account.address}</div>
+            <div class="account-number">${escapeHtml(account.accountNumber)}</div>
+            <div class="account-name">${escapeHtml(account.accountName || 'Unknown')}</div>
+            <div class="account-details">${escapeHtml(account.address)}</div>
           </div>
         `;
       }).join('');
@@ -500,11 +506,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const isSelected = index === currentSelectedAccountIndex;
       return `
         <tr class="breakdown-row ${isSelected ? 'selected' : ''}" data-index="${index}">
-          <td class="mono breakdown-accno">${acc.accountNumber}</td>
-          <td class="breakdown-name">${acc.name}</td>
+          <td class="mono breakdown-accno">${escapeHtml(acc.accountNumber)}</td>
+          <td class="breakdown-name">${escapeHtml(acc.name)}</td>
           <td class="mono breakdown-amount">${fmt(accountTotal)}</td>
           <td class="breakdown-action">
-            <button class="btn-remove-account" data-account="${acc.accountNumber}">Remove</button>
+            <button class="btn-remove-account" data-account="${escapeHtml(acc.accountNumber)}">Remove</button>
           </td>
         </tr>
       `;
@@ -729,9 +735,9 @@ document.addEventListener('DOMContentLoaded', function () {
         : '\u2014';
       
       row.innerHTML = `
-        <td><input class="bill-checkbox" type="checkbox" ${bill.selected ? 'checked' : ''} aria-label="Select bill for ${billMonth}"></td>
-        <td><b>${billMonth}</b></td>
-        <td class="muted">${bill.dueDate}</td>
+        <td><input class="bill-checkbox" type="checkbox" ${bill.selected ? 'checked' : ''} aria-label="Select bill for ${escapeHtml(billMonth)}"></td>
+        <td><b>${escapeHtml(billMonth)}</b></td>
+        <td class="muted">${escapeHtml(bill.dueDate)}</td>
         <td class="mono">${fmt(bill.amount)}</td>
         <td class="mono muted">${fmt(pca + mmf)}</td>
         <td class="penalty-cell mono">${penaltyCell}</td>
@@ -781,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (selectedRows.length) {
         const totals = getSelectedBillTotals();
         const subTotal = totals.amount + totals.pca + totals.mmf + totals.penalty;
-        const discountAmt = activeDiscount ? parseFloat((subTotal * activeDiscount.rate).toFixed(2)) : 0;
+        const discountAmt = activeDiscount ? parseFloat((totals.amount * activeDiscount.rate).toFixed(2)) : 0;
         const finalTotal  = subTotal - discountAmt;
         totalBalance.textContent = fmt(finalTotal);
         amountToPay.value = finalTotal.toFixed(2);
@@ -909,7 +915,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }, { amount: 0, pca: 0, mmf: 0, penalty: 0 });
 
     const grossTotal = totals.amount + totals.pca + totals.mmf + totals.penalty;
-    const discount = activeDiscount ? Number((grossTotal * activeDiscount.rate).toFixed(2)) : 0;
+    const discount = activeDiscount ? Number((totals.amount * activeDiscount.rate).toFixed(2)) : 0;
     const subTotal = grossTotal - discount;
     const change = Math.max(0, tendered - subTotal);
     const customerNames = [...new Set(bills.map(bill => bill.customerName).filter(Boolean))];
@@ -958,9 +964,10 @@ document.addEventListener('DOMContentLoaded', function () {
     let allocatedAmount = 0;
     bills.forEach((bill, index) => {
       const billGross = bill.amount + bill.pca + bill.mmf + bill.penalty;
+      const billDiscount = activeDiscount ? Number((bill.amount * activeDiscount.rate).toFixed(2)) : 0;
       const paidAmount = index === bills.length - 1
         ? Number((subTotal - allocatedAmount).toFixed(2))
-        : Number((billGross * (subTotal / grossTotal)).toFixed(2));
+        : Number((billGross - billDiscount).toFixed(2));
       allocatedAmount += paidAmount;
       paymentBills.push({
         billingReferenceId: bill.billingReferenceId,
@@ -968,7 +975,17 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
 
-    pendingPayment = { invoiceNo, amount: subTotal, amountTendered: tendered, payMode, bills: paymentBills };
+    pendingPayment = {
+      invoiceNo,
+      amount: subTotal,
+      amountTendered: tendered,
+      payMode,
+      bills: paymentBills,
+      seniorCitizenDiscount: activeDiscount ? {
+        idNumber: activeDiscount.idNumber,
+        name: activeDiscount.name
+      } : null
+    };
     paymentSummaryOverlay.hidden = false;
     document.body.classList.add('ps-modal-open');
     psProceedBtn.focus();
@@ -992,12 +1009,16 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
       const response = await fetch('/Collections/Pay', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+        },
         body: JSON.stringify({
           invoiceNumber: payment.invoiceNo,
           method: methodIds[payment.payMode],
           amountTendered: payment.amountTendered,
-          bills: payment.bills
+          bills: payment.bills,
+          seniorCitizenDiscount: payment.seniorCitizenDiscount
         })
       });
       const result = await response.json().catch(() => ({}));
@@ -1007,6 +1028,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
       closePaymentSummary();
       resetBtn.click();
+      if (payment.payMode === 'cash' && typeof window.recordCashCollection === 'function') {
+        window.recordCashCollection(payment.amount);
+      }
       showToast(`Payment of ${fmt(payment.amount)} recorded via ${payment.payMode.toUpperCase()} \u2014 Invoice ${payment.invoiceNo}.`);
     } catch (error) {
       showToast(error.message || 'Payment could not be completed.', true);
@@ -1380,7 +1404,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
             <div>
               <div class="disc-title" id="discTitle">Senior Citizen Discount</div>
-              <div class="disc-subtitle">PWD / Senior Citizen privilege card</div>
+              <div class="disc-subtitle">For the registered account holder only</div>
             </div>
           </div>
           <button class="disc-close" id="discCloseBtn" aria-label="Close">
@@ -1396,24 +1420,22 @@ document.addEventListener('DOMContentLoaded', function () {
           <div class="disc-field">
             <span class="disc-label">Discount Rate</span>
             <div class="disc-rate-group" id="discRateGroup">
-              <div class="disc-rate-pill active" data-rate="0.05">5%</div>
-              <div class="disc-rate-pill" data-rate="0.10">10%</div>
-              <div class="disc-rate-pill" data-rate="0.20">20%</div>
+              <div class="disc-rate-pill active" data-rate="0.20">20% of water consumption charge</div>
             </div>
           </div>
 
           <!-- SC ID Number -->
           <div class="disc-field">
-            <span class="disc-label">SC / PWD ID Number</span>
+            <span class="disc-label">Senior Citizen ID Number</span>
             <input class="disc-input" id="discIdNumber" type="text" placeholder="e.g. SC-2024-001234" autocomplete="off" maxlength="30" />
             <span class="disc-field-error" id="discIdError">ID number is required.</span>
           </div>
 
           <!-- SC Name -->
           <div class="disc-field">
-            <span class="disc-label">Senior Citizen / PWD Name</span>
-            <input class="disc-input" id="discScName" type="text" placeholder="Full name on the card" autocomplete="off" maxlength="80" />
-            <span class="disc-field-error" id="discNameError">Name is required.</span>
+            <span class="disc-label">Account Holder / Senior Citizen Name</span>
+            <input class="disc-input" id="discScName" type="text" autocomplete="off" maxlength="160" readonly />
+            <span class="disc-field-error" id="discNameError">The account-holder name is required.</span>
           </div>
 
           <!-- Discount preview -->
@@ -1441,38 +1463,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const idError       = overlay.querySelector('#discIdError');
     const nameError     = overlay.querySelector('#discNameError');
 
-    let selectedRate = 0.05;
+    const selectedRate = 0.20;
 
     // Helpers
     function fmtPHP(n) {
       return '\u20B1' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function getCurrentSubTotal() {
-      // Read from the page receipt sub-total before discount
-      return Array.from(document.querySelectorAll('#billsBody .bill-row.selected')).reduce((sum, row) => {
-        return sum + (parseFloat(row.dataset.amount) || 0)
-          + (parseFloat(row.dataset.penalty) || 0)
-          + (parseFloat(row.dataset.pca) || 0)
-          + (parseFloat(row.dataset.mmf) || 0);
-      }, 0);
-    }
-
     function updatePreview() {
-      const base = getCurrentSubTotal();
+      const base = Array.from(document.querySelectorAll('#billsBody .bill-row.selected'))
+        .reduce((sum, row) => sum + (parseFloat(row.dataset.amount) || 0), 0);
       const discountAmt = parseFloat((base * selectedRate).toFixed(2));
       previewAmt.textContent = '- ' + fmtPHP(discountAmt);
     }
-
-    // Rate pill selection
-    rateGroup.addEventListener('click', function (e) {
-      const pill = e.target.closest('.disc-rate-pill');
-      if (!pill) return;
-      rateGroup.querySelectorAll('.disc-rate-pill').forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      selectedRate = parseFloat(pill.dataset.rate);
-      updatePreview();
-    });
 
     // Live preview on input
     idInput.addEventListener('input', function () {
@@ -1486,17 +1489,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Open / Close
     function openModal() {
+      if (multipleAccountsMode) {
+        showToast('Apply a Senior Citizen discount to one account at a time.', true);
+        return;
+      }
+      if (!currentAccountData || !currentAccountData.account) {
+        showToast('Select an account before applying a discount.', true);
+        return;
+      }
       // Reset fields
       idInput.value   = '';
-      nameInput.value = '';
+      nameInput.value = currentAccountData.account.name || '';
       idError.style.display   = 'none';
       nameError.style.display = 'none';
       idInput.classList.remove('disc-input--error');
       nameInput.classList.remove('disc-input--error');
-      // Default to 5%
-      selectedRate = 0.05;
       rateGroup.querySelectorAll('.disc-rate-pill').forEach(p => {
-        p.classList.toggle('active', parseFloat(p.dataset.rate) === 0.05);
+        p.classList.toggle('active', parseFloat(p.dataset.rate) === selectedRate);
       });
       updatePreview();
       overlay.classList.add('show');
@@ -1530,7 +1539,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const rateLabel = Math.round(selectedRate * 100) + '%';
       // Call the page-level applyDiscount helper defined in the main DOMContentLoaded block
       if (typeof applyDiscount === 'function') {
-        applyDiscount(selectedRate, `Senior Citizen (${rateLabel})`);
+        applyDiscount(selectedRate, `Senior Citizen (${rateLabel})`,
+          idInput.value.trim(), nameInput.value.trim());
       }
 
       closeModal();
@@ -2064,6 +2074,15 @@ document.addEventListener('DOMContentLoaded', function () {
       // Strip formatting so user can edit the raw number
       this.value = this.value.replace(/,/g, '');
     });
+
+    window.recordCashCollection = function (amount) {
+      const current = parseFloat(String(tellerCash.value).replace(/,/g, '')) || 0;
+      const collected = Number(amount) || 0;
+      tellerCash.value = (current + collected).toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    };
   }());
 
   // ---------- Kick things off ----------
