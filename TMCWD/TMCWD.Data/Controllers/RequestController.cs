@@ -26,7 +26,10 @@ namespace TMCWD.Data.Controllers
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<ActionResult<Request>> SaveUpdate(int userId, [FromBody] Request request)
         {
-
+            if (request.Id > 0 && (await _requestService.Get(checked((int)request.Id)))?.IsServiceRequest == true)
+                return Conflict("Edit this request from the Service Requests Summary.");
+            if (request.IsServiceRequest)
+                return BadRequest("Create service requests from the Service Request page.");
             var insertedRequest = await _requestService.SaveUpdate(userId, request);
 
             if (insertedRequest == null || insertedRequest.Id <= 0) BadRequest("Request was not created");

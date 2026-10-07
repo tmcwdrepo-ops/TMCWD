@@ -19,6 +19,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/service-request.css" asp-append-version="true" />
 }
 
 <section class="service-dashboard" aria-labelledby="serviceApplicationsTitle">
@@ -81,21 +82,24 @@
     <section class="summary-card" aria-labelledby="requestSummaryTitle">
         <div class="summary-card__title">
             <h2 id="requestSummaryTitle">Service Request Summary</h2>
+            <button type="button" class="inspection-pdf-button" id="serviceRequestCompleted" style="margin-left:auto">View Completed</button>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M4 12h7M4 17h9M17 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm3 0 3 3" /></svg>
         </div>
         <div class="summary-table-wrap">
             <table class="summary-table">
-                <thead><tr><th scope="col">Request</th><th scope="col">Count</th></tr></thead>
-                <tbody>
+                <thead><tr><th scope="col">Request</th><th scope="col">Pending</th></tr></thead>
+                <tbody id="serviceRequestSummaryRows">
                 @if (Model.RequestSummary.Count == 0)
                 {
-                    <tr><td colspan="2" class="summary-empty">No service requests have been recorded.</td></tr>
+                    <tr><td colspan="2" class="summary-empty">No pending service requests.</td></tr>
                 }
                 else
                 {
                     @foreach (var row in Model.RequestSummary)
                     {
-                        <tr><td>@row.Request</td><td>@row.Count</td></tr>
+                        <tr class="summary-table__row--clickable" data-description="@row.Request" style="cursor:pointer">
+                            <td>@row.Request</td><td>@row.Count</td>
+                        </tr>
                     }
                 }
                 </tbody>
@@ -124,6 +128,11 @@
             <header class="dashboard-modal__header charge-header">
                 <div><span class="dashboard-modal__eyebrow">Account charge workspace</span><h2 id="chargeModalTitle">Other Charges</h2></div>
                 <div class="charge-header__total"><span>Total active charges</span><strong id="dashboardChargeTotal">₱0.00</strong></div>
+                <button type="button" class="charge-post-button" id="dashboardPostCharges" disabled>Post to Collection</button>
+                <a id="chargeModalFullPageLink" href="/Billing/OtherCharges" target="_blank"
+                   class="inspection-pdf-button" title="Open in full Other Charges page" style="margin-left:auto">
+                    <span>↗</span> Full page
+                </a>
                 <button type="button" class="dashboard-modal__close" data-close-modal="chargeModal" aria-label="Close">&times;</button>
             </header>
             <div class="selected-account">
@@ -133,14 +142,30 @@
             </div>
             <div class="charge-composer">
                 <div class="charge-field charge-field--wide"><label for="dashboardChargeType">Charge type</label><select id="dashboardChargeType"><option value="">Select a charge type</option></select></div>
-                <div class="charge-field"><label for="dashboardPayableIn">Payable in</label><select id="dashboardPayableIn"><option value="Cash">Cash</option><option value="Check">Check</option><option value="Online">Online</option></select></div>
-                <div class="charge-field charge-field--wide"><label for="dashboardParticulars">Particulars</label><input id="dashboardParticulars" maxlength="255" placeholder="Purpose or notes" /></div>
+                <div class="charge-field"><label for="dashboardPayableIn">Payable in</label><select id="dashboardPayableIn">
+                    <option value="">— optional —</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Check">Check</option>
+                    <option value="GCash">GCash</option>
+                    <option value="Maya">Maya</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="3 months">3 months</option>
+                    <option value="6 months">6 months</option>
+                    <option value="12 months">12 months</option>
+                </select></div>
+                <div class="charge-field charge-field--wide"><label for="dashboardParticulars">Particulars</label><input id="dashboardParticulars" maxlength="255" placeholder="Optional notes" /></div>
                 <div class="charge-field"><label for="dashboardAmount">Amount</label><input id="dashboardAmount" type="number" min="0.01" step="0.01" placeholder="0.00" /></div>
                 <button type="button" class="charge-add-button" id="dashboardAddCharge">Add charge</button>
             </div>
             <div class="charge-message" id="dashboardChargeMessage" role="status"></div>
             <div class="charge-table-wrap">
-                <table class="charge-table"><thead><tr><th>Description</th><th>Payable in</th><th>Particulars</th><th>Amount</th></tr></thead><tbody id="dashboardChargeRows"></tbody></table>
+                <table class="charge-table"><thead><tr><th>Description</th><th>Payable in</th><th>Particulars</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody id="dashboardChargeRows"></tbody></table>
+            </div>
+            <div class="charge-post-bar">
+                <span class="charge-post-message" id="dashboardPostMessage" role="status"></span>
+                <button type="button" class="inspection-save-button" id="dashboardPostCharges" disabled>
+                    Post to Collection
+                </button>
             </div>
         </section>
     </div>
@@ -151,7 +176,7 @@
             <header class="dashboard-modal__header inspection-header">
                 <div><span class="dashboard-modal__eyebrow">New connection workflow</span><h2 id="inspectionModalTitle">Service Inspection</h2></div>
                 <button type="button" class="inspection-pdf-button" id="inspectionPdfButton" title="Open printable PDF report" aria-label="Open printable PDF report">
-                    <span>PDF</span> Print report
+                    <span>PDF</span>
                 </button>
                 <button type="button" class="dashboard-modal__close" data-close-modal="inspectionModal" aria-label="Close">&times;</button>
             </header>
@@ -174,8 +199,8 @@
                         <label>Type of connection<select id="inspectionConnectionType"><option value="">Select connection</option><option>Standard</option><option>Cluster</option><option>Dual</option><option>Crossroad</option></select></label>
                         <label>Distance from mainline<input id="inspectionDistance" maxlength="100" placeholder="e.g. 12 meters" /></label>
                         <label class="inspection-check"><input type="checkbox" id="inspectionBoring" /><span>Needs underground boring</span></label>
-                        <label>Zone<select id="inspectionZone"><option value="">Select zone</option></select></label>
-                        <label>Book<select id="inspectionBook"><option value="">Select book</option></select></label>
+                        <label>Zone<div class="inspection-field inspection-field--readonly" id="inspectionZoneDisplay">—</div></label>
+                        <label>Book<div class="inspection-field inspection-field--readonly" id="inspectionBookDisplay">—</div></label>
                         <fieldset class="inspection-nearest">
                             <legend>Nearest connection</legend>
                             <label>Account number<input id="inspectionNearestNumber" maxlength="50" placeholder="Nearest account number" /></label>
@@ -191,7 +216,7 @@
                         <label>Inspected by<select id="inspectionInspector"><option value="">Select inspector</option></select></label>
                         <label>Approved by<select id="inspectionApprover"><option value="">Select approver</option></select></label>
                         <label>Date inspected<input type="date" id="inspectionDate" /></label>
-                        <label>Status<select id="inspectionStatus"><option>Pending</option><option>For Approval</option><option>Approved</option><option>Returned</option></select></label>
+                        <label>Status<select id="inspectionStatus"><option value="Approved">Approved</option><option value="Disapproved">Disapproved</option></select></label>
                         <label class="inspection-check"><input type="checkbox" id="inspectionChargeNsc" checked /><span>Charge new service connection fee</span></label>
                     </div>
                 </section>
@@ -199,6 +224,43 @@
                 <div class="inspection-actions">
                     <button type="button" class="inspection-secondary-button" data-close-modal="inspectionModal">Cancel</button>
                     <button type="button" class="inspection-save-button" id="inspectionSaveButton">Save inspection</button>
+                </div>
+
+                @* Account activation — appears automatically when Status = Approved and zone/book are set *@
+                <div class="connect-activate-section" id="inspectionActivateSection" hidden>
+                    <div class="connect-activate-divider"><span>Account activation</span></div>
+                    <p class="connect-activate-hint">
+                        Inspection is approved. Enter the meter details to generate the account number —
+                        it will appear on the printed report.
+                    </p>
+                    <div class="connect-activate-fields">
+                        <label>
+                            <span>Meter serial number</span>
+                            <input id="inspectionMeterNumber" maxlength="50" placeholder="Serial number from the physical meter" />
+                        </label>
+                        <label>
+                            <span>Meter size</span>
+                            <select id="inspectionMeterSize">
+                                <option value="0.5">½"</option>
+                                <option value="0.75">¾"</option>
+                                <option value="1">1"</option>
+                                <option value="1.5">1½"</option>
+                                <option value="2">2"</option>
+                                <option value="3">3"</option>
+                                <option value="4">4"</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="connect-activate-actions">
+                        <button type="button" class="connect-activate-button" id="inspectionActivateButton">
+                            Generate account number
+                        </button>
+                        <div class="connect-activate-result" id="inspectionActivateResult" hidden>
+                            <span>Account number</span>
+                            <strong id="inspectionActivatedAccountNumber">—</strong>
+                        </div>
+                    </div>
+                    <div class="inspection-message" id="inspectionActivateMessage" role="status"></div>
                 </div>
             </div>
         </section>
@@ -240,6 +302,351 @@
                     <button type="button" class="inspection-secondary-button" data-close-modal="connectOrderModal">Cancel</button>
                     <button type="button" class="inspection-save-button" id="connectOrderSaveButton">Save connect order</button>
                 </div>
+            </div>
+        </section>
+    </div>
+
+    @* Work Order modal — shared by Installation and Tapping *@
+    <div class="dashboard-modal" id="paymentDetailModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="paymentDetailModal"></div>
+        <section class="dashboard-modal__panel dashboard-modal__panel--review" role="dialog" aria-modal="true" aria-labelledby="paymentDetailTitle">
+            <header class="dashboard-modal__header">
+                <div><span class="dashboard-modal__eyebrow">Application payment</span><h2 id="paymentDetailTitle">Payment Details</h2></div>
+                <button type="button" class="dashboard-modal__close" data-close-modal="paymentDetailModal" aria-label="Close">&times;</button>
+            </header>
+            <div class="request-review-content">
+                <section class="request-review-summary">
+                    <div class="inspection-field"><span>Application number</span><strong id="paymentTrackingNumber">—</strong></div>
+                    <div class="inspection-field"><span>Applicant</span><strong id="paymentApplicantName">—</strong></div>
+                    <div class="inspection-field"><span>Charge reference</span><strong id="paymentChargeReference">—</strong></div>
+                    <div class="inspection-field"><span>Charge amount</span><strong id="paymentChargeAmount">—</strong></div>
+                    <div class="inspection-field"><span>Payment reference</span><strong id="paymentReference">—</strong></div>
+                    <div class="inspection-field"><span>Payment method</span><strong id="paymentMethod">—</strong></div>
+                    <div class="inspection-field"><span>Payment date</span><strong id="paymentDate">—</strong></div>
+                    <div class="inspection-field"><span>Status</span><strong id="paymentStatus">—</strong></div>
+                </section>
+                <p class="request-review-note" id="paymentRemarks">Payment information is loaded from the application payment record.</p>
+                <div class="inspection-actions"><button type="button" class="inspection-secondary-button" data-close-modal="paymentDetailModal">Close</button></div>
+            </div>
+        </section>
+    </div>
+
+    <div class="dashboard-modal" id="requestReviewModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="requestReviewModal"></div>
+        <section class="dashboard-modal__panel dashboard-modal__panel--review" role="dialog" aria-modal="true" aria-labelledby="requestReviewTitle">
+            <header class="dashboard-modal__header">
+                <div><span class="dashboard-modal__eyebrow" id="requestReviewEyebrow">Application record</span><h2 id="requestReviewTitle">Application Review</h2></div>
+                <button type="button" class="dashboard-modal__close" data-close-modal="requestReviewModal" aria-label="Close">&times;</button>
+            </header>
+            <div class="request-review-content">
+                <section class="request-review-summary">
+                    <div class="inspection-field"><span>Control number</span><strong id="reviewControlNumber">—</strong></div>
+                    <div class="inspection-field"><span>Account holder</span><strong id="reviewAccountName">—</strong></div>
+                    <div class="inspection-field"><span>Date submitted</span><strong id="reviewDateSubmitted">—</strong></div>
+                    <div class="inspection-field request-review-service"><span>Requested service</span><strong id="reviewServiceName">—</strong></div>
+                    <div class="inspection-field"><span>Current stage</span><strong id="reviewStage">—</strong></div>
+                    <div class="inspection-field request-review-service"><span>Service address</span><strong id="reviewAddress">—</strong></div>
+                    <div class="inspection-field"><span>Contact number</span><strong id="reviewContact">—</strong></div>
+                    <div class="inspection-field"><span>Email address</span><strong id="reviewEmail">—</strong></div>
+                    <div class="inspection-field"><span>Application source</span><strong id="reviewSource">—</strong></div>
+                </section>
+                <p class="request-review-note" id="requestReviewNote"></p>
+
+                @* Send to Inspection — only visible for New applications (stage = application) *@
+                <div class="review-advance-section" id="reviewAdvanceSection" hidden>
+                    <div class="connect-activate-divider"><span>Next step</span></div>
+                    <p class="connect-activate-hint">
+                        This application has been reviewed and is ready to be scheduled for site inspection.
+                        Advancing it will move it to the <strong>Inspection</strong> queue.
+                    </p>
+                    <div class="inspection-message" id="reviewAdvanceMessage" role="status"></div>
+                    <div class="inspection-actions">
+                        <button type="button" class="inspection-secondary-button" data-close-modal="requestReviewModal">Close</button>
+                        <button type="button" class="connect-activate-button" id="reviewSendToInspectionButton">
+                            Send to inspection
+                        </button>
+                    </div>
+                </div>
+
+                @* Default action row — shown when advance section is hidden *@
+                <div class="inspection-actions" id="reviewCloseActions">
+                    <button type="button" class="inspection-secondary-button" data-close-modal="requestReviewModal">Close</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="dashboard-modal" id="installationRequestModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="installationRequestModal"></div>
+        <section class="dashboard-modal__panel dashboard-modal__panel--installation-request" role="dialog" aria-modal="true" aria-labelledby="installationRequestTitle">
+            <header class="dashboard-modal__header">
+                <div>
+                    <span class="dashboard-modal__eyebrow">Installation workflow</span>
+                    <h2 id="installationRequestTitle">Service Request - Job Order / Maintenance / Complaints</h2>
+                </div>
+                <button type="button" class="dashboard-modal__close" data-close-modal="installationRequestModal" aria-label="Close">&times;</button>
+            </header>
+
+            <form id="installationRequestForm" class="sr-card installation-request-form" novalidate>
+                <input id="installSrApplicationId" type="hidden" value="0" />
+                <input id="installSrAccountId" type="hidden" value="0" />
+
+                <div class="sr-grid sr-grid--two">
+                    <div class="sr-column">
+                        <label class="sr-field"><span>Account Number</span><input id="installSrAccountNumber" readonly /></label>
+                        <label class="sr-field"><span>Account Name</span><input id="installSrAccountName" readonly /></label>
+                        <label class="sr-field"><span>Address</span><textarea id="installSrAddress" rows="2" readonly required></textarea></label>
+                        <label class="sr-field"><span>Reported By</span><input id="installSrReportedBy" placeholder="Enter the reporter's name" required /></label>
+                        <label class="sr-field"><span>Contact Number</span><input id="installSrContact" readonly required /></label>
+                    </div>
+
+                    <div class="sr-column">
+                        <label class="sr-field"><span>Job Order Number</span><input id="installSrJobNumber" value="Generated after saving" readonly /></label>
+                        <label class="sr-field"><span>Job Order Date</span><input id="installSrJobDate" type="date" required /></label>
+                        <label class="sr-field"><span>Source</span><select id="installSrSource" required><option value="">Select source</option><option>Walk-In</option><option>Phone</option><option>Other</option></select></label>
+                        <label class="sr-field"><span>JO Type</span><select id="installSrType" required><option value="">Select job order type</option><option>Service Request</option><option selected>Maintenance</option></select></label>
+                    </div>
+                </div>
+
+                <div class="sr-received"><span>Received By</span><strong id="installSrReceivedBy">Current user</strong></div>
+
+                <div class="sr-section">
+                    <h3>Request details</h3>
+                    <div class="sr-grid sr-grid--two">
+                        <label class="sr-field"><span>Job Description</span><select id="installSrDescription" required><option value="">Select description</option><option>LEAK</option><option>INTERCONNECTION OF MAINLINE</option><option>Service Line / Mainline Leak</option><option>Reread</option><option>Investigation of Water Meter</option><option>Gate Valve Repair / Replacement</option><option>TRANSFER</option><option>STOLEN METER</option><option>OTHERS</option><option>DISCONNECTION</option><option>LOW CONSUMPTION</option><option>RELOCATION</option><option>RECLASSIFICATION</option><option>Low Pressure</option><option>REHABILITATION OF SERVICE LINE</option><option>CONCRETING</option><option>Inspection</option><option>STOP METER</option><option>NO WATER</option><option>HIGH CONSUMPTION</option><option>RECONNECTION</option><option>CHANGE METER</option><option selected>NEW CONNECTION INSTALLATION</option><option>Meter Calibration</option></select></label>
+                        <label class="sr-field"><span>Referred To</span><select id="installSrReferredTo"><option value="">Not yet referred</option><option>Billing</option><option selected>Maintenance</option><option>Customer Service</option></select></label>
+                        <label class="sr-field"><span>Date Referred</span><input id="installSrDateReferred" type="date" disabled /></label>
+                        <label class="sr-field"><span>Name</span><input id="installSrName" placeholder="Contact person, crew, or department" /></label>
+                    </div>
+                    <label class="sr-field"><span>Particulars</span><textarea id="installSrParticulars" rows="3" placeholder="Installation instructions and other details"></textarea></label>
+                </div>
+
+                <div class="sr-result" id="installSrResult" hidden><span>Installation job order created</span><strong id="installSrResultNumber"></strong><small id="installSrResultStatus"></small></div>
+                <footer class="sr-footer">
+                    <p id="installSrMessage" role="status"></p>
+                    <div class="installation-request-actions">
+                        <button type="button" class="inspection-secondary-button" data-close-modal="installationRequestModal">Cancel</button>
+                        <button type="submit" id="installSrSubmit">Save</button>
+                    </div>
+                </footer>
+            </form>
+        </section>
+    </div>
+
+    <div class="dashboard-modal" id="houseTappingModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="houseTappingModal"></div>
+        <section class="dashboard-modal__panel dashboard-modal__panel--tapping" role="dialog" aria-modal="true" aria-labelledby="houseTappingTitle">
+            <header class="dashboard-modal__header">
+                <div>
+                    <span class="dashboard-modal__eyebrow">Tapping workflow</span>
+                    <h2 id="houseTappingTitle">House Tapping</h2>
+                </div>
+                <button type="button" class="dashboard-modal__close" data-close-modal="houseTappingModal" aria-label="Close">&times;</button>
+            </header>
+
+            <div class="house-tapping-content">
+                <section class="house-tapping-identity">
+                    <label>Application Number<input id="tappingApplicationNumber" readonly /></label>
+                    <label class="house-tapping-wide">Applicant Name<input id="tappingApplicantName" readonly /></label>
+                    <label>Date Applied<input id="tappingDateApplied" readonly /></label>
+                    <label class="house-tapping-wide">Address<input id="tappingAddress" readonly /></label>
+                    <label>Classification<input id="tappingClassification" readonly /></label>
+                    <label>Inspected By<input id="tappingInspectedBy" readonly /></label>
+                    <label>Date Inspected<input id="tappingDateInspected" readonly /></label>
+                </section>
+
+                <section class="house-tapping-section">
+                    <div class="house-tapping-grid house-tapping-grid--meter">
+                        <label>Zone<select id="tappingZone" required><option value="">Select zone</option></select></label>
+                        <label>Meter Brand<select id="tappingMeterBrand" required><option value="">Select meter brand</option></select></label>
+                        <label>Serial Number<input id="tappingSerialNumber" maxlength="100" required /></label>
+                        <label>Book<select id="tappingBook" required><option value="">Select book</option></select></label>
+                        <label>Meter Size<select id="tappingMeterSize" required>
+                            <option value="0.5">1/2</option><option value="0.75">3/4</option><option value="1">1</option>
+                            <option value="1.5">1 1/2</option><option value="2">2</option>
+                        </select></label>
+                        <label>Initial Reading<input id="tappingInitialReading" type="number" min="0" step="0.01" required /></label>
+                    </div>
+                </section>
+
+                <section class="house-tapping-section">
+                    <div class="house-tapping-grid house-tapping-grid--completion">
+                        <div>
+                            <label>Accomplished By<select id="tappingAccomplishedBy" required><option value="">Select personnel</option></select></label>
+                            <label>Date Accomplished<input id="tappingDateAccomplished" type="datetime-local" required /></label>
+                        </div>
+                        <label>Remarks<textarea id="tappingRemarks" maxlength="2000" placeholder="Remarks"></textarea></label>
+                    </div>
+                </section>
+
+                <div class="inspection-message" id="tappingMessage" role="status"></div>
+                <div class="house-tapping-actions">
+                    <button type="button" class="inspection-save-button" id="tappingSaveButton">Save</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="dashboard-modal" id="workOrderModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="workOrderModal"></div>
+        <section class="dashboard-modal__panel dashboard-modal__panel--work-order" role="dialog" aria-modal="true" aria-labelledby="workOrderTitle">
+            <header class="dashboard-modal__header work-order-header">
+                <div>
+                    <span class="dashboard-modal__eyebrow" id="workOrderEyebrow">Work order</span>
+                    <h2 id="workOrderTitle">Work Order</h2>
+                </div>
+                <div class="work-order-job-badge" id="workOrderJobBadge" hidden>
+                    <span>Job order</span>
+                    <strong id="workOrderJobNumber">—</strong>
+                </div>
+                <button type="button" class="dashboard-modal__close" data-close-modal="workOrderModal" aria-label="Close">&times;</button>
+            </header>
+
+            <div class="work-order-content">
+
+                @* Identity *@
+                <section class="work-order-identity">
+                    <div class="inspection-field"><span>Application number</span><strong id="workOrderApplicationNumber">—</strong></div>
+                    <div class="inspection-field"><span>Applicant name</span><strong id="workOrderApplicantName">—</strong></div>
+                    <div class="inspection-field"><span>Account number</span><strong id="workOrderAccountNumber">—</strong></div>
+                    <div class="inspection-field work-order-address"><span>Service address</span><strong id="workOrderAddress">—</strong></div>
+                    <div class="inspection-field"><span>Service type</span><strong id="workOrderServiceName">—</strong></div>
+                </section>
+
+                @* Work details *@
+                <section class="inspection-card">
+                    <h3>Work order details</h3>
+                    <div class="inspection-form-grid">
+                        <label>Assigned to<select id="workOrderAssignedTo"><option value="">Select personnel</option></select></label>
+                        <label>Status<select id="workOrderStatus">
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="On Hold">On Hold</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select></label>
+                        <label>Scheduled date<input type="date" id="workOrderScheduledDate" /></label>
+                        <label>Completion date<input type="date" id="workOrderCompletionDate" /></label>
+                        <label>Meter number<input id="workOrderMeterNumber" maxlength="100" placeholder="Meter serial number" /></label>
+                        <label>Pipe size<select id="workOrderPipeSize">
+                            <option value="">Select pipe size</option>
+                            <option>1/2</option><option>3/4</option><option>1</option>
+                            <option>1 1/2</option><option>2</option>
+                        </select></label>
+                        <label>Work location<input id="workOrderLocation" maxlength="255" placeholder="Exact work location" /></label>
+                        <label class="inspection-remarks">Work notes<textarea id="workOrderNotes" maxlength="2000" placeholder="Instructions, findings, and remarks"></textarea></label>
+                    </div>
+                </section>
+
+                @* Materials *@
+                <section class="inspection-card">
+                    <h3>Materials used</h3>
+                    <div class="work-order-material-composer">
+                        <input id="workOrderMaterialDesc" maxlength="200" placeholder="Material description" />
+                        <input id="workOrderMaterialQty" type="number" min="1" step="1" placeholder="Qty" />
+                        <button type="button" class="charge-add-button" id="workOrderAddMaterial">Add</button>
+                    </div>
+                    <div class="work-order-material-table-wrap">
+                        <table class="charge-table">
+                            <thead><tr><th>Description</th><th>Quantity</th></tr></thead>
+                            <tbody id="workOrderMaterialRows"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <div class="inspection-message" id="workOrderMessage" role="status"></div>
+                <div class="inspection-actions">
+                    <button type="button" class="inspection-secondary-button" data-close-modal="workOrderModal">Cancel</button>
+                    <button type="button" class="inspection-save-button" id="workOrderSaveButton">Save work order</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    @* Service Request detail modal — opened by clicking a row in the SR list *@
+    <div class="dashboard-modal" id="srDetailModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="srDetailModal"></div>
+        <section class="dashboard-modal__panel sr-detail-panel" role="dialog" aria-modal="true" aria-labelledby="srDetailTitle">
+<header class="dashboard-modal__header">
+                <div><span class="dashboard-modal__eyebrow" id="srDetailEyebrow">Service Request</span><h2 id="srDetailTitle">Service Request - Job Order / Maintenance / Complaints</h2></div>
+                <nav class="sr-document-links" aria-label="Service request documents">
+                    <a id="srDetailPdf" href="#" target="_blank" rel="noopener" title="View PDF" aria-label="View service request PDF">
+                        <span>PDF</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5" /></svg>
+                    </a>
+                    <a id="srDetailLedger" href="#srAccountLedgerModal" title="View ledger" aria-label="View account ledger">
+                        <span>Ledger</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M9 3v18M12 8h5M12 12h5M12 16h5" /></svg>
+                    </a>
+                </nav>
+                <button type="button" class="dashboard-modal__close" data-close-modal="srDetailModal" aria-label="Close">&times;</button></header>
+<div class="sr-detail-content">
+                <div class="sr-detail-grid">
+                <div class="sr-detail-field"><span>Account Number</span><strong id="srDetailAccountNumber">&mdash;</strong></div>
+                <div class="sr-detail-field"><span>Job Order Number</span><strong id="srDetailJobNumber">&mdash;</strong></div>
+                <div class="sr-detail-field"><span>Account Name</span><strong id="srDetailAccountName">&mdash;</strong></div>
+                <div class="sr-detail-field"><span>Job Order Date</span><strong id="srDetailJobDate">&mdash;</strong></div>
+                <div class="sr-detail-field"><span>Address</span><strong id="srDetailAddress">&mdash;</strong></div>
+                <div class="sr-detail-field"><span>Source</span><input id="srDetailSource" maxlength="100" aria-label="Source" /></div>
+                <div class="sr-detail-field"><span>Reported By</span><input id="srDetailReportedBy" maxlength="200" aria-label="ReportedBy" /></div>
+                <div class="sr-detail-field"><span>JO Type</span><strong id="srDetailJobType">&mdash;</strong></div>
+                <div class="sr-detail-field"><span>Contact Number</span><input id="srDetailContact" maxlength="50" aria-label="Contact Number" /></div>
+                <div class="sr-detail-field"><span>Status</span><strong id="srDetailStatus">&mdash;</strong></div></div>
+<div class="sr-received"><span>Received By</span><strong id="srDetailReceivedBy">&mdash;</strong></div><h3>Request details</h3>
+<div class="sr-detail-grid">
+                <div class="sr-detail-field"><span>Job Description</span><strong id="srDetailDescription">&mdash;</strong></div>
+                <div class="sr-detail-field"><span>Referred To</span><strong id="srDetailReferredTo">&mdash;</strong></div>
+                <div class="sr-detail-field"><span>Date Referred</span><strong id="srDetailDateReferred">&mdash;</strong></div>
+                <div class="sr-detail-field"><span>Name</span><input id="srDetailName" maxlength="200" aria-label="Name" /></div></div>
+                <div class="sr-detail-field"><span>Particulars</span><input id="srDetailParticulars" maxlength="2000" aria-label="Particulars" /></div></div>
+            <footer class="sr-detail-footer">
+                <p id="srDetailMessage" role="status"></p>
+                <button type="button" class="sr-detail-cancel" data-close-modal="srDetailModal">Cancel</button>
+                <button type="button" class="sr-detail-save" id="srDetailSave">Save</button>
+                <button type="button" class="sr-detail-accomplish" id="srDetailAccomplish">Accomplished</button>
+            </footer>
+        </section>
+    </div>
+
+    @* Service Request list modal — opened by clicking a summary table row *@
+    <div class="dashboard-modal" id="serviceRequestModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="serviceRequestModal"></div>
+        <section class="dashboard-modal__panel dashboard-modal__panel--applications" role="dialog" aria-modal="true" aria-labelledby="serviceRequestModalTitle">
+            <header class="dashboard-modal__header">
+                <div>
+                    <span class="dashboard-modal__eyebrow">Service queue</span>
+                    <h2 id="serviceRequestModalTitle">Service Requests</h2>
+                </div>
+                <button type="button" class="dashboard-modal__close" data-close-modal="serviceRequestModal" aria-label="Close">&times;</button>
+            </header>
+            <div class="application-toolbar sr-list-toolbar">
+                <div class="sr-list-search"><label for="serviceRequestSearch">Search</label>
+                <input type="search" id="serviceRequestSearch" placeholder="Search job order, account, or name" autocomplete="off" /></div>
+                <div class="sr-list-date" id="srDateFilters" hidden><label for="srDateFrom">Job-order date from</label><input type="date" id="srDateFrom" /></div>
+                <div class="sr-list-date" id="srDateEndFilters" hidden><label for="srDateTo">To</label><input type="date" id="srDateTo" /></div>
+            </div>
+            <div class="application-list" id="serviceRequestList">
+                <div class="dashboard-modal__state">Select a request type to view entries.</div>
+            </div>
+            <footer class="sr-list-pagination" id="srPagination" hidden><span id="srResultCount" role="status" aria-live="polite"></span><div><button type="button" class="inspection-secondary-button" id="srPrevious">Previous</button><span id="srPageLabel"></span><button type="button" class="inspection-secondary-button" id="srNext">Next</button></div></footer>
+        </section>
+    </div>
+
+    <div class="dashboard-modal" id="srAccountLedgerModal" aria-hidden="true">
+        <div class="dashboard-modal__backdrop" data-close-modal="srAccountLedgerModal"></div>
+        <section class="dashboard-modal__panel sr-account-ledger-panel" role="dialog" aria-modal="true" aria-labelledby="srAccountLedgerTitle">
+            <header class="dashboard-modal__header">
+                <div><span class="dashboard-modal__eyebrow">Customer account</span><h2 id="srAccountLedgerTitle">Billing ledger</h2></div>
+                <button type="button" class="dashboard-modal__close" data-close-modal="srAccountLedgerModal" aria-label="Close ledger">&times;</button>
+            </header>
+            <div class="sr-account-ledger-content">
+                <p id="srAccountLedgerIdentity"></p>
+                <p id="srAccountLedgerMessage" role="status"></p>
+                <table class="sr-account-ledger-table">
+                    <thead><tr><th scope="col">Reference / Date</th><th scope="col">Previous</th><th scope="col">Present</th><th scope="col">Usage</th><th scope="col">Debit</th><th scope="col">Credit</th><th scope="col">Balance</th><th scope="col">Processed by</th></tr></thead>
+                    <tbody id="srAccountLedgerRows"></tbody>
+                    <tfoot><tr><th scope="row" colspan="6">Outstanding billing balance</th><td id="srAccountLedgerBalance">—</td><td></td></tr></tfoot>
+                </table>
             </div>
         </section>
     </div>

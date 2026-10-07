@@ -5275,7 +5275,9 @@ html .oc-modal select option {
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--color-border);
-  overflow: hidden;
+  /* Account suggestions are absolutely positioned below the lookup row. */
+  overflow: visible;
+  min-width: 0;
 }
 
 .oc-others-account-row {

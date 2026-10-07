@@ -37,6 +37,11 @@ namespace TMCWD.Data.Entities
         [MaxLength(50), Column("MeterNumber")]
         public string MeterNumber { get; set; } = string.Empty;
 
+        // The installation baseline is persisted in the linked application's
+        // tapping_data. It is populated by AccountService for reading workflows.
+        [NotMapped]
+        public decimal InitialReading { get; set; }
+
         [Column("UnitNo")]
         public string? UnitNumber { get; set; } = string.Empty;
 

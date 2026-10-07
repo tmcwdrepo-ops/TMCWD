@@ -10,6 +10,7 @@
 }
 
 <section class="page-section" aria-label="Other Charges">
+    @Html.AntiForgeryToken()
 
     <div class="panel">
 
@@ -30,6 +31,10 @@
             <div class="oc-total-due">
                 <span class="oc-label">Total Due</span>
                 <strong id="ocTotalDue">0.00</strong>
+                <button type="button" class="btn btn--green oc-post-button" id="ocPostChargesBtn" disabled>
+                    Post to Collection
+                </button>
+                <span class="oc-post-message" id="ocPostMessage" role="status"></span>
             </div>
         </div>
 
@@ -51,12 +56,15 @@
             <div class="oc-field">
                 <label class="oc-label" for="ocPayableIn">Payable In</label>
                 <select id="ocPayableIn" class="oc-input oc-select">
-                    <option value="" selected>Select...</option>
+                    <option value="" selected>— optional —</option>
                     <option value="Cash">Cash</option>
                     <option value="Check">Check</option>
                     <option value="GCash">GCash</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
                     <option value="Maya">Maya</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="3 months">3 months</option>
+                    <option value="6 months">6 months</option>
+                    <option value="12 months">12 months</option>
                     <option value="__other__">Other...</option>
                 </select>
                 <input type="text" id="ocPayableInOther" class="oc-input oc-payable-other"

@@ -49,11 +49,20 @@
             }
 
             public async Task<BillingBase> Get(int id)
+            
             {
                 var response = await _service.Client.GetAsync($"api/Billing/Get/{id}");
                 var data = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode) return null;
                 return ConvertJsonToBilling(data);
+            }
+
+            public async Task<CollectionBill?> GetCollectionBill(string reference)
+            {
+                using var response = await _service.Client.GetAsync($"api/Billing/Collection/{Uri.EscapeDataString(reference)}");
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<CollectionBill>();
             }
 
             public async Task<List<BillingBase>> GetAll()
@@ -66,7 +75,7 @@
 
             public async Task<BillingBase> GetByReference(string reference)
             {
-                var response = await _service.Client.GetAsync($"api/Billing/GetByRefence/{reference}");
+                var response = await _service.Client.GetAsync($"api/Billing/GetByBillingReference/{Uri.EscapeDataString(reference)}");
                 var data = await response.Content.ReadAsStringAsync();
                 return ConvertJsonToBilling(data);
             }

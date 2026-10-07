@@ -6,6 +6,7 @@ namespace TMCWD.Data.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
     public class PaymentController : Controller
     {
 
@@ -75,10 +76,9 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
-        public async Task<IActionResult> SaveUpdate(int userId, Payment payment)
+        public IActionResult SaveUpdate(int userId, Payment payment)
         {
-            var savedPayment = await _service.SaveUpdate(userId, payment);
-            return Ok(savedPayment);
+            return Conflict(new { message = "Record payments through ProcessCollection or the posted Other Charges workflow so balances are updated atomically." });
         }
 
         [HttpPost("ProcessCollection/{userId}")]
@@ -88,6 +88,8 @@ namespace TMCWD.Data.Controllers
         {
             try
             {
+                userId = ActorId;
+                if (userId <= 0) return Unauthorized();
                 var payments = await _service.ProcessCollectionPayment(userId, request);
                 return Ok(new { success = true, paymentCount = payments.Count });
             }
@@ -133,6 +135,8 @@ namespace TMCWD.Data.Controllers
         {
             try
             {
+                userId = ActorId;
+                if (userId <= 0) return Unauthorized();
                 await _service.CancelInvoice(userId, request);
                 return Ok(new { success = true });
             }
@@ -143,6 +147,7 @@ namespace TMCWD.Data.Controllers
         }
 
         #endregion
+        private int ActorId => int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var id) ? id : 0;
 
     }
 }

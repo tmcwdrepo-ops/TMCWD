@@ -1,0 +1,36 @@
+name: tmcwd_meter_reader_mobile
+description: Offline meter reading for TMCWD.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.12.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  sqflite: ^2.4.4
+  flutter_secure_storage: ^11.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  sqflite_common_ffi: ^2.4.3
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - lib/data/local/schema.sql
+    - assets/icons/tmcwd_logo.png
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+
+  image_path: "assets/icons/tmcwd_logo.png"
+
+  adaptive_icon_foreground: "assets/icons/tmcwd_logo_foreground.png"
+  adaptive_icon_background: "#FFFFFF"
+
+  min_sdk_android: 23

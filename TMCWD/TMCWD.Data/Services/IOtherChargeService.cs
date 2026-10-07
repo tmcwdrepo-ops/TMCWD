@@ -14,6 +14,8 @@ namespace TMCWD.Data.Services
 
         public Task<OtherCharge> Deactivate(int id, int userId);
 
+        public Task<int> PostToCollection(int userId, List<int> otherChargeIds);
+
         /// <summary>
         /// Processes payment for a set of other-charge records identified by their IDs.
         /// Marks each charge as Paid, writes a Payment row, and returns the new invoice number.

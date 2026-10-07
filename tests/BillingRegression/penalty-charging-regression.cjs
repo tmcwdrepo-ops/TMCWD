@@ -19,7 +19,7 @@ function page(fetch) {
         return nodes.get(id);
     }
     let ready;
-    const context = vm.createContext({ fetch, Date, console, setTimeout: () => 1, clearTimeout() {},
+    const context = vm.createContext({ fetch, Date, URLSearchParams, console, setTimeout: () => 1, clearTimeout() {},
         document: { getElementById: node, querySelectorAll: () => [], querySelector: () => ({ value: 'TOKEN' }),
             addEventListener(type, fn) { if (type === 'DOMContentLoaded') ready = fn; }, createElement: () => node('new') } });
     vm.runInContext(source, context);

@@ -12,6 +12,8 @@ namespace TMCWD.Data.Services
         private readonly UserDbContext _context;
         private readonly IBillingService _billingService;
         private readonly IWaterRateService _waterRateService;
+        private readonly IAccountService _accountService;
+        private readonly IReadingService _readingService;
 
         #endregion
 
@@ -20,11 +22,15 @@ namespace TMCWD.Data.Services
         public ReadingSheetService(
             UserDbContext context,
             IBillingService billingService,
-            IWaterRateService waterRateService)
+            IWaterRateService waterRateService,
+            IAccountService accountService,
+            IReadingService readingService)
         {
             _context = context;
             _billingService = billingService;
             _waterRateService = waterRateService;
+            _accountService = accountService;
+            _readingService = readingService;
         }
 
         #endregion
@@ -279,72 +285,50 @@ namespace TMCWD.Data.Services
 
         public async Task<List<ReadingSheetAccountDto>> GetAccountsForReadingSheet(int readingSheetId)
         {
-            var currentReadings = await _context.Readings
-                .Where(r => r.ReadingSheetId == readingSheetId)
-                .Join(_context.Accounts,
-                    r => r.AccountId,
-                    a => a.Id,
-                    (r, a) => new { Reading = r, Account = a })
-                .Join(_context.Customers,
-                    ra => ra.Account.CustomerId,
-                    c => c.Id,
-                    (ra, c) => new { ra.Reading, ra.Account, Customer = c })
-                .ToListAsync();
-
-            var readingIds = currentReadings.Select(x => x.Reading.Id).ToList();
-            var billings = await _context.Billings
-                .Where(b => readingIds.Contains(b.ReadingId))
-                .ToListAsync();
-
+            var sheet = await Get(readingSheetId);
+            if (sheet == null || sheet.Status == ReadingStatus.Deleted) return new();
+            var roster = await _accountService.GetReadingSheetRoster(sheet);
+            var readings = (await _readingService.GetByReadingSheetId(readingSheetId))
+                .Where(r => r.Status != ReadingStatus.Deleted)
+                .GroupBy(r => r.AccountId)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.Id).First());
+            var customerIds = roster.Select(a => a.CustomerId).Distinct().ToList();
+            var customers = await _context.Customers.Where(c => customerIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id);
+            var readingIds = readings.Values.Select(r => r.Id).ToList();
+            var billings = await _context.Billings.Where(b => readingIds.Contains(b.ReadingId)).ToListAsync();
             var result = new List<ReadingSheetAccountDto>();
-
-            foreach (var item in currentReadings)
+            foreach (var account in roster)
             {
-                decimal prev = item.Reading.PreviousReading;
-                decimal pres = item.Reading.CurrentReading;
-                decimal usage = pres - prev;
-
-                var billing = billings.FirstOrDefault(b => b.ReadingId == item.Reading.Id);
-
-                var fullName = string.Join(" ", new[]
+                readings.TryGetValue(account.Id, out var reading);
+                customers.TryGetValue(account.CustomerId, out var customer);
+                var previous = reading == null
+                    ? await _readingService.GetPreviousForSheet(account.Id, readingSheetId) : null;
+                var prev = reading?.PreviousReading ?? previous?.CurrentReading ?? account.InitialReading;
+                decimal? pres = reading?.CurrentReading;
+                decimal? usage = pres - prev;
+                var billing = reading == null ? null : billings.FirstOrDefault(b => b.ReadingId == reading.Id);
+                var fullName = customer == null ? account.AccountNumber : string.Join(" ", new[]
                 {
-            item.Customer.Firstname,
-            item.Customer.Middlename,
-            item.Customer.Lastname
-            }.Where(n => !string.IsNullOrWhiteSpace(n)));
-
-                    var address = string.Join(" ", new[]
-                    {
-                item.Account.UnitNumber,
-                item.Account.Building,
-                item.Account.HouseNumber,
-                item.Account.Street,
-                item.Account.Barangay
-            }.Where(a => !string.IsNullOrWhiteSpace(a)));
-
+                    customer.Firstname, customer.Middlename, customer.Lastname
+                }.Where(n => !string.IsNullOrWhiteSpace(n)));
+                var address = string.Join(" ", new[]
+                {
+                    account.UnitNumber, account.Building, account.HouseNumber, account.Street, account.Barangay
+                }.Where(a => !string.IsNullOrWhiteSpace(a)));
                 result.Add(new ReadingSheetAccountDto
                 {
-                    Name = fullName,
-                    Code = item.Account.AccountNumber,
-                    Number = item.Account.AccountNumber,
-                    Prev = prev,
-                    Pres = pres,
-                    Usage = usage,
+                    Name = fullName, Code = account.AccountNumber, Number = account.AccountNumber,
+                    Prev = prev, Pres = pres, Usage = usage,
                     Trend = usage > 0 ? "up" : usage < 0 ? "down" : "normal",
-                    Balance = 0,
-                    Amount = 0,
-                    Total = 0,
-                    Status = item.Reading.Status.ToString(),
-                    Category = "normal",
-                    Classification = (int)item.Account.Classification,
-                    MeterSize = item.Account.MeterSize > 0 ? item.Account.MeterSize : 0.5m,
-                    Address = address,
-                    MeterNo = item.Account.MeterNumber,
-                    ReferenceNumber = billing?.BillingReferenceId,
-                    ReadingDate = item.Reading.DateCreated
+                    Balance = 0, Amount = 0, Total = 0,
+                    Status = reading?.Status.ToString() ?? "Pending", Category = "normal",
+                    Classification = account.Classification,
+                    MeterSize = account.MeterSize > 0 ? account.MeterSize : 0.5m,
+                    Address = address, MeterNo = account.MeterNumber,
+                    ReferenceNumber = billing?.BillingReferenceId, ReadingDate = reading?.DateCreated
                 });
             }
-
             return result;
         }
         /// <summary>
@@ -423,6 +407,33 @@ namespace TMCWD.Data.Services
 
                 if (amount < 0) continue; // present < previous — invalid, skip
 
+                var lines = InvoiceChargeLines((int)reading.PreviousReading, (int)reading.CurrentReading, rate);
+                var waterAmount = lines.Sum(line => line.Amount);
+                var maintenance = TMCWD.Model.Billing.BillingCharges.MeterMaintenanceFee;
+                if (waterAmount + maintenance != amount)
+                    throw new InvalidOperationException("Invoice charge lines do not match the posted bill.");
+
+                // The snapshot captures the water-charge components at the exact
+                // post time so they are immune to future rate changes.
+                // OtherCharges and BillingAdjustment start at zero — those are
+                // posted after billing and are not part of the water invoice.
+                // TotalDue = waterAmount + maintenance (the authoritative posted amount).
+                // Freeze the consumption period from authoritative reading dates, not sheet scheduling dates.
+                // PowerCostAdjustment and ArrearsAmount are not yet authoritative.
+                // Penalty must NOT be stored in the snapshot.
+                var previousReading = await _readingService.GetPreviousBeforeReading(reading.AccountId, reading.DateCreated);
+                var snapshot = new TMCWD.Model.Billing.OfficialInvoiceSnapshot(
+                    SchemaVersion: 1,
+                    PeriodFrom: previousReading?.DateCreated,
+                    PeriodTo: reading.DateCreated,
+                    BillAmount: waterAmount,
+                    MeterMaintenance: maintenance,
+                    PowerCostAdjustment: null,
+                    ArrearsAmount: null,
+                    OtherCharges: 0m,
+                    BillingAdjustment: 0m,
+                    TotalDue: amount,       // waterAmount + maintenance = TotalBillAmount at post time
+                    ChargeLines: lines);
                 var billing = new Billing
                 {
                     AccountId = account.Id,
@@ -431,12 +442,19 @@ namespace TMCWD.Data.Services
                     BillingPeriod = readingSheet.BillingDate.Value.Date,
                     TotalBillAmount = amount,
                     RemainingAmount = amount,
+                    InvoiceSnapshotJson = System.Text.Json.JsonSerializer.Serialize(snapshot),
                     PaymentStatus = (int)PaymentStatus.Unpaid,
                     CreatedBy = userId,
                     DateCreated = DateTime.Now,
                     UpdatedBy = userId,
                     DateUpdated = DateTime.Now
                 };
+
+                // Assign a stable, unique, customer-facing service invoice number
+                // inside this transaction so the counter lock is held atomically.
+                // Idempotent: a retry will skip already-billed reading IDs above,
+                // so this path is only reached once per reading.
+                await _billingService.AssignServiceInvoiceNumber(billing);
 
                 _context.Billings.Add(billing);
 
@@ -460,28 +478,26 @@ namespace TMCWD.Data.Services
         /// readings remain). Returns null if the sheet doesn't exist or
         /// still has pending readings.
         /// </summary>
-        public async Task<ReadingSheet> CompleteReadingSheet(int readingSheetId, int userId)
+        public async Task<ReadingSheet?> CompleteReadingSheet(int readingSheetId, int userId)
         {
-            var sheet = await _context.ReadingSheets
-                .FirstOrDefaultAsync(x => x.Id == readingSheetId);
-
-            if (sheet == null)
-                return null;
-
-            var pendingCount = await _context.Readings
-                .Where(r => r.ReadingSheetId == readingSheetId
-                         && (r.Status == ReadingStatus.Created
-                             || r.Status == ReadingStatus.InProgress))
-                .CountAsync();
-
-            if (pendingCount > 0)
-                return null; // caller should treat null as "cannot complete yet"
-
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var locked = await _context.ReadingSheets
+                .FromSqlInterpolated($"SELECT * FROM reading_sheets WHERE Id = {readingSheetId} FOR UPDATE").ToListAsync();
+            var sheet = locked.SingleOrDefault();
+            if (sheet == null || sheet.Status == ReadingStatus.Deleted) return null;
+            if (sheet.Status == ReadingStatus.Completed) return sheet;
+            if (sheet.Status != ReadingStatus.Created && sheet.Status != ReadingStatus.InProgress) return null;
+            var roster = await _accountService.GetReadingSheetRoster(sheet);
+            var readings = await _readingService.GetByReadingSheetId(readingSheetId);
+            if (roster.Count == 0 || readings.GroupBy(r => r.AccountId).Any(g => g.Count() != 1)
+                || readings.Any(r => r.Status != ReadingStatus.Completed || !r.IsCompleted)
+                || roster.Any(a => !readings.Any(r => r.AccountId == a.Id))) return null;
+            var bills = await _billingService.GetByReadings(readings.Select(r => checked((int)r.Id)).ToArray());
+            if (readings.Any(r => !bills.Any(bill => bill.ReadingId == r.Id))) return null;
             sheet.Status = ReadingStatus.Completed;
             sheet.DateUpload = DateTime.Now;
-
             await _context.SaveChangesAsync();
-
+            await transaction.CommitAsync();
             return sheet;
         }
 
@@ -500,21 +516,27 @@ namespace TMCWD.Data.Services
         {
             if (presentReading < previousReading) return -1;
 
-            int usage = presentReading - previousReading;
-            decimal total;
+            return InvoiceChargeLines(previousReading, presentReading, rate).Sum(line => line.Amount)
+                + TMCWD.Model.Billing.BillingCharges.MeterMaintenanceFee;
+        }
 
-            if (usage <= 10)
-                total = rate.MinimumCharge;
-            else if (usage <= 20)
-                total = rate.MinimumCharge + ((usage - 10) * rate.Rate11To20);
-            else if (usage <= 30)
-                total = rate.MinimumCharge + (10 * rate.Rate11To20) + ((usage - 20) * rate.Rate21To30);
-            else if (usage <= 40)
-                total = rate.MinimumCharge + (10 * rate.Rate11To20) + (10 * rate.Rate21To30) + ((usage - 30) * rate.Rate31To40);
-            else
-                total = rate.MinimumCharge + (10 * rate.Rate11To20) + (10 * rate.Rate21To30) + (10 * rate.Rate31To40) + ((usage - 40) * rate.Rate41Up);
-
-            return total + TMCWD.Model.Billing.BillingCharges.MeterMaintenanceFee;
+        private static IReadOnlyList<TMCWD.Model.Billing.InvoiceChargeLine> InvoiceChargeLines(int previous, int current, WaterRate rate)
+        {
+            var usage = current - previous;
+            var lines = new List<TMCWD.Model.Billing.InvoiceChargeLine>
+            {
+                new("Minimum (0-10 cu.m)", null, rate.MinimumCharge, rate.MinimumCharge, 0)
+            };
+            foreach (var (start, end, price, description) in new[] {
+                (10, 20, rate.Rate11To20, "11-20 cu.m"),
+                (20, 30, rate.Rate21To30, "21-30 cu.m"),
+                (30, 40, rate.Rate31To40, "31-40 cu.m"),
+                (40, int.MaxValue, rate.Rate41Up, "41+ cu.m") })
+            {
+                var quantity = Math.Max(0, Math.Min(usage, end) - start);
+                if (quantity > 0) lines.Add(new(description, quantity, price, quantity * price, lines.Count));
+            }
+            return lines;
         }
 
         #endregion

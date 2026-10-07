@@ -33,7 +33,26 @@ builder.Services.AddScoped<AuthenticatedUserService>(services =>
 
     return authenticatedUser;
 });
-builder.Services.AddSingleton<WebService>();
+builder.Services.AddScoped<WebService>(services =>
+{
+    var service = new WebService(services.GetRequiredService<IHttpClientFactory>());
+    var user = services.GetRequiredService<AuthenticatedUserService>().User;
+    if (user.Id > 0 && user.Role.HasValue)
+    {
+        // Bridge the trusted server session to the API; never share user headers across requests.
+        var config = services.GetRequiredService<IConfiguration>();
+        var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var token = handler.CreateToken(new SecurityTokenDescriptor {
+            Subject = new System.Security.Claims.ClaimsIdentity([
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, user.Role.Value.ToString())]),
+            Issuer = config["Jwt:Issuer"], Audience = config["Jwt:Audience"], Expires = DateTime.UtcNow.AddMinutes(5),
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]!)), SecurityAlgorithms.HmacSha256)
+        });
+        service.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", handler.WriteToken(token));
+    }
+    return service;
+});
 builder.Services.AddTransient<UserTransaction>();
 builder.Services.AddTransient<InspectionTypeTransaction>();
 builder.Services.AddTransient<AccountTransaction>();

@@ -51,12 +51,44 @@ namespace TMCWD.Application.Controllers
             }
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveServiceRequest([FromBody] ServiceRequestOrderRecord request)
+        {
+            if (_authenticatedUserService.User == null) return Unauthorized();
+            if (request.RequestId <= 0) return BadRequest("Service request is required.");
+            try { return Ok(await _dashboardTransaction.SaveServiceRequest(_authenticatedUserService.User.Id, request)); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AccomplishServiceRequest(long requestId)
+        {
+            if (_authenticatedUserService.User == null) return Unauthorized();
+            if (requestId <= 0) return BadRequest("Service request is required.");
+            try
+            {
+                await _dashboardTransaction.AccomplishServiceRequest(requestId, _authenticatedUserService.User.Id);
+                return Ok(new { status = "Done" });
+            }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
         public async Task<IActionResult> GetUsers(string searchString)
         {
             var userList = await _userTransaction.SearchUser(searchString);
             if (userList == null) userList = await _userTransaction.GetUsers();
             if (userList == null) return NotFound();
             return Ok(userList);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetServiceRequestsByDescription(string? description, string status = "Pending")
+        {
+            if (string.IsNullOrWhiteSpace(description) && status != "Completed") return BadRequest("Description is required.");
+            try { return Ok(await _dashboardTransaction.GetServiceRequestsByDescription(description, status)); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
         }
 
         [HttpGet]
@@ -72,6 +104,22 @@ namespace TMCWD.Application.Controllers
         {
             if (requestId <= 0) return BadRequest("Service application is required.");
             try { return Ok(await _dashboardTransaction.GetServiceInspection(requestId)); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetApplicationPayment(long applicationId)
+        {
+            if (applicationId <= 0) return BadRequest("Application is required.");
+            try { return Ok(await _dashboardTransaction.GetApplicationPayment(applicationId)); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetApplicationTicket(long applicationId)
+        {
+            if (applicationId <= 0) return BadRequest("Application is required.");
+            try { return Ok(await _dashboardTransaction.GetApplicationTicket(applicationId)); }
             catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
         }
 
@@ -115,6 +163,61 @@ namespace TMCWD.Application.Controllers
         {
             if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
             try { return Ok(await _dashboardTransaction.SaveWorkOrder(_authenticatedUserService.User.Id, order)); }
+            catch (HttpRequestException exception) { return BadRequest(exception.Message); }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetHouseTapping(long requestId)
+        {
+            if (requestId <= 0) return BadRequest("Tapping application is required.");
+            try { return Ok(await _dashboardTransaction.GetHouseTapping(requestId)); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveHouseTapping([FromBody] HouseTappingRecord record)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            if (record.RequestId <= 0) return BadRequest("Tapping application is required.");
+            try { return Ok(await _dashboardTransaction.SaveHouseTapping(_authenticatedUserService.User.Id, record)); }
+            catch (HttpRequestException exception) { return BadRequest(exception.Message); }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetServiceRequestAssignees()
+        {
+            try { return Ok(await _dashboardTransaction.GetServiceRequestAssignees()); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveInstallationServiceRequest([FromBody] ServiceRequestOrderRecord request)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            if (request.ApplicationId <= 0) return BadRequest("Installation application is required.");
+            try { return Ok(await _dashboardTransaction.CreateServiceRequest(_authenticatedUserService.User.Id, request)); }
+            catch (HttpRequestException exception) { return BadRequest(exception.Message); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ActivateAccount([FromBody] ActivateAccountRequest request)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            if (request.ApplicationId <= 0) return BadRequest("Application is required.");
+            try { return Ok(await _dashboardTransaction.ActivateAccount(_authenticatedUserService.User.Id, request)); }
+            catch (HttpRequestException exception) { return BadRequest(exception.Message); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AdvanceStage([FromBody] AdvanceStageRequest request)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            if (request.ApplicationId <= 0) return BadRequest("Application is required.");
+            try { return Ok(await _dashboardTransaction.AdvanceStage(_authenticatedUserService.User.Id, request)); }
             catch (HttpRequestException exception) { return BadRequest(exception.Message); }
         }
 

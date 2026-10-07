@@ -86,6 +86,13 @@ namespace TMCWD.Model.Billing.Interfaces
         [DisplayName("Remaining Amount")]
         public decimal RemainingAmount { get; set; }
 
+        /// <summary>
+        /// Customer-facing service invoice number.
+        /// Assigned by PartialPost. NULL for pre-Phase-6D historical rows.
+        /// </summary>
+        [DisplayName("Service Invoice Number")]
+        public string? ServiceInvoiceNumber { get; set; }
+
         #endregion
 
         #region methods

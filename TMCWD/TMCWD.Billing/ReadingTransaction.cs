@@ -67,7 +67,7 @@ namespace TMCWD.Billing
 
         public async Task<List<Reading>> GetByReader(int readerId)
         {
-            var response = await _service.Client.GetAsync($"api/Reading/GetByAccountAndBillingPeriod/{readerId}");
+            var response = await _service.Client.GetAsync($"api/Reading/GetByReader/{readerId}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToReadings(data);

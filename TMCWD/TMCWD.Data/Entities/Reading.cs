@@ -23,6 +23,9 @@ namespace TMCWD.Data.Entities
         [Column("PreviousReading")]
         public decimal PreviousReading { get; set; }
 
+        [Column("Remarks"), MaxLength(2000)]
+        public string? Remarks { get; set; }
+
         [Column("IsCompleted")]
         public bool IsCompleted { get; set; }
 

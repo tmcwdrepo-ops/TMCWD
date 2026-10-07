@@ -283,6 +283,30 @@ namespace TMCWD.Application.Controllers
                 var readings = readingsTask.Result ?? new List<Reading>();
                 var zoneBooks = zoneBooksTask.Result ?? new List<ZoneBook>();
 
+                // A sheet's denominator must come from the accounts assigned to its
+                // Zone/Book (and sequence range), not from reading rows that happen
+                // to exist already. Otherwise a new sheet incorrectly starts at 0/0.
+                var accountTasks = readingSheets.Select(sheet =>
+                {
+                    var zoneBook = zoneBooks.FirstOrDefault(x => x.Id == sheet.ZoneBookId);
+                    return zoneBook == null
+                        ? Task.FromResult(new List<Account>())
+                        : _accountTransaction.GetByZoneBookAndSequence(
+                            zoneBook.Zone,
+                            zoneBook.Book,
+                            sheet.SeqFrom ?? 0,
+                            sheet.SeqTo ?? 0);
+                }).ToArray();
+
+                var accountsPerSheet = await Task.WhenAll(accountTasks);
+                var accountsBySheetId = readingSheets
+                    .Select((sheet, index) => new
+                    {
+                        sheet.Id,
+                        Accounts = accountsPerSheet[index] ?? new List<Account>()
+                    })
+                    .ToDictionary(x => x.Id, x => x.Accounts);
+
                 // DEBUG: Log loaded data
                 try
                 {
@@ -324,26 +348,36 @@ namespace TMCWD.Application.Controllers
                         .Where(x => x.ReadingSheetId == sheet.Id)
                         .ToList();
 
-                    // Total distinct accounts with a reading row on this sheet
-                    var totalAccounts = sheetReadings
+                    var eligibleAccountIds = accountsBySheetId[sheet.Id]
+                        .Where(x => x.Status == AccountStatus.Active
+                                 || x.Status == AccountStatus.Pending)
+                        .Select(x => x.Id)
+                        .Distinct()
+                        .ToHashSet();
+
+                    var totalAccounts = eligibleAccountIds.Count;
+
+                    var totalCompleted = sheetReadings
+                        .Where(x => eligibleAccountIds.Contains(x.AccountId)
+                                 && x.Status == ReadingStatus.Completed)
                         .Select(x => x.AccountId)
                         .Distinct()
                         .Count();
 
-                    var totalCompleted = sheetReadings.Count(
-                        x => x.Status == ReadingStatus.Completed
-                    );
-
-                    var totalInProgress = sheetReadings.Count(
-                        x => x.Status == ReadingStatus.InProgress
-                    );
+                    var totalInProgress = sheetReadings
+                        .Where(x => eligibleAccountIds.Contains(x.AccountId)
+                                 && x.Status == ReadingStatus.InProgress)
+                        .Select(x => x.AccountId)
+                        .Distinct()
+                        .Count();
 
                     // Accounts still pending — Created or InProgress, not yet Completed.
                     // Distinct by AccountId so a duplicate reading row for the same account
                     // doesn't inflate the count.
                     var totalForPosting = sheetReadings
-                        .Where(x => x.Status == ReadingStatus.Created
-                                 || x.Status == ReadingStatus.InProgress)
+                        .Where(x => eligibleAccountIds.Contains(x.AccountId)
+                                 && (x.Status == ReadingStatus.Created
+                                  || x.Status == ReadingStatus.InProgress))
                         .Select(x => x.AccountId)
                         .Distinct()
                         .Count();
@@ -421,7 +455,9 @@ namespace TMCWD.Application.Controllers
                     readerId = t.ReaderId,
                     readerName = reader?.Name ?? "—",
                     zone = zoneBook?.Zone ?? 0,
-                    book = zoneBook?.Book ?? 0
+                    book = zoneBook?.Book ?? 0,
+                    seqFrom = t.SeqFrom,
+                    seqTo = t.SeqTo
                 });
             }
 
@@ -454,6 +490,20 @@ namespace TMCWD.Application.Controllers
 
             if (zoneBook == null)
                 return BadRequest("Zone/Book combination not found.");
+            
+            if (request.SeqFrom.HasValue != request.SeqTo.HasValue)
+                {
+                    return BadRequest("Both sequence From and To are required for a scoped template.");
+                }
+
+                if (request.SeqFrom.HasValue && request.SeqTo.HasValue)
+                {
+                    if (request.SeqFrom.Value < 1 ||
+                        request.SeqTo.Value < request.SeqFrom.Value)
+                    {
+                        return BadRequest("Invalid sequence range.");
+                    }
+                }
 
             var template = new ReadingSheetTemplate
             {
@@ -461,6 +511,8 @@ namespace TMCWD.Application.Controllers
                 Name = request.Name,
                 ReaderId = request.ReaderId,
                 ZoneBookId = zoneBook.Id,
+                SeqFrom = request.SeqFrom,
+                SeqTo = request.SeqTo,
                 IsActive = request.IsActive
             };
 
@@ -634,13 +686,14 @@ namespace TMCWD.Application.Controllers
 
             foreach (var acct in accounts)
             {
+                if (acct.Pres is not decimal present) continue;
                 if (acct.Pres <= 0 && acct.Prev <= 0)
                     continue; // no reading yet — leave amount at 0
 
                 var amount = await WaterChargeCalculator.ComputeWaterCharge(
                     _waterRateTrans,
                     (int)acct.Prev,
-                    (int)acct.Pres,
+                    (int)present,
                     (AccountClassification)acct.Classification,
                     acct.MeterSize);
 

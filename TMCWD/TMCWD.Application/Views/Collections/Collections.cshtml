@@ -5,7 +5,7 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/collections.css?v=15"/>
+    <link rel="stylesheet" href="~/css/collections.css?v=16"/>
 }
 
 @section Scripts {
@@ -13,13 +13,13 @@
   <script src="~/js/collections/collection-monitoring.js?v=3"></script>
   <script src="~/js/collections/my-collection.js?v=2"></script>
   <script src="~/js/collections/ledger-modal.js?v=6"></script>
-  <script src="~/js/collections/invoice-search.js?v=2"></script>
-  <script src="~/js/collections/reprint-invoice.js?v=2"></script>
-  <script src="~/js/collections/cancel-invoice.js?v=2"></script>
-  <script src="~/js/collections/oc-modal.js?v=1"></script>
+  <script src="~/js/collections/invoice-search.js?v=3"></script>
+  <script src="~/js/collections/reprint-invoice.js?v=3"></script>
+  <script src="~/js/collections/cancel-invoice.js?v=3"></script>
+  <script src="~/js/collections/oc-modal.js?v=6"></script>
   <script src="~/js/collections/collection-report.js?v=1"></script>
   <script src="~/js/collections/batch-payments.js?v=1"></script>
-    <script src="~/js/collections.js?v=22"></script>
+    <script src="~/js/collections.js?v=25"></script>
 }
 
 @Html.AntiForgeryToken()
@@ -100,7 +100,7 @@
       </div>
 
       <div class="invoice-cluster">
-        <span class="invoice-label">Invoice No.</span>
+        <span class="invoice-label">Payment Reference</span>
         <div class="invoice-input-group">
           <span class="invoice-prefix">CR00</span>
           <input type="text" class="invoice-input" id="invoiceInput" maxlength="10" />
@@ -149,19 +149,19 @@
       <div class="nav-icon nav-icon--teal">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       </div>
-      <span>Invoice Search</span>
+      <span>Payment Receipt Search</span>
     </a>
     <a class="nav-item" id="reprintInvoiceBtn" href="#">
       <div class="nav-icon nav-icon--orange">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       </div>
-      <span>Reprint Invoice</span>
+      <span>Reprint Payment Receipt</span>
     </a>
     <a class="nav-item" id="cancelInvoiceBtn" href="#">
       <div class="nav-icon nav-icon--danger">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
       </div>
-      <span>Cancel Invoice</span>
+      <span>Cancel Payment Receipt</span>
     </a>
   </div>
 
@@ -229,7 +229,7 @@
                 <th>Bill Month</th>
                 <th>Due Date</th>
                 <th>Amount</th>
-                <th>PCA/MMF</th>
+                <th>Meter Maintenance</th>
                 <th>Penalty</th>
                 <th style="text-align:right;">Sub Total</th>
               </tr>
@@ -278,10 +278,12 @@
 
           <div class="lines">
             <div class="line"><span>Total Bill</span><span class="mono" id="sTotalBill">₱0.00</span></div>
-            <div class="line" id="sPCALine"><span>Power Cost Adjustment</span><span class="mono" id="sPCA">₱0.00</span></div>
+            <div class="line" id="sPCALine" hidden><span>Power Cost Adjustment</span><span class="mono" id="sPCA">₱0.00</span></div>
             <div class="line" id="sMMFLine"><span>Meter Maintenance</span><span class="mono" id="sMMF">₱0.00</span></div>
+            <div class="line"><span>Miscellaneous Other Charges</span><span class="mono" id="sOtherCharges">₱0.00</span></div>
+            <div class="line"><span>Billing Adjustment (included in balance)</span><span class="mono" id="sAdjustment">₱0.00</span></div>
             <div class="line strong"><span>Total Due</span><span class="mono" id="sTotalDue">₱0.00</span></div>
-            <div class="line"><span>Penalty</span><span class="mono" id="sPenalty">₱0.00</span></div>
+            <div class="line"><span>Applied Penalty</span><span class="mono" id="sPenalty">₱0.00</span></div>
             <div class="line line--discount" id="sDiscountLine" style="display:none;">
               <span class="discount-label">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;vertical-align:-1px;"><circle cx="8" cy="8" r="2.2"/><circle cx="16" cy="16" r="2.2"/><path d="M18 6L6 18"/></svg>
@@ -403,8 +405,8 @@
           <div class="action-row">
             <button class="btn btn-primary" id="payBtn">Pay</button>
             <div class="btn-row2">
-              <button class="btn btn-secondary" id="reprintBtn" title="Reprint Invoice">Reprint Invoice</button>
-              <button class="btn btn-danger" id="cancelBtn" title="Cancel Invoice">Cancel Invoice</button>
+              <button class="btn btn-secondary" id="reprintBtn" title="Reprint Payment Receipt">Reprint Payment Receipt</button>
+              <button class="btn btn-danger" id="cancelBtn" title="Cancel Payment Receipt">Cancel Payment Receipt</button>
             </div>
           </div>
 
@@ -438,8 +440,9 @@
     <div class="ps-breakdown">
       <div class="ps-breakdown-title">Cost Breakdown</div>
       <div class="ps-line"><span>Total Bills</span><span class="mono" id="psTotalBills">₱0.00</span></div>
-      <div class="ps-line"><span>Power Cost Adjustment</span><span class="mono" id="psPca">₱0.00</span></div>
+      <div class="ps-line" hidden><span>Power Cost Adjustment</span><span class="mono" id="psPca">₱0.00</span></div>
       <div class="ps-line"><span>Meter Maintenance</span><span class="mono" id="psMmf">₱0.00</span></div>
+      <div class="ps-line"><span>Miscellaneous Other Charges</span><span class="mono" id="psOtherCharges">₱0.00</span></div>
       <div class="ps-line" id="psPenaltyRow"><span>Penalty</span><span class="mono" id="psPenalty">₱0.00</span></div>
       <div class="ps-line" id="psDiscountRow" hidden><span id="psDiscountLabel">Discount</span><span class="mono" id="psDiscount">-₱0.00</span></div>
       <div class="ps-line ps-total"><span>Total</span><span class="mono" id="psTotal">₱0.00</span></div>
@@ -1023,7 +1026,7 @@
       <table class="mcl-table" id="collectionListTable">
         <thead>
           <tr>
-            <th>Invoice No.</th>
+            <th>Payment Reference</th>
             <th>Account</th>
             <th>Total Amount</th>
             <th>Transaction Type</th>
@@ -1069,14 +1072,14 @@
   </div><!-- /.mcl-modal -->
 </div><!-- /.mcl-overlay -->
 
-<!-- ===== Invoice Search Modal ===== -->
+<!-- ===== Payment Receipt Search Modal ===== -->
 <div class="is-overlay" id="isOverlay" style="display:none;" aria-modal="true" role="dialog" aria-labelledby="isModalTitle">
   <div class="is-modal">
 
     <!-- Header -->
     <div class="is-header">
-      <h2 class="is-title" id="isModalTitle">Invoice Search</h2>
-      <button class="is-close" id="isCloseBtn" aria-label="Close Invoice Search modal" type="button">
+      <h2 class="is-title" id="isModalTitle">Payment Receipt Search</h2>
+      <button class="is-close" id="isCloseBtn" aria-label="Close Payment Receipt Search modal" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18">
           <path d="M18 6L6 18M6 6l12 12"/>
         </svg>
@@ -1086,7 +1089,7 @@
     <!-- Search row -->
     <div class="is-search-row">
       <div class="is-input-wrap">
-        <label class="is-floating-label" id="isFloatingLabel" for="invoiceSearchInput">Invoice No.</label>
+        <label class="is-floating-label" id="isFloatingLabel" for="invoiceSearchInput">Payment Reference</label>
         <input
           type="text"
           class="is-input"
@@ -1405,14 +1408,14 @@
   </div><!-- /.oc-receipt-modal -->
 </div><!-- /.oc-overlay -->
 
-<!-- ===== Re-Print Invoice Modal ===== -->
+<!-- ===== Re-Print Payment Receipt Modal ===== -->
 <div class="ri-overlay" id="riOverlay" style="display:none;" aria-modal="true" role="dialog" aria-labelledby="riModalTitle">
   <div class="ri-modal">
 
     <!-- Header -->
     <div class="ri-header">
-      <h2 class="ri-title" id="riModalTitle">Re-Print Invoice</h2>
-      <button class="ri-close" id="riCloseBtn" aria-label="Close Re-Print Invoice modal" type="button">
+      <h2 class="ri-title" id="riModalTitle">Re-Print Payment Receipt</h2>
+      <button class="ri-close" id="riCloseBtn" aria-label="Close Re-Print Payment Receipt modal" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18">
           <path d="M18 6L6 18M6 6l12 12"/>
         </svg>
@@ -1430,7 +1433,7 @@
           autocomplete="off"
           maxlength="30"
         />
-        <label class="ri-floating-label" for="reprintInvoiceNumber">Invoice Number or Account Name</label>
+        <label class="ri-floating-label" for="reprintInvoiceNumber">Payment Reference or Account Name</label>
       </div>
     </div>
 
@@ -1442,14 +1445,14 @@
   </div><!-- /.ri-modal -->
 </div><!-- /.ri-overlay -->
 
-<!-- ===== Cancel Invoice Modal (ci-*) ===== -->
+<!-- ===== Cancel Payment Receipt Modal (ci-*) ===== -->
 <div class="ci-overlay" id="ciOverlay" style="display:none;" aria-modal="true" role="dialog" aria-labelledby="ciModalTitle">
   <div class="ci-modal">
 
     <!-- Header -->
     <div class="ci-header">
       <h2 class="ci-title" id="ciModalTitle">Request Invoice Cancellation</h2>
-      <button class="ci-close" id="ciCloseBtn" aria-label="Close Cancel Invoice modal" type="button">
+      <button class="ci-close" id="ciCloseBtn" aria-label="Close Cancel Payment Receipt modal" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18">
           <path d="M18 6L6 18M6 6l12 12"/>
         </svg>
@@ -1459,9 +1462,9 @@
     <!-- Body -->
     <div class="ci-body">
 
-      <!-- Invoice Number field with live-search suggestions -->
+      <!-- Payment Reference field with live-search suggestions -->
       <div class="ci-field">
-        <label class="ci-label" for="ciInvoiceInput">Invoice Number</label>
+        <label class="ci-label" for="ciInvoiceInput">Payment Reference</label>
         <div class="ci-input-wrap" id="ciInvoiceWrap">
           <input
             type="text"

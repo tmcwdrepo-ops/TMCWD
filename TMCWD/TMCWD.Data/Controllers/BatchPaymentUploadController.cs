@@ -6,6 +6,7 @@ namespace TMCWD.Data.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
     public class BatchPaymentUploadController : ControllerBase
     {
         private readonly IBatchPaymentUploadService _service;
@@ -39,6 +40,8 @@ namespace TMCWD.Data.Controllers
             int userId,
             [FromBody] BatchPaymentUpload upload)
         {
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                return Unauthorized();
             if (upload == null || string.IsNullOrWhiteSpace(upload.Filename))
                 return BadRequest("Filename is required.");
 

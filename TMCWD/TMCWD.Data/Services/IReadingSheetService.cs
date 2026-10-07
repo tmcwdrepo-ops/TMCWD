@@ -37,6 +37,6 @@ namespace TMCWD.Data.Services
         Task<List<ReadingSheetAccountDto>> GetAccountsForReadingSheet(int readingSheetId);
 
         Task<int> PartialPost(int readingSheetId, int userId);
-        Task<ReadingSheet> CompleteReadingSheet(int readingSheetId, int userId);
+        Task<ReadingSheet?> CompleteReadingSheet(int readingSheetId, int userId);
     }
 }

@@ -158,8 +158,12 @@ namespace TMCWD.Application.Controllers
 
             foreach (var request in requests)
             {
-                Task<Customer> getCustomer = _customerTransaction.Get(request.CustomerId);
-                Task<Account> getAccount = _accountTransaction.Get(request.AccountId);
+                Task<Customer> getCustomer = request.CustomerId is > 0
+                    ? _customerTransaction.Get(request.CustomerId.Value)
+                    : Task.FromResult<Customer>(null!);
+                Task<Account> getAccount = request.AccountId is > 0
+                    ? _accountTransaction.Get(request.AccountId.Value)
+                    : Task.FromResult<Account>(null!);
                 Task<User> getUser = _userTransaction.Get(request.CreatedBy);
 
                 await Task.WhenAll(getCustomer, getAccount, getUser);
@@ -171,8 +175,8 @@ namespace TMCWD.Application.Controllers
                     AccountId = request.AccountId,
                     CustomerId = request.CustomerId,
                     Status = (int)request.Status,
-                    CustomerName = getCustomer.Result.FullName,
-                    AccountNumber = getAccount.Result.AccountNumber,
+                    CustomerName = getCustomer.Result?.FullName ?? request.ReportedBy,
+                    AccountNumber = getAccount.Result?.AccountNumber ?? request.AccountNumber,
                     LoggedDate = request.DateCreated,
                     LoggedBy = getUser.Result.Name
                 };

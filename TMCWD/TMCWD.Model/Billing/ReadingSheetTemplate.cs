@@ -20,6 +20,8 @@ namespace TMCWD.Model.Billing
         public string Name { get; set; } = string.Empty;
         public int ReaderId { get; set; }
         public int ZoneBookId { get; set; }
+        public int? SeqFrom { get; set; }
+        public int? SeqTo { get; set; }
         public int CreatedBy { get; set; }
         public DateTime DateCreated { get; set; }
         public int UpdatedBy { get; set; }

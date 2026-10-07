@@ -44,7 +44,8 @@ namespace TMCWD.Data.Services
                 request.CreatedBy = userId;
                 request.DateCreated = DateTime.Now;
 
-                var lastRequest = _dbContext.Requests.Where(x => x.DateCreated.Year == DateTime.Now.Year && x.DateCreated.Month == DateTime.Now.Month).OrderByDescending(x => x.ControlNumber).FirstOrDefault();
+                var lastRequest = _dbContext.Requests.Where(x => x.ControlNumber.StartsWith("TKT")
+                    && x.DateCreated.Year == DateTime.Now.Year && x.DateCreated.Month == DateTime.Now.Month).OrderByDescending(x => x.ControlNumber).FirstOrDefault();
                 if (lastRequest != null)
                 {
                     int.TryParse(lastRequest.ControlNumber.Split('-')[^1].Trim(), out int lastCount);

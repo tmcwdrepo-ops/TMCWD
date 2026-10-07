@@ -1,0 +1,304 @@
+[
+  {
+    "route": "/Home/Index",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Admin/Index",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 9,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Admin/InspectionTypes",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [
+      "TypeError: table.DataTable is not a function"
+    ],
+    "failed": []
+  },
+  {
+    "route": "/Admin/AddEditInspectionType",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Admin/OtherFeeTypes",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [
+      "TypeError: table.DataTable is not a function"
+    ],
+    "failed": []
+  },
+  {
+    "route": "/CustomerSupport/Index",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/CustomerSupport/CustomerInformation",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/CustomerSupport/AddEditCustomer",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/CustomerSupport/AddEditAccount",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/CustomerSupport/Requests",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [
+      "TypeError: table.DataTable is not a function"
+    ],
+    "failed": []
+  },
+  {
+    "route": "/CustomerSupport/AddEditRequest",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [
+      "ReferenceError: Alert is not defined"
+    ],
+    "failed": []
+  },
+  {
+    "route": "/CustomerSupport/NewConnection",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/CustomerSupport/Disconnection",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/CustomerSupport/AccountTransfer",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/CustomerSupport/ServiceRequest",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Billing/ReadingSheet",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Billing/Reading",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Billing/BillAdjustment",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Billing/OtherCharges",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Billing/DebitCreditMemo",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Billing/Penalty",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Billing/PenaltyCharging",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Collections/Index",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/ReadingSheet/Index",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [
+      "TypeError: accordion.Collapsible is not a function"
+    ],
+    "failed": []
+  },
+  {
+    "route": "/JobOrder/Index",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [
+      "ReferenceError: Alert is not defined"
+    ],
+    "failed": []
+  },
+  {
+    "route": "/Engineering/Index",
+    "ready": "complete",
+    "forms": 0,
+    "cards": 0,
+    "errors": [
+      "TypeError: Cannot read properties of null (reading 'querySelector')"
+    ],
+    "failed": []
+  },
+  {
+    "route": "/Engineering/Inventory",
+    "ready": "complete",
+    "forms": 1,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/Engineering/AddEditInventory",
+    "ready": "complete",
+    "forms": 2,
+    "cards": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "category": "applications",
+    "displayedRecords": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "category": "new",
+    "displayedRecords": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "category": "inspection",
+    "displayedRecords": 2,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "category": "charging",
+    "displayedRecords": 3,
+    "errors": [],
+    "failed": [
+      {
+        "path": "/Billing/GetOtherChargesByAccount",
+        "status": 400
+      }
+    ]
+  },
+  {
+    "category": "payment",
+    "displayedRecords": 2,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "category": "installation",
+    "displayedRecords": 1,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "category": "connect",
+    "displayedRecords": 0,
+    "errors": [],
+    "failed": []
+  },
+  {
+    "category": "tapping",
+    "displayedRecords": 2,
+    "errors": [],
+    "failed": [
+      {
+        "path": "/Admin/GetHouseTapping",
+        "status": 502
+      }
+    ]
+  },
+  {
+    "category": "tickets",
+    "displayedRecords": 10,
+    "errors": [],
+    "failed": []
+  }
+]

@@ -6,6 +6,7 @@ namespace TMCWD.Data.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
     public class BillingAdjustmentController : Controller
     {
         private readonly IBillingAdjustmentService _service;
@@ -42,6 +43,8 @@ namespace TMCWD.Data.Controllers
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<IActionResult> SaveUpdate(int userId, [FromBody] BillingAdjustment billingAdjustment)
         {
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                return Unauthorized();
             var saved = await _service.SaveUpdate(userId, billingAdjustment);
             if (saved == null) return BadRequest();
             return Ok(saved);
@@ -52,6 +55,8 @@ namespace TMCWD.Data.Controllers
         {
             try
             {
+                if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                    return Unauthorized();
                 return Ok(await _service.SaveBatch(userId, billingAdjustments));
             }
             catch (InvalidOperationException ex)

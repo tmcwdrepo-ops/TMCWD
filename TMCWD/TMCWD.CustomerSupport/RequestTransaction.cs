@@ -57,8 +57,8 @@ namespace TMCWD.CustomerSupport
         {
             StringBuilder sb = new();
             if (request == null) throw new Exception("Request data has not been supplied to create or update a request");
-            if (request.AccountId <= 0) sb.AppendLine("Creating or updating request requires account");
-            if (request.CustomerId <= 0) sb.AppendLine("Creating or updating request requires customer with account");
+            if (request.AccountId is null or <= 0) sb.AppendLine("Creating or updating request requires account");
+            if (request.CustomerId is null or <= 0) sb.AppendLine("Creating or updating request requires customer with account");
 
             if(!String.IsNullOrEmpty(sb.ToString().Trim())) throw new Exception(sb.ToString());
 
@@ -127,14 +127,14 @@ namespace TMCWD.CustomerSupport
 
             StringBuilder sb = new();
 
-            if (string.IsNullOrEmpty(detail.InspectionTypeDetail.Trim())) sb.AppendLine("Inspection detail is not specified");
+            if (string.IsNullOrWhiteSpace(detail.InspectionTypeDetail)) sb.AppendLine("Inspection detail is not specified");
             if (detail.RequestTypeId <= 0) sb.AppendLine("Select at least one inspection type to be performed");
             if (detail.RequestId <= 0) sb.AppendLine("Request for detail is not found");
 
-            if(String.IsNullOrEmpty(sb.ToString().Trim())) throw new Exception(sb.ToString());
+            if(!String.IsNullOrEmpty(sb.ToString().Trim())) throw new Exception(sb.ToString());
 
             var content = JsonContent.Create(detail);
-            var response = await _webService.Client.PostAsync($"api/RequestDetail/{requestId}/SaveUpdate/{userId}", content);
+            var response = await _webService.Client.PostAsync($"api/{requestId}/RequestDetail/SaveUpdate/{userId}", content);
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) throw new Exception(data);
             
@@ -146,11 +146,11 @@ namespace TMCWD.CustomerSupport
             StringBuilder sb = new();
             if (details == null || !details.Any()) throw new Exception("Request details is empty");
 
-            var emptyDetailType = details.Where(x => string.IsNullOrEmpty(x.InspectionTypeDetail.Trim()));
+            var emptyDetailType = details.Where(x => string.IsNullOrWhiteSpace(x.InspectionTypeDetail));
             var noInspectionType = details.Where(x => x.RequestTypeId <= 0).FirstOrDefault();
             var noRequestId = details.Where(x => x.RequestId <= 0).FirstOrDefault();
 
-            if (emptyDetailType == null || !emptyDetailType.Any()) sb.AppendLine("One of the request detail is missing the required inspection type detail");
+            if (emptyDetailType.Any()) sb.AppendLine("One of the request detail is missing the required inspection type detail");
             if (noInspectionType != null) sb.AppendLine("One of the request detail is missing the required inspection type");
             if (noRequestId != null) sb.AppendLine("One of the request detail is missing the request");
 
@@ -198,7 +198,7 @@ namespace TMCWD.CustomerSupport
         {
             if (requestId <= 0) throw new Exception("Request id is required to delete request details");
 
-            var response = await _webService.Client.DeleteAsync($"api/RequestDetail/DeleteDetails/{requestId}");
+            var response = await _webService.Client.DeleteAsync($"api/{requestId}/RequestDetail/DeleteDetails");
 
             var data = await response.Content.ReadAsStringAsync();
 

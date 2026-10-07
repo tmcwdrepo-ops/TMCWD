@@ -69,10 +69,6 @@
 
     if (!overlay) return; // modal not present on this page
 
-    // ---------- API ----------
-    // NOTE: Scope / From / To are collected in the form for future use,
-    // but the backend (ReadingSheetTemplate) does not have columns for
-    // them yet, so they are NOT sent to the server or persisted.
 
     function apiGet(url) {
         return fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } })
@@ -126,15 +122,23 @@
     function loadTemplates() {
         return apiGet('/ReadingSheet/GetReadingSheetTemplates').then(function (data) {
             templates = (data || []).map(function (t) {
-                return {
-                    id: String(t.id),
-                    name: t.name,
-                    readerId: t.readerId,
-                    readerName: t.readerName,
-                    zone: t.zone,
-                    book: t.book
-                };
-            });
+                    return {
+                        id: String(t.id),
+                        name: t.name,
+                        readerId: t.readerId,
+                        readerName: t.readerName,
+                        zone: t.zone,
+                        book: t.book,
+
+                        seqFrom: t.seqFrom ?? null,
+                        seqTo: t.seqTo ?? null,
+
+                        scope:
+                            t.seqFrom != null && t.seqTo != null
+                                ? 'ranged'
+                                : 'all'
+                    };
+                });
             renderTable();
         });
     }
@@ -255,7 +259,13 @@
                 '<td>' + esc(tpl.readerName) + '</td>' +
                 '<td>Zone ' + esc(tpl.zone) + '</td>' +
                 '<td>Book ' + esc(tpl.book) + '</td>' +
-                '<td>—</td>' + // Scope not persisted yet
+                '<td>' +
+                    (
+                        tpl.scope === 'ranged'
+                            ? 'Scoped ' + esc(tpl.seqFrom) + '–' + esc(tpl.seqTo)
+                            : 'All'
+                    ) +
+                '</td>' +               
                 '<td class="ct-actions">' +
                 '<button type="button" class="ct-row-btn ct-edit" title="Edit">' +
                 '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
@@ -288,6 +298,18 @@
             nameInput.value = tpl.name;
             mrSelect.value = tpl.readerId;
             zoneSelect.value = tpl.zone;
+
+            scopeSelect.value = tpl.scope || 'all';
+
+                if (tpl.scope === 'ranged') {
+                    fromInput.value = tpl.seqFrom ?? '';
+                    toInput.value = tpl.seqTo ?? '';
+                } else {
+                    fromInput.value = '';
+                    toInput.value = '';
+                }
+
+                syncScope();
 
             loadBooksForZone(tpl.zone).then(function () {
                 bookSelect.value = tpl.book;
@@ -325,13 +347,25 @@
         e.preventDefault();
         if (!validate()) return;
 
-        var payload = {
-            id: editingId ? parseInt(editingId, 10) : 0,
-            name: nameInput.value.trim(),
-            readerId: parseInt(mrSelect.value, 10),
-            zone: parseInt(zoneSelect.value, 10),
-            book: parseInt(bookSelect.value, 10)
-        };
+            var isRanged = scopeSelect.value === 'ranged';
+
+            var payload = {
+                id: editingId ? parseInt(editingId, 10) : 0,
+                name: nameInput.value.trim(),
+                readerId: parseInt(mrSelect.value, 10),
+                zone: parseInt(zoneSelect.value, 10),
+                book: parseInt(bookSelect.value, 10),
+
+                seqFrom: isRanged
+                    ? parseInt(fromInput.value, 10)
+                    : null,
+
+                seqTo: isRanged
+                    ? parseInt(toInput.value, 10)
+                    : null,
+
+                isActive: true
+            };
 
         fetch('/ReadingSheet/SaveReadingSheetTemplate', {
             method: 'POST',

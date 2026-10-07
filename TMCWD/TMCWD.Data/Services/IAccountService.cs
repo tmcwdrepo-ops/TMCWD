@@ -13,6 +13,7 @@ namespace TMCWD.Data.Services
         Task<Account> SaveUpdate(int userId, Account account);
         Task<IEnumerable<Account>> GetAccounts();
         Task<IEnumerable<Account>> GetByZoneBookId(int zoneBookId);
+        Task<List<Account>> GetReadingSheetRoster(ReadingSheet sheet);
         Task<IEnumerable<Account>> GetByZoneBookAndSequence(int zone, int book, int from, int to);
         Task<IEnumerable<Account>> Search(string query);
 

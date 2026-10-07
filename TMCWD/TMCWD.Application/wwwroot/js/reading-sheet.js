@@ -155,24 +155,6 @@ function renderReadingSheetTable(rows, emptyMessage) {
       ' stroke="currentColor" stroke-width="1.3"/>' +
     '</svg>';
 
-  // Build zone stats from FULL dataset so the bar is always accurate
-    var zoneStats = {};
-
-    readingSheetState.rows.forEach(function (r) {
-        if (!zoneStats[r.zone]) {
-            zoneStats[r.zone] = {
-                total: 0,
-                done: 0
-            };
-        }
-
-        // Add the actual counts from each sheet
-        zoneStats[r.zone].total += (r.totalAccounts || 0);
-        zoneStats[r.zone].done += (r.totalCompleted || 0);
-    });
-
-    
-
     var html = rows.map(function (row) {
 
         var badgeClass =
@@ -194,21 +176,11 @@ function renderReadingSheetTable(rows, emptyMessage) {
         // Zone progress - just show completed/total
         // --------------------------------------------------------
 
-        var zoneStat = zoneStats[row.zone] || {
-            total: row.totalAccounts,
-            done: row.totalCompleted
-        };
-
-        var actualDone = zoneStat.done;
-        var actualTotal = zoneStat.total;
-
-        var isCompleted =
-            readingSheetState.statusFilter === 'completed';
-
-        var barLabel =
-            (isCompleted ? actualTotal : actualDone) +
-            '/' +
-            actualTotal;
+        // Progress belongs to this reading sheet's Zone/Book assignment.
+        // Do not combine it with other books that happen to share the zone.
+        var actualDone = Number(row.totalCompleted || 0);
+        var actualTotal = Number(row.totalAccounts || 0);
+        var barLabel = actualDone + '/' + actualTotal;
 
 
         // --------------------------------------------------------
@@ -218,7 +190,7 @@ function renderReadingSheetTable(rows, emptyMessage) {
         var zoneCell =
             '<div class="zone-cell">' +
             '<span class="zone-cell__label">' +
-            row.zone +
+            row.zone + '-' + row.book +
             '</span>' +
             '<span class="zone-mini-bar__text zone-progress-clickable" data-zone="' + row.zone + '" style="cursor: pointer;">' +
             barLabel +
@@ -798,7 +770,7 @@ async function openViewPanel(id) {
     if (dueDateEl) dueDateEl.textContent = row.dueDate ? formatShortDate(row.dueDate) : '—';
     if (disconDateEl) disconDateEl.textContent = row.disconnectionDate ? formatShortDate(row.disconnectionDate) : '—';
     if (meterReaderEl) meterReaderEl.textContent = row.meterReader;
-    if (postingEl) postingEl.textContent = row.forPosting + ' of ' + row.forPosting;
+    if (postingEl) postingEl.textContent = row.totalCompleted + ' of ' + row.totalAccounts;
     if (sheetRefEl) sheetRefEl.textContent = 'RS-' + String(row.id).padStart(5, '0');
 
     var tbody = document.getElementById('rsdAccountsTableBody');
@@ -840,6 +812,12 @@ async function openViewPanel(id) {
  * @param {Array} accounts
  * @returns {string} HTML string of <tr> elements.
  */
+function escapeReadingSheetText(value) {
+    return String(value ?? '').replace(/[&<>"']/g, function (character) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+    });
+}
+
 function renderAccountRows(accounts) {
     if (!accounts || accounts.length === 0) {
         return '<tr><td colspan="9" style="text-align:center;padding:32px;color:#9aa4b2;">No accounts found for this reading sheet.</td></tr>';
@@ -852,23 +830,23 @@ function renderAccountRows(accounts) {
         } else if (acct.trend === 'down') {
             trendIcon = '<svg class="trend-icon trend-down" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
         }
-        var statusClass = 'status-' + (acct.status || '').toLowerCase().replace(/ /g, '-');
+        var statusClass = 'status-' + (acct.status || '').toLowerCase().replace(/[^a-z-]/g, '-');
         return (
-            '<tr data-account-name="' + (acct.name || '').toLowerCase() + '"' +
-            ' data-account-number="' + (acct.number || '') + '"' +
-            ' data-usage-category="' + (acct.category || 'normal') + '">' +
+            '<tr data-account-name="' + escapeReadingSheetText((acct.name || '').toLowerCase()) + '"' +
+            ' data-account-number="' + escapeReadingSheetText(acct.number) + '"' +
+            ' data-usage-category="' + escapeReadingSheetText(acct.category || 'normal') + '">' +
             '<td class="col-account">' +
-            '<div class="acct-name">' + (acct.name || '—') + '</div>' +
-            '<div class="acct-code">' + (acct.code || '') + '</div>' +
-            '<div class="acct-number">' + (acct.number || '') + '</div>' +
+            '<div class="acct-name">' + escapeReadingSheetText(acct.name || '—') + '</div>' +
+            '<div class="acct-code">' + escapeReadingSheetText(acct.code) + '</div>' +
+            '<div class="acct-number">' + escapeReadingSheetText(acct.number) + '</div>' +
             '</td>' +
             '<td class="col-num">' + (acct.prev ?? 0).toLocaleString() + '</td>' +
-            '<td class="col-num">' + (acct.pres ?? 0).toLocaleString() + '</td>' +
-            '<td class="col-num usage-cell"><span>' + (acct.usage ?? 0).toLocaleString() + '</span>' + trendIcon + '</td>' +
+            '<td class="col-num">' + (acct.pres == null ? 'Pending' : acct.pres.toLocaleString()) + '</td>' +
+            '<td class="col-num usage-cell"><span>' + (acct.usage == null ? '—' : acct.usage.toLocaleString()) + '</span>' + trendIcon + '</td>' +
             '<td class="col-num">' + (acct.balance ?? 0).toFixed(2) + '</td>' +
             '<td class="col-num">' + (acct.amount ?? 0).toFixed(2) + '</td>' +
             '<td class="col-num">' + (acct.total ?? 0).toFixed(2) + '</td>' +
-            '<td class="col-status"><span class="status-text ' + statusClass + '">' + (acct.status || '—') + '</span></td>' +
+            '<td class="col-status"><span class="status-text ' + statusClass + '">' + escapeReadingSheetText(acct.status || '—') + '</span></td>' +
             '<td class="col-action">' +
             '<button type="button" class="row-print-btn" title="Print account details" aria-label="Print account details">' +
             '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>' +
@@ -909,6 +887,12 @@ async function handlePartialPostClick() {
         // Refresh the main table so "For Posting" count updates
         var freshData = await loadDataAsync('/ReadingSheet/GetAllReadingSheet');
         readingSheetState.rows = mapReadingSheetRows(freshData);
+        var freshDrawerRow = readingSheetState.rows.find(function (r) { return r.id === currentDrawerReadingSheetId; });
+        if (freshDrawerRow) {
+            currentDrawerRow = freshDrawerRow;
+            var postingEl = document.getElementById('rsdPostingStatus');
+            if (postingEl) postingEl.textContent = freshDrawerRow.totalCompleted + ' of ' + freshDrawerRow.totalAccounts;
+        }
         applyAllFilters();
         applyAndRender();
         generateZoneProgressInputs();
@@ -990,7 +974,7 @@ function handleExportExcelClick() {
             acct.meterNo || '',
             acct.balance || 0,
             acct.prev || 0,
-            acct.pres || 0
+            acct.pres ?? ''
         ]);
     });
 
@@ -1119,7 +1103,7 @@ function handleExportPdfClick() {
             acct.meterNo || '',
             (acct.balance || 0).toFixed(2),
             (acct.prev || 0).toString(),
-            (acct.pres || 0).toString()
+            acct.pres == null ? '' : acct.pres.toString()
         ];
     });
 

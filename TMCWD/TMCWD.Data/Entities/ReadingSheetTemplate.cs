@@ -21,6 +21,12 @@ namespace TMCWD.Data.Entities
         [Required, Column("ZoneBookId")]
         public System.Int64 ZoneBookId { get; set; }
 
+        [Column("SeqFrom")]
+        public int? SeqFrom { get; set; }
+
+        [Column("SeqTo")]
+        public int? SeqTo { get; set; }
+
         [Required, Column("CreatedBy")]
         public System.Int64 CreatedBy { get; set; }
 

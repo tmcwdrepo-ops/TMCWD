@@ -33,21 +33,10 @@ namespace TMCWD.Data.Services
 
         public async Task<Penalty> SaveUpdate(int userId, Penalty penalty)
         {
-            if(penalty.Id == 0)
-            {
-                penalty.CreatedBy = userId;
-                penalty.DateCreated = DateTime.Now;
-                _context.Penalties.Add(penalty);
-            }
-            else
-            {
-                penalty.UpdatedBy = userId;
-                penalty.DateUpdated = DateTime.Now;
-                _context.Penalties.Update(penalty);
-            }
-
-            await _context.SaveChangesAsync();
-            return penalty;
+            if (penalty.Id != 0)
+                throw new InvalidOperationException("Posted penalties cannot be rewritten. Use the authorized waiver workflow.");
+            await PostCharges(userId, new() { BillingReferenceIds = new() { penalty.BillingReferenceId } });
+            return (await GetByReference(penalty.BillingReferenceId)).Single();
         }
 
         public async Task<int> WaiveUnpaid(int userId, List<string> billingReferences)
@@ -188,15 +177,19 @@ namespace TMCWD.Data.Services
             return affected;
         }
 
-        private IQueryable<TMCWD.Model.Billing.PenaltyChargeEntry> ChargeEntries(DateTime? billingPeriod, DateTime today)
+        private IQueryable<TMCWD.Model.Billing.PenaltyChargeEntry> ChargeEntries(DateTime? billingPeriod, DateTime today, DateTime? dueDateCutoff = null)
         {
+            // Use the provided due-date cutoff (≤) or fall back to strictly before today (<)
+            var cutoff = dueDateCutoff.HasValue && dueDateCutoff.Value.Date < today
+                ? dueDateCutoff.Value.Date : today.AddDays(-1);
+
             return from bill in _context.Billings
                    join reading in _context.Readings on bill.ReadingId equals reading.Id
                    join sheet in _context.ReadingSheets on reading.ReadingSheetId equals sheet.Id
                    join account in _context.Accounts on bill.AccountId equals account.Id
                    join customer in _context.Customers on account.CustomerId equals customer.Id into customers
                    from customer in customers.DefaultIfEmpty()
-                   where sheet.DueDate.HasValue && sheet.DueDate.Value.Date < today
+                   where sheet.DueDate.HasValue && sheet.DueDate.Value.Date <= cutoff
                        && (bill.PaymentStatus == (int)PaymentStatus.Unpaid || bill.PaymentStatus == (int)PaymentStatus.Overdue)
                        && bill.RemainingAmount > 0 && bill.TotalBillAmount > 0
                        && (!billingPeriod.HasValue || (sheet.BillingDate ?? bill.BillingPeriod).Date == billingPeriod.Value.Date)
@@ -209,19 +202,61 @@ namespace TMCWD.Data.Services
                        BillingDate = sheet.BillingDate ?? bill.BillingPeriod,
                        DueDate = sheet.DueDate.Value,
                        Usage = reading.CurrentReading - reading.PreviousReading,
-                       // Reading bills store the water bill here. Penalties and
-                       // other charges are collected separately, never compounded.
-                       BillAmount = bill.TotalBillAmount
+                       InvoiceSnapshotJson = bill.InvoiceSnapshotJson
                    };
         }
 
-        public async Task<List<TMCWD.Model.Billing.PenaltyChargeEntry>> GetChargeEntries(DateTime? billingPeriod)
+        public async Task<List<TMCWD.Model.Billing.PenaltyChargeEntry>> GetChargeEntries(DateTime? billingPeriod, DateTime? dueDate = null)
         {
-            var entries = await ChargeEntries(billingPeriod, TMCWD.Model.Billing.LatePaymentPenalty.Today)
+            var today = TMCWD.Model.Billing.LatePaymentPenalty.Today;
+            var entries = await ChargeEntries(billingPeriod, today, dueDate)
                 .OrderBy(x => x.DueDate).ThenBy(x => x.BillingReferenceId).ToListAsync();
             foreach (var entry in entries)
-                entry.Penalty = TMCWD.Model.Billing.LatePaymentPenalty.Calculate(entry.BillAmount);
+                SetWaterPenalty(entry);
             return entries;
+        }
+
+        private static void SetWaterPenalty(TMCWD.Model.Billing.PenaltyChargeEntry entry)
+        {
+            var invoice = entry.InvoiceSnapshotJson == null ? null
+                : System.Text.Json.JsonSerializer.Deserialize<TMCWD.Model.Billing.OfficialInvoiceSnapshot>(entry.InvoiceSnapshotJson);
+            if (invoice == null)
+                throw new InvalidOperationException("A selected bill has no authoritative water-charge snapshot. Its penalty cannot be calculated safely.");
+            entry.BillAmount = invoice.BillAmount;
+            entry.Penalty = TMCWD.Model.Billing.LatePaymentPenalty.Calculate(entry.BillAmount);
+        }
+
+        public Task<List<TMCWD.Model.Billing.ActivePenaltyEntry>> GetActiveEntries(DateTime dueDate)
+        {
+            var selectedDate = dueDate.Date;
+            return (from bill in _context.Billings
+                    join reading in _context.Readings on bill.ReadingId equals reading.Id
+                    join sheet in _context.ReadingSheets on reading.ReadingSheetId equals sheet.Id
+                    join account in _context.Accounts on bill.AccountId equals account.Id
+                    join penalty in _context.Penalties on bill.BillingReferenceId equals penalty.BillingReferenceId
+                    where sheet.DueDate.HasValue && sheet.DueDate.Value.Date == selectedDate
+                        && (penalty.PaymentStatus == (int)PaymentStatus.Unpaid
+                         || penalty.PaymentStatus == (int)PaymentStatus.Overdue)
+                    group penalty by new
+                    {
+                        bill.BillingReferenceId,
+                        account.AccountNumber,
+                        DueDate = sheet.DueDate.Value,
+                        Usage = reading.CurrentReading - reading.PreviousReading,
+                        bill.TotalBillAmount
+                    }
+                    into penalties
+                    orderby penalties.Key.AccountNumber, penalties.Key.BillingReferenceId
+                    select new TMCWD.Model.Billing.ActivePenaltyEntry
+                    {
+                        BillingReferenceId = penalties.Key.BillingReferenceId,
+                        AccountNumber = penalties.Key.AccountNumber,
+                        DueDate = penalties.Key.DueDate,
+                        Usage = penalties.Key.Usage,
+                        BillAmount = penalties.Key.TotalBillAmount,
+                        Discount = 0,
+                        Penalty = penalties.Sum(p => p.Amount)
+                    }).ToListAsync();
         }
 
         public async Task<TMCWD.Model.Billing.PostPenaltyChargesResult> PostCharges(
@@ -246,7 +281,7 @@ namespace TMCWD.Data.Services
                     throw new InvalidOperationException("A selected bill no longer exists. Reload the list.");
             }
 
-            var entries = await ChargeEntries(request.BillingPeriod, today)
+            var entries = await ChargeEntries(request.BillingPeriod, today, request.DueDate)
                 .Where(x => references.Contains(x.BillingReferenceId)).ToListAsync();
             if (entries.Count != references.Count)
                 throw new InvalidOperationException("A selected bill was paid, already charged, or is not overdue. Reload the list; no penalties were posted.");
@@ -254,7 +289,8 @@ namespace TMCWD.Data.Services
             decimal total = 0;
             foreach (var entry in entries)
             {
-                var amount = TMCWD.Model.Billing.LatePaymentPenalty.Calculate(entry.BillAmount);
+                SetWaterPenalty(entry);
+                var amount = entry.Penalty;
                 if (amount <= 0)
                     throw new InvalidOperationException("A selected bill has no chargeable amount.");
                 _context.Penalties.Add(new Penalty

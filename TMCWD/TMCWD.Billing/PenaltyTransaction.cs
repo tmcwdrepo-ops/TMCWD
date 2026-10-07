@@ -106,12 +106,22 @@ namespace TMCWD.Billing
             return await response.Content.ReadFromJsonAsync<int>();
         }
 
-        public async Task<List<PenaltyChargeEntry>> GetChargeEntries(DateTime? billingPeriod)
+        public async Task<List<PenaltyChargeEntry>> GetChargeEntries(DateTime? billingPeriod, DateTime? dueDate = null)
         {
-            var query = billingPeriod.HasValue ? $"?billingPeriod={billingPeriod:yyyy-MM-dd}" : "";
+            var parts = new List<string>();
+            if (billingPeriod.HasValue) parts.Add($"billingPeriod={billingPeriod:yyyy-MM-dd}");
+            if (dueDate.HasValue)       parts.Add($"dueDate={dueDate:yyyy-MM-dd}");
+            var query = parts.Count > 0 ? "?" + string.Join("&", parts) : "";
             using var response = await _service.Client.GetAsync("api/Penalty/ChargeEntries" + query);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<List<PenaltyChargeEntry>>() ?? new();
+        }
+
+        public async Task<List<ActivePenaltyEntry>> GetActiveEntries(DateTime dueDate)
+        {
+            using var response = await _service.Client.GetAsync($"api/Penalty/ActiveEntries?dueDate={dueDate:yyyy-MM-dd}");
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<List<ActivePenaltyEntry>>() ?? new();
         }
 
         public async Task<PostPenaltyChargesResult> PostCharges(int userId, PostPenaltyChargesRequest request)

@@ -39,9 +39,15 @@ namespace TMCWD.Data.Services
 
         public async Task<JobOrder> SaveUpdate(int userId, JobOrder jobOrder)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             jobOrder.DateUpdated = DateTime.Now;
             if(jobOrder.Id > 0)
             {
+                var existing = await _context.JobOrders.AsNoTracking().SingleAsync(x => x.Id == jobOrder.Id);
+                // Older job order forms do not send service dates or referrals.
+                jobOrder.JobOrderDate ??= existing.JobOrderDate;
+                jobOrder.ReferredToUserId ??= existing.ReferredToUserId;
+                jobOrder.DateReferred ??= existing.DateReferred;
                 jobOrder.UpdatedBy = userId;
                 _context.JobOrders.Update(jobOrder);
             }
@@ -55,6 +61,18 @@ namespace TMCWD.Data.Services
             }
 
             await _context.SaveChangesAsync();
+            var request = await _context.Requests.FirstOrDefaultAsync(x => x.Id == jobOrder.RequestId && x.IsServiceRequest);
+            if (request != null)
+            {
+                var statuses = await _context.JobOrders.Where(x => x.RequestId == request.Id).Select(x => x.Status).ToListAsync();
+                request.Status = statuses.All(x => x == (int)JobOrderStatus.Completed) ? (int)RequestStatus.Completed
+                    : statuses.All(x => x == (int)JobOrderStatus.Completed || x == (int)JobOrderStatus.Rejected)
+                        ? (int)RequestStatus.Rejected : (int)RequestStatus.InProgress;
+                request.UpdatedBy = userId;
+                request.DateUpdated = DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+            await transaction.CommitAsync();
             return jobOrder;
         }
 

@@ -42,6 +42,9 @@ namespace TMCWD.Model.CustomerSupport
         [DisplayName("Meter Number")]
         public string MeterNumber { get; set; } = string.Empty;
 
+        [DisplayName("Initial Reading")]
+        public decimal InitialReading { get; set; }
+
         [DisplayName("Address")]
         public string FullAddress => $"{UnitNumber} {Building} {HouseNumber} {Street} {Barangay}";
 

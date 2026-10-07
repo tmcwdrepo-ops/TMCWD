@@ -1,0 +1,1 @@
+Phase 4B sync/service/database/auth additions removed. ReadingEntry widget and its original test copied unchanged.

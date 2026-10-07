@@ -17,12 +17,15 @@ namespace TMCWD.Data.Services
         public Task<List<Reading>> GetByReadingSheetId(int readingSheetId);
 
         public Task<Reading> GetAccountPreviousReading(int accountId);
+        Task<Reading?> GetPreviousForSheet(long accountId, int readingSheetId);
+        Task<Reading?> GetPreviousBeforeReading(long accountId, DateTime readingDate);
 
         public Task<Reading> GetAccountCurrentReading(int accountId);
 
         public Task<List<Reading>> GetByReader(int readerId);
 
         public Task<Reading> SaveUpdate(int userId, Reading reading);
+        Task<Reading> Sync(int readerId, int sheetId, TMCWD.Model.Billing.Requests.MobileReadingUpload upload);
 
         public Task<List<Reading>> SaveMultiple(List<Reading> readings);
 

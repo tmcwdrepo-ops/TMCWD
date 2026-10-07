@@ -81,6 +81,44 @@
     renderTableFromRows(charges);
   }
 
+  // Refresh the selected account from the same Collections endpoint that
+  // supplies the receipt. This prevents a stale shared object from leaving
+  // the modal empty while the account-level balance is already visible.
+  function refreshCurrentAccountCharges() {
+    var current = window._ocCurrentAccount;
+    var accountNumber = current && current.accountNumber;
+    if (!accountNumber) return Promise.resolve();
+
+    if (tableBody) {
+      tableBody.innerHTML =
+        '<tr><td colspan="2" class="oc-receipt-empty">Loading posted charges...</td></tr>';
+    }
+
+    return fetch('/Collections/SearchAccounts?q=' + encodeURIComponent(accountNumber))
+      .then(function (response) {
+        if (!response.ok) throw new Error('Unable to reload posted charges.');
+        return response.json();
+      })
+      .then(function (accounts) {
+        var exact = (accounts || []).find(function (account) {
+          return String(account.accountNumber || '').toLowerCase() === String(accountNumber).toLowerCase();
+        });
+        if (!exact) throw new Error('The selected account could not be reloaded.');
+
+        current.otherCharges = Array.isArray(exact.otherCharges) ? exact.otherCharges : [];
+        current.otherChargesBalance = Number(exact.otherChargesBalance || 0);
+        window._ocCurrentAccount = current;
+        fillAccountFields(current);
+        renderTable();
+        calculateTotals();
+      })
+      .catch(function (error) {
+        renderTable();
+        calculateTotals();
+        showAddError(error.message || 'Unable to load posted charges.');
+      });
+  }
+
   //  Phase 4: Render from explicit rows array 
   function renderTableFromRows(rows) {
     if (!tableBody) return;
@@ -104,10 +142,22 @@
     var t = term.trim();
     if (!t) return Promise.resolve([]);
 
-    return fetch('/api/Billing/AccountLookup?q=' + encodeURIComponent(t))
+    return fetch('/Collections/SearchAccounts?q=' + encodeURIComponent(t))
       .then(function(res) {
         if (!res.ok) throw new Error('Network response was not ok');
         return res.json();
+      })
+      .then(function (accounts) {
+        return (accounts || []).map(function (account) {
+          return {
+            accountNumber: account.accountNumber,
+            name: account.accountName,
+            tin: '',
+            address: account.address || '',
+            otherChargesBalance: Number(account.otherChargesBalance || 0),
+            otherCharges: Array.isArray(account.otherCharges) ? account.otherCharges : []
+          };
+        });
       })
       .catch(function(err) {
         console.error('Account lookup error:', err);
@@ -371,6 +421,9 @@
   var othAccNoInput     = document.getElementById('ocOthAccNo');
   var othAccNameInput   = document.getElementById('ocOthAccName');
   var othSuggestionsEl  = document.getElementById('ocOthAccSuggestions');
+  var othSearchBtn      = othAccNoInput && othAccNoInput.parentElement
+    ? othAccNoInput.parentElement.querySelector('.oc-acc-search-btn')
+    : null;
   var othChargeType     = document.getElementById('ocOthChargeType');
   var othAmount         = document.getElementById('ocOthAmount');
   var othAddBtn         = document.getElementById('ocOthAddBtn');
@@ -515,15 +568,60 @@
   });
 
   // Others view: account number search (same logic as Lookup, different elements)
+  function runOthAccountSearch(selectExactMatch) {
+    var val = othAccNoInput ? othAccNoInput.value.trim() : '';
+    clearTimeout(_othSearchTimer);
+    if (!val) { hideOthSugg(); return Promise.resolve([]); }
+
+    if (othSuggestionsEl) {
+      othSuggestionsEl.innerHTML = '<div class="oc-sugg-empty">Searching...</div>';
+      othSuggestionsEl.style.display = 'block';
+    }
+
+    return searchAccount(val).then(function (matches) {
+      if (selectExactMatch) {
+        var exact = matches.find(function (account) {
+          return String(account.accountNumber || '').toLowerCase() === val.toLowerCase();
+        });
+        if (exact) {
+          selectOthSugg(exact);
+          return matches;
+        }
+      }
+      showOthSugg(matches);
+      return matches;
+    });
+  }
+
+  function loadOthAccount(accountNumber) {
+    if (!accountNumber) return Promise.resolve(null);
+    if (othAccNoInput) othAccNoInput.value = accountNumber;
+    if (othTableBody) {
+      othTableBody.innerHTML =
+        '<tr><td colspan="3" class="oc-receipt-empty">Loading posted charges...</td></tr>';
+    }
+    return runOthAccountSearch(true).then(function (matches) {
+      var exact = matches.find(function (account) {
+        return String(account.accountNumber || '').toLowerCase() === String(accountNumber).toLowerCase();
+      });
+      if (!exact) {
+        _ocOthCharges = [];
+        renderOthTable();
+      }
+      return exact || null;
+    });
+  }
+
   if (othAccNoInput) {
     othAccNoInput.addEventListener('input', function () {
       var val = this.value.trim();
       clearTimeout(_othSearchTimer);
+      _ocOthCharges = [];
+      if (othAccNameInput) othAccNameInput.value = '';
+      renderOthTable();
       if (!val) { hideOthSugg(); return; }
       _othSearchTimer = setTimeout(function () {
-        searchAccount(val).then(function(matches) {
-          showOthSugg(matches);
-        });
+        runOthAccountSearch(false);
       }, 300);
     });
     othAccNoInput.addEventListener('keydown', function (e) {
@@ -537,9 +635,14 @@
           selectOthSugg(othSuggestionsEl._matches[_othSuggIdx]);
         else if (vis && othSuggestionsEl._matches && othSuggestionsEl._matches.length)
           selectOthSugg(othSuggestionsEl._matches[0]);
+        else
+          runOthAccountSearch(true);
       }
     });
     othAccNoInput.addEventListener('blur', function () { setTimeout(hideOthSugg, 150); });
+  }
+  if (othSearchBtn) {
+    othSearchBtn.addEventListener('click', function () { runOthAccountSearch(true); });
   }
 
   function hideOthSugg() {
@@ -581,6 +684,9 @@
   function selectOthSugg(rec) {
     if (othAccNoInput)   othAccNoInput.value   = rec.accountNumber;
     if (othAccNameInput) othAccNameInput.value = rec.name;
+    window._ocCurrentAccount = rec;
+    _ocOthCharges = Array.isArray(rec.otherCharges) ? rec.otherCharges.slice() : [];
+    renderOthTable();
     hideOthSugg();
   }
 
@@ -605,7 +711,10 @@
       var csrfToken  = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
       var invoiceNo  = 'OCO-' + Date.now();
       var methodNum  = _ocOthPayMethod === 'check' ? 2 : _ocOthPayMethod === 'ewallet' ? 3 : 1;
-      var chargeIds  = _ocOthCharges.map(function (c) { return Number(c.chargeTypeId); }).filter(Boolean);
+      var chargeIds  = _ocOthCharges.map(function (c) {
+        return Number(c.id || c.otherChargeId);
+      }).filter(Boolean);
+      var paidAccountNumber = othAccNoInput ? othAccNoInput.value.trim() : '';
       var self       = this;
 
       fetch('/Collections/PayOtherCharges', {
@@ -640,6 +749,13 @@
             }, 3000);
           }
           closeModal();
+          if (typeof window.refreshCollectionsAccount === 'function') {
+            window.refreshCollectionsAccount(paidAccountNumber).catch(function () {
+              window.location.reload();
+            });
+          } else {
+            window.location.reload();
+          }
         })
         .catch(function (err) {
           console.error('[OC Others Pay] error:', err);
@@ -694,7 +810,7 @@
     var csrfToken = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
     var invoiceNo = 'OC-' + Date.now();
     var methodNum = _ocPayMethod === 'check' ? 2 : _ocPayMethod === 'ewallet' ? 3 : 1;
-    var chargeIds = charges.map(function (c) { return c.chargeTypeId; }).filter(Boolean);
+    var chargeIds = charges.map(function (c) { return c.id || c.otherChargeId || c.chargeTypeId; }).filter(Boolean);
 
     fetch('/Collections/PayOtherCharges', {
       method: 'POST',
@@ -769,9 +885,15 @@
 
     if (payBtn) { payBtn.disabled = true; payBtn.textContent = 'Pay'; }
 
-    // Reset Others view fields
-    if (othAccNoInput)   othAccNoInput.value   = '';
-    if (othAccNameInput) othAccNameInput.value = '';
+    // Reset payment inputs, then load the account already selected on Collections.
+    var selectedAccount = window._ocCurrentAccount;
+    var displayedAccountNumber = document.getElementById('fAccNo');
+    var selectedAccountNumber = selectedAccount && selectedAccount.accountNumber
+      ? selectedAccount.accountNumber
+      : (displayedAccountNumber ? displayedAccountNumber.textContent.trim() : '');
+    if (selectedAccountNumber === '\u2014') selectedAccountNumber = '';
+    if (othAccNoInput)   othAccNoInput.value   = selectedAccountNumber;
+    if (othAccNameInput) othAccNameInput.value = selectedAccount ? (selectedAccount.name || '') : '';
     if (othTenderedInput) othTenderedInput.value = '';
     if (othChargeType)   othChargeType.value   = '';
     if (othAmount)       othAmount.value        = '';
@@ -786,10 +908,8 @@
     overlay.querySelectorAll('input[name="ocOthPayMethod"]').forEach(function (r) {
       r.checked = r.value === 'cash';
     });
-    if (othTableBody) {
-      othTableBody.innerHTML =
-        '<tr><td colspan="3" class="oc-receipt-empty">No charges added yet.</td></tr>';
-    }
+    _ocOthCharges = [];
+    renderOthTable();
 
     calculateTotals();
     clearTimeout(_ocSearchTimer);
@@ -798,7 +918,9 @@
     overlay.style.display        = 'flex';
     document.body.style.overflow = 'hidden';
 
-    setTimeout(function () { if (accNoInput) accNoInput.focus(); }, 180);
+    if (selectedAccountNumber) loadOthAccount(selectedAccountNumber);
+
+    setTimeout(function () { if (othAccNoInput) othAccNoInput.focus(); }, 180);
   }
 
   //  Close 
@@ -947,6 +1069,7 @@
 
   // Fill account fields + auto-populate charges from account record only
   function fillAccount(acc) {
+    if (accNoInput) accNoInput.value = acc ? (acc.accountNumber || '') : '';
     if (accNameInput) accNameInput.value = acc ? (acc.name || '') : '';
     _charges = [];
     if (acc && Array.isArray(acc.otherCharges)) {
@@ -960,6 +1083,36 @@
       });
     }
     renderTable();
+  }
+
+  function loadAccountWithCharges(accountNumber) {
+    if (!accountNumber) return Promise.resolve(null);
+    if (tableBody) {
+      tableBody.innerHTML = '<tr><td colspan="4" class="oce-empty">Loading posted charges...</td></tr>';
+    }
+    return fetch('/Collections/SearchAccounts?q=' + encodeURIComponent(accountNumber))
+      .then(function (response) {
+        if (!response.ok) throw new Error('Unable to load posted charges.');
+        return response.json();
+      })
+      .then(function (accounts) {
+        var exact = (accounts || []).find(function (account) {
+          return String(account.accountNumber || '').toLowerCase() === String(accountNumber).toLowerCase();
+        });
+        if (!exact) throw new Error('The selected account could not be loaded.');
+        var account = {
+          accountNumber: exact.accountNumber,
+          name: exact.accountName,
+          otherCharges: Array.isArray(exact.otherCharges) ? exact.otherCharges : []
+        };
+        fillAccount(account);
+        return account;
+      })
+      .catch(function () {
+        _charges = [];
+        renderTable();
+        return null;
+      });
   }
 
   // Account number live search
@@ -1003,9 +1156,17 @@
       _charges = []; renderTable();
       if (!val) { hideSugg(); return; }
       _searchTimer = setTimeout(function () {
-        fetch('/Collections/AccountLookup?q=' + encodeURIComponent(val))
+        fetch('/Collections/SearchAccounts?q=' + encodeURIComponent(val))
           .then(function (res) { return res.ok ? res.json() : []; })
-          .then(function (results) { showSugg(results); })
+          .then(function (results) {
+            showSugg((results || []).map(function (account) {
+              return {
+                accountNumber: account.accountNumber,
+                name: account.accountName,
+                otherCharges: Array.isArray(account.otherCharges) ? account.otherCharges : []
+              };
+            }));
+          })
           .catch(function () { showSugg([]); });
       }, 300);
     });
@@ -1065,10 +1226,17 @@
   window.openOceModal = function () {
     populateDropdowns();
     // Do not pre-fill — table stays empty until user types and selects an account
-    if (accNoInput)   accNoInput.value   = '';
-    if (accNameInput) accNameInput.value = '';
-    _charges = [];
-    renderTable();
+    var selected = window._ocCurrentAccount;
+    if (selected && selected.accountNumber) {
+      if (accNoInput) accNoInput.value = selected.accountNumber;
+      if (accNameInput) accNameInput.value = selected.name || '';
+      loadAccountWithCharges(selected.accountNumber);
+    } else {
+      if (accNoInput)   accNoInput.value   = '';
+      if (accNameInput) accNameInput.value = '';
+      _charges = [];
+      renderTable();
+    }
     if (chargeType)  chargeType.value  = '';
     if (payableIn)   payableIn.value   = '';
     if (particulars) particulars.value = '';

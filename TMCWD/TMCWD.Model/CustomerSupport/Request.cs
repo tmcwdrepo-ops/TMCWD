@@ -19,13 +19,18 @@ namespace TMCWD.Model.CustomerSupport
 
         public int Id { get; set; }
         public string ControlNumber { get; set; }
-        public int CustomerId { get; set; }
-        public int AccountId { get; set; }
+        public int? CustomerId { get; set; }
+        public int? AccountId { get; set; }
+        public bool IsServiceRequest { get; set; }
+        public bool IsNonCustomer { get; set; }
+        public string AccountNumber { get; set; } = string.Empty;
+        public string AccountName { get; set; } = string.Empty;
+        public string ReportedBy { get; set; } = string.Empty;
         public RequestStatus Status { get; set; }
         public int CreatedBy { get; set; }
         public DateTime DateCreated { get; set; }
-        public int UpdatedBy { get; set; }
-        public DateTime DateUpdated { get; set; }
+        public int? UpdatedBy { get; set; }
+        public DateTime? DateUpdated { get; set; }
 
     }
 }

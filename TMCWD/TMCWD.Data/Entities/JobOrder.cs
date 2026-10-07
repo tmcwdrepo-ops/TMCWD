@@ -13,7 +13,7 @@ namespace TMCWD.Data.Entities
         public int RequestId { get; set; }
         [Required, Column("RequestDetailId")]
         public int RequestDetailId { get; set; }
-        [Required, MaxLength(20), Column("JobOrderNumber")]
+        [Required, MaxLength(50), Column("JobOrderNumber")]
         public string JobOrderNumber { get; set; } = string.Empty;
         [Column("HasCharges")]
         public bool HasCharges { get; set; }
@@ -27,5 +27,8 @@ namespace TMCWD.Data.Entities
         public int UpdatedBy { get; set; }
         [Column("DateUpdated")]
         public DateTime DateUpdated { get; set; }
+        public DateTime? JobOrderDate { get; set; }
+        public long? ReferredToUserId { get; set; }
+        public DateTime? DateReferred { get; set; }
     }
 }

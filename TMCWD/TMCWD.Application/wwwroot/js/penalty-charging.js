@@ -4,6 +4,7 @@
 
     const els = {
         billingPeriod: document.getElementById("pcBillingPeriod"),
+        dueDate: document.getElementById("pcDueDate"),
         loadBtn: document.getElementById("pcLoadBtn"),
         resetBtn: document.getElementById("pcResetBtn"),
         postBtn: document.getElementById("pcPostBtn"),
@@ -126,8 +127,10 @@
         els.search.value = "";
         setLoadingState();
         try {
-            const query = els.billingPeriod.value
-                ? "?billingPeriod=" + encodeURIComponent(els.billingPeriod.value) : "";
+            const params = new URLSearchParams();
+            if (els.billingPeriod.value) params.set("billingPeriod", els.billingPeriod.value);
+            if (els.dueDate?.value)      params.set("dueDate", els.dueDate.value);
+            const query = params.toString() ? "?" + params.toString() : "";
             const res = await fetch("/Billing/GetPenaltyChargeEntries" + query);
             if (!res.ok) throw new Error("Could not load overdue bills. Please try again.");
             entries = await res.json();
@@ -387,7 +390,11 @@
                     "Content-Type": "application/json",
                     "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
                 },
-                body: JSON.stringify({ billingPeriod: period || null, billingReferenceIds: references })
+                body: JSON.stringify({
+                    billingPeriod: period || null,
+                    dueDate: els.dueDate?.value || null,
+                    billingReferenceIds: references
+                })
             });
             if (!res.ok) throw new Error(await res.text() || "Posting was not confirmed. Reload entries before retrying.");
             const result = await res.json();

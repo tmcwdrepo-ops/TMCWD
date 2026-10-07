@@ -1,0 +1,52 @@
+@model TMCWD.Model.Dashboard.AccountTransferRecord
+@{
+    Layout = "_InsideLayout";
+    ViewData["PageTitle"] = "Account Transfer";
+    ViewData["ActivePage"] = "account-transfer";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/account-transfer.css" asp-append-version="true" />
+    <style>.at-summary[hidden] { display: none !important; }</style>
+}
+
+<section class="at-page" aria-labelledby="atTitle">
+    @Html.AntiForgeryToken()
+    <header class="at-header">
+        <div><span class="at-eyebrow">Services</span><h1 id="atTitle">Account Transfer</h1><p>Transfer an existing service account to a new account number and zone-book assignment.</p></div>
+    </header>
+
+    <form id="atForm" class="at-card" novalidate>
+        <input type="hidden" id="atAccountId" value="0" />
+        <div class="at-grid at-grid--two">
+            <label class="at-field"><span>Job Order Number</span><input id="atJobNumber" value="Generated after transfer" readonly /></label>
+            <label class="at-field"><span>Job Order Date</span><input id="atJobDate" type="date" value="@(Model.JobOrderDate?.ToString("yyyy-MM-dd"))" required /></label>
+        </div>
+
+        <div class="at-account-search">
+            <label class="at-field"><span>Find Existing Account</span><input id="atAccountSearch" autocomplete="off" placeholder="Enter account number or account name" /></label>
+            <button type="button" id="atSearchButton" aria-label="Search account"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg></button>
+            <div class="at-suggestions" id="atSuggestions" hidden></div>
+        </div>
+
+        <div class="at-grid at-grid--two">
+            <label class="at-field"><span>Current Account Number</span><input id="atAccountNumber" readonly required /></label>
+            <label class="at-field"><span>Account Name</span><input id="atAccountName" readonly /></label>
+        </div>
+        <label class="at-field"><span>Service Address</span><input id="atAddress" readonly /></label>
+        <div class="at-grid at-grid--two">
+            <label class="at-field"><span>Zone</span><select id="atZone" required><option value="">Select zone</option></select></label>
+            <label class="at-field"><span>Book</span><select id="atBook" required disabled><option value="">Select book</option></select></label>
+        </div>
+        <div class="at-grid at-grid--two at-transfer-row">
+            <label class="at-field"><span>New Account Number</span><input id="atNewAccount" maxlength="50" placeholder="Enter the replacement account number" required /></label>
+            <label class="at-field"><span>Transfer Date</span><input id="atTransferDate" type="date" value="@(Model.TransferDate?.ToString("yyyy-MM-dd"))" required /></label>
+        </div>
+
+        <div class="at-summary" id="atSummary" hidden>
+            <span>Transfer completed</span><strong id="atSummaryNumber"></strong><small id="atSummaryDetail"></small>
+        </div>
+        <div class="at-footer"><p id="atMessage" role="status"></p><button type="submit" id="atSubmit">Transfer Account</button></div>
+    </form>
+</section>
+
+@section Scripts { <script src="~/js/account-transfer.js" asp-append-version="true"></script> }

@@ -23,10 +23,10 @@ namespace TMCWD.Data.Entities
         public string ControlNumber { get; set; } = string.Empty;
 
         [Column("CustomerId")]
-        public System.Int64 CustomerId { get; set; }
+        public System.Int64? CustomerId { get; set; }
 
         [Column("AccountId")]
-        public System.Int64 AccountId { get; set; }
+        public System.Int64? AccountId { get; set; }
 
         [Column("Status")]
         public int Status { get; set; }
@@ -38,10 +38,22 @@ namespace TMCWD.Data.Entities
         public DateTime DateCreated { get; set; }
 
         [Column("UpdatedBy")]
-        public System.Int64 UpdatedBy { get; set;  }
+        public System.Int64? UpdatedBy { get; set;  }
 
         [Column("DateUpdated")]
-        public DateTime DateUpdated { get; set; }
+        public DateTime? DateUpdated { get; set; }
+
+        public bool IsServiceRequest { get; set; }
+        public bool IsNonCustomer { get; set; }
+        public long? LegacyServiceRequestId { get; set; }
+        [MaxLength(50)] public string AccountNumber { get; set; } = string.Empty;
+        [MaxLength(200)] public string AccountName { get; set; } = string.Empty;
+        [MaxLength(500)] public string Address { get; set; } = string.Empty;
+        [MaxLength(200)] public string ReportedBy { get; set; } = string.Empty;
+        [MaxLength(50)] public string ContactNumber { get; set; } = string.Empty;
+        [MaxLength(100)] public string Source { get; set; } = string.Empty;
+        [MaxLength(200)] public string Name { get; set; } = string.Empty;
+        public string? Particulars { get; set; }
 
         #endregion
 

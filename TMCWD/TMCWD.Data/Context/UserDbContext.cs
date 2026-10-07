@@ -86,6 +86,16 @@ namespace TMCWD.Data.Context
 
         public DbSet<BatchPaymentUpload> BatchPaymentUploads { get; set; }
 
+        public DbSet<WaterConnectionApplication> WaterConnectionApplications { get; set; }
+
+        public DbSet<DisconnectionOrder> DisconnectionOrders { get; set; }
+
+        public DbSet<AccountTransferOrder> AccountTransferOrders { get; set; }
+
+        // ── Phase 6D ──────────────────────────────────────────────────────────
+        public DbSet<BirInvoiceConfig> BirInvoiceConfigs { get; set; }
+        public DbSet<ServiceInvoiceSeq> ServiceInvoiceSeq { get; set; }
+
         #endregion
 
         #region constructors
@@ -104,6 +114,8 @@ namespace TMCWD.Data.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Request>().HasIndex(x => x.LegacyServiceRequestId).IsUnique();
 
             modelBuilder.Entity<WaterRate>(entity =>
             {

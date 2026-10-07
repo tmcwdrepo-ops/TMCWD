@@ -61,7 +61,7 @@ namespace TMCWD.Billing
 
         public async Task<List<ChargeType>> GetByClassificationId(int classificationId)
         {
-            var response = await _webService.Client.GetAsync($"api/ChargeType/GetByClassificationId/{classificationId}");
+            var response = await _webService.Client.GetAsync($"api/ChargeType/GetByClassification/{classificationId}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return new List<ChargeType>();
             return ConvertJsonToChargeTypes(data);

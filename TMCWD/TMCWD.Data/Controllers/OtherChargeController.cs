@@ -57,10 +57,13 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         public async Task<IActionResult> SaveUpdate(int userId, OtherCharge otherCharge)
         {
             try
             {
+                if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                    return Unauthorized();
                 if (otherCharge == null)
                     return BadRequest("Other charge is required.");
 
@@ -82,20 +85,51 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPut("Deactivate/{id}/{userId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         public async Task<IActionResult> Deactivate(int id, int userId)
         {
-            var otherCharge = await _service.Deactivate(id, userId);
-            if (otherCharge == null) return NotFound();
-            return Ok(otherCharge);
+            try
+            {
+                if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                    return Unauthorized();
+                var otherCharge = await _service.Deactivate(id, userId);
+                if (otherCharge == null) return NotFound();
+                return Ok(otherCharge);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("PostToCollection/{userId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
+        public async Task<IActionResult> PostToCollection(
+            int userId,
+            [FromBody] TMCWD.Model.Billing.Requests.PostOtherChargesRequest request)
+        {
+            try
+            {
+                if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                    return Unauthorized();
+                return Ok(new { postedCount = await _service.PostToCollection(userId, request?.OtherChargeIds ?? new()) });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         [HttpPost("ProcessPayment/{userId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
         public async Task<IActionResult> ProcessPayment(
             int userId,
             [FromBody] TMCWD.Model.Billing.Requests.OtherChargePaymentRequest request)
         {
             try
             {
+                if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                    return Unauthorized();
                 var invoiceNumber = await _service.ProcessPayment(userId, request);
                 return Ok(new { success = true, invoiceNumber });
             }

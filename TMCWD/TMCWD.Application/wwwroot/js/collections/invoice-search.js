@@ -23,7 +23,7 @@
     }
     const table = document.createElement('table');
     table.className = 'is-results-table';
-    table.innerHTML = '<thead><tr><th>Invoice No.</th><th>Account</th><th style="text-align:right">Total Amount</th><th>Transaction Type</th><th>Date Issued</th><th>Status</th></tr></thead>';
+    table.innerHTML = '<thead><tr><th>Payment Reference</th><th>Account</th><th style="text-align:right">Total Amount</th><th>Transaction Type</th><th>Date Issued</th><th>Status</th></tr></thead>';
     const body = document.createElement('tbody');
     rows.forEach(invoice => {
       const row = document.createElement('tr');

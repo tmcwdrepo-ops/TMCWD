@@ -26,6 +26,7 @@ namespace TMCWD.Application.Controllers
         private readonly PaymentTransaction _paymentTrans;
         private readonly CollectionRemittanceTransaction _remittanceTrans;
         private readonly OtherChargeTransaction _otherChargeTrans;
+        private readonly OtherFeeTypeTransaction _otherFeeTypeTrans;
         private readonly UserTransaction _userTrans;
         private readonly BatchPaymentUploadTransaction _batchUploadTrans;
 
@@ -43,6 +44,7 @@ namespace TMCWD.Application.Controllers
             PaymentTransaction paymentTrans,
             CollectionRemittanceTransaction remittanceTrans,
             OtherChargeTransaction otherChargeTrans,
+            OtherFeeTypeTransaction otherFeeTypeTrans,
             UserTransaction userTrans,
             BatchPaymentUploadTransaction batchUploadTrans)
         {
@@ -56,6 +58,7 @@ namespace TMCWD.Application.Controllers
             _paymentTrans = paymentTrans;
             _remittanceTrans = remittanceTrans;
             _otherChargeTrans = otherChargeTrans;
+            _otherFeeTypeTrans = otherFeeTypeTrans;
             _userTrans = userTrans;
             _batchUploadTrans = batchUploadTrans;
         }
@@ -329,6 +332,8 @@ namespace TMCWD.Application.Controllers
                 return Ok(new List<object>());
 
             var result = new List<object>();
+            var feeTypes = await _otherFeeTypeTrans.GetAll() ?? new List<OtherFeeType>();
+            var feeTypeNames = feeTypes.ToDictionary(x => (int)x.Id, x => x.Name);
 
             foreach (var account in accounts)
             {
@@ -351,52 +356,58 @@ namespace TMCWD.Application.Controllers
                 decimal totalBillAmount = 0;
                 decimal totalMeterMaintenance = 0;
                 decimal totalPenalty = 0;
+                decimal totalOtherCharges = 0;
+                decimal totalAmountDue = 0;
                 var bills = new List<object>();
+                var accountOtherCharges = new List<object>();
 
                 foreach (var billing in unpaidBills)
                 {
-                    // Get penalties for this bill
-                    var penalties = await _penaltyTrans.GetByReference(billing.BillingReferenceId);
-                    var activePenalties = penalties?
-                        .Where(p => p.PaymentStatus != PaymentStatus.Waived &&
-                                    p.PaymentStatus != PaymentStatus.Paid)
-                        .ToList() ?? new List<Model.Billing.Penalty>();
+                    var summary = await _billingTrans.GetCollectionBill(billing.BillingReferenceId);
+                    if (summary == null || summary.AmountDue <= 0m) continue;
+                    totalAmountDue += summary.AmountDue;
 
-                    var penaltyAmount = activePenalties.Sum(p => p.Amount);
-
-                    // Older records used their posting date as BillingPeriod.
-                    // Follow the billing's reading back to its reading sheet so
-                    // the scheduled billing month and due date are displayed.
-                    Model.Billing.Reading? reading = null;
-                    Model.Billing.ReadingSheet? readingSheet = null;
-                    if (billing.ReadingId > 0)
+                    // Load posted charges before splitting the collectible bill,
+                    // because RemainingAmount already includes them on new data.
+                    var otherCharges = await _otherChargeTrans.GetByReference(billing.BillingReferenceId);
+                    var activeUnpaidCharges = otherCharges?
+                        .Where(c => c.IsActive && (c.PaymentStatus == PaymentStatus.Unpaid
+                                               || c.PaymentStatus == PaymentStatus.Overdue))
+                        .ToList() ?? new List<Model.Billing.OtherCharge>();
+                    var otherChargeAmount = summary.OtherCharges;
+                    totalOtherCharges += otherChargeAmount;
+                    accountOtherCharges.AddRange(activeUnpaidCharges.Select(c => (object)new
                     {
-                        reading = await _readingTrans.Get((int)billing.ReadingId);
-                        if (reading?.ReadingSheetId > 0)
-                            readingSheet = await _readingSheetTrans.Get(reading.ReadingSheetId);
-                    }
+                        id = c.Id,
+                        chargeType = feeTypeNames.GetValueOrDefault(c.Type, $"Charge #{c.Type}"),
+                        amount = c.Amount,
+                        payableIn = c.PayableIn,
+                        particulars = c.Particulars,
+                        billingReferenceId = c.BillingReferenceId
+                    }));
 
-                    var billingDate = readingSheet?.BillingDate ?? billing.BillingPeriod;
-                    var dueDate = readingSheet?.DueDate ?? billingDate.AddDays(15);
-
-                    var meterMaintenanceFee = WaterChargeCalculator.WaterMeterMaintenanceFee;
-                    var collectibleBillAmount = Math.Max(meterMaintenanceFee, billing.RemainingAmount);
-                    var waterBillAmount = Math.Max(0m, collectibleBillAmount - meterMaintenanceFee);
-                    totalBillAmount += waterBillAmount;
-                    totalMeterMaintenance += meterMaintenanceFee;
-                    totalPenalty += penaltyAmount;
+                    totalBillAmount += summary.BillAmount ?? 0m;
+                    totalMeterMaintenance += summary.MeterMaintenanceFee ?? 0m;
+                    totalPenalty += summary.Penalty;
 
                     bills.Add(new
                     {
                         billingReferenceId = billing.BillingReferenceId,
-                        readingSheetId = readingSheet?.Id,
-                        billingPeriod = billingDate.ToString("yyyy-MM"),
-                        dueDate = dueDate.ToString("yyyy-MM-dd"),
-                        // The stored collectible amount already includes this fee. Split it
-                        // into visible line items without increasing the amount due.
-                        billAmount = waterBillAmount,
-                        meterMaintenanceFee,
-                        penalty = penaltyAmount,
+                        serviceInvoiceNumber = summary.ServiceInvoiceNumber,
+                        paymentReference = summary.PaymentReference,
+                        billingPeriod = summary.BillingDate.ToString("yyyy-MM"),
+                        dueDate = summary.DueDate?.ToString("yyyy-MM-dd"),
+                        disconnectionDate = summary.DisconnectionDate?.ToString("yyyy-MM-dd"),
+                        billAmount = summary.BillAmount,
+                        meterMaintenanceFee = summary.MeterMaintenanceFee,
+                        otherCharges = otherChargeAmount,
+                        billingAdjustment = summary.BillingAdjustment,
+                        remainingAmount = summary.RemainingAmount,
+                        amountDue = summary.AmountDue,
+                        totalDue = summary.TotalDue,
+                        penaltyAfterDue = summary.PenaltyAfterDue,
+                        totalAfterDue = summary.TotalAfterDue,
+                        penalty = summary.Penalty,
                         status = billing.PaymentStatus.ToString()
                     });
                 }
@@ -412,8 +423,10 @@ namespace TMCWD.Application.Controllers
                     totalBillAmount,
                     totalMeterMaintenance,
                     totalPenalty,
-                    totalDue = totalBillAmount + totalMeterMaintenance + totalPenalty,
-                    unpaidCount = unpaidBills.Count,
+                    otherChargesBalance = totalOtherCharges,
+                    otherCharges = accountOtherCharges,
+                    totalDue = totalAmountDue,
+                    unpaidCount = bills.Count,
                     bills
                 });
             }

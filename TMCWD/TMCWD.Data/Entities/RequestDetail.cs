@@ -29,6 +29,9 @@ namespace TMCWD.Data.Entities
         [Column("DateUpdated")]
         public DateTime DateUpdated { get; set; }
 
+        [MaxLength(255)] public string JobDescription { get; set; } = string.Empty;
+        [MaxLength(100)] public string JobOrderType { get; set; } = string.Empty;
+
         #endregion
 
     }

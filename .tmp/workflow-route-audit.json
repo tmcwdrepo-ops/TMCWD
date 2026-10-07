@@ -1,0 +1,2470 @@
+{
+  "scope": "Static literal-route discovery; dynamic URLs and runtime behavior need separate verification.",
+  "mvcReferences": 208,
+  "missingMvc": [
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Engineering\\Inventory.cshtml",
+      "line": 122,
+      "route": "/Engineering/DeactivateInventory"
+    }
+  ],
+  "apiReferences": 220,
+  "declaredApiRoutes": 221,
+  "missingApi": [
+    {
+      "file": "TMCWD/TMCWD.Billing/EWalletLogTransaction.cs",
+      "line": 71,
+      "method": "Post",
+      "route": "api/EWalletTransaction/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/OtherChargeTransaction.cs",
+      "line": 82,
+      "method": "Get",
+      "route": "api/OtherCharge/GetByClassificationId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 113,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetByBillingDateAndAssignedTo/VALUE/VALUE/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 131,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetByZoneBookId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 139,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetByBillingPeriodStart/VALUE/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 158,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetRangeReadingSheets"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 87,
+      "method": "Get",
+      "route": "api/Reading/GetByZoneAndBook/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 151,
+      "method": "Post",
+      "route": "api/Reading/UpdateStatusByReadingSheetIds"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 159,
+      "method": "Get",
+      "route": "api/Reading/GetByReadingSheetId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/WaterRateTransaction.cs",
+      "line": 88,
+      "method": "Get",
+      "route": "api/WaterRate/GetByClassificationAndMeterSize/"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/AccountTransaction.cs",
+      "line": 131,
+      "method": "Get",
+      "route": "api/Account/GetByZoneBookId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/ApprovalHistoryTransaction.cs",
+      "line": 56,
+      "method": "Post",
+      "route": "api/VALUE/ApprovalHistory/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/JobOrderTransaction.cs",
+      "line": 84,
+      "method": "Get",
+      "route": "api/VALUE/JobOrder/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/MaterialTransaction.cs",
+      "line": 32,
+      "method": "Get",
+      "route": "api/VALUE/Material/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 188,
+      "method": "Delete",
+      "route": "api/RequestDetail/Delete/VALUE"
+    }
+  ],
+  "missingAssets": [],
+  "mvc": [
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Account\\Index.cshtml",
+      "line": 83,
+      "route": "/Account/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Account\\Index.cshtml",
+      "line": 123,
+      "route": "/Account/DeactivateAccount"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Admin\\AddEditInspectionType.cshtml",
+      "line": 35,
+      "route": "/Admin/InspectionTypes"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Admin\\AddEditUser.cshtml",
+      "line": 62,
+      "route": "/Admin/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Admin\\Index.cshtml",
+      "line": 132,
+      "route": "/Billing/OtherCharges"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Admin\\InspectionTypes.cshtml",
+      "line": 26,
+      "route": "/Admin/AddEditInspectionType"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Admin\\InspectionTypes.cshtml",
+      "line": 73,
+      "route": "/Admin/GetInspectionTypes"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Admin\\InspectionTypes.cshtml",
+      "line": 108,
+      "route": "/Admin/AddEditInspectionType"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Admin\\InspectionTypes.cshtml",
+      "line": 117,
+      "route": "/Admin/DeactivateInspectionType"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Admin\\OtherFeeTypes.cshtml",
+      "line": 72,
+      "route": "/Admin/GetOtherFeeTypes"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Admin\\OtherFeeTypes.cshtml",
+      "line": 86,
+      "route": "/Admin/SaveOtherFeeType"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Billing\\BillAdjustment.cshtml",
+      "line": 225,
+      "route": "/Billing/ReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditCustomer.cshtml",
+      "line": 45,
+      "route": "/CustomerSupport/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditCustomer.cshtml",
+      "line": 94,
+      "route": "/Account/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditCustomer.cshtml",
+      "line": 130,
+      "route": "/CustomerSupport/DeactivateAccount"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditCustomer.cshtml",
+      "line": 150,
+      "route": "/Account/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditRequest.cshtml",
+      "line": 153,
+      "route": "/CustomerSupport/Requests"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditRequest.cshtml",
+      "line": 213,
+      "route": "/Request/GetInspectionType"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditRequest.cshtml",
+      "line": 235,
+      "route": "/JobOrder/GetJobOrders"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditRequest.cshtml",
+      "line": 261,
+      "route": "/JobOrder/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditRequest.cshtml",
+      "line": 306,
+      "route": "/CustomerSupport/SaveRequest"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditRequest.cshtml",
+      "line": 368,
+      "route": "/CustomerSupport/SaveRequestDetails"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditRequest.cshtml",
+      "line": 372,
+      "route": "/CustomerSupport/Requests"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditRequest.cshtml",
+      "line": 385,
+      "route": "/CustomerSupport/SearchCustomer"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditRequest.cshtml",
+      "line": 392,
+      "route": "/CustomerSupport/RefreshAccountSelectComponent"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\AddEditRequest.cshtml",
+      "line": 421,
+      "route": "/Account/AddAccount"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\CustomerInformation.cshtml",
+      "line": 1275,
+      "route": "/Billing/History"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\CustomerInformation.cshtml",
+      "line": 870,
+      "route": "/CustomerSupport/SearchByAccount"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\CustomerInformation.cshtml",
+      "line": 871,
+      "route": "/CustomerSupport/GetCustomerInformationData"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\CustomerInformation.cshtml",
+      "line": 872,
+      "route": "/CustomerSupport/SaveCustomerInformation"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\CustomerInformation.cshtml",
+      "line": 873,
+      "route": "/CustomerSupport/SaveAccountInformation"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\CustomerInformation.cshtml",
+      "line": 874,
+      "route": "/CustomerSupport/DeactivateCustomer"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\CustomerInformation.cshtml",
+      "line": 875,
+      "route": "/CustomerSupport/CustomerInformation"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\CustomerInformation.cshtml",
+      "line": 876,
+      "route": "/Account/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\CustomerInformation.cshtml",
+      "line": 877,
+      "route": "/CustomerSupport/GetBillsData"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\CustomerInformation.cshtml",
+      "line": 1352,
+      "route": "/Billing/GetDebitCreditMemosByAccount"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\CustomerInformation.cshtml",
+      "line": 1353,
+      "route": "/Billing/GetBillAdjustmentsByAccount"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\Index.cshtml",
+      "line": 23,
+      "route": "/CustomerSupport/AddEditCustomer"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\NewConnection.cshtml",
+      "line": 192,
+      "route": "/Admin/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\Requests.cshtml",
+      "line": 24,
+      "route": "/CustomerSupport/AddEditRequest"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\Requests.cshtml",
+      "line": 65,
+      "route": "/Request/GetRequests"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\CustomerSupport\\Requests.cshtml",
+      "line": 100,
+      "route": "/CustomerSupport/AddEditRequest"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Engineering\\AddEditInventory.cshtml",
+      "line": 51,
+      "route": "/Engineering/Inventory"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Engineering\\Inventory.cshtml",
+      "line": 26,
+      "route": "/Engineering/AddEditInventory"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Engineering\\Inventory.cshtml",
+      "line": 81,
+      "route": "/Engineering/AddEditInventory"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Engineering\\Inventory.cshtml",
+      "line": 122,
+      "route": "/Engineering/DeactivateInventory"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Engineering\\Inventory.cshtml",
+      "line": 151,
+      "route": "/Engineering/UpdateInventoryQuantity"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 43,
+      "route": "/CustomerSupport/Requests"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 46,
+      "route": "/CustomerSupport/Requests"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 49,
+      "route": "/CustomerSupport/Requests"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 52,
+      "route": "/CustomerSupport/Requests"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 273,
+      "route": "/Approval/GetHistory"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 365,
+      "route": "/Finding/SaveFindingFile"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 413,
+      "route": "/Finding/SaveFinding"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 418,
+      "route": "/JobOrder/GetJobOrder"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 455,
+      "route": "/Finding/GetFindings"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 489,
+      "route": "/JobOrder/MoveToNextStatus"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 496,
+      "route": "/Engineering/GetInventory"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 507,
+      "route": "/CustomerSupport/SaveMaterial"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 531,
+      "route": "/CustomerSupport/GetMaterialRequest"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 560,
+      "route": "/CustomerSupport/GetMaterialRequest"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 577,
+      "route": "/CustomerSupport/DeleteMaterial"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\JobOrder\\Index.cshtml",
+      "line": 597,
+      "route": "/CustomerSupport/SaveMaterial"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\Components\\LeftSideMenu\\Default.cshtml",
+      "line": 26,
+      "route": "/Admin/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\Components\\LeftSideMenu\\Default.cshtml",
+      "line": 29,
+      "route": "/Admin/InspectionTypes"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\Components\\LeftSideMenu\\Default.cshtml",
+      "line": 32,
+      "route": "/Admin/OtherFeeTypes"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\Components\\LeftSideMenu\\Default.cshtml",
+      "line": 37,
+      "route": "/CustomerSupport/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\Components\\LeftSideMenu\\Default.cshtml",
+      "line": 40,
+      "route": "/CustomerSupport/NewConnection"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\Components\\LeftSideMenu\\Default.cshtml",
+      "line": 43,
+      "route": "/CustomerSupport/Requests"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\Components\\LeftSideMenu\\Default.cshtml",
+      "line": 48,
+      "route": "/Engineering/Inventory"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 44,
+      "route": "/Admin/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 53,
+      "route": "/CustomerSupport/CustomerInformation"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 73,
+      "route": "/Billing/ReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 84,
+      "route": "/Billing/BillAdjustment"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 96,
+      "route": "/Billing/OtherCharges"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 107,
+      "route": "/Billing/DebitCreditMemo"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 118,
+      "route": "/Billing/Reading"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 132,
+      "route": "/Billing/Penalty"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 145,
+      "route": "/Billing/PenaltyCharging"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 161,
+      "route": "/Collections/Index"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 181,
+      "route": "/CustomerSupport/NewConnection"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 182,
+      "route": "/CustomerSupport/Disconnection"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 183,
+      "route": "/CustomerSupport/AccountTransfer"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\Views\\Shared\\_InsideLayout.cshtml",
+      "line": 184,
+      "route": "/CustomerSupport/ServiceRequest"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\account-transfer.js",
+      "line": 15,
+      "route": "/ZoneBook/GetZone"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\account-transfer.js",
+      "line": 33,
+      "route": "/ZoneBook/GetBooksByZone"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\account-transfer.js",
+      "line": 47,
+      "route": "/CustomerSupport/SearchAccountTransferAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\account-transfer.js",
+      "line": 87,
+      "route": "/CustomerSupport/SaveAccountTransfer"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\bill_adjustment.js",
+      "line": 165,
+      "route": "/Billing/SearchAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\bill_adjustment.js",
+      "line": 192,
+      "route": "/Billing/GetAsBilledValues"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\bill_adjustment.js",
+      "line": 256,
+      "route": "/Billing/History"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\batch-payments.js",
+      "line": 76,
+      "route": "/Collections/BatchPayments"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\batch-payments.js",
+      "line": 98,
+      "route": "/Collections/BatchPaymentUpload"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\batch-payments.js",
+      "line": 190,
+      "route": "/Collections/BatchPaymentDetail"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\cancel-invoice.js",
+      "line": 88,
+      "route": "/Collections/CancelInvoice"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\collection-monitoring.js",
+      "line": 46,
+      "route": "/Collections/Monitoring"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\collection-report.js",
+      "line": 32,
+      "route": "/Collections/Collectors"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\collection-report.js",
+      "line": 295,
+      "route": "/Collections/CollectionReportPdf"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\collection-report.js",
+      "line": 354,
+      "route": "/Collections/CollectionReportExcel"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\invoice-search.js",
+      "line": 51,
+      "route": "/Collections/SearchInvoices"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\ledger-modal.js",
+      "line": 106,
+      "route": "/Billing/History"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\my-collection.js",
+      "line": 47,
+      "route": "/Collections/CollectionList"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\oc-modal.js",
+      "line": 53,
+      "route": "/Billing/GetChargeTypes"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\oc-modal.js",
+      "line": 97,
+      "route": "/Collections/SearchAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\oc-modal.js",
+      "line": 145,
+      "route": "/Collections/SearchAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\oc-modal.js",
+      "line": 444,
+      "route": "/Billing/GetChargeTypes"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\oc-modal.js",
+      "line": 720,
+      "route": "/Collections/PayOtherCharges"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\oc-modal.js",
+      "line": 815,
+      "route": "/Collections/PayOtherCharges"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\oc-modal.js",
+      "line": 1022,
+      "route": "/Billing/GetChargeTypes"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\oc-modal.js",
+      "line": 1093,
+      "route": "/Collections/SearchAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\oc-modal.js",
+      "line": 1159,
+      "route": "/Collections/SearchAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\remittance.js",
+      "line": 130,
+      "route": "/Collections/RemittanceExpected"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\remittance.js",
+      "line": 391,
+      "route": "/Collections/CurrentCollector"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\remittance.js",
+      "line": 703,
+      "route": "/Collections/SaveRemittance"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections\\reprint-invoice.js",
+      "line": 32,
+      "route": "/Collections/Invoice"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections.js",
+      "line": 260,
+      "route": "/Collections/SearchAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections.js",
+      "line": 350,
+      "route": "/Collections/SearchAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections.js",
+      "line": 363,
+      "route": "/Collections/SearchAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections.js",
+      "line": 1051,
+      "route": "/Collections/Pay"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\collections.js",
+      "line": 2065,
+      "route": "/Collections/CurrentCollector"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_reading.js",
+      "line": 125,
+      "route": "/ReadingSheet/GetReaders"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_reading.js",
+      "line": 144,
+      "route": "/Admin/GetUsersByRole"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_reading.js",
+      "line": 305,
+      "route": "/ZoneBook/GetBooksByZone"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_reading.js",
+      "line": 321,
+      "route": "/account/GetByZoneBookAndSequence"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_reading.js",
+      "line": 431,
+      "route": "/ReadingSheet/CreateReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_reading.js",
+      "line": 515,
+      "route": "/account/GetByZoneBookAndSequence"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_reading.js",
+      "line": 815,
+      "route": "/ReadingSheet/GetReadingSheetTemplates"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_reading.js",
+      "line": 886,
+      "route": "/ReadingSheet/GetZones"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_reading.js",
+      "line": 908,
+      "route": "/ReadingSheet/GetBooksByZone"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_temp.js",
+      "line": 87,
+      "route": "/ReadingSheet/GetReaders"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_temp.js",
+      "line": 100,
+      "route": "/ReadingSheet/GetZones"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_temp.js",
+      "line": 115,
+      "route": "/ReadingSheet/GetBooksByZone"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_temp.js",
+      "line": 127,
+      "route": "/ReadingSheet/GetReadingSheetTemplates"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_temp.js",
+      "line": 308,
+      "route": "/ReadingSheet/DeactivateReadingSheetTemplate"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\create_temp.js",
+      "line": 336,
+      "route": "/ReadingSheet/SaveReadingSheetTemplate"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 105,
+      "route": "/Admin/GetServiceApplications"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 164,
+      "route": "/Admin/GetApplicationPayment"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 219,
+      "route": "/Admin/GetApplicationTicket"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 265,
+      "route": "/Admin/AdvanceStage"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 339,
+      "route": "/Admin/GetServiceRequestsByDescription"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 518,
+      "route": "/Billing/History"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 555,
+      "route": "/Admin/SaveServiceRequest"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 561,
+      "route": "/Admin/AccomplishServiceRequest"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 710,
+      "route": "/Admin/GetServiceInspection"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 797,
+      "route": "/Admin/SaveServiceInspection"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 853,
+      "route": "/Admin/GetConnectOrder"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 901,
+      "route": "/Admin/SaveConnectOrder"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 974,
+      "route": "/Admin/SaveServiceInspection"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 1083,
+      "route": "/Admin/SaveInstallationServiceRequest"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 1112,
+      "route": "/Admin/GetHouseTapping"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 1191,
+      "route": "/Admin/SaveHouseTapping"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 1243,
+      "route": "/Admin/GetWorkOrder"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 1348,
+      "route": "/Admin/SaveWorkOrder"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 1386,
+      "route": "/Billing/OtherCharges"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 1393,
+      "route": "/Billing/GetChargeTypes"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 1394,
+      "route": "/Billing/GetOtherChargesByAccount"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 1434,
+      "route": "/Billing/SaveOtherCharge"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 1514,
+      "route": "/Billing/PostOtherCharges"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\dashboard.js",
+      "line": 1547,
+      "route": "/Billing/DeactivateOtherCharge"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\debit-credit-memo.js",
+      "line": 107,
+      "route": "/Billing/SearchAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\debit-credit-memo.js",
+      "line": 237,
+      "route": "/Billing/SaveDebitCreditMemo"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\disconnection.js",
+      "line": 19,
+      "route": "/CustomerSupport/SearchDisconnectionAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\disconnection.js",
+      "line": 62,
+      "route": "/CustomerSupport/SaveDisconnectionOrder"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\disconnection.js",
+      "line": 79,
+      "route": "/CustomerSupport/GetDisconnectionOrders"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\new-connection.js",
+      "line": 22,
+      "route": "/ZoneBook/GetZone"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\new-connection.js",
+      "line": 36,
+      "route": "/ZoneBook/GetBooksByZone"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\new-connection.js",
+      "line": 149,
+      "route": "/CustomerSupport/SaveNewConnection"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\other-charges.js",
+      "line": 7,
+      "route": "/Billing/GetChargeTypes"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\other-charges.js",
+      "line": 8,
+      "route": "/Billing/SearchAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\other-charges.js",
+      "line": 9,
+      "route": "/Billing/GetOtherChargesByAccount"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\other-charges.js",
+      "line": 10,
+      "route": "/Billing/SaveOtherCharge"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\other-charges.js",
+      "line": 11,
+      "route": "/Billing/PostOtherCharges"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\other-charges.js",
+      "line": 12,
+      "route": "/Billing/DeactivateOtherCharge"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\penalties.js",
+      "line": 19,
+      "route": "/Billing/GetPenaltiesByDueDate"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\penalties.js",
+      "line": 33,
+      "route": "/Billing/WaivePenalties"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\penalties.js",
+      "line": 46,
+      "route": "/Billing/PendingPenaltyWaivers"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\penalties.js",
+      "line": 60,
+      "route": "/Billing/ReviewPenaltyWaiver"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\penalty-charging.js",
+      "line": 134,
+      "route": "/Billing/GetPenaltyChargeEntries"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\penalty-charging.js",
+      "line": 387,
+      "route": "/Billing/PostPenaltyCharges"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 703,
+      "route": "/ReadingSheet/GetReadingSheetAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 761,
+      "route": "/ReadingSheet/PartialPostReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 777,
+      "route": "/ReadingSheet/GetReadingSheetAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 782,
+      "route": "/ReadingSheet/GetAllReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 803,
+      "route": "/ReadingSheet/CompleteReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 819,
+      "route": "/ReadingSheet/GetAllReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 918,
+      "route": "/ReadingSheet/DownloadExcel"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 1066,
+      "route": "/ReadingSheet/GetReaders"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 1245,
+      "route": "/ReadingSheet/UpdateReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 1287,
+      "route": "/ReadingSheet/GetAllReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 1381,
+      "route": "/readingsheet/DeleteReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 1552,
+      "route": "/ReadingSheet/BulkDeleteReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 1809,
+      "route": "/ReadingSheet/GetAllReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 2015,
+      "route": "/readingsheet/GetAllReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 2051,
+      "route": "/readingsheet/createreadingsheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 2069,
+      "route": "/ReadingSheet/GetAllReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 2330,
+      "route": "/ReadingSheet/GetAllReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 2503,
+      "route": "/ReadingSheet/BulkUpdateStatus"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading-sheet.js",
+      "line": 2524,
+      "route": "/ReadingSheet/GetAllReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading.js",
+      "line": 34,
+      "route": "/ZoneBook/GetZone"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading.js",
+      "line": 64,
+      "route": "/ZoneBook/GetBooksByZone"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading.js",
+      "line": 85,
+      "route": "/ReadingSheet/GetReaders"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading.js",
+      "line": 172,
+      "route": "/ReadingSheet/GetActiveForManualReading"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading.js",
+      "line": 178,
+      "route": "/ReadingSheet/GetAllReadingSheet"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading.js",
+      "line": 268,
+      "route": "/Billing/SearchAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading.js",
+      "line": 383,
+      "route": "/Billing/GetReadingsByZoneBook"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\reading.js",
+      "line": 525,
+      "route": "/Billing/SaveReading"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\service-request.js",
+      "line": 25,
+      "route": "/CustomerSupport/SearchDisconnectionAccounts"
+    },
+    {
+      "file": "TMCWD\\TMCWD.Application\\wwwroot\\js\\service-request.js",
+      "line": 72,
+      "route": "/CustomerSupport/SaveServiceRequest"
+    }
+  ],
+  "api": [
+    {
+      "file": "TMCWD/TMCWD.Administration/ApplicationLoginTransaction.cs",
+      "line": 51,
+      "method": "Get",
+      "route": "api/Users/GetByEmail/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 15,
+      "method": "Get",
+      "route": "api/Dashboard/ServiceSummary"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 22,
+      "method": "Get",
+      "route": "api/Dashboard/ServiceApplications/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 29,
+      "method": "Get",
+      "route": "api/Dashboard/ServiceInspection/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 36,
+      "method": "Post",
+      "route": "api/Dashboard/SaveServiceInspection/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 43,
+      "method": "Get",
+      "route": "api/Dashboard/ConnectOrder/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 50,
+      "method": "Post",
+      "route": "api/Dashboard/SaveConnectOrder/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 57,
+      "method": "Get",
+      "route": "api/Dashboard/ApplicationPayment/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 64,
+      "method": "Get",
+      "route": "api/Dashboard/ApplicationTicket/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 71,
+      "method": "Post",
+      "route": "api/Dashboard/NewConnection/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 78,
+      "method": "Get",
+      "route": "api/Dashboard/DisconnectionAccounts"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 85,
+      "method": "Get",
+      "route": "api/Dashboard/DisconnectionOrders"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 92,
+      "method": "Post",
+      "route": "api/Dashboard/DisconnectionOrder/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 99,
+      "method": "Get",
+      "route": "api/Dashboard/AccountTransferAccounts"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 106,
+      "method": "Post",
+      "route": "api/Dashboard/AccountTransfer/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 113,
+      "method": "Get",
+      "route": "api/Dashboard/ServiceRequestAssignees"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 120,
+      "method": "Post",
+      "route": "api/Dashboard/ServiceRequest/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 127,
+      "method": "Get",
+      "route": "api/Dashboard/WorkOrder/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 134,
+      "method": "Post",
+      "route": "api/Dashboard/SaveWorkOrder/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 141,
+      "method": "Get",
+      "route": "api/Dashboard/HouseTapping/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 148,
+      "method": "Post",
+      "route": "api/Dashboard/SaveHouseTapping/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 155,
+      "method": "Post",
+      "route": "api/Dashboard/ActivateAccount/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 162,
+      "method": "Post",
+      "route": "api/Dashboard/AdvanceStage/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 169,
+      "method": "Post",
+      "route": "api/Dashboard/SaveServiceRequest/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 176,
+      "method": "Post",
+      "route": "api/Dashboard/AccomplishServiceRequest/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/DashboardTransaction.cs",
+      "line": 182,
+      "method": "Get",
+      "route": "api/Dashboard/ServiceRequestsByDescription"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/InspectionTypeTransaction.cs",
+      "line": 45,
+      "method": "Get",
+      "route": "api/InspectionType/GetTypes"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/InspectionTypeTransaction.cs",
+      "line": 57,
+      "method": "Post",
+      "route": "api/InspectionType/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/InspectionTypeTransaction.cs",
+      "line": 67,
+      "method": "Get",
+      "route": "api/InspectionType/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/InspectionTypeTransaction.cs",
+      "line": 76,
+      "method": "Get",
+      "route": "api/InspectionType/GetNewRequestType"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/OtherFeeTypeTransaction.cs",
+      "line": 35,
+      "method": "Get",
+      "route": "api/OtherFeeType/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/OtherFeeTypeTransaction.cs",
+      "line": 43,
+      "method": "Get",
+      "route": "api/OtherFeeType/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/OtherFeeTypeTransaction.cs",
+      "line": 53,
+      "method": "Get",
+      "route": "api/OtherFeeType/GetByName/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/OtherFeeTypeTransaction.cs",
+      "line": 63,
+      "method": "Post",
+      "route": "api/OtherFeeType/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/OtherFeeTypeTransaction.cs",
+      "line": 72,
+      "method": "Delete",
+      "route": "api/OtherFeeType/Delete/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/UserTransaction.cs",
+      "line": 47,
+      "method": "Post",
+      "route": "api/Users/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/UserTransaction.cs",
+      "line": 55,
+      "method": "Get",
+      "route": "api/Users/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/UserTransaction.cs",
+      "line": 63,
+      "method": "Get",
+      "route": "api/Users/GetByName/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/UserTransaction.cs",
+      "line": 71,
+      "method": "Get",
+      "route": "api/Users/GetByEmail/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/UserTransaction.cs",
+      "line": 80,
+      "method": "Get",
+      "route": "api/Users/GetUsers"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/UserTransaction.cs",
+      "line": 130,
+      "method": "Get",
+      "route": "api/Users/SearchUser/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/UserTransaction.cs",
+      "line": 140,
+      "method": "Get",
+      "route": "api/Users/GetUsersByRole/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/UserTransaction.cs",
+      "line": 149,
+      "method": "Get",
+      "route": "api/Users/GetUsersById"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/WorkflowTransaction.cs",
+      "line": 35,
+      "method": "Get",
+      "route": "api/Workflow/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/WorkflowTransaction.cs",
+      "line": 43,
+      "method": "Get",
+      "route": "api/Workflow/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/WorkflowTransaction.cs",
+      "line": 52,
+      "method": "Post",
+      "route": "api/Workflow/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Administration/WorkflowTransaction.cs",
+      "line": 60,
+      "method": "Delete",
+      "route": "api/Workflow/Delete/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/AdvancePaymentTransaction.cs",
+      "line": 46,
+      "method": "Get",
+      "route": "api/AdvancePayment/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/AdvancePaymentTransaction.cs",
+      "line": 55,
+      "method": "Get",
+      "route": "api/AdvancePayment/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/AdvancePaymentTransaction.cs",
+      "line": 63,
+      "method": "Get",
+      "route": "api/AdvancePayment/GetActiveByAccount/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/AdvancePaymentTransaction.cs",
+      "line": 71,
+      "method": "Get",
+      "route": "api/AdvancePayment/GetByAccount/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BatchPaymentUploadTransaction.cs",
+      "line": 48,
+      "method": "Get",
+      "route": "api/BatchPaymentUpload/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BatchPaymentUploadTransaction.cs",
+      "line": 65,
+      "method": "Post",
+      "route": "api/BatchPaymentUpload/Save/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BillingAdjustmentTransaction.cs",
+      "line": 28,
+      "method": "Get",
+      "route": "api/BillingAdjustment/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BillingAdjustmentTransaction.cs",
+      "line": 36,
+      "method": "Get",
+      "route": "api/BillingAdjustment/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BillingAdjustmentTransaction.cs",
+      "line": 44,
+      "method": "Get",
+      "route": "api/BillingAdjustment/GetByReference/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BillingAdjustmentTransaction.cs",
+      "line": 53,
+      "method": "Post",
+      "route": "api/BillingAdjustment/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BillingAdjustmentTransaction.cs",
+      "line": 63,
+      "method": "Post",
+      "route": "api/BillingAdjustment/SaveBatch/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BillingTransaction.cs",
+      "line": 53,
+      "method": "Get",
+      "route": "api/Billing/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BillingTransaction.cs",
+      "line": 61,
+      "method": "Get",
+      "route": "api/Billing/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BillingTransaction.cs",
+      "line": 69,
+      "method": "Get",
+      "route": "api/Billing/GetByBillingReference/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BillingTransaction.cs",
+      "line": 77,
+      "method": "Post",
+      "route": "api/Billing/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BillingTransaction.cs",
+      "line": 86,
+      "method": "Get",
+      "route": "api/Billing/GetByAccountId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/BillingTransaction.cs",
+      "line": 94,
+      "method": "Get",
+      "route": "api/Billing/History/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ChargeTypeTransaction.cs",
+      "line": 48,
+      "method": "Get",
+      "route": "api/ChargeType/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ChargeTypeTransaction.cs",
+      "line": 56,
+      "method": "Get",
+      "route": "api/ChargeType/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ChargeTypeTransaction.cs",
+      "line": 64,
+      "method": "Get",
+      "route": "api/ChargeType/GetByClassification/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ChargeTypeTransaction.cs",
+      "line": 73,
+      "method": "Post",
+      "route": "api/ChargeType/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/CollectionRemittanceTransaction.cs",
+      "line": 20,
+      "method": "Post",
+      "route": "api/CollectionRemittance/Save"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/DebitCreditMemoTransaction.cs",
+      "line": 19,
+      "method": "Post",
+      "route": "api/DebitCreditMemo/Save/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/DebitCreditMemoTransaction.cs",
+      "line": 29,
+      "method": "Get",
+      "route": "api/DebitCreditMemo/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/EndpointTransaction.cs",
+      "line": 43,
+      "method": "Get",
+      "route": "api/Endpoint/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/EndpointTransaction.cs",
+      "line": 51,
+      "method": "Get",
+      "route": "api/Endpoint/GetByType/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/EndpointTransaction.cs",
+      "line": 59,
+      "method": "Get",
+      "route": "api/Endpoint/GetByTypeAndName/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/EWalletLogTransaction.cs",
+      "line": 46,
+      "method": "Get",
+      "route": "api/EWalletTransaction/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/EWalletLogTransaction.cs",
+      "line": 54,
+      "method": "Get",
+      "route": "api/EWalletTransaction/GetByPaymentReference/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/EWalletLogTransaction.cs",
+      "line": 62,
+      "method": "Get",
+      "route": "api/EWalletTransaction/GetByProcessedBy/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/EWalletLogTransaction.cs",
+      "line": 71,
+      "method": "Post",
+      "route": "api/EWalletTransaction/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/OtherChargeTransaction.cs",
+      "line": 52,
+      "method": "Get",
+      "route": "api/OtherCharge/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/OtherChargeTransaction.cs",
+      "line": 60,
+      "method": "Get",
+      "route": "api/OtherCharge/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/OtherChargeTransaction.cs",
+      "line": 68,
+      "method": "Get",
+      "route": "api/OtherCharge/GetByReference/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/OtherChargeTransaction.cs",
+      "line": 82,
+      "method": "Get",
+      "route": "api/OtherCharge/GetByClassificationId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/OtherChargeTransaction.cs",
+      "line": 91,
+      "method": "Post",
+      "route": "api/OtherCharge/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/OtherChargeTransaction.cs",
+      "line": 100,
+      "method": "Put",
+      "route": "api/OtherCharge/Deactivate/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/OtherChargeTransaction.cs",
+      "line": 110,
+      "method": "Post",
+      "route": "api/OtherCharge/PostToCollection/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/OtherChargeTransaction.cs",
+      "line": 133,
+      "method": "Post",
+      "route": "api/OtherCharge/ProcessPayment/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentCheckTransaction.cs",
+      "line": 45,
+      "method": "Get",
+      "route": "api/PaymentCheck/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentCheckTransaction.cs",
+      "line": 53,
+      "method": "Get",
+      "route": "api/PaymentCheck/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentCheckTransaction.cs",
+      "line": 61,
+      "method": "Get",
+      "route": "api/PaymentCheck/GetByReference/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentCheckTransaction.cs",
+      "line": 70,
+      "method": "Post",
+      "route": "api/PaymentCheck/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 46,
+      "method": "Get",
+      "route": "api/Payment/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 54,
+      "method": "Get",
+      "route": "api/Payment/GetByBillingReference/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 62,
+      "method": "Get",
+      "route": "api/Payment/GetByBillingReference/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 73,
+      "method": "Get",
+      "route": "api/Payment/GetByCashier/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 81,
+      "method": "Get",
+      "route": "api/Payment/GetByCashier/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 92,
+      "method": "Get",
+      "route": "api/Payment/GetByMethod/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 100,
+      "method": "Get",
+      "route": "api/Payment/GetByMacAddress/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 108,
+      "method": "Get",
+      "route": "api/Payment/GetByPaymentReference/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 117,
+      "method": "Post",
+      "route": "api/Payment/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 127,
+      "method": "Post",
+      "route": "api/Payment/ProcessCollection/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 157,
+      "method": "Get",
+      "route": "api/Payment/SearchInvoices"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 180,
+      "method": "Get",
+      "route": "api/Payment/Invoice/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PaymentTransaction.cs",
+      "line": 190,
+      "method": "Post",
+      "route": "api/Payment/CancelInvoice/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PenaltyTransaction.cs",
+      "line": 53,
+      "method": "Get",
+      "route": "api/Penalty/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PenaltyTransaction.cs",
+      "line": 61,
+      "method": "Get",
+      "route": "api/Penalty/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PenaltyTransaction.cs",
+      "line": 69,
+      "method": "Get",
+      "route": "api/Penalty/GetByReference/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PenaltyTransaction.cs",
+      "line": 78,
+      "method": "Post",
+      "route": "api/Penalty/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PenaltyTransaction.cs",
+      "line": 86,
+      "method": "Post",
+      "route": "api/Penalty/SubmitWaiver/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PenaltyTransaction.cs",
+      "line": 95,
+      "method": "Get",
+      "route": "api/Penalty/PendingWaivers/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PenaltyTransaction.cs",
+      "line": 102,
+      "method": "Post",
+      "route": "api/Penalty/ReviewWaiver/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PenaltyTransaction.cs",
+      "line": 115,
+      "method": "Get",
+      "route": "api/Penalty/ChargeEntries"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PenaltyTransaction.cs",
+      "line": 122,
+      "method": "Get",
+      "route": "api/Penalty/ActiveEntries"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/PenaltyTransaction.cs",
+      "line": 129,
+      "method": "Post",
+      "route": "api/Penalty/PostCharges/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTemplateTransaction.cs",
+      "line": 45,
+      "method": "Get",
+      "route": "api/ReadingSheetTemplate/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTemplateTransaction.cs",
+      "line": 53,
+      "method": "Get",
+      "route": "api/ReadingSheetTemplate/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTemplateTransaction.cs",
+      "line": 61,
+      "method": "Get",
+      "route": "api/ReadingSheetTemplate/GetByUser/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTemplateTransaction.cs",
+      "line": 70,
+      "method": "Post",
+      "route": "api/ReadingSheetTemplate/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTemplateTransaction.cs",
+      "line": 78,
+      "method": "Put",
+      "route": "api/ReadingSheetTemplate/Deactivate/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 59,
+      "method": "Get",
+      "route": "api/ReadingSheet/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 69,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 79,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetByAssignedTo/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 87,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetByZoneAndBook/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 95,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetByZoneBookAndAssignedTo/VALUE/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 103,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetByBillingDate/VALUE/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 113,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetByBillingDateAndAssignedTo/VALUE/VALUE/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 122,
+      "method": "Post",
+      "route": "api/ReadingSheet/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 131,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetByZoneBookId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 139,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetByBillingPeriodStart/VALUE/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 147,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetCurrentByAssignedTo/VALUE/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 158,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetRangeReadingSheets"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 167,
+      "method": "Patch",
+      "route": "api/ReadingSheet/UpdateReadingSheetsStatus/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 176,
+      "method": "Get",
+      "route": "api/ReadingSheet/GetReadingSheetAccounts"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 191,
+      "method": "Post",
+      "route": "api/ReadingSheet/PartialPostReadingSheet"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingSheetTransaction.cs",
+      "line": 208,
+      "method": "Post",
+      "route": "api/ReadingSheet/CompleteReadingSheet"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 46,
+      "method": "Get",
+      "route": "api/Reading/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 54,
+      "method": "Get",
+      "route": "api/Reading/GetByAccount/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 62,
+      "method": "Get",
+      "route": "api/Reading/GetByAccountAndBillingPeriod/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 70,
+      "method": "Get",
+      "route": "api/Reading/GetByReader/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 78,
+      "method": "Get",
+      "route": "api/Reading/GetByZoneAndBook/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 87,
+      "method": "Get",
+      "route": "api/Reading/GetByZoneAndBook/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 95,
+      "method": "Get",
+      "route": "api/Reading/GetAccountCurrentReading/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 103,
+      "method": "Get",
+      "route": "api/Reading/GetAccountPreviousReading/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 112,
+      "method": "Post",
+      "route": "api/Reading/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 123,
+      "method": "Post",
+      "route": "api/Reading/SaveRange"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 132,
+      "method": "Post",
+      "route": "api/Reading/SaveRange"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 141,
+      "method": "Post",
+      "route": "api/Reading/GetRangeByReadingSheetIds"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 151,
+      "method": "Post",
+      "route": "api/Reading/UpdateStatusByReadingSheetIds"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ReadingTransaction.cs",
+      "line": 159,
+      "method": "Get",
+      "route": "api/Reading/GetByReadingSheetId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/TariffTransaction.cs",
+      "line": 54,
+      "method": "Get",
+      "route": "api/Tariff/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/TariffTransaction.cs",
+      "line": 68,
+      "method": "Get",
+      "route": "api/Tariff/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/TariffTransaction.cs",
+      "line": 83,
+      "method": "Get",
+      "route": "api/Tariff/GetByClassification/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/WaterRateTransaction.cs",
+      "line": 43,
+      "method": "Get",
+      "route": "api/WaterRate/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/WaterRateTransaction.cs",
+      "line": 56,
+      "method": "Get",
+      "route": "api/WaterRate/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/WaterRateTransaction.cs",
+      "line": 70,
+      "method": "Get",
+      "route": "api/WaterRate/GetByClassification/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/WaterRateTransaction.cs",
+      "line": 88,
+      "method": "Get",
+      "route": "api/WaterRate/GetByClassificationAndMeterSize/"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ZoneBookTransaction.cs",
+      "line": 45,
+      "method": "Get",
+      "route": "api/ZoneBook/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ZoneBookTransaction.cs",
+      "line": 53,
+      "method": "Get",
+      "route": "api/ZoneBook/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ZoneBookTransaction.cs",
+      "line": 61,
+      "method": "Get",
+      "route": "api/ZoneBook/GetByZone/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ZoneBookTransaction.cs",
+      "line": 69,
+      "method": "Get",
+      "route": "api/ZoneBook/GetZones"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ZoneBookTransaction.cs",
+      "line": 77,
+      "method": "Get",
+      "route": "api/ZoneBook/GetBooksByZone/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ZoneBookTransaction.cs",
+      "line": 85,
+      "method": "Get",
+      "route": "api/ZoneBook/GetByZoneAndBook/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ZoneBookTransaction.cs",
+      "line": 93,
+      "method": "Get",
+      "route": "api/ZoneBook/GetByWeek/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Billing/ZoneBookTransaction.cs",
+      "line": 102,
+      "method": "Get",
+      "route": "api/ZoneBook/GetByIds"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/AccountTransaction.cs",
+      "line": 63,
+      "method": "Post",
+      "route": "api/Account/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/AccountTransaction.cs",
+      "line": 77,
+      "method": "Get",
+      "route": "api/Account/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/AccountTransaction.cs",
+      "line": 91,
+      "method": "Get",
+      "route": "api/Account/GetByAccountNumber/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/AccountTransaction.cs",
+      "line": 103,
+      "method": "Get",
+      "route": "api/Account/GetByCustomerId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/AccountTransaction.cs",
+      "line": 115,
+      "method": "Get",
+      "route": "api/Account/GetByMeterNumber/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/AccountTransaction.cs",
+      "line": 123,
+      "method": "Get",
+      "route": "api/Account/GetByZoneAndBook/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/AccountTransaction.cs",
+      "line": 131,
+      "method": "Get",
+      "route": "api/Account/GetByZoneBookId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/AccountTransaction.cs",
+      "line": 139,
+      "method": "Get",
+      "route": "api/Account/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/AccountTransaction.cs",
+      "line": 147,
+      "method": "Get",
+      "route": "api/Account/GetByZoneBookAndSequence/VALUE/VALUE/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/AccountTransaction.cs",
+      "line": 155,
+      "method": "Get",
+      "route": "api/Account/Search"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/ApprovalHistoryTransaction.cs",
+      "line": 37,
+      "method": "Get",
+      "route": "api/VALUE/ApprovalHistory/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/ApprovalHistoryTransaction.cs",
+      "line": 56,
+      "method": "Post",
+      "route": "api/VALUE/ApprovalHistory/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/CustomerTransaction.cs",
+      "line": 41,
+      "method": "Post",
+      "route": "api/Customer/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/CustomerTransaction.cs",
+      "line": 52,
+      "method": "Get",
+      "route": "api/Customer/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/CustomerTransaction.cs",
+      "line": 60,
+      "method": "Get",
+      "route": "api/Customer/GetByName/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/CustomerTransaction.cs",
+      "line": 68,
+      "method": "Get",
+      "route": "api/Customer/GetCustomers"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/CustomerTransaction.cs",
+      "line": 76,
+      "method": "Get",
+      "route": "api/Customer/Search/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/CustomerTransaction.cs",
+      "line": 85,
+      "method": "Get",
+      "route": "api/Customer/GetCustomersFromIds"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/FindingTransaction.cs",
+      "line": 36,
+      "method": "Get",
+      "route": "api/VALUE/Finding/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/FindingTransaction.cs",
+      "line": 46,
+      "method": "Get",
+      "route": "api/VALUE/Finding/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/FindingTransaction.cs",
+      "line": 65,
+      "method": "Post",
+      "route": "api/VALUE/Finding/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/InspectionReportTransaction.cs",
+      "line": 50,
+      "method": "Post",
+      "route": "api/InspectionReport/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/InspectionReportTransaction.cs",
+      "line": 62,
+      "method": "Get",
+      "route": "api/InspectionReport/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/InspectionReportTransaction.cs",
+      "line": 73,
+      "method": "Get",
+      "route": "api/InspectionReport/GetByRequestId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/JobOrderTransaction.cs",
+      "line": 37,
+      "method": "Get",
+      "route": "api/VALUE/JobOrder/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/JobOrderTransaction.cs",
+      "line": 48,
+      "method": "Get",
+      "route": "api/VALUE/JobOrder/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/JobOrderTransaction.cs",
+      "line": 68,
+      "method": "Post",
+      "route": "api/VALUE/JobOrder/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/JobOrderTransaction.cs",
+      "line": 76,
+      "method": "Get",
+      "route": "api/VALUE/JobOrder/GetByRequestId"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/JobOrderTransaction.cs",
+      "line": 84,
+      "method": "Get",
+      "route": "api/VALUE/JobOrder/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/MaterialTransaction.cs",
+      "line": 32,
+      "method": "Get",
+      "route": "api/VALUE/Material/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/MaterialTransaction.cs",
+      "line": 43,
+      "method": "Get",
+      "route": "api/0/Material/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/MaterialTransaction.cs",
+      "line": 54,
+      "method": "Get",
+      "route": "api/VALUE/Material/GetByJobOrderId"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/MaterialTransaction.cs",
+      "line": 64,
+      "method": "Post",
+      "route": "api/VALUE/Material/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/MaterialTransaction.cs",
+      "line": 84,
+      "method": "Put",
+      "route": "api/VALUE/Material/UpdateQuantityOrNewUnitCost/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/MaterialTransaction.cs",
+      "line": 92,
+      "method": "Delete",
+      "route": "api/VALUE/Material/Delete/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RecommendationTransaction.cs",
+      "line": 58,
+      "method": "Post",
+      "route": "api/VALUE/Recommendation/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RecommendationTransaction.cs",
+      "line": 70,
+      "method": "Get",
+      "route": "api/VALUE/Recommendation/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RecommendationTransaction.cs",
+      "line": 84,
+      "method": "Get",
+      "route": "api/VALUE/Recommendation/GetByRequestId"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestFileTransaction.cs",
+      "line": 35,
+      "method": "Get",
+      "route": "api/RequestFile/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestFileTransaction.cs",
+      "line": 43,
+      "method": "Get",
+      "route": "api/RequestFile/GetAll/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestFileTransaction.cs",
+      "line": 52,
+      "method": "Post",
+      "route": "api/RequestFile/SaveUpdate/VALUE/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestFileTransaction.cs",
+      "line": 61,
+      "method": "Post",
+      "route": "api/RequestFile/SaveRange"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 68,
+      "method": "Post",
+      "route": "api/Request/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 81,
+      "method": "Get",
+      "route": "api/Request/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 93,
+      "method": "Get",
+      "route": "api/Request/GetRequests"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 103,
+      "method": "Get",
+      "route": "api/Request/GetByUserId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 117,
+      "method": "Get",
+      "route": "api/Request/GetByCustomerId/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 137,
+      "method": "Post",
+      "route": "api/VALUE/RequestDetail/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 160,
+      "method": "Post",
+      "route": "api/VALUE/RequestDetail/SaveMultiple/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 169,
+      "method": "Get",
+      "route": "api/VALUE/RequestDetail/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 177,
+      "method": "Get",
+      "route": "api/VALUE/RequestDetail/GetByRequestId"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 188,
+      "method": "Delete",
+      "route": "api/RequestDetail/Delete/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.CustomerSupport/RequestTransaction.cs",
+      "line": 201,
+      "method": "Delete",
+      "route": "api/VALUE/RequestDetail/DeleteDetails"
+    },
+    {
+      "file": "TMCWD/TMCWD.Engineering/InventoryTransaction.cs",
+      "line": 60,
+      "method": "Post",
+      "route": "api/Inventory/SaveUpdate/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Engineering/InventoryTransaction.cs",
+      "line": 74,
+      "method": "Get",
+      "route": "api/Inventory/Get/VALUE"
+    },
+    {
+      "file": "TMCWD/TMCWD.Engineering/InventoryTransaction.cs",
+      "line": 86,
+      "method": "Get",
+      "route": "api/Inventory/GetAll"
+    },
+    {
+      "file": "TMCWD/TMCWD.Engineering/InventoryTransaction.cs",
+      "line": 94,
+      "method": "Get",
+      "route": "api/Inventory/GetByName/VALUE"
+    }
+  ]
+}

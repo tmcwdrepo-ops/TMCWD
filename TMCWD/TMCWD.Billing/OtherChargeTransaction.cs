@@ -103,6 +103,29 @@ namespace TMCWD.Billing
             return ConvertJsonToOtherCharge(data);
         }
 
+        public async Task<int> PostToCollection(
+            int userId,
+            TMCWD.Model.Billing.Requests.PostOtherChargesRequest request)
+        {
+            using var response = await _service.Client.PostAsJsonAsync(
+                $"api/OtherCharge/PostToCollection/{userId}", request);
+            var data = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    using var json = System.Text.Json.JsonDocument.Parse(data);
+                    if (json.RootElement.TryGetProperty("message", out var message))
+                        throw new InvalidOperationException(message.GetString());
+                }
+                catch (System.Text.Json.JsonException) { }
+                throw new HttpRequestException("The charge posting was not confirmed.");
+            }
+
+            using var result = System.Text.Json.JsonDocument.Parse(data);
+            return result.RootElement.GetProperty("postedCount").GetInt32();
+        }
+
         public async Task<(bool Success, string Message, string InvoiceNumber)> ProcessPayment(
             int userId,
             TMCWD.Model.Billing.Requests.OtherChargePaymentRequest request)

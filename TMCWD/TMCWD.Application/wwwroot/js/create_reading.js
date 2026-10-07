@@ -1044,21 +1044,72 @@ document.addEventListener('templates:updated', function (e) {
  * @param {string} tplId  — matches a real template's id, or '' to clear
  */
 function applyTemplate(tplId) {
-    var tpl = crRealTemplates.find(function (t) { return String(t.id) === String(tplId); }) || null;
+    var tpl = crRealTemplates.find(function (t) {
+        return String(t.id) === String(tplId);
+    }) || null;
 
     if (tpl) {
+
+        // ---------------------------------------------------------
+        // Meter Reader
+        // ---------------------------------------------------------
         if (crMeterReaderInput) {
             crMeterReaderInput.value = tpl.readerName;
             crMeterReaderInput.dataset.id = tpl.readerId;
-            crMeterReaderValue = tpl.readerId;
+
+            crMeterReaderValue = tpl.readerName;
             crMeterReaderId = tpl.readerId;
         }
+
+        // ---------------------------------------------------------
+        // Scope / Sequence
+        //
+        // NULL + NULL = All
+        // SeqFrom + SeqTo = Scoped
+        // ---------------------------------------------------------
+        var isScoped =
+            tpl.seqFrom != null &&
+            tpl.seqTo != null;
+
+        if (crScope) {
+            crScope.value = isScoped ? 'ranged' : 'all';
+
+            // Force the range UI to update.
+            selectedScope = '';
+            syncScopeRange();
+        }
+
+        if (crFromSeq) {
+            crFromSeq.value = isScoped ? tpl.seqFrom : '';
+            currentFromSeq = isScoped ? tpl.seqFrom : 0;
+        }
+
+        if (crToSeq) {
+            crToSeq.value = isScoped ? tpl.seqTo : '';
+            currentToSeq = isScoped ? tpl.seqTo : 0;
+        }
+
+        // ---------------------------------------------------------
+        // Zone / Book
+        // ---------------------------------------------------------
         var zoneSelect = document.getElementById('crZone');
+
         if (zoneSelect) {
             zoneSelect.value = tpl.zone;
+            selectedZone = tpl.zone;
+
             loadCrBooksForZone(tpl.zone).then(function () {
-                var bookSelect = document.getElementById('crBook');
-                if (bookSelect) bookSelect.value = tpl.book;
+
+                var bookSelect =
+                    document.getElementById('crBook');
+
+                if (bookSelect) {
+                    bookSelect.value = tpl.book;
+                    selectedBook = tpl.book;
+                }
+
+                // Previous accounts may belong to another
+                // template/range, so clear them.
                 resetCrAccounts();
             });
         }
@@ -1066,7 +1117,9 @@ function applyTemplate(tplId) {
 
     syncOverrideStart();
 
-    if (crTemplateActions) crTemplateActions.hidden = !tpl;
+    if (crTemplateActions) {
+        crTemplateActions.hidden = !tpl;
+    }
 }
 
 if (crTemplateSelect) {

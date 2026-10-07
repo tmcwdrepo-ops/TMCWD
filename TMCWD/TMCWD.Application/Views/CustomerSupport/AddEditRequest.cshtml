@@ -194,7 +194,7 @@
 <vc:customer-selection></vc:customer-selection>
 
 <div id="divAccountSelection">
-    <vc:account-selection customer-id="@Model.AddEditRequest.CustomerId"></vc:account-selection>
+    <vc:account-selection customer-id="@(Model.AddEditRequest.CustomerId ?? 0)"></vc:account-selection>
 </div>
 
 <script type="text/javascript">

@@ -1,0 +1,16 @@
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\bin\TMCWD.Services\debug\TMCWD.Services.deps.json
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\bin\TMCWD.Services\debug\TMCWD.Services.dll
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\bin\TMCWD.Services\debug\TMCWD.Services.pdb
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\bin\TMCWD.Services\debug\TMCWD.Model.dll
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\bin\TMCWD.Services\debug\TMCWD.Model.pdb
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\obj\TMCWD.Services\debug\TMCWD.Services.csproj.AssemblyReference.cache
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\obj\TMCWD.Services\debug\TMCWD.Services.GeneratedMSBuildEditorConfig.editorconfig
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\obj\TMCWD.Services\debug\TMCWD.Services.AssemblyInfoInputs.cache
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\obj\TMCWD.Services\debug\TMCWD.Services.AssemblyInfo.cs
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\obj\TMCWD.Services\debug\TMCWD.Services.csproj.CoreCompileInputs.cache
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\obj\TMCWD.Services\debug\TMCWD.Services.sourcelink.json
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\obj\TMCWD.Services\debug\TMCWD.Se.A40DBACA.Up2Date
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\obj\TMCWD.Services\debug\TMCWD.Services.dll
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\obj\TMCWD.Services\debug\refint\TMCWD.Services.dll
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\obj\TMCWD.Services\debug\TMCWD.Services.pdb
+D:\Projects 20260720\TMCWD\.tmp\meter-reader-auth\obj\TMCWD.Services\debug\ref\TMCWD.Services.dll

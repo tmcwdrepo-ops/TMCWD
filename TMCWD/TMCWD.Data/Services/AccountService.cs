@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using System.Security.Principal;
+using System.Text.Json;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
+using TMCWD.Model.Dashboard;
 
 namespace TMCWD.Data.Services
 {
@@ -28,24 +30,29 @@ namespace TMCWD.Data.Services
         public async Task<Account?> Get(int id)
         {
             var account = await _dbContext.Accounts.Where(x => x.Id == id).FirstOrDefaultAsync();
+            if (account != null) await PopulateInitialReadings(new[] { account });
             return account;
         }
 
         public async Task<Account?> GetByAccountNumber(string accountNumber)
         {
             var account = await _dbContext.Accounts.Where(x => x.AccountNumber.ToLower() == accountNumber.ToLower()).FirstOrDefaultAsync();
+            if (account != null) await PopulateInitialReadings(new[] { account });
             return account;
         }
 
         public async Task<IEnumerable<Account>> GetByCustomerId(int customerId)
         {
             var accounts = _dbContext.Accounts.Where(x => x.CustomerId == customerId);
-            return await accounts.ToListAsync();
+            var result = await accounts.ToListAsync();
+            await PopulateInitialReadings(result);
+            return result;
         }
 
         public async Task<Account?> GetByMeterNumber(string meterNumber)
         {
             var account = await _dbContext.Accounts.Where(x => x.MeterNumber.ToLower() == meterNumber.ToLower()).FirstOrDefaultAsync();
+            if (account != null) await PopulateInitialReadings(new[] { account });
             return account;
         }
 
@@ -73,7 +80,9 @@ namespace TMCWD.Data.Services
         public async Task<IEnumerable<Account>> GetAccounts()
         {
             var accounts = _dbContext.Accounts;
-            return await accounts.ToListAsync();
+            var result = await accounts.ToListAsync();
+            await PopulateInitialReadings(result);
+            return result;
         }
 
         public async Task<IEnumerable<Account>> GetByZoneAndBook(int zone, int book)
@@ -83,13 +92,25 @@ namespace TMCWD.Data.Services
                         join accounts in _dbContext.Accounts on zoneBooks.Id equals accounts.ZoneBookId
                         where zoneBooks.Zone == zone && zoneBooks.Book == book
                         select accounts;
-            return await accts.ToListAsync();
+            var result = await accts.ToListAsync();
+            await PopulateInitialReadings(result);
+            return result;
         }
 
         public async Task<IEnumerable<Account>> GetByZoneBookId(int zoneBookId)
         {
             var accounts = await _dbContext.Accounts.Where(x => x.ZoneBookId == zoneBookId).ToListAsync();
+            await PopulateInitialReadings(accounts);
             return accounts;
+        }
+
+        public async Task<List<Account>> GetReadingSheetRoster(ReadingSheet sheet)
+        {
+            return (await GetByZoneBookId(sheet.ZoneBookId))
+                .Where(a => a.Status == (int)AccountStatus.Active
+                    && (sheet.SeqFrom.GetValueOrDefault() == 0 || a.Sequence >= sheet.SeqFrom)
+                    && (sheet.SeqTo.GetValueOrDefault() == 0 || a.Sequence <= sheet.SeqTo))
+                .OrderBy(a => a.Sequence).ThenBy(a => a.Id).ToList();
         }
 
         public async Task<IEnumerable<Account>> GetByZoneBookAndSequence(int zone, int book, int seqFrom, int seqTo)
@@ -100,7 +121,9 @@ namespace TMCWD.Data.Services
                        (accounts.Sequence >= seqFrom || seqFrom == 0) &&
                        (accounts.Sequence <= seqTo || seqTo == 0)
                        select accounts;
-            return await data.ToListAsync();
+            var result = await data.ToListAsync();
+            await PopulateInitialReadings(result);
+            return result;
         }
 
         public async Task<IEnumerable<Account>> Search(string query)
@@ -114,7 +137,39 @@ namespace TMCWD.Data.Services
                           || (x.Barangay != null && x.Barangay.ToLower().Contains(q)))
                 .Take(30)
                 .ToListAsync();
+            await PopulateInitialReadings(accounts);
             return accounts;
+        }
+
+        private async Task PopulateInitialReadings(IEnumerable<Account> accounts)
+        {
+            var accountList = accounts.ToList();
+            var accountIds = accountList.Select(x => x.Id).Distinct().ToList();
+            if (accountIds.Count == 0) return;
+
+            var tappingRecords = await _dbContext.WaterConnectionApplications.AsNoTracking()
+                .Where(x => x.AccountId.HasValue && accountIds.Contains(x.AccountId.Value)
+                    && x.TappingData != null && x.TappingData != string.Empty)
+                .OrderByDescending(x => x.UpdatedAt)
+                .Select(x => new { AccountId = x.AccountId!.Value, x.TappingData })
+                .ToListAsync();
+
+            var initialByAccount = new Dictionary<long, decimal>();
+            foreach (var tapping in tappingRecords)
+            {
+                if (initialByAccount.ContainsKey(tapping.AccountId)) continue;
+                try
+                {
+                    var record = JsonSerializer.Deserialize<HouseTappingRecord>(tapping.TappingData!,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (record != null && record.InitialReading >= 0)
+                        initialByAccount[tapping.AccountId] = record.InitialReading;
+                }
+                catch (JsonException) { }
+            }
+
+            foreach (var account in accountList)
+                account.InitialReading = initialByAccount.GetValueOrDefault(account.Id, 0);
         }
 
         #endregion

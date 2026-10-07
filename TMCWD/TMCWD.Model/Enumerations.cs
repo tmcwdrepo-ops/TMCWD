@@ -100,6 +100,7 @@ public enum FeeClassification
 
 public enum PaymentStatus
 {
+    Draft = 0,
     Unpaid = 1,
     Paid = 2,
     Overdue = 3,

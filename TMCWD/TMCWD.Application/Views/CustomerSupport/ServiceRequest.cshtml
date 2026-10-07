@@ -1,0 +1,65 @@
+@model TMCWD.Model.Dashboard.ServiceRequestOrderRecord
+@{
+    Layout = "_InsideLayout";
+    ViewData["PageTitle"] = "Service Request";
+    ViewData["ActivePage"] = "service-requests";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/service-request.css" asp-append-version="true" />
+}
+
+<section class="sr-page" aria-labelledby="srTitle">
+    @Html.AntiForgeryToken()
+    <header class="sr-header">
+        <div>
+            <h1 id="srTitle">Service Request</h1>
+        </div>
+    </header>
+
+    <form id="srForm" class="sr-card" novalidate>
+        <div class="sr-card__heading">
+            <div><h2>Customer details</h2></div>
+            <label class="sr-check"><input id="srNonCustomer" type="checkbox" /><span>Non-Customer</span></label>
+        </div>
+
+        <div class="sr-grid sr-grid--two">
+            <div class="sr-column">
+                <div class="sr-account-search">
+                    <label class="sr-field"><span>Account Number</span><input id="srAccountSearch" autocomplete="off" placeholder="Search account number or name" /></label>
+                    <button type="button" id="srSearchButton" aria-label="Search account"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg></button>
+                    <div class="sr-suggestions" id="srSuggestions" hidden></div>
+                </div>
+                <input id="srAccountId" type="hidden" value="0" />
+                <label class="sr-field"><span>Account Name</span><input id="srAccountName" readonly /></label>
+                <label class="sr-field"><span>Address</span><textarea id="srAddress" rows="2" readonly required></textarea></label>
+                <label class="sr-field"><span>Reported By</span><input id="srReportedBy" maxlength="200" required /></label>
+                <label class="sr-field"><span>Contact Number</span><input id="srContact" inputmode="tel" maxlength="50" readonly required /></label>
+            </div>
+
+            <div class="sr-column">
+                <label class="sr-field"><span>Job Order Number</span><input id="srJobNumber" value="Generated after submission" readonly /></label>
+                <label class="sr-field"><span>Job Order Date</span><input id="srJobDate" type="date" value="@(Model.JobOrderDate?.ToString("yyyy-MM-dd"))" required /></label>
+                <label class="sr-field"><span>Source</span><select id="srSource" required><option value="">Select source</option><option>Walk-In</option><option>Phone</option><option>Other</option></select></label>
+                <label class="sr-field"><span>Job Order Type</span><select id="srType" required><option value="">Select type</option><option>Service Request</option><option>Maintenance</option></select></label>
+            </div>
+        </div>
+
+        <div class="sr-received"><span>Received By</span><strong>@(ViewBag.ReceivedBy ?? "Current user")</strong></div>
+
+        <div class="sr-section">
+            <h3>Request details</h3>
+            <div class="sr-grid sr-grid--two">
+                <label class="sr-field"><span>Job Description</span><select id="srDescription" required><option value="">Select description</option><option>LEAK</option><option>INTERCONNECTION OF MAINLINE</option><option>Service Line / Mainline Leak</option><option>Reread</option><option>Investigation of Water Meter</option><option>Gate Valve Repair / Replacement</option><option>TRANSFER</option><option>STOLEN METER</option><option>OTHERS</option><option>DISCONNECTION</option><option>LOW CONSUMPTION</option><option>RELOCATION</option><option>RECLASSIFICATION</option><option>Low Pressure</option><option>REHABILITATION OF SERVICE LINE</option><option>CONCRETING</option><option>Inspection</option><option>STOP METER</option><option>NO WATER</option><option>HIGH CONSUMPTION</option><option>RECONNECTION</option><option>CHANGE METER</option><option>NEW CONNECTION INSTALLATION</option><option>Meter Calibration</option></select></label>
+                <label class="sr-field"><span>Referred To</span><select id="srReferredTo"><option value="">Not yet referred</option><option>Billing</option><option>Maintenance</option><option>Customer Service</option></select></label>
+                <label class="sr-field"><span>Date Referred</span><input id="srDateReferred" type="date" value="@(Model.DateReferred?.ToString("yyyy-MM-dd"))" disabled /></label>
+                <label class="sr-field"><span>Contact / Crew</span><input id="srName" maxlength="200" /></label>
+            </div>
+            <label class="sr-field"><span>Particulars</span><textarea id="srParticulars" rows="4" maxlength="2000"></textarea></label>
+        </div>
+
+        <div class="sr-result" id="srResult" hidden><span>Service request created</span><strong id="srResultNumber"></strong><small id="srResultStatus"></small></div>
+        <footer class="sr-footer"><p id="srMessage" role="status"></p><button type="submit" id="srSubmit">Create Service Request</button></footer>
+    </form>
+</section>
+
+@section Scripts { <script src="~/js/service-request.js" asp-append-version="true"></script> }

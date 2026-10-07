@@ -11,6 +11,10 @@ namespace TMCWD.Model.Billing.Requests
         public int ReaderId { get; set; }
         public int Zone { get; set; }
         public int Book { get; set; }
+
+        public int? SeqFrom { get; set; }
+        public int? SeqTo { get; set; }
+
         public bool IsActive { get; set; } = true;
     }
 }

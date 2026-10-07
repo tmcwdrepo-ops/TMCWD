@@ -13,10 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function loadEntries() {
-    const date = document.getElementById('billingDate')?.value;
-    if (!date) return alertModal('Select a Billing Date', 'Please pick a billing date first.', 'error');
+    const date = document.getElementById('dueDate')?.value;
+    if (!date) return alertModal('Select a Due Date', 'Please pick a due date first.', 'error');
     try {
-        const response = await fetch('/Billing/GetPenaltiesByBillPeriod?billPeriod=' + encodeURIComponent(date));
+        const response = await fetch('/Billing/GetPenaltiesByDueDate?dueDate=' + encodeURIComponent(date));
         if (!response.ok) throw new Error();
         penaltyList = await response.json() || []; isLoaded = true; currentPage = 1; renderTable();
     } catch { alertModal('Error', 'Could not load penalties. Please try again.', 'error'); }
@@ -70,7 +70,7 @@ function renderTable() {
     const body = document.getElementById('penaltyTableBody'); if (!body) return;
     const list = filtered(), info = document.getElementById('paginationInfo'), previous = document.getElementById('prevPageBtn'), next = document.getElementById('nextPageBtn'), selectAll = document.getElementById('selectAllCheckbox');
     if (!isLoaded || !list.length) {
-        body.innerHTML = `<tr><td colspan="6" class="pn-table-empty">${isLoaded ? 'No accounts found.' : 'Please select a billing date and click "Load Entries".'}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6" class="pn-table-empty">${isLoaded ? 'No active penalties found for this due date.' : 'Please select a due date and click "Load Entries".'}</td></tr>`;
         if (info) info.textContent = '0–0 of 0'; if (previous) previous.disabled = true; if (next) next.disabled = true; if (selectAll) selectAll.checked = false; return;
     }
     const pages = Math.ceil(list.length / pageSize); currentPage = Math.min(currentPage, pages); const start = (currentPage - 1) * pageSize, end = Math.min(start + pageSize, list.length);

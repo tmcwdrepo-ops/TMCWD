@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "TMCWD.Utility/1.0.0": {
+        "dependencies": {
+          "TMCWD.Model": "1.0.0"
+        },
+        "runtime": {
+          "TMCWD.Utility.dll": {}
+        }
+      },
+      "TMCWD.Model/1.0.0": {
+        "runtime": {
+          "TMCWD.Model.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "TMCWD.Utility/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "TMCWD.Model/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

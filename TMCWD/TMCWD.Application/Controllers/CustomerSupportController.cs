@@ -2,14 +2,15 @@
 using System.Text.Json;
 using TMCWD.Administration;
 using TMCWD.Application.Models;
-using TMCWD.Model.Administrator;
 using TMCWD.Model.CustomerSupport;
+using TMCWD.Model.Administrator;
 using TMCWD.CustomerSupport;
 using TMCWD.Services;
 using System.Net;
 using TMCWD.Model.Engineering;
 using TMCWD.Engineering;
 using TMCWD.Model.Extensions;
+using TMCWD.Model.Dashboard;
 
 namespace TMCWD.Application.Controllers
 {
@@ -28,6 +29,8 @@ namespace TMCWD.Application.Controllers
         private readonly InventoryTransaction _inventoryTransaction;
         private readonly MaterialTransaction _materialTransaction;
         private readonly FindingTransaction _findingTransaction;
+        private readonly DashboardTransaction _dashboardTransaction;
+        private readonly TMCWD.Billing.BillingTransaction _billingTransaction;
 
         #endregion
 
@@ -42,27 +45,22 @@ namespace TMCWD.Application.Controllers
             RecommendationTransaction recommendationTrasaction, 
             InventoryTransaction inventoryTransaction,
             MaterialTransaction materialTransaction,
-            FindingTransaction findingTransaction)
+            FindingTransaction findingTransaction,
+            DashboardTransaction dashboardTransaction,
+            TMCWD.Billing.BillingTransaction billingTransaction)
         {
             _authenticatedUserService = authenticatedUserService;
-
             _accountTransaction = accountTransaction;
-
             _customerTransaction = customerTransaction;
-
             _requestTransaction = requestTransaction;
-
             _inspectionTypeTransaction = inspectionTypeTransaction;
-
             _userTransaction = userTransaction;
-
             _recommendationTransaction = recommendationTrasaction;
-
             _inventoryTransaction = inventoryTransaction;
-
             _materialTransaction = materialTransaction;
-
             _findingTransaction = findingTransaction;
+            _dashboardTransaction = dashboardTransaction;
+            _billingTransaction = billingTransaction;
         }
 
         #endregion
@@ -76,11 +74,148 @@ namespace TMCWD.Application.Controllers
             return View(model);
         }
 
+        // ── Customer Information page ─────────────────────────────────────────
+
+        /// <summary>
+        /// Main customer information page. Loads the customer and their accounts.
+        /// Pass customerId=0 (default) to open a blank form ready for searching.
+        /// </summary>
+        public async Task<IActionResult> CustomerInformation(int customerId = 0)
+        {
+            var model = new CustomerInformationViewModel();
+
+            // Always fetch the full sorted ID list so Prev / Next can work.
+            var allCustomers = await _customerTransaction.GetCustomers();
+            if (allCustomers != null && allCustomers.Any())
+            {
+                model.CustomerIds = allCustomers
+                    .OrderBy(c => c.Id)
+                    .Select(c => c.Id)
+                    .ToList();
+            }
+
+            if (customerId > 0)
+            {
+                var customerTask  = _customerTransaction.Get(customerId);
+                var accountsTask  = _accountTransaction.GetByCustomerId(customerId);
+
+                await Task.WhenAll(customerTask, accountsTask);
+
+                model.Customer         = customerTask.Result  ?? new Customer();
+                model.CustomerAccounts = accountsTask.Result  ?? new List<Account>();
+                model.SelectedAccount  = model.CustomerAccounts.FirstOrDefault(a => a.IsCurrentAddress)
+                                         ?? model.CustomerAccounts.FirstOrDefault();
+            }
+
+            ViewData["ActivePage"] = "customers";
+            return View(model);
+        }
+
+        /// <summary>
+        /// AJAX endpoint – returns full customer JSON (used by the search / account-number lookup).
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetCustomerInformationData(int customerId)
+        {
+            if (customerId <= 0) return BadRequest();
+
+            var customerTask = _customerTransaction.Get(customerId);
+            var accountsTask = _accountTransaction.GetByCustomerId(customerId);
+
+            await Task.WhenAll(customerTask, accountsTask);
+
+            var customer = customerTask.Result;
+            var accounts = accountsTask.Result ?? new List<Account>();
+
+            if (customer == null) return NotFound();
+
+            return Ok(new
+            {
+                customer,
+                accounts,
+                selectedAccount = accounts.FirstOrDefault(a => a.IsCurrentAddress) ?? accounts.FirstOrDefault()
+            });
+        }
+
+        /// <summary>
+        /// AJAX – saves the customer portion of the Customer Information form.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SaveCustomerInformation([FromBody] Customer customer)
+        {
+            if (customer == null) return BadRequest("Customer data is required.");
+
+            var saved = await _customerTransaction.SaveUpdate(_authenticatedUserService.User.Id, customer);
+            if (saved == null) return StatusCode(500, "Customer could not be saved.");
+
+            return Ok(saved);
+        }
+
+        /// <summary>
+        /// AJAX – saves the account (meter information) portion of the Customer Information form.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SaveAccountInformation([FromBody] Account account)
+        {
+            if (account == null) return BadRequest("Account data is required.");
+
+            var saved = await _accountTransaction.SaveUpdate(_authenticatedUserService.User.Id, account);
+            if (saved == null) return StatusCode(500, "Account could not be saved.");
+
+            return Ok(saved);
+        }
+
         public async Task<IActionResult> GetCustomers()
         {
             var customers = await _customerTransaction.GetCustomers();
             if (customers == null || !customers.Any()) return NotFound();
             return Ok(customers);
+        }
+
+        /// <summary>
+        /// AJAX – returns billing history for a given account number.
+        /// Proxies /Billing/History so the Customer Information page doesn't need a cross-controller fetch.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetBillsData(string accountNumber)
+        {
+            if (string.IsNullOrWhiteSpace(accountNumber)) return BadRequest();
+
+            var history = await _billingTransaction.GetBillingHistory(accountNumber);
+            return Ok(history ?? new List<TMCWD.Model.Billing.BillingHistory>());
+        }
+        [HttpGet]
+        public async Task<IActionResult> SearchByAccount(string q)
+        {
+            if (string.IsNullOrWhiteSpace(q)) return Ok(new List<object>());
+
+            var accounts = await _accountTransaction.Search(q);
+            if (accounts == null || !accounts.Any()) return Ok(new List<object>());
+
+            // Fetch unique customers for matched accounts
+            var customerIds = accounts.Select(a => a.CustomerId).Distinct().ToList();
+            var customers   = await _customerTransaction.GetCustomersFromIds(customerIds);
+            var customerMap = (customers ?? new List<Customer>())
+                               .ToDictionary(c => c.Id);
+
+            var results = accounts
+                .Where(a => customerMap.ContainsKey(a.CustomerId))
+                .Select(a =>
+                {
+                    var c = customerMap[a.CustomerId];
+                    return new
+                    {
+                        customerId    = c.Id,
+                        accountId     = a.Id,
+                        accountNumber = a.AccountNumber,
+                        meterNumber   = a.MeterNumber,
+                        customerName  = $"{c.Lastname}, {c.Firstname} {c.Middlename}".Trim(),
+                        address       = a.FullAddress,
+                    };
+                })
+                .ToList();
+
+            return Ok(results);
         }
 
         public async Task<IActionResult> AddEditCustomer(int editCustomerId = 0)
@@ -239,8 +374,13 @@ namespace TMCWD.Application.Controllers
                 model.AddEditRequest = await _requestTransaction.Get(requestId);
                 if (model.AddEditRequest != null)
                 {
-                    Task<Customer> getCustomerTask = _customerTransaction.Get(model.AddEditRequest.CustomerId);
-                    Task<Account> getAccountTask = _accountTransaction.Get(model.AddEditRequest.AccountId);
+                    if (model.AddEditRequest.IsServiceRequest) return RedirectToAction("Index", "Admin");
+                    Task<Customer> getCustomerTask = model.AddEditRequest.CustomerId is > 0
+                        ? _customerTransaction.Get(model.AddEditRequest.CustomerId.Value)
+                        : Task.FromResult(new Customer());
+                    Task<Account> getAccountTask = model.AddEditRequest.AccountId is > 0
+                        ? _accountTransaction.Get(model.AddEditRequest.AccountId.Value)
+                        : Task.FromResult(new Account());
                     Task<List<RequestDetail>> getRequestDetailsTask = _requestTransaction.GetRequestDetailByRequestId(model.AddEditRequest.Id);
                     Task<List<Recommendation>> getRecommendationsTask = _recommendationTransaction.GetByRequestId(model.AddEditRequest.Id);
                     //Task<List<Material>> getMaterial = _materialTransaction.GetByJobOrderIdId(model.AddEditRequest.Id);
@@ -497,9 +637,117 @@ namespace TMCWD.Application.Controllers
 
         #region new connection
 
-        public async Task<IActionResult> NewConnection()
+        public IActionResult NewConnection()
         {
-            return View();
+            return View(new NewConnectionApplicationRecord { DateApplied = DateTime.Today });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveNewConnection([FromBody] NewConnectionApplicationRecord application)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            if (string.IsNullOrWhiteSpace(application.ApplicantName)) return BadRequest("Applicant name is required.");
+            if (string.IsNullOrWhiteSpace(application.Barangay)) return BadRequest("Barangay is required.");
+            if (string.IsNullOrWhiteSpace(application.Address)) return BadRequest("Service address is required.");
+            if (string.IsNullOrWhiteSpace(application.MobileNumber)) return BadRequest("Mobile number is required.");
+
+            try
+            {
+                return Ok(await _dashboardTransaction.CreateNewConnection(
+                    _authenticatedUserService.User.Id, application));
+            }
+            catch (HttpRequestException exception)
+            {
+                return BadRequest(exception.Message);
+            }
+        }
+
+        public IActionResult Disconnection()
+        {
+            return View(new DisconnectionOrderRecord
+            {
+                JobOrderDate = DateTime.Today,
+                DisconnectionDate = DateTime.Today,
+                ReconnectionFee = 350m,
+                ChargeFee = true
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SearchDisconnectionAccounts(string q)
+        {
+            if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2) return Ok(new List<DisconnectionAccountRecord>());
+            try { return Ok(await _dashboardTransaction.SearchDisconnectionAccounts(q)); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDisconnectionOrders()
+        {
+            try { return Ok(await _dashboardTransaction.GetDisconnectionOrders()); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveDisconnectionOrder([FromBody] DisconnectionOrderRecord order)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            try { return Ok(await _dashboardTransaction.SaveDisconnectionOrder(_authenticatedUserService.User.Id, order)); }
+            catch (HttpRequestException exception) { return BadRequest(exception.Message); }
+        }
+
+        public IActionResult AccountTransfer()
+        {
+            return View(new AccountTransferRecord
+            {
+                JobOrderDate = DateTime.Today,
+                TransferDate = DateTime.Today
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SearchAccountTransferAccounts(string q)
+        {
+            if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2) return Ok(new List<AccountTransferLookupRecord>());
+            try { return Ok(await _dashboardTransaction.SearchAccountTransferAccounts(q)); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveAccountTransfer([FromBody] AccountTransferRecord transfer)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            try { return Ok(await _dashboardTransaction.SaveAccountTransfer(_authenticatedUserService.User.Id, transfer)); }
+            catch (HttpRequestException exception) { return BadRequest(exception.Message); }
+        }
+
+        public IActionResult ServiceRequest()
+        {
+            ViewBag.ReceivedBy = _authenticatedUserService.User.Name ?? string.Empty;
+            return View(new ServiceRequestOrderRecord
+            {
+                JobOrderDate = DateTime.Today,
+                DateReferred = DateTime.Today
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetServiceRequestAssignees()
+        {
+            try { return Ok(await _dashboardTransaction.GetServiceRequestAssignees()); }
+            catch (HttpRequestException exception) { return StatusCode(502, exception.Message); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveServiceRequest([FromBody] ServiceRequestOrderRecord request)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            try { return Ok(await _dashboardTransaction.CreateServiceRequest(_authenticatedUserService.User.Id, request)); }
+            catch (HttpRequestException exception) { return BadRequest(exception.Message); }
         }
 
         #endregion

@@ -14,6 +14,8 @@ namespace TMCWD.Model.Billing.Interfaces
         public int ReaderId { get; set; }
 
         public int ZoneBookId { get; set; }
+        int? SeqFrom { get; set; }
+        int? SeqTo { get; set; }
 
         public int CreatedBy { get; set; }
 

@@ -124,6 +124,30 @@
     font-variant-numeric: tabular-nums;
 }
 
+.oc-post-button {
+    margin-top: 8px;
+    min-width: 148px;
+}
+
+.oc-post-button:disabled { opacity: .55; cursor: not-allowed; }
+
+.oc-post-message {
+    min-height: 16px;
+    max-width: 240px;
+    color: var(--color-text-faint);
+    font-size: var(--font-size-xs);
+    text-align: right;
+}
+
+.oc-status {
+    display: inline-block;
+    margin-right: 8px;
+    color: var(--color-text-faint);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
 /* ------------------------------------------------------------
    Entry bar — charge form row
    ------------------------------------------------------------ */

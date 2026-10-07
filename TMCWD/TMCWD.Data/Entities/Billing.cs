@@ -60,5 +60,17 @@ namespace TMCWD.Data.Entities
         [Column("RemainingAmount")]
         public decimal RemainingAmount { get; set; }
 
+        /// <summary>
+        /// Customer-facing service invoice number.
+        /// Assigned by PartialPost when the Billing row is first created.
+        /// NULL for historical rows created before Phase 6D.
+        /// Stable and immutable after assignment.
+        /// </summary>
+        [MaxLength(30), Column("ServiceInvoiceNumber")]
+        public string? ServiceInvoiceNumber { get; set; }
+
+        [Column("InvoiceSnapshotJson", TypeName = "longtext")]
+        public string? InvoiceSnapshotJson { get; set; }
+
     }
 }

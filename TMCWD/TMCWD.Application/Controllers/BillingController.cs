@@ -149,8 +149,8 @@ namespace TMCWD.Application.Controllers
                         .FirstOrDefault();
                 }
 
-                var present = reading?.CurrentReading ?? 0;
-                var previous = reading?.PreviousReading ?? 0;
+                var present = reading?.CurrentReading ?? account.InitialReading;
+                var previous = reading?.PreviousReading ?? account.InitialReading;
                 var usage = Math.Max(0, present - previous);
                 var payments = await _paymentTrans.GetPaymentHistoryByBillingReference(billing.BillingReferenceId);
                 var successfulPayments = payments
@@ -213,14 +213,90 @@ namespace TMCWD.Application.Controllers
             });
         }
 
+        /// <summary>
+        /// Returns Debit/Credit Memo history for a given account number.
+        /// Used by the Adjustments modal on the Customer Information page.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetDebitCreditMemosByAccount(string accountNumber)
+        {
+            if (string.IsNullOrWhiteSpace(accountNumber))
+                return BadRequest("Account number is required.");
+
+            var memos = await _debitCreditMemoTrans.GetByAccountNumber(accountNumber);
+            return Ok(memos.OrderByDescending(m => m.DcmDate).Select(m => new
+            {
+                id            = m.Id,
+                accountNumber = m.AccountNumber,
+                dcmType       = m.DcmType,
+                memoType      = m.MemoType,
+                amount        = m.Amount,
+                dcmDate       = m.DcmDate,
+                billMonthBasis = m.BillMonthBasis,
+                explanation   = m.Explanation,
+                remarks       = m.Remarks,
+                status        = m.Status,
+                dateCreated   = m.DateCreated,
+            }));
+        }
+
+        /// <summary>
+        /// Returns Bill Adjustment history for a given account number.
+        /// Walks account → billings → adjustments per billing reference.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetBillAdjustmentsByAccount(string accountNumber)
+        {
+            if (string.IsNullOrWhiteSpace(accountNumber))
+                return BadRequest("Account number is required.");
+
+            var account = await _accountTrans.GetByAccountNumber(accountNumber);
+            if (account == null)
+                return NotFound("Account not found.");
+
+            var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
+            var accountBillings = allBillings
+                .Where(b => b.AccountId == account.Id)
+                .ToList();
+
+            var result = new List<object>();
+
+            foreach (var billing in accountBillings)
+            {
+                var adjustments = await _billingAdjustmentTrans.GetByReference(billing.BillingReferenceId)
+                                  ?? new List<BillingAdjustment>();
+
+                foreach (var adj in adjustments)
+                {
+                    var typeName = ((AdjustmentLineType)adj.Type).ToString();
+                    result.Add(new
+                    {
+                        id               = adj.Id,
+                        billingReference = adj.BillingReferenceId,
+                        billingPeriod    = billing.BillingPeriod,
+                        type             = typeName,
+                        amount           = adj.Amount,
+                        dateCreated      = adj.DateCreated,
+                    });
+                }
+            }
+
+            return Ok(result.OrderByDescending(r => ((dynamic)r).dateCreated));
+        }
+
         public IActionResult Index() => View();
-        public IActionResult PenaltyCharging() => View();
+        public IActionResult PenaltyCharging()
+        {
+            if (!HasRole(UserRole.CustomerServiceOic, UserRole.SuperAdmin))
+                return Forbid();
+            return View();
+        }
 
         [HttpGet]
-        public async Task<IActionResult> GetPenaltyChargeEntries(DateTime? billingPeriod)
+        public async Task<IActionResult> GetPenaltyChargeEntries(DateTime? billingPeriod, DateTime? dueDate)
         {
             if (!ModelState.IsValid) return BadRequest("Invalid billing date.");
-            try { return Ok(await _penaltyTrans.GetChargeEntries(billingPeriod)); }
+            try { return Ok(await _penaltyTrans.GetChargeEntries(billingPeriod, dueDate)); }
             catch (HttpRequestException) { return StatusCode(502, "Could not load overdue bills. Please try again."); }
         }
 
@@ -229,6 +305,7 @@ namespace TMCWD.Application.Controllers
         public async Task<IActionResult> PostPenaltyCharges([FromBody] PostPenaltyChargesRequest request)
         {
             if (_user.User == null || _user.User.Id <= 0) return Unauthorized();
+            if (!HasRole(UserRole.Cashier, UserRole.SuperAdmin, UserRole.CustomerRepresentative, UserRole.CustomerServiceOic)) return Forbid();
             if (!ModelState.IsValid || request == null) return BadRequest("Invalid penalty posting request.");
             try { return Ok(await _penaltyTrans.PostCharges(_user.User.Id, request)); }
             catch (InvalidOperationException ex) { return Conflict(ex.Message); }
@@ -464,7 +541,27 @@ namespace TMCWD.Application.Controllers
         public async Task<IActionResult> GetChargeTypes()
         {
             var types = await _otherFeeTypeTrans.GetAll() ?? new List<OtherFeeType>();
-            return Ok(types.Select(t => new { value = t.Id, label = t.Name }));
+            if (types.Count > 0)
+            {
+                return Ok(types.Select(t => new
+                {
+                    value = t.Id,
+                    label = t.Name,
+                    defaultAmount = t.DefaultValue
+                }));
+            }
+
+            // Keep every Other Charges entry point usable before master charge
+            // types have been configured in the database.
+            return Ok(new[]
+            {
+                new { value = 4L, label = "MSR - Recon. Fee", defaultAmount = 0m },
+                new { value = 1L, label = "Reconnection Fee", defaultAmount = 350m },
+                new { value = 2L, label = "Penalty", defaultAmount = 0m },
+                new { value = 3L, label = "Meter Testing Fee", defaultAmount = 0m },
+                new { value = 5L, label = "Service Connection Fee", defaultAmount = 0m },
+                new { value = 6L, label = "Miscellaneous Charge", defaultAmount = 0m }
+            });
         }
 
         [HttpGet]
@@ -485,7 +582,9 @@ namespace TMCWD.Application.Controllers
             foreach (var billing in accountBillings)
             {
                 var charges = await _otherChargeTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.OtherCharge>();
-                var activeCharges = charges.Where(c => c.IsActive).ToList();
+                var activeCharges = charges.Where(c => c.IsActive
+                    && c.PaymentStatus != PaymentStatus.Paid
+                    && c.PaymentStatus != PaymentStatus.Waived).ToList();
 
                 foreach (var charge in activeCharges)
                 {
@@ -496,7 +595,9 @@ namespace TMCWD.Application.Controllers
                         description = feeType?.Name ?? "—",
                         payableIn = charge.PayableIn,
                         particulars = charge.Particulars,
-                        amount = charge.Amount
+                        amount = charge.Amount,
+                        isPosted = charge.PaymentStatus != PaymentStatus.Draft,
+                        status = charge.PaymentStatus.ToString()
                     });
                 }
             }
@@ -505,6 +606,7 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveOtherCharge([FromBody] SaveOtherChargeRequest request)
         {
             if (request == null)
@@ -525,19 +627,40 @@ namespace TMCWD.Application.Controllers
 
             var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
             var currentBilling = allBillings
-                .Where(b => b.AccountId == account.Id)
+                .Where(b => b.AccountId == account.Id
+                    && b.PaymentStatus != PaymentStatus.Paid
+                    && b.PaymentStatus != PaymentStatus.Waived)
                 .OrderByDescending(b => b.DateCreated)
                 .FirstOrDefault();
 
             if (currentBilling == null)
             {
-                Console.WriteLine("========== OTHER CHARGE ERROR ==========");
-                Console.WriteLine($"Account Number: {request.AccountNumber}");
-                Console.WriteLine($"Account ID: {account.Id}");
-                Console.WriteLine("No billing record found for this account.");
-                Console.WriteLine("========================================");
+                // New connection accounts have no billing history yet —
+                // create an initial pre-billing stub so charges can be attached.
+                // This stub has zero amounts and Unpaid status; it will be
+                // superseded by the first proper metered billing cycle.
+                var stub = new Model.Billing.Billing
+                {
+                    AccountId          = account.Id,
+                    BillingReferenceId = Guid.NewGuid().ToString("N")[..12].ToUpper(),
+                    BillingPeriod      = DateTime.Now,
+                    TotalBillAmount    = 0,
+                    RemainingAmount    = 0,
+                    PaymentStatus      = PaymentStatus.Unpaid,
+                    DateCreated        = DateTime.Now,
+                    DateUpdated        = DateTime.Now
+                };
+                await _billingTrans.SaveUpdate(_user.User.Id, stub);
 
-                return BadRequest("No billing record found for this account.");
+                // Re-fetch after insert
+                var allBillings2 = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
+                currentBilling = allBillings2
+                    .Where(b => b.AccountId == account.Id)
+                    .OrderByDescending(b => b.DateCreated)
+                    .FirstOrDefault();
+
+                if (currentBilling == null)
+                    return BadRequest("Could not create a billing record for this account.");
             }
 
             var otherCharge = new Model.Billing.OtherCharge
@@ -547,7 +670,7 @@ namespace TMCWD.Application.Controllers
                 Amount = request.Amount,
                 PayableIn = request.PayableIn,
                 Particulars = request.Particulars,
-                PaymentStatus = PaymentStatus.Unpaid,
+                PaymentStatus = PaymentStatus.Draft,
                 IsActive = true,
                 DateCreated = DateTime.Now,
                 DateUpdated = DateTime.Now
@@ -576,13 +699,38 @@ namespace TMCWD.Application.Controllers
                 description = feeType?.Name ?? "—",
                 payableIn = saved.PayableIn,
                 particulars = saved.Particulars,
-                amount = saved.Amount
+                amount = saved.Amount,
+                isPosted = false,
+                status = PaymentStatus.Draft.ToString()
             });
         }
 
        
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PostOtherCharges([FromBody] PostOtherChargesRequest request)
+        {
+            if (request?.OtherChargeIds == null || request.OtherChargeIds.Count == 0)
+                return BadRequest(new { message = "Select at least one draft charge to post." });
+
+            try
+            {
+                var postedCount = await _otherChargeTrans.PostToCollection(_user.User.Id, request);
+                return Ok(new { postedCount });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(502, new { message = "The charges were not posted. Please try again." });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeactivateOtherCharge(int id)
         {
             var result = await _otherChargeTrans.Deactivate(id, _user.User.Id);
@@ -603,11 +751,21 @@ namespace TMCWD.Application.Controllers
             var readingsTask = _readingTrans.GetByZoneAndBook(zone, book);
             await Task.WhenAll(accountsTask, readingsTask);
 
-            var accounts = accountsTask.Result;
+            var accounts = accountsTask.Result?
+                .Where(account => account.Status == AccountStatus.Active)
+                .ToList();
             var readings = readingsTask.Result ?? new List<TMCWD.Model.Billing.Reading>();
 
             if (accounts == null || !accounts.Any())
                 return Ok(new List<PresentReadingViewModel>());
+
+            // Fetch customer names for all accounts in parallel
+            var customerTasks = accounts.Select(a => _customerTrans.Get(a.CustomerId)).ToArray();
+            var customers = await Task.WhenAll(customerTasks);
+            var customerById = accounts
+                .Select((a, i) => new { a.CustomerId, Customer = customers[i] })
+                .Where(x => x.Customer != null)
+                .ToDictionary(x => x.CustomerId, x => x.Customer!);
 
             // Group readings by AccountId â€” keep only the most recent per account
             var latestReading = readings
@@ -635,12 +793,16 @@ namespace TMCWD.Application.Controllers
                         account.MeterSize > 0 ? account.MeterSize : 0.5m);
                 }
 
+                var customerName = customerById.TryGetValue(account.CustomerId, out var cust) && cust != null
+                    ? cust.FullName.Trim().TrimEnd(',')
+                    : account.AccountNumber;
+
                 result.Add(new PresentReadingViewModel
                 {
                     ReadingId = reading?.Id ?? 0,
                     AccountId = account.Id,
                     AccountNumber = account.AccountNumber,
-                    Name = account.FullAddress,
+                    Name = customerName,
                     Classification = account.Classification.ToString(),
                     MeterNumber = account.MeterNumber,
                     Address = account.FullAddress,
@@ -667,7 +829,9 @@ namespace TMCWD.Application.Controllers
             if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 1)
                 return Ok(new List<object>());
 
-            var accounts = await _accountTrans.Search(q.Trim());
+            var accounts = (await _accountTrans.Search(q.Trim()))?
+                .Where(account => account.Status == AccountStatus.Active)
+                .ToList();
             if (accounts == null || !accounts.Any())
                 return Ok(new List<object>());
 
@@ -676,19 +840,28 @@ namespace TMCWD.Application.Controllers
             var readingTasks = accounts.Select(a => _readingTrans.GetByAccount(a.Id));
             var allReadings = await Task.WhenAll(readingTasks);
 
+            // Fetch customer names for all matched accounts in parallel
+            var customerTasks = accounts.Select(a => _customerTrans.Get(a.CustomerId));
+            var allCustomers = await Task.WhenAll(customerTasks);
+
             var result = new List<object>();
 
             for (int i = 0; i < accounts.Count; i++)
             {
                 var account = accounts[i];
                 var readings = allReadings[i];
+                var customer = allCustomers[i];
+
+                var customerName = customer != null
+                    ? customer.FullName.Trim().TrimEnd(',')
+                    : account.AccountNumber;
 
                 var current = readings?
                     .OrderByDescending(r => r.Id)
                     .FirstOrDefault();
 
-                var present = current?.CurrentReading ?? 0;
-                var previousVal = current?.PreviousReading ?? 0;
+                var present = current?.CurrentReading ?? account.InitialReading;
+                var previousVal = current?.PreviousReading ?? account.InitialReading;
 
                 decimal amount = 0;
 
@@ -708,7 +881,7 @@ namespace TMCWD.Application.Controllers
                 {
                     accountId = account.Id,
                     accountNumber = account.AccountNumber,
-                    name = account.FullAddress,
+                    name = customerName,
                     meterNumber = account.MeterNumber,
                     address = account.FullAddress,
                     classification = account.Classification.ToString(),
@@ -736,6 +909,8 @@ namespace TMCWD.Application.Controllers
             var account = await _accountTrans.GetByAccountNumber(accountNumber);
             if (account == null)
                 return NotFound("Account not found.");
+            if (account.Status != AccountStatus.Active)
+                return Conflict("This account is not active yet. Complete the connection and House Tapping workflow before recording meter readings.");
 
             var readings = await _readingTrans.GetByAccount(account.Id);
 
@@ -787,6 +962,8 @@ namespace TMCWD.Application.Controllers
             var account = await _accountTrans.GetByAccountNumber(accountNumber);
             if (account == null)
                 return NotFound("Account not found.");
+            if (account.Status != AccountStatus.Active)
+                return Conflict("This account is not active yet. Complete the connection and House Tapping workflow before recording meter readings.");
 
             // Get the current reading for this account (most recent)
             var currentReading = await _readingTrans.GetAccountCurrentReading(account.Id);
@@ -801,7 +978,7 @@ namespace TMCWD.Application.Controllers
                 Classification = account.Classification.ToString(),
                 // Use the CurrentReading value from the most recent reading record as "previous reading"
                 // because that's what the user will be updating
-                PreviousReading = currentReading?.CurrentReading ?? 0,
+                PreviousReading = currentReading?.CurrentReading ?? account.InitialReading,
                 MeterSize = account.MeterSize
             };
 
@@ -836,6 +1013,8 @@ namespace TMCWD.Application.Controllers
 
                 if (account == null)
                     return NotFound("Account not found.");
+                if (account.Status != AccountStatus.Active)
+                    return Conflict("This account is not active yet. Complete the connection and House Tapping workflow before recording meter readings.");
 
                 // ============================================================
                 // 2. GET EXISTING READING SHEET
@@ -890,7 +1069,7 @@ namespace TMCWD.Application.Controllers
                     .FirstOrDefault();
 
                 decimal previousReading =
-                    latestReading?.CurrentReading ?? 0;
+                    latestReading?.CurrentReading ?? account.InitialReading;
 
                 if (request.PresentReading < previousReading)
                     return BadRequest("Present reading cannot be less than the previous reading.");
@@ -969,6 +1148,14 @@ namespace TMCWD.Application.Controllers
             }
         }
 
+
+        [HttpGet]
+        public async Task<IActionResult> GetPenaltiesByDueDate(DateTime dueDate)
+        {
+            if (!ModelState.IsValid) return BadRequest("Invalid due date.");
+            try { return Ok(await _penaltyTrans.GetActiveEntries(dueDate)); }
+            catch (HttpRequestException) { return StatusCode(502, "Could not load penalties. Please try again."); }
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetPenaltiesByBillPeriod(DateTime billPeriod)

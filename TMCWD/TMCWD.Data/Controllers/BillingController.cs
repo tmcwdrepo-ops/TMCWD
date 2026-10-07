@@ -35,6 +35,14 @@ namespace TMCWD.Data.Controllers
             return Ok(billing);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
+        [HttpGet("Collection/{billingReferenceId}")]
+        public async Task<IActionResult> Collection(string billingReferenceId)
+        {
+            var bill = await _billingService.GetCollectionBill(billingReferenceId);
+            return bill == null ? NotFound() : Ok(bill);
+        }
+
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -83,8 +91,11 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         public async Task<IActionResult> SaveUpdate(int userId, [FromBody]Billing billing)
         {
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                return Unauthorized();
             var savedBilling = await _billingService.SaveUpdate(userId, billing);
             return Ok(savedBilling);
         }

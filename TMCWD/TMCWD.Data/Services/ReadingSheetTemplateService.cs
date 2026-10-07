@@ -58,6 +58,8 @@ namespace TMCWD.Data.Services
                 forUpdate.Name = template.Name;
                 forUpdate.ReaderId = template.ReaderId;
                 forUpdate.ZoneBookId = template.ZoneBookId;
+                forUpdate.SeqFrom = template.SeqFrom;
+                forUpdate.SeqTo = template.SeqTo;
                 forUpdate.IsActive = template.IsActive;
                 forUpdate.UpdatedBy = userId;
                 forUpdate.DateUpdated = DateTime.Now;

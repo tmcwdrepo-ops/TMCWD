@@ -68,7 +68,7 @@ namespace TMCWD.Billing
 
         public async Task<List<AdvancePayment>> GetByAccount(int accountId)
         {
-            var response = await _service.Client.GetAsync($"api/GetByAccount/{accountId}");
+            var response = await _service.Client.GetAsync($"api/AdvancePayment/GetByAccount/{accountId}");
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToAdvancePayments(data);

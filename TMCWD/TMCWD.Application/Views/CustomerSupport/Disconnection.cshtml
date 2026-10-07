@@ -1,0 +1,72 @@
+@model TMCWD.Model.Dashboard.DisconnectionOrderRecord
+@{
+    Layout = "_InsideLayout";
+    ViewData["PageTitle"] = "Disconnection";
+    ViewData["ActivePage"] = "disconnection";
+}
+@section Styles { <link rel="stylesheet" href="~/css/disconnection.css" asp-append-version="true" /> }
+
+<section class="dc-page" aria-labelledby="dcTitle">
+    @Html.AntiForgeryToken()
+    <header class="dc-header">
+        <div><span class="dc-eyebrow">Services</span><h1 id="dcTitle">Disconnection</h1><p>Create and process account disconnection orders.</p></div>
+        <div class="dc-header-actions">
+            <button type="button" class="dc-orders-button" id="dcShowOrders">Disconnection Orders</button>
+            <label class="dc-batch"><input type="checkbox" id="dcBatch" /><span></span> Batch</label>
+        </div>
+    </header>
+
+    <form id="dcForm" class="dc-card" novalidate>
+        <input type="hidden" id="dcOrderId" value="0" />
+        <input type="hidden" id="dcAccountId" value="0" />
+        <div class="dc-grid dc-grid--two">
+            <label class="dc-field"><span>Job Order Number</span><input id="dcJobNumber" value="Generated after saving" readonly /></label>
+            <label class="dc-field"><span>Job Order Date</span><input id="dcJobDate" type="date" value="@(Model.JobOrderDate?.ToString("yyyy-MM-dd"))" required /></label>
+        </div>
+
+        <div class="dc-account-search">
+            <label class="dc-field"><span>Find Account</span><input id="dcAccountSearch" autocomplete="off" placeholder="Enter account number, meter, or customer name" /></label>
+            <button type="button" id="dcSearchButton" aria-label="Search account"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg></button>
+            <div class="dc-suggestions" id="dcSuggestions" hidden></div>
+        </div>
+
+        <div class="dc-grid dc-grid--two">
+            <label class="dc-field"><span>Account Number</span><input id="dcAccountNumber" readonly required /></label>
+            <label class="dc-field"><span>Full Name</span><input id="dcFullName" readonly /></label>
+        </div>
+        <label class="dc-field"><span>Service Address</span><input id="dcAddress" readonly /></label>
+        <div class="dc-grid dc-grid--two">
+            <label class="dc-field"><span>Meter Number</span><input id="dcMeterNumber" readonly /></label>
+            <label class="dc-field"><span>Account Status</span><input id="dcAccountStatus" readonly /></label>
+        </div>
+        <div class="dc-grid dc-grid--two">
+            <label class="dc-field"><span>Disconnection Date</span><input id="dcDate" type="date" value="@(Model.DisconnectionDate?.ToString("yyyy-MM-dd"))" required /></label>
+            <label class="dc-field"><span>Nature of Disconnection</span><select id="dcNature" required><option value="">Select nature</option><option>Temporary</option><option>Permanent</option><option>For reconnection compliance</option></select></label>
+        </div>
+        <div class="dc-grid dc-grid--two">
+            <label class="dc-field"><span>Possession</span><select id="dcPossession"><option value="">Select possession</option><option>Meter retained by TMCWD</option><option>Meter left on site</option><option>Meter not recovered</option></select></label>
+            <label class="dc-field"><span>Reason</span><select id="dcReason" required><option value="">Select reason</option><option>Delinquent account</option><option>Customer request</option><option>Illegal connection</option><option>Vacant property</option><option>Other</option></select></label>
+        </div>
+        <div class="dc-grid dc-grid--three">
+            <label class="dc-field"><span>Last Reading</span><input id="dcLastReading" type="number" min="0" step="0.01" /></label>
+            <label class="dc-field"><span>Assigned Plumber</span><input id="dcPlumber" /></label>
+            <label class="dc-field"><span>Reconnection Fee</span><input id="dcFee" type="number" min="0" step="0.01" value="350.00" /></label>
+        </div>
+        <div class="dc-bottom-row">
+            <label class="dc-field"><span>Remarks</span><textarea id="dcRemarks" rows="2"></textarea></label>
+            <label class="dc-check"><input id="dcChargeFee" type="checkbox" checked /> Charge fee</label>
+            <label class="dc-check"><input id="dcOverride" type="checkbox" /> Reading override</label>
+        </div>
+        <div class="dc-footer">
+            <p id="dcMessage" role="status"></p>
+            <div><button type="button" class="dc-danger" data-dc-action="disconnect">Disconnect</button><button type="button" class="dc-primary" data-dc-action="accomplish">Accomplish</button><button type="button" class="dc-cancel" data-dc-action="cancel">Cancel Request</button></div>
+        </div>
+    </form>
+
+    <section class="dc-card dc-orders" id="dcOrders" hidden>
+        <div class="dc-orders-heading"><div><h2>Disconnection Orders</h2><p>Select an order to review or update it.</p></div><button type="button" id="dcCloseOrders">Back to form</button></div>
+        <div class="dc-table-wrap"><table><thead><tr><th class="dc-batch-column">Select</th><th>Job Order</th><th>Account</th><th>Customer</th><th>Date</th><th>Status</th></tr></thead><tbody id="dcOrderRows"><tr><td colspan="6">Loading orders...</td></tr></tbody></table></div>
+    </section>
+</section>
+
+@section Scripts { <script src="~/js/disconnection.js"></script> }

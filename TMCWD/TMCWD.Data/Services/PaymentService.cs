@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Text;
+using System.Text.Json;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 
@@ -108,6 +109,7 @@ namespace TMCWD.Data.Services
             }
 
             var invoiceNumber = request.InvoiceNumber.Trim().ToUpperInvariant();
+            await using var referenceLock = await PaymentReferenceLock.Acquire(_context, invoiceNumber);
             if (await _context.Payments.AnyAsync(x => x.PaymentReference == invoiceNumber))
                 throw new InvalidOperationException("This invoice number has already been used.");
 
@@ -180,6 +182,11 @@ namespace TMCWD.Data.Services
                     .Where(p => p.BillingReferenceId == billing.BillingReferenceId
                         && (p.PaymentStatus == (int)PaymentStatus.Unpaid || p.PaymentStatus == (int)PaymentStatus.Overdue))
                     .SumAsync(p => p.Amount);
+                var outstandingOtherCharges = await _context.OtherCharges
+                    .Where(c => c.BillingReferenceId == billing.BillingReferenceId && c.IsActive
+                        && (c.PaymentStatus == (int)PaymentStatus.Unpaid
+                         || c.PaymentStatus == (int)PaymentStatus.Overdue))
+                    .SumAsync(c => (decimal?)c.Amount) ?? 0m;
                 var discountAmount = 0m;
                 if (seniorDiscount != null)
                 {
@@ -191,8 +198,11 @@ namespace TMCWD.Data.Services
                         throw new InvalidOperationException(
                             $"The Senior Citizen name must exactly match the account holder: {accountHolderName}.");
 
-                    var waterCharge = Math.Max(0m,
-                        billing.RemainingAmount - TMCWD.Model.Billing.BillingCharges.MeterMaintenanceFee);
+                    var invoice = billing.InvoiceSnapshotJson == null ? null
+                        : JsonSerializer.Deserialize<TMCWD.Model.Billing.OfficialInvoiceSnapshot>(billing.InvoiceSnapshotJson);
+                    if (invoice == null)
+                        throw new InvalidOperationException("The bill has no authoritative water-charge snapshot for this discount.");
+                    var waterCharge = invoice.BillAmount;
                     if (waterCharge <= 0m)
                         throw new InvalidOperationException("The selected bill has no water-consumption charge eligible for discount.");
 
@@ -220,7 +230,11 @@ namespace TMCWD.Data.Services
                     });
                 }
 
-                var amountDue = billing.RemainingAmount - discountAmount + outstandingPenalty;
+                // Legacy new-connection stubs can have a zero RemainingAmount
+                // even though a posted charge exists. Never collect less than
+                // the active posted Other Charges balance.
+                var collectibleBalance = Math.Max(0m, Math.Max(billing.RemainingAmount, outstandingOtherCharges));
+                var amountDue = collectibleBalance - discountAmount + outstandingPenalty;
                 if (billRequest.PaidAmount != amountDue)
                     throw new InvalidOperationException("The bill amount changed. Reload the account to include its current penalty before collecting payment.");
 
@@ -253,6 +267,37 @@ namespace TMCWD.Data.Services
                 penalty.PaymentStatus = (int)PaymentStatus.Paid;
                 penalty.UpdatedBy = userId;
                 penalty.DateUpdated = now;
+            }
+
+            var otherCharges = await _context.OtherCharges
+                .Where(x => references.Contains(x.BillingReferenceId) && x.IsActive
+                    && (x.PaymentStatus == (int)PaymentStatus.Unpaid
+                     || x.PaymentStatus == (int)PaymentStatus.Overdue))
+                .ToListAsync();
+            foreach (var charge in otherCharges)
+            {
+                charge.PaymentStatus = (int)PaymentStatus.Paid;
+                charge.UpdatedBy = userId;
+                charge.DateUpdated = now;
+            }
+
+            var paidAccountIds = billings.Select(x => x.AccountId).Distinct().ToList();
+            var paidApplications = await _context.WaterConnectionApplications
+                .Where(x => x.AccountId.HasValue
+                    && paidAccountIds.Contains(x.AccountId.Value)
+                    && x.Stage == "payment")
+                .ToListAsync();
+            foreach (var application in paidApplications)
+            {
+                application.PaymentData = JsonSerializer.Serialize(new
+                {
+                    reference = invoiceNumber,
+                    method = request.Method.ToString(),
+                    date = now,
+                    status = "Paid"
+                });
+                application.Stage = "installation";
+                application.UpdatedAt = now;
             }
 
             _context.Payments.AddRange(payments);
@@ -349,6 +394,12 @@ namespace TMCWD.Data.Services
                         && x.DateUpdated == payment.DateCreated)
                     .ToListAsync();
                 var penaltyAmount = paidPenalties.Sum(x => x.Amount);
+                var paidOtherCharges = await _context.OtherCharges
+                    .Where(x => x.BillingReferenceId == payment.BillingReference
+                        && x.PaymentStatus == (int)PaymentStatus.Paid
+                        && x.UpdatedBy == payment.CreatedBy
+                        && x.DateUpdated == payment.DateCreated)
+                    .ToListAsync();
                 var discounts = await _context.SeniorCitizenDiscounts
                     .Where(x => x.BillingReferenceId == payment.BillingReference && !x.IsCancelled)
                     .ToListAsync();
@@ -366,6 +417,13 @@ namespace TMCWD.Data.Services
                     penalty.PaymentStatus = (int)PaymentStatus.Unpaid;
                     penalty.UpdatedBy = userId;
                     penalty.DateUpdated = now;
+                }
+
+                foreach (var charge in paidOtherCharges)
+                {
+                    charge.PaymentStatus = (int)PaymentStatus.Unpaid;
+                    charge.UpdatedBy = userId;
+                    charge.DateUpdated = now;
                 }
 
                 foreach (var discount in discounts)

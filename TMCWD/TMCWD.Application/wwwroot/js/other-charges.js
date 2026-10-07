@@ -11,6 +11,7 @@
         searchAccounts: (q) => `/Billing/SearchAccounts?q=${encodeURIComponent(q)}`,
         charges: (accountNumber) => `/Billing/GetOtherChargesByAccount?accountNumber=${encodeURIComponent(accountNumber)}`,
         addCharge: () => `/Billing/SaveOtherCharge`,
+        postCharges: () => `/Billing/PostOtherCharges`,
         deleteCharge: (chargeId) => `/Billing/DeactivateOtherCharge?id=${encodeURIComponent(chargeId)}`,
     };
 
@@ -36,6 +37,8 @@
             particulars: document.getElementById("ocParticulars"),
             amount: document.getElementById("ocAmount"),
             addBtn: document.getElementById("ocAddChargeBtn"),
+            postBtn: document.getElementById("ocPostChargesBtn"),
+            postMessage: document.getElementById("ocPostMessage"),
             entryError: document.getElementById("ocEntryError"),
             totalDue: document.getElementById("ocTotalDue"),
             tableBody: document.getElementById("ocTableBody"),
@@ -49,6 +52,9 @@
             lastPage: document.getElementById("ocLastPage"),
             favoriteBtn: null,
         };
+
+        // Read the CSRF token from the antiforgery hidden input
+        const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
 
         const state = {
             accountNumber: "",
@@ -173,8 +179,23 @@
                 const opt = document.createElement("option");
                 opt.value = t.value;
                 opt.textContent = t.label;
+                opt.dataset.defaultAmount = Number(t.defaultAmount || 0);
                 el.chargeType.appendChild(opt);
             });
+
+            // Pre-fill amount when a charge type is selected
+            el.chargeType.addEventListener("change", function () {
+                const selected = el.chargeType.options[el.chargeType.selectedIndex];
+                const defaultAmount = selected ? Number(selected.dataset.defaultAmount || 0) : 0;
+                if (defaultAmount > 0 && el.amount) {
+                    el.amount.value = defaultAmount.toFixed(2);
+                }
+            });
+
+            // Make searchable after options are loaded
+            if (window.makeSearchableSelect) {
+                window.makeSearchableSelect(el.chargeType, { placeholder: 'Search charge type...' });
+            }
         }
 
         // ---------- Account search / autocomplete ----------
@@ -323,20 +344,13 @@
                 particulars,
                 amount: Math.round(amount * 100) / 100,
             };
-            console.log("========== SAVE OTHER CHARGE ==========");
-            console.log("accountNumber:", state.accountNumber);
-            console.log("chargeTypeValue:", chargeTypeValue);
-            console.log("chargeType parsed:", parseInt(chargeTypeValue, 10));
-            console.log("payableIn:", payableIn);
-            console.log("particulars:", particulars);
-            console.log("amount:", amount);
-            console.log("payload:", payload);
-            console.log("JSON:", JSON.stringify(payload));
-            console.log("=======================================");
 
             const saved = await safeFetchJson(ENDPOINTS.addCharge(), {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": csrfToken
+                },
                 body: JSON.stringify(payload),
             });
 
@@ -360,6 +374,42 @@
             el.addBtn.disabled = false;
         }
 
+        async function postCharges() {
+            const drafts = state.charges.filter(charge => !charge.isPosted);
+            if (!state.accountNumber || !drafts.length || el.postBtn.disabled) return;
+            if (!window.confirm(`Post ${drafts.length} charge(s) to Collection? Posted charges can no longer be edited.`)) return;
+
+            el.postBtn.disabled = true;
+            el.postMessage.textContent = "Posting charges...";
+            try {
+                const response = await fetch(ENDPOINTS.postCharges(), {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": csrfToken
+                    },
+                    body: JSON.stringify({ otherChargeIds: drafts.map(charge => Number(charge.id)) })
+                });
+                const text = await response.text();
+                let result = {};
+                try { result = text ? JSON.parse(text) : {}; } catch { result = { message: text }; }
+                if (!response.ok) throw new Error(result.message || "The charges could not be posted.");
+
+                const postedIds = new Set(drafts.map(charge => Number(charge.id)));
+                state.charges.forEach(charge => {
+                    if (postedIds.has(Number(charge.id))) {
+                        charge.isPosted = true;
+                        charge.status = "Unpaid";
+                    }
+                });
+                el.postMessage.textContent = `${result.postedCount || drafts.length} charge(s) posted to Collection.`;
+                renderTable();
+            } catch (error) {
+                el.postMessage.textContent = error.message || "The charges could not be posted.";
+                renderTable();
+            }
+        }
+
         // ---------- Delete charge ----------
 
         async function deleteCharge(chargeId) {
@@ -371,7 +421,10 @@
             const confirmed = await showConfirm(`Delete ${label}? This cannot be undone.`);
             if (!confirmed) return;
 
-            const result = await safeFetchJson(ENDPOINTS.deleteCharge(chargeId), { method: "POST" });
+            const result = await safeFetchJson(ENDPOINTS.deleteCharge(chargeId), {
+                method: "POST",
+                headers: { "RequestVerificationToken": csrfToken }
+            });
 
             if (result === null) {
                 setEntryError("Could not delete the charge. Please try again.");
@@ -463,14 +516,20 @@
             `;
 
                 const actionCell = tr.querySelector(".oc-col-actions");
-                const delBtn = document.createElement("button");
-                delBtn.type = "button";
-                delBtn.className = "oc-row-delete-btn";
-                delBtn.setAttribute("aria-label", "Delete charge");
-                delBtn.innerHTML =
-                    '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-                delBtn.addEventListener("click", () => deleteCharge(charge.id));
-                actionCell.appendChild(delBtn);
+                const status = document.createElement("span");
+                status.className = "oc-status";
+                status.textContent = charge.isPosted ? "Posted" : "Draft";
+                actionCell.appendChild(status);
+                if (!charge.isPosted) {
+                    const delBtn = document.createElement("button");
+                    delBtn.type = "button";
+                    delBtn.className = "oc-row-delete-btn";
+                    delBtn.setAttribute("aria-label", "Delete draft charge");
+                    delBtn.innerHTML =
+                        '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                    delBtn.addEventListener("click", () => deleteCharge(charge.id));
+                    actionCell.appendChild(delBtn);
+                }
 
                 el.tableBody.appendChild(tr);
             });
@@ -489,6 +548,7 @@
 
             const total = state.charges.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
             el.totalDue.textContent = formatCurrency(total);
+            if (el.postBtn) el.postBtn.disabled = !state.accountNumber || !state.charges.some(charge => !charge.isPosted);
 
             updateSortIcons();
         }
@@ -508,6 +568,7 @@
         });
 
         el.addBtn.addEventListener("click", addCharge);
+        el.postBtn?.addEventListener("click", postCharges);
 
         document.querySelectorAll(".th-inner[data-sort]").forEach(function (inner) {
             inner.closest("th").addEventListener("click", function () {
@@ -562,6 +623,31 @@
 
         loadChargeTypes();
         renderTable();
+
+        // Auto-load account if passed via URL query string
+        // e.g. /Billing/OtherCharges?accountNumber=01-010043
+        const urlParams = new URLSearchParams(window.location.search);
+        const preloadAccount = urlParams.get('accountNumber');
+        if (preloadAccount) {
+            el.accountNumber.value = preloadAccount;
+            // Fetch account details then load charges
+            safeFetchJson(ENDPOINTS.searchAccounts(preloadAccount)).then(results => {
+                const match = Array.isArray(results)
+                    ? results.find(r => r.accountNumber === preloadAccount)
+                    : null;
+                if (match) {
+                    selectAccount(match);
+                } else {
+                    // Account found by exact number even if search returns nothing
+                    state.accountNumber = preloadAccount;
+                    safeFetchJson(ENDPOINTS.charges(preloadAccount)).then(charges => {
+                        state.charges = Array.isArray(charges) ? charges : [];
+                        state.page = 1;
+                        renderTable();
+                    });
+                }
+            });
+        }
 
     }); // end DOMContentLoaded
 })();

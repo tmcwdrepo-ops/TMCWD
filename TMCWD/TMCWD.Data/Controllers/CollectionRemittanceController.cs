@@ -9,6 +9,7 @@ namespace TMCWD.Data.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
 public sealed class CollectionRemittanceController : ControllerBase
 {
     private readonly UserDbContext _context;
@@ -21,6 +22,9 @@ public sealed class CollectionRemittanceController : ControllerBase
     [HttpPost("Save")]
     public async Task<IActionResult> Save([FromBody] CollectionRemittanceRequest request)
     {
+        if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var collectorId) || collectorId <= 0)
+            return Unauthorized();
+        if (request != null) request.CollectorId = collectorId;
         if (request == null || request.CollectorId <= 0)
             return BadRequest("A valid collector is required.");
         if (request.Date == default || request.Date.Date > DateTime.Today)

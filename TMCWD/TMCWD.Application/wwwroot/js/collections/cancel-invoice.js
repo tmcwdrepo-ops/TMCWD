@@ -74,7 +74,7 @@
     const selectedReason = reasonSelect.value;
     const reason = selectedReason === 'Other' ? (otherInput?.value.trim() || '') : selectedReason;
     let valid = true;
-    if (!invoiceNo) { fieldError(invoiceInput, 'Invoice number is required.'); valid = false; }
+    if (!invoiceNo) { fieldError(invoiceInput, 'Payment reference is required.'); valid = false; }
     if (!selectedReason) { fieldError(reasonSelect, 'Select a cancellation reason.'); valid = false; }
     if (selectedReason === 'Other' && reason.length < 3) {
       fieldError(otherInput, 'Enter at least 3 characters.'); valid = false;

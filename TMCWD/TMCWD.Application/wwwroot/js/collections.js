@@ -117,20 +117,25 @@ document.addEventListener('DOMContentLoaded', function () {
       totals.penalty += parseFloat(row.dataset.penalty) || 0;
       totals.pca += parseFloat(row.dataset.pca) || 0;
       totals.mmf += parseFloat(row.dataset.mmf) || 0;
+      totals.otherCharges += parseFloat(row.dataset.otherCharges) || 0;
+      totals.payable += parseFloat(row.dataset.payable) || 0;
+      totals.adjustment += parseFloat(row.dataset.adjustment) || 0;
       return totals;
-    }, { amount: 0, penalty: 0, pca: 0, mmf: 0 });
+    }, { amount: 0, penalty: 0, pca: 0, mmf: 0, otherCharges: 0, payable: 0, adjustment: 0 });
   }
 
   function updateSelectedBillsSummary() {
     const totals = getSelectedBillTotals();
-    const totalDue = totals.amount + totals.pca + totals.mmf;
-    const subTotal = totalDue + totals.penalty;
+    const totalDue = totals.payable - totals.penalty;
+    const subTotal = totals.payable;
 
     sTotalBill.textContent = fmt(totals.amount);
     sPCA.textContent       = fmt(totals.pca);
     sMMF.textContent       = fmt(totals.mmf);
     sTotalDue.textContent  = fmt(totalDue);
     sPenalty.textContent   = fmt(totals.penalty);
+    document.getElementById('sOtherCharges').textContent = fmt(totals.otherCharges);
+    document.getElementById('sAdjustment').textContent = fmt(totals.adjustment);
 
     // Senior Citizen discount applies only to the water-consumption charge.
     const discountAmt = activeDiscount ? parseFloat((totals.amount * activeDiscount.rate).toFixed(2)) : 0;
@@ -315,17 +320,23 @@ document.addEventListener('DOMContentLoaded', function () {
         address: apiAccount.address,
         type: apiAccount.classification || '',
         status: apiAccount.unpaidCount > 0 ? 'Unpaid' : 'Paid',
-        otherChargesBalance: 0
+        otherChargesBalance: apiAccount.otherChargesBalance || 0,
+        otherCharges: Array.isArray(apiAccount.otherCharges) ? apiAccount.otherCharges : []
       },
       bills: apiAccount.bills.map(bill => ({
         billingReferenceId: bill.billingReferenceId,
+        serviceInvoiceNumber: bill.serviceInvoiceNumber,
         billMonth: bill.billingPeriod,
         dueDate: bill.dueDate,
-        amount: bill.billAmount,
+        amount: bill.billAmount == null ? null : Number(bill.billAmount),
+        amountDue: Number(bill.amountDue),
+        remainingAmount: Number(bill.remainingAmount),
+        billingAdjustment: Number(bill.billingAdjustment) || 0,
         pca: 0,
         mmf: bill.meterMaintenanceFee,
+        otherCharges: bill.otherCharges || 0,
         penalty: bill.penalty,
-        subTotal: bill.billAmount + bill.penalty,
+        subTotal: Number(bill.amountDue),
         selected: false
       })),
       invoiceNo: '',
@@ -337,6 +348,40 @@ document.addEventListener('DOMContentLoaded', function () {
   function selectAccountFromAPI(apiAccount) {
     const accountData = convertAPIToAccountData(apiAccount);
     selectAccount(accountData);
+  }
+
+  // Used by the Other Charges payment modal to replace stale totals and rows
+  // immediately after its independent payment transaction completes.
+  window.refreshCollectionsAccount = async function(accountNumber) {
+    if (!accountNumber) return false;
+    const response = await fetch(`/Collections/SearchAccounts?q=${encodeURIComponent(accountNumber)}`);
+    if (!response.ok) throw new Error('Account refresh failed');
+    const accounts = await response.json();
+    const exact = (accounts || []).find(account =>
+      String(account.accountNumber || '').toLowerCase() === String(accountNumber).toLowerCase());
+    if (!exact) return false;
+    selectAccountFromAPI(exact);
+    return true;
+  };
+
+  // Dashboard payment cards open Collections with the account already selected.
+  const requestedAccountNumber = new URLSearchParams(window.location.search).get('accountNumber');
+  if (requestedAccountNumber) {
+    fetch(`/Collections/SearchAccounts?q=${encodeURIComponent(requestedAccountNumber)}`)
+      .then(response => response.ok ? response.json() : Promise.reject(new Error('Account lookup failed')))
+      .then(accounts => {
+        const exact = (accounts || []).find(account =>
+          String(account.accountNumber || '').toLowerCase() === requestedAccountNumber.toLowerCase());
+        if (exact) selectAccountFromAPI(exact);
+        else {
+          searchInput.value = requestedAccountNumber;
+          searchInput.dispatchEvent(new Event('input'));
+        }
+      })
+      .catch(() => {
+        searchInput.value = requestedAccountNumber;
+        searchInput.dispatchEvent(new Event('input'));
+      });
   }
   
   // Function to hide suggestions
@@ -498,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .filter(bill => bill.selected)
         .reduce((sum, bill) => {
           const pca = bill.pca != null ? bill.pca : (bill.pcaMmf || 0);
-          return sum + bill.amount + pca + (bill.mmf || 0) + bill.penalty;
+          return sum + bill.amountDue;
         }, 0);
       
       totalAmount += accountTotal;
@@ -723,10 +768,13 @@ document.addEventListener('DOMContentLoaded', function () {
       const pca = bill.pca != null ? bill.pca : 0;
       const mmf = bill.mmf != null ? bill.mmf : 0;
       const billMonth = bill.billMonth || bill.month || '—';
-      row.setAttribute('data-amount', bill.amount.toFixed(2));
+      row.setAttribute('data-amount', bill.amount == null ? '' : bill.amount.toFixed(2));
+      row.setAttribute('data-payable', bill.amountDue.toFixed(2));
+      row.setAttribute('data-adjustment', bill.billingAdjustment.toFixed(2));
       row.setAttribute('data-penalty', bill.penalty.toFixed(2));
       row.setAttribute('data-pca', pca.toFixed(2));
       row.setAttribute('data-mmf', mmf.toFixed(2));
+      row.setAttribute('data-other-charges', Number(bill.otherCharges || 0).toFixed(2));
       row.setAttribute('data-month', billMonth);
       row.setAttribute('data-bill-index', billIndex);
       
@@ -736,12 +784,12 @@ document.addEventListener('DOMContentLoaded', function () {
       
       row.innerHTML = `
         <td><input class="bill-checkbox" type="checkbox" ${bill.selected ? 'checked' : ''} aria-label="Select bill for ${escapeHtml(billMonth)}"></td>
-        <td><b>${escapeHtml(billMonth)}</b></td>
+        <td><b>${escapeHtml(billMonth)}</b><br><small>Service Invoice: ${escapeHtml(bill.serviceInvoiceNumber || 'Historical — unavailable')}</small></td>
         <td class="muted">${escapeHtml(bill.dueDate)}</td>
-        <td class="mono">${fmt(bill.amount)}</td>
-        <td class="mono muted">${fmt(pca + mmf)}</td>
+        <td class="mono">${bill.amount == null ? '\u2014' : fmt(bill.amount)}</td>
+        <td class="mono muted">${bill.mmf == null ? '\u2014' : fmt(mmf)}</td>
         <td class="penalty-cell mono">${penaltyCell}</td>
-        <td style="text-align:right;" class="subtotal-strong">${fmt(bill.amount + pca + mmf + bill.penalty)}</td>
+        <td style="text-align:right;" class="subtotal-strong">${fmt(bill.amountDue)}</td>
       `;
       
       billsBody.appendChild(row);
@@ -766,7 +814,7 @@ document.addEventListener('DOMContentLoaded', function () {
     selectedAccounts.forEach(accountData => {
       accountData.bills.filter(bill => bill.selected).forEach(bill => {
         const pca = bill.pca != null ? bill.pca : (bill.pcaMmf || 0);
-        grandTotal += bill.amount + pca + (bill.mmf || 0) + bill.penalty;
+        grandTotal += bill.amountDue;
       });
     });
     
@@ -786,7 +834,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const selectedRows = billsBody.querySelectorAll('.bill-row.selected');
       if (selectedRows.length) {
         const totals = getSelectedBillTotals();
-        const subTotal = totals.amount + totals.pca + totals.mmf + totals.penalty;
+        const subTotal = totals.payable;
         const discountAmt = activeDiscount ? parseFloat((totals.amount * activeDiscount.rate).toFixed(2)) : 0;
         const finalTotal  = subTotal - discountAmt;
         totalBalance.textContent = fmt(finalTotal);
@@ -892,8 +940,11 @@ document.addEventListener('DOMContentLoaded', function () {
         customerName: accountData.account.name,
         month: formatSummaryBillMonth(bill.billMonth || bill.month),
         amount: Number(bill.amount) || 0,
+        hasAuthoritativeWater: bill.amount != null,
+        amountDue: bill.amountDue,
         pca: Number(bill.pca) || 0,
         mmf: Number(bill.mmf) || 0,
+        otherCharges: Number(bill.otherCharges) || 0,
         penalty: Number(bill.penalty) || 0
       })));
   }
@@ -910,11 +961,16 @@ document.addEventListener('DOMContentLoaded', function () {
       sum.amount += bill.amount;
       sum.pca += bill.pca;
       sum.mmf += bill.mmf;
+      sum.otherCharges += bill.otherCharges;
       sum.penalty += bill.penalty;
       return sum;
-    }, { amount: 0, pca: 0, mmf: 0, penalty: 0 });
+    }, { amount: 0, pca: 0, mmf: 0, otherCharges: 0, penalty: 0 });
 
-    const grossTotal = totals.amount + totals.pca + totals.mmf + totals.penalty;
+    if (activeDiscount && bills.some(bill => !bill.hasAuthoritativeWater)) {
+      showToast('This bill has no authoritative water-charge snapshot for the discount.', true);
+      return;
+    }
+    const grossTotal = bills.reduce((sum, bill) => sum + bill.amountDue, 0);
     const discount = activeDiscount ? Number((totals.amount * activeDiscount.rate).toFixed(2)) : 0;
     const subTotal = grossTotal - discount;
     const change = Math.max(0, tendered - subTotal);
@@ -936,7 +992,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const value = document.createElement('span');
       value.className = 'mono';
-      value.textContent = fmt(bill.amount);
+      value.textContent = fmt(bill.amountDue);
 
       row.append(label, value);
       billsContainer.appendChild(row);
@@ -945,6 +1001,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('psTotalBills').textContent = fmt(totals.amount);
     document.getElementById('psPca').textContent = fmt(totals.pca);
     document.getElementById('psMmf').textContent = fmt(totals.mmf);
+    document.getElementById('psOtherCharges').textContent = fmt(totals.otherCharges);
     document.getElementById('psPenalty').textContent = fmt(totals.penalty);
     document.getElementById('psPenaltyRow').hidden = totals.penalty === 0;
     document.getElementById('psTotal').textContent = fmt(grossTotal);
@@ -963,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const paymentBills = [];
     let allocatedAmount = 0;
     bills.forEach((bill, index) => {
-      const billGross = bill.amount + bill.pca + bill.mmf + bill.penalty;
+      const billGross = bill.amountDue;
       const billDiscount = activeDiscount ? Number((bill.amount * activeDiscount.rate).toFixed(2)) : 0;
       const paidAmount = index === bills.length - 1
         ? Number((subTotal - allocatedAmount).toFixed(2))
@@ -1031,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (payment.payMode === 'cash' && typeof window.recordCashCollection === 'function') {
         window.recordCashCollection(payment.amount);
       }
-      showToast(`Payment of ${fmt(payment.amount)} recorded via ${payment.payMode.toUpperCase()} \u2014 Invoice ${payment.invoiceNo}.`);
+      showToast(`Payment of ${fmt(payment.amount)} recorded via ${payment.payMode.toUpperCase()} \u2014 Payment Reference ${payment.invoiceNo}.`);
     } catch (error) {
       showToast(error.message || 'Payment could not be completed.', true);
     } finally {
@@ -1072,13 +1129,11 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   document.getElementById('reprintBtn').addEventListener('click', function () {
-    const invoiceNo = getFullInvoiceNo();
-    showToast(`Reprint Invoice${invoiceNo ? ' ' + invoiceNo : ''} \u2014 sent to printer.`);
+    document.getElementById('reprintInvoiceBtn').click();
   });
 
   document.getElementById('cancelBtn').addEventListener('click', function () {
-    const invoiceNo = getFullInvoiceNo();
-    showToast(`Invoice${invoiceNo ? ' ' + invoiceNo : ''} cancelled.`, true);
+    document.getElementById('cancelInvoiceBtn').click();
   });
 
   // ---------- Nav action bar \u2014 stub buttons ----------
