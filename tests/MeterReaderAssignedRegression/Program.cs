@@ -22,6 +22,8 @@ using TMCWD.Utility.Encryption;
 
 // Real HTTP, controllers and bearer middleware; synthetic services, no database writes.
 var key = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+if (args.Length == 2 && args[0] == "--live-api")
+    await MvcApiAuthentication.RunLive(new Uri(args[1]), Directory.GetCurrentDirectory());
 const string password = "Synthetic regression password";
 const string issuer = "synthetic-tmcwd";
 const string audience = "synthetic-reader";
@@ -75,15 +77,40 @@ var billingService = DispatchProxy.Create<IBillingService, SyntheticService>();
 };
 builder.Services.AddSingleton(billingService);
 var cashierWrites = new List<int>();
+var cashierReportFilters = new List<int>();
+var cancellationCashiers = new List<int>();
 var paymentsService = DispatchProxy.Create<IPaymentService, SyntheticService>();
 ((SyntheticService)(object)paymentsService).Call = (method, args) => {
     if (method == nameof(IPaymentService.ProcessCollectionPayment)) {
+        if (((TMCWD.Model.Billing.Requests.CollectionPaymentRequest)args[1]!).Bills.Any(b => b.BillingReferenceId == "STALE"))
+            throw new TMCWD.Model.Billing.PaymentConflictException();
         cashierWrites.Add((int)args[0]!);
         return Task.FromResult(new List<Payment> { new() { PaymentReference = "SYNTHETIC-PAYMENT", PaidAmount = 190m } });
+    }
+    if (method == nameof(IPaymentService.GetByCashier))
+        return Task.FromResult(new List<Payment> { new() { CreatedBy = (int)args[0]!, PaidAmount = 190m } });
+    if (method == nameof(IPaymentService.CancelInvoice)) {
+        if (((TMCWD.Model.Billing.CancelInvoiceRequest)args[1]!).InvoiceNo == "OTHER-OWNER") throw new UnauthorizedAccessException();
+        cancellationCashiers.Add((int)args[0]!);
+        return Task.CompletedTask;
+    }
+    if (method == nameof(IPaymentService.GetByDateRange)) {
+        cashierReportFilters.Add((int)args[2]!);
+        return Task.FromResult(new List<Payment>());
     }
     throw new NotSupportedException(method);
 };
 builder.Services.AddSingleton(paymentsService);
+var chargeCashiers = new List<int>();
+var otherChargeService = DispatchProxy.Create<IOtherChargeService, SyntheticService>();
+((SyntheticService)(object)otherChargeService).Call = (method, args) => {
+    if (method != nameof(IOtherChargeService.ProcessPayment)) throw new NotSupportedException(method);
+    if (((TMCWD.Model.Billing.Requests.OtherChargePaymentRequest)args[1]!).OtherChargeIds.Contains(999))
+        throw new TMCWD.Model.Billing.PaymentConflictException();
+    chargeCashiers.Add((int)args[0]!);
+    return Task.FromResult("CR000222");
+};
+builder.Services.AddSingleton(otherChargeService);
 var penaltyService = DispatchProxy.Create<IPenaltyService, SyntheticService>();
 ((SyntheticService)(object)penaltyService).Call = (method, args) => {
     if (method == nameof(IPenaltyService.GetByReference)) return Task.FromResult(new List<Penalty>());
@@ -184,6 +211,7 @@ try
 {
     using var client = new HttpClient { BaseAddress = new Uri(app.Services.GetRequiredService<IServer>()
         .Features.Get<IServerAddressesFeature>()!.Addresses.Single()) };
+    await MvcApiAuthentication.Run(client.BaseAddress!, key, issuer, audience);
     using var login = await client.PostAsJsonAsync("/api/auth/meter-reader/login", new { identifier = reader.Email, password });
     Check(login.StatusCode == HttpStatusCode.OK, "Existing Data login must succeed.");
     var session = await login.Content.ReadFromJsonAsync<JsonElement>();
@@ -417,8 +445,68 @@ try
             ? HttpStatusCode.OK : HttpStatusCode.Forbidden), $"Penalty posting authorization failed for {role}.");
     }
     Check(cashierWrites.Count == 6 && cashierWrites.All(id => id == 10), "Financial write identity trusted a route user ID.");
+    using (var stale = new HttpRequestMessage(HttpMethod.Post, "/api/Payment/ProcessCollection/999") {
+        Content = JsonContent.Create(new TMCWD.Model.Billing.Requests.CollectionPaymentRequest {
+            InvoiceNumber = "STALE", Method = PaymentMethod.Cash, Bills = new() { new() { BillingReferenceId = "STALE", PaidAmount = 190m } } }) }) {
+        stale.Headers.Authorization = new("Bearer", Token(role: UserRole.Cashier));
+        using var response = await client.SendAsync(stale);
+        Check(response.StatusCode == HttpStatusCode.Conflict, "Stale payment did not return controlled 409.");
+    }
+    foreach (var (role, expected) in new[] { (UserRole.Cashier, HttpStatusCode.Forbidden), (UserRole.SuperAdmin, HttpStatusCode.OK) }) {
+        using var otherCashier = new HttpRequestMessage(HttpMethod.Get, "/api/Payment/GetByCashier/11");
+        otherCashier.Headers.Authorization = new("Bearer", Token(role: role));
+        using var response = await client.SendAsync(otherCashier);
+        Check(response.StatusCode == expected, "Personal collection history ownership was not enforced.");
+        using var report = new HttpRequestMessage(HttpMethod.Get, "/api/Payment/GetByDateRange?from=2026-10-07&to=2026-10-07&cashierId=11");
+        report.Headers.Authorization = new("Bearer", Token(role: role));
+        using var reportResponse = await client.SendAsync(report);
+        Check(reportResponse.StatusCode == HttpStatusCode.OK, "Authorized collection report failed.");
+    }
+    Check(cashierReportFilters.SequenceEqual(new[] { 10, 11 }), "Cashier report trusted another collector ID or removed supervisor access.");
+    using (var combinedReport = new HttpRequestMessage(HttpMethod.Get, "/api/Payment/GetByDateRange?from=2026-10-07&to=2026-10-07")) {
+        combinedReport.Headers.Authorization = new("Bearer", Token(role: UserRole.SuperAdmin));
+        using var response = await client.SendAsync(combinedReport);
+        Check(response.StatusCode == HttpStatusCode.OK && cashierReportFilters.Last() == 0, "Supervisor combined report was restricted to personal totals.");
+    }
     using (var unauthenticatedPay = await client.PostAsJsonAsync("/api/Payment/ProcessCollection/999", new { }))
         Check(unauthenticatedPay.StatusCode == HttpStatusCode.Unauthorized, "Payment API accepted missing authentication.");
+    foreach (var role in new UserRole?[] { null, UserRole.MeterReader, UserRole.Cashier, UserRole.SuperAdmin }) {
+        using var charges = new HttpRequestMessage(HttpMethod.Post, "/api/OtherCharge/ProcessPayment/999") {
+            Content = JsonContent.Create(new TMCWD.Model.Billing.Requests.OtherChargePaymentRequest {
+                Method = PaymentMethod.Check, OtherChargeIds = new() { 1 }, AmountTendered = 20m }) };
+        if (role.HasValue) charges.Headers.Authorization = new("Bearer", Token(role: role.Value));
+        using var response = await client.SendAsync(charges);
+        Check(response.StatusCode == (role == null ? HttpStatusCode.Unauthorized : role == UserRole.MeterReader ? HttpStatusCode.Forbidden : HttpStatusCode.OK),
+            "Other Charges payment authorization failed.");
+    }
+    Check(chargeCashiers.SequenceEqual(new[] { 10, 10 }), "Other Charges trusted a browser cashier ID.");
+    foreach (var role in new UserRole?[] { null, UserRole.MeterReader, UserRole.Cashier, UserRole.SuperAdmin }) {
+        using var cancel = new HttpRequestMessage(HttpMethod.Post, "/api/Payment/CancelInvoice/999") {
+            Content = JsonContent.Create(new TMCWD.Model.Billing.CancelInvoiceRequest { InvoiceNo = "CR000222", Reason = "Synthetic correction" }) };
+        if (role.HasValue) cancel.Headers.Authorization = new("Bearer", Token(role: role.Value));
+        using var response = await client.SendAsync(cancel);
+        Check(response.StatusCode == (role == null ? HttpStatusCode.Unauthorized : role == UserRole.MeterReader ? HttpStatusCode.Forbidden : HttpStatusCode.OK),
+            "Cancellation authorization failed.");
+    }
+    Check(cancellationCashiers.SequenceEqual(new[] { 10, 10 }), "Cancellation trusted a browser cashier ID.");
+    using (var otherOwner = new HttpRequestMessage(HttpMethod.Post, "/api/Payment/CancelInvoice/999") {
+        Content = JsonContent.Create(new TMCWD.Model.Billing.CancelInvoiceRequest { InvoiceNo = "OTHER-OWNER", Reason = "Synthetic correction" }) }) {
+        otherOwner.Headers.Authorization = new("Bearer", Token(role: UserRole.Cashier));
+        using var response = await client.SendAsync(otherOwner);
+        Check(response.StatusCode == HttpStatusCode.Forbidden, "Another cashier's cancellation did not preserve 403.");
+    }
+    using (var staleCharge = new HttpRequestMessage(HttpMethod.Post, "/api/OtherCharge/ProcessPayment/999") {
+        Content = JsonContent.Create(new TMCWD.Model.Billing.Requests.OtherChargePaymentRequest { Method = PaymentMethod.Cash, OtherChargeIds = new() { 999 } }) }) {
+        staleCharge.Headers.Authorization = new("Bearer", Token(role: UserRole.Cashier));
+        using var response = await client.SendAsync(staleCharge);
+        Check(response.StatusCode == HttpStatusCode.Conflict, "Stale Other Charges did not return controlled 409.");
+    }
+    using (var rawPayment = new HttpRequestMessage(HttpMethod.Post, "/api/Payment/SaveUpdate/999") {
+        Content = JsonContent.Create(new Payment { BillingReference = "SYNTHETIC", PaymentReference = "BYPASS", MacAddress = "WEB", PaidAmount = 190m }) }) {
+        rawPayment.Headers.Authorization = new("Bearer", Token(role: UserRole.Cashier));
+        using var rejected = await client.SendAsync(rawPayment);
+        Check(rejected.StatusCode == HttpStatusCode.Conflict, "Raw payment endpoint bypassed atomic balance processing.");
+    }
     Console.WriteLine("PASS: Collection/payment summaries and penalty posting enforce staff roles and derive write identity from claims.");
     downloadAccounts.Clear(); downloadReadings.Clear();
     Check((await Download(1, token, HttpStatusCode.OK)).GetProperty("accounts").GetArrayLength() == 0,

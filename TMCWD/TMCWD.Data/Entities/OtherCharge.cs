@@ -8,6 +8,11 @@ namespace TMCWD.Data.Entities
     [Table("other_charges")]
     public class OtherCharge
     {
+        public long? SettledPaymentId { get; set; }
+        // Posted plans require a positive count and exactly this many children.
+        public int? InstallmentCount { get; set; }
+        [NotMapped]
+        public List<TMCWD.Model.Billing.OtherChargeInstallmentRecord> Installments { get; set; } = new();
 
         [Key, Column("Id")]
         public System.Int64 Id { get; set; }
@@ -19,7 +24,7 @@ namespace TMCWD.Data.Entities
         public int Type { get; set; }
 
         [Column("PayableIn")]
-        public string PayableIn { get; set; } = string.Empty;
+        public string? PayableIn { get; set; } = string.Empty;
 
         [Column("Particulars")]
         public string Particulars { get; set; } = string.Empty;

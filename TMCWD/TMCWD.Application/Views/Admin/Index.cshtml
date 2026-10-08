@@ -127,8 +127,9 @@
         <section class="dashboard-modal__panel dashboard-modal__panel--charge" role="dialog" aria-modal="true" aria-labelledby="chargeModalTitle">
             <header class="dashboard-modal__header charge-header">
                 <div><span class="dashboard-modal__eyebrow">Account charge workspace</span><h2 id="chargeModalTitle">Other Charges</h2></div>
-                <div class="charge-header__total"><span>Total active charges</span><strong id="dashboardChargeTotal">₱0.00</strong></div>
+                <div class="charge-header__total"><span>Currently collectible</span><strong id="dashboardChargeTotal">₱0.00</strong></div>
                 <button type="button" class="charge-post-button" id="dashboardPostCharges" disabled>Post to Collection</button>
+                <button type="button" id="chargeAccountLedger" class="inspection-secondary-button" disabled>Account Ledger</button>
                 <a id="chargeModalFullPageLink" href="/Billing/OtherCharges" target="_blank"
                    class="inspection-pdf-button" title="Open in full Other Charges page" style="margin-left:auto">
                     <span>↗</span> Full page
@@ -142,24 +143,14 @@
             </div>
             <div class="charge-composer">
                 <div class="charge-field charge-field--wide"><label for="dashboardChargeType">Charge type</label><select id="dashboardChargeType"><option value="">Select a charge type</option></select></div>
-                <div class="charge-field"><label for="dashboardPayableIn">Payable in</label><select id="dashboardPayableIn">
-                    <option value="">— optional —</option>
-                    <option value="Cash">Cash</option>
-                    <option value="Check">Check</option>
-                    <option value="GCash">GCash</option>
-                    <option value="Maya">Maya</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="3 months">3 months</option>
-                    <option value="6 months">6 months</option>
-                    <option value="12 months">12 months</option>
-                </select></div>
+                <div class="charge-field"><label for="dashboardPayableIn">Number of Installments</label><input type="number" id="dashboardPayableIn" class="" min="1" step="1" required aria-label="Number of Installments" placeholder="Number of Installments" /></div>
                 <div class="charge-field charge-field--wide"><label for="dashboardParticulars">Particulars</label><input id="dashboardParticulars" maxlength="255" placeholder="Optional notes" /></div>
                 <div class="charge-field"><label for="dashboardAmount">Amount</label><input id="dashboardAmount" type="number" min="0.01" step="0.01" placeholder="0.00" /></div>
                 <button type="button" class="charge-add-button" id="dashboardAddCharge">Add charge</button>
             </div>
             <div class="charge-message" id="dashboardChargeMessage" role="status"></div>
             <div class="charge-table-wrap">
-                <table class="charge-table"><thead><tr><th>Description</th><th>Payable in</th><th>Particulars</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody id="dashboardChargeRows"></tbody></table>
+                <table class="charge-table"><thead><tr><th>Description</th><th>Installments</th><th>Particulars</th><th>Total contractual amount</th><th>Status</th><th></th></tr></thead><tbody id="dashboardChargeRows"></tbody></table>
             </div>
             <div class="charge-post-bar">
                 <span class="charge-post-message" id="dashboardPostMessage" role="status"></span>
@@ -574,7 +565,7 @@
                         <span>PDF</span>
                         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5" /></svg>
                     </a>
-                    <a id="srDetailLedger" href="#srAccountLedgerModal" title="View ledger" aria-label="View account ledger">
+                    <a id="srDetailLedger" href="#accountLedger" title="View ledger" aria-label="View account ledger">
                         <span>Ledger</span>
                         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M9 3v18M12 8h5M12 12h5M12 16h5" /></svg>
                     </a>
@@ -632,24 +623,8 @@
         </section>
     </div>
 
-    <div class="dashboard-modal" id="srAccountLedgerModal" aria-hidden="true">
-        <div class="dashboard-modal__backdrop" data-close-modal="srAccountLedgerModal"></div>
-        <section class="dashboard-modal__panel sr-account-ledger-panel" role="dialog" aria-modal="true" aria-labelledby="srAccountLedgerTitle">
-            <header class="dashboard-modal__header">
-                <div><span class="dashboard-modal__eyebrow">Customer account</span><h2 id="srAccountLedgerTitle">Billing ledger</h2></div>
-                <button type="button" class="dashboard-modal__close" data-close-modal="srAccountLedgerModal" aria-label="Close ledger">&times;</button>
-            </header>
-            <div class="sr-account-ledger-content">
-                <p id="srAccountLedgerIdentity"></p>
-                <p id="srAccountLedgerMessage" role="status"></p>
-                <table class="sr-account-ledger-table">
-                    <thead><tr><th scope="col">Reference / Date</th><th scope="col">Previous</th><th scope="col">Present</th><th scope="col">Usage</th><th scope="col">Debit</th><th scope="col">Credit</th><th scope="col">Balance</th><th scope="col">Processed by</th></tr></thead>
-                    <tbody id="srAccountLedgerRows"></tbody>
-                    <tfoot><tr><th scope="row" colspan="6">Outstanding billing balance</th><td id="srAccountLedgerBalance">—</td><td></td></tr></tfoot>
-                </table>
-            </div>
-        </section>
-    </div>
+    <partial name="_AccountLedger" />
+
 </section>
 
 @section Scripts {

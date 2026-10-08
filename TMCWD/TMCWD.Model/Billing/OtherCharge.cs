@@ -10,6 +10,8 @@ namespace TMCWD.Model.Billing
     {
 
         public OtherCharge() { }
+        public int? InstallmentCount { get; set; }
+        public List<OtherChargeInstallmentRecord> Installments { get; set; } = new();
 
         [DisplayName("Id")]
         public int Id { get; set; }
@@ -18,7 +20,7 @@ namespace TMCWD.Model.Billing
         public int Type { get; set; }
 
         [DisplayName("Payable In")]
-        public string PayableIn { get; set; } = string.Empty;
+        public string? PayableIn { get; set; } = string.Empty;
 
         [DisplayName("Particulars")]
         public string Particulars { get; set; } = string.Empty;

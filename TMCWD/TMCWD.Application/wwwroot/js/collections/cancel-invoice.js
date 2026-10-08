@@ -80,7 +80,7 @@
       fieldError(otherInput, 'Enter at least 3 characters.'); valid = false;
     }
     if (!valid) return;
-    if (!window.confirm(`Cancel invoice ${invoiceNo}? This will reopen its bill and reverse the payment.`)) return;
+    if (!window.confirm(`Cancel payment ${invoiceNo}? This will reopen its bill and reverse the payment.`)) return;
 
     submitBtn.disabled = true;
     submitBtn.textContent = 'Cancelling...';
@@ -94,11 +94,12 @@
         body: JSON.stringify({ invoiceNo, reason })
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.message || 'Invoice could not be cancelled.');
+      if (!response.ok) throw new Error(result.message || 'Payment could not be cancelled.');
       close();
-      toast(`Invoice ${invoiceNo} was cancelled and its bill was reopened.`, false);
+      toast(`Payment ${invoiceNo} was cancelled and its bill was reopened.`, false);
+      document.dispatchEvent(new Event('collectionChanged'));
     } catch (error) {
-      toast(error.message || 'Invoice could not be cancelled.', true);
+      toast(error.message || 'Payment could not be cancelled.', true);
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Submit';

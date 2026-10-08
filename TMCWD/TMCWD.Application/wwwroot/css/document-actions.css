@@ -1,5 +1,5 @@
 /* Shared PDF and ledger actions, including dynamically rendered export controls. */
-:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf, .ldg-action-btn--pdf, .link-chip--ledger) {
+:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf ) {
     display: inline-flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -19,7 +19,7 @@
     text-decoration: none !important;
     cursor: pointer;
 }
-:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf, .ldg-action-btn--pdf, .link-chip--ledger)::before {
+:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf)::before {
     content: '';
     display: block;
     width: 20px;
@@ -30,7 +30,7 @@
 :is(#srDetailLedger, .link-chip--ledger)::before {
     background-image: url('../images/icon-ledger.svg');
 }
-:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf, .ldg-action-btn--pdf, .link-chip--ledger) > svg {
+:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf) > svg {
     display: none !important;
 }
 :is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf) > span {
@@ -39,14 +39,14 @@
     padding: 0 !important;
     font: inherit !important;
 }
-:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf, .ldg-action-btn--pdf, .link-chip--ledger):hover {
+:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf):hover {
     background: #f1f5f9 !important;
 }
-:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf, .ldg-action-btn--pdf, .link-chip--ledger):focus-visible {
+:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf):focus-visible {
     outline: 2px solid #2878dc;
     outline-offset: 2px;
 }
-:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf, .ldg-action-btn--pdf, .link-chip--ledger):disabled {
+:is(#inspectionPdfButton, #srDetailPdf, #srDetailLedger, .export-pdf, .colrep-btn--pdf):disabled {
     opacity: .5;
     cursor: default;
 }

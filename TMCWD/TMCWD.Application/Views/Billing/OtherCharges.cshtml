@@ -3,7 +3,6 @@
     ViewData["PageTitle"] = "Other Charges";
     ViewData["ActivePage"] = "other-charges";
 }
-
 @section Styles {
     <link rel="stylesheet" href="~/css/reading-sheet.css" />
     <link rel="stylesheet" href="~/css/other-charges.css" />
@@ -54,21 +53,8 @@
                 </select>
             </div>
             <div class="oc-field">
-                <label class="oc-label" for="ocPayableIn">Payable In</label>
-                <select id="ocPayableIn" class="oc-input oc-select">
-                    <option value="" selected>— optional —</option>
-                    <option value="Cash">Cash</option>
-                    <option value="Check">Check</option>
-                    <option value="GCash">GCash</option>
-                    <option value="Maya">Maya</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="3 months">3 months</option>
-                    <option value="6 months">6 months</option>
-                    <option value="12 months">12 months</option>
-                    <option value="__other__">Other...</option>
-                </select>
-                <input type="text" id="ocPayableInOther" class="oc-input oc-payable-other"
-                       placeholder="Specify payment method" autocomplete="off" />
+                <label class="oc-label" for="ocPayableIn">Number of Installments</label>
+                <input type="number" id="ocPayableIn" class="oc-input" min="1" step="1" required aria-label="Number of Installments" placeholder="Number of Installments" />
             </div>
             <div class="oc-field">
                 <label class="oc-label" for="ocParticulars">Particulars</label>

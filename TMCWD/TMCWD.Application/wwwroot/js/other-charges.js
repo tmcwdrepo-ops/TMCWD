@@ -121,6 +121,11 @@
                 console.log("[OtherCharges] Response:", text);
 
                 if (!res.ok) {
+                    if (options && options.method === 'POST') {
+                        let message = text;
+                        try { const error = JSON.parse(text); message = error.message || error; } catch { }
+                        setEntryError(String(message || 'The charge could not be saved.'));
+                    }
                     return null;
                 }
 
@@ -314,12 +319,9 @@
 
             const chargeTypeEl = el.chargeType;
             const chargeTypeValue = chargeTypeEl.value;
-            const payableIn = el.payableIn.value === "__other__"
-                ? el.payableInOther.value.trim()
-                : el.payableIn.value;
-
-            if (el.payableIn.value === "__other__" && !payableIn) {
-                setEntryError("Please specify the payment method.");
+            const payableIn = el.payableIn.value;
+            if (!/^[0-9]+$/.test(payableIn) || Number(payableIn) < 1 || !Number.isSafeInteger(Number(payableIn))) {
+                setEntryError("Number of Installments must be a positive whole number.");
                 return;
             }
             const particulars = el.particulars.value.trim();
@@ -355,7 +357,7 @@
             });
 
             if (!saved) {
-                setEntryError("Could not save the charge. Please try again.");
+                if (!el.entryError.textContent) setEntryError("Could not save the charge. Please try again.");
                 el.addBtn.disabled = false;
                 return;
             }
@@ -367,8 +369,6 @@
             // Reset entry row.
             chargeTypeEl.value = "";
             el.payableIn.value = "";
-            el.payableInOther.value = "";
-            el.payableInOther.classList.remove("is-visible");
             el.particulars.value = "";
             el.amount.value = "";
             el.addBtn.disabled = false;
@@ -556,16 +556,6 @@
         // ---------- Event wiring ----------
 
         el.amount.addEventListener("input", () => clampAmountInput(el.amount));
-
-        el.payableIn.addEventListener("change", function () {
-            var isOther = el.payableIn.value === "__other__";
-            el.payableInOther.classList.toggle("is-visible", isOther);
-            if (isOther) {
-                el.payableInOther.focus();
-            } else {
-                el.payableInOther.value = "";
-            }
-        });
 
         el.addBtn.addEventListener("click", addCharge);
         el.postBtn?.addEventListener("click", postCharges);

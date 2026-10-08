@@ -66,7 +66,6 @@ public class DashboardController : ControllerBase
     public async Task<ActionResult<ServiceDashboard>> ServiceSummary()
     {
         await BackfillApplicationAccountNumbers();
-        await ReconcilePaidApplicationPayments();
 
         // Count applications by stage from water_connection_applications
         var stageCounts = await _context.WaterConnectionApplications.AsNoTracking()
@@ -114,7 +113,6 @@ public class DashboardController : ControllerBase
         if (!allowed.Contains(category)) return BadRequest("Unknown dashboard category.");
 
         await BackfillApplicationAccountNumbers();
-        await ReconcilePaidApplicationPayments();
 
         // Map dashboard card name → stage value(s) in water_connection_applications
         var stageFilter = category switch
@@ -973,7 +971,8 @@ public class DashboardController : ControllerBase
                         var regFeeType = await _context.OtherFeeTypes
                             .FirstOrDefaultAsync(x => x.Name.ToLower().Contains("registration fee"));
 
-                        if (regFeeType != null)
+                        if (regFeeType != null && regFeeType.DefaultValue > 0m
+                            && regFeeType.DefaultValue <= 9999.99m && decimal.Round(regFeeType.DefaultValue, 2) == regFeeType.DefaultValue)
                         {
                             // Create the initial billing stub for this new account
                             var billingRef = Guid.NewGuid().ToString("N")[..12].ToUpper();
@@ -1001,9 +1000,10 @@ public class DashboardController : ControllerBase
                                 Amount             = regFeeType.DefaultValue > 0
                                                         ? regFeeType.DefaultValue
                                                         : 0,
-                                PayableIn          = "Cash",
+                                PayableIn          = "1",
+                                InstallmentCount   = 1,
                                 Particulars        = "New service connection — registration fee",
-                                PaymentStatus      = (int)PaymentStatus.Unpaid,
+                                PaymentStatus      = (int)PaymentStatus.Draft,
                                 IsActive           = true,
                                 CreatedBy          = userId,
                                 DateCreated        = now2,
@@ -1013,7 +1013,7 @@ public class DashboardController : ControllerBase
                             await _context.SaveChangesAsync();
 
                             // The fee remains a draft until Charging explicitly
-                            // posts it to Collection. Posting performs the rollup.
+                            // posts it to Collection. Posting creates the installment.
                         }
                     }
                 }
@@ -1233,7 +1233,6 @@ public class DashboardController : ControllerBase
     [HttpGet("ApplicationPayment/{applicationId:long}")]
     public async Task<ActionResult<ApplicationPaymentRecord>> ApplicationPayment(long applicationId)
     {
-        await ReconcilePaidApplicationPayments();
 
         var app = await _context.WaterConnectionApplications.AsNoTracking()
             .Where(x => x.Id == applicationId)
@@ -1315,84 +1314,6 @@ public class DashboardController : ControllerBase
             application.AccountNumber = accountNumber;
             application.UpdatedAt = DateTime.Now;
             changed = true;
-        }
-
-        if (changed) await _context.SaveChangesAsync();
-    }
-
-    /// <summary>
-    /// Repairs applications paid through the standalone Other Charges cashier
-    /// modal before that workflow wrote payment_data. The successful payment is
-    /// the source of truth; only fully paid connection-fee billings are advanced.
-    /// </summary>
-    private async Task ReconcilePaidApplicationPayments()
-    {
-        var applications = await _context.WaterConnectionApplications
-            .Where(x => x.Stage == "payment" && x.AccountId.HasValue
-                && x.ChargingData != null && x.ChargingData != string.Empty)
-            .ToListAsync();
-        if (applications.Count == 0) return;
-
-        var changed = false;
-        foreach (var application in applications)
-        {
-            string? billingReference = null;
-            try
-            {
-                using var charging = JsonDocument.Parse(application.ChargingData!);
-                if (charging.RootElement.TryGetProperty("reference", out var referenceElement))
-                    billingReference = referenceElement.GetString();
-            }
-            catch (JsonException) { }
-
-            if (string.IsNullOrWhiteSpace(billingReference)) continue;
-
-            var charges = await _context.OtherCharges
-                .Where(x => x.BillingReferenceId == billingReference && x.IsActive)
-                .ToListAsync();
-            if (charges.Count == 0
-                || charges.Any(x => x.PaymentStatus != (int)PaymentStatus.Paid))
-                continue;
-
-            var payment = await _context.Payments.AsNoTracking()
-                .Where(x => x.BillingReference == billingReference && x.Success)
-                .OrderByDescending(x => x.DateCreated)
-                .FirstOrDefaultAsync();
-            if (payment == null) continue;
-
-            var billing = await _context.Billings
-                .FirstOrDefaultAsync(x => x.BillingReferenceId == billingReference);
-            if (billing == null) continue;
-
-            var previousOtherCharges = billing.OtherCharges;
-            billing.OtherCharges = 0m;
-            billing.TotalBillAmount = Math.Max(0m, billing.TotalBillAmount - previousOtherCharges);
-            billing.RemainingAmount = Math.Max(0m, billing.RemainingAmount - previousOtherCharges);
-            changed = true;
-
-            var hasOutstandingPenalty = await _context.Penalties.AnyAsync(x =>
-                x.BillingReferenceId == billingReference
-                && (x.PaymentStatus == (int)PaymentStatus.Unpaid
-                 || x.PaymentStatus == (int)PaymentStatus.Overdue));
-            if (billing.RemainingAmount > 0m || hasOutstandingPenalty) continue;
-
-            billing.PaymentStatus = (int)PaymentStatus.Paid;
-            billing.PaymentTransactionId = payment.PaymentReference;
-            billing.UpdatedBy = payment.CreatedBy;
-            billing.DateUpdated = payment.DateCreated;
-
-            var method = Enum.IsDefined(typeof(PaymentMethod), payment.Method)
-                ? ((PaymentMethod)payment.Method).ToString()
-                : "Unknown";
-            application.PaymentData = JsonSerializer.Serialize(new
-            {
-                reference = payment.PaymentReference,
-                method,
-                date = payment.DateCreated,
-                status = "Paid"
-            });
-            application.Stage = "installation";
-            application.UpdatedAt = DateTime.Now;
         }
 
         if (changed) await _context.SaveChangesAsync();

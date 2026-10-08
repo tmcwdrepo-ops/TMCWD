@@ -59,6 +59,9 @@ namespace TMCWD.Data.Entities
 
         [Column("RemainingAmount")]
         public decimal RemainingAmount { get; set; }
+        
+        [Column("BillArrearsAmount")]
+        public decimal? BillArrearsAmount { get; set; }
 
         /// <summary>
         /// Customer-facing service invoice number.

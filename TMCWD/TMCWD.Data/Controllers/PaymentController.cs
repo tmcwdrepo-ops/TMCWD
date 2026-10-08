@@ -46,6 +46,8 @@ namespace TMCWD.Data.Controllers
         [HttpGet("GetByCashier/{userId}")]
         public async Task<IActionResult> GetByCashier(int userId)
         {
+            if (!User.IsInRole(((int)UserRole.SuperAdmin).ToString()) && userId != ActorId)
+                return Forbid();
             var payments = await _service.GetByCashier(userId);
             if (payments == null || !payments.Any()) return NotFound();
             return Ok(payments);
@@ -91,7 +93,11 @@ namespace TMCWD.Data.Controllers
                 userId = ActorId;
                 if (userId <= 0) return Unauthorized();
                 var payments = await _service.ProcessCollectionPayment(userId, request);
-                return Ok(new { success = true, paymentCount = payments.Count });
+                return Ok(new { success = true, paymentCount = payments.Count, paymentReference = payments.First().PaymentReference });
+            }
+            catch (TMCWD.Model.Billing.PaymentConflictException ex)
+            {
+                return Conflict(new { success = false, message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
@@ -117,6 +123,7 @@ namespace TMCWD.Data.Controllers
             [FromQuery] DateTime to,
             [FromQuery] int cashierId = 0)
         {
+            if (!User.IsInRole(((int)UserRole.SuperAdmin).ToString())) cashierId = ActorId;
             var payments = await _service.GetByDateRange(from, to, cashierId);
             return Ok(payments);
         }
@@ -140,6 +147,8 @@ namespace TMCWD.Data.Controllers
                 await _service.CancelInvoice(userId, request);
                 return Ok(new { success = true });
             }
+            catch (UnauthorizedAccessException) { return Forbid(); }
+            catch (TMCWD.Model.Billing.PaymentConflictException ex) { return Conflict(new { success = false, message = ex.Message }); }
             catch (InvalidOperationException ex)
             {
                 return BadRequest(new { success = false, message = ex.Message });

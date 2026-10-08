@@ -81,6 +81,23 @@ namespace TMCWD.Application.Controllers
             base.OnActionExecuting(context);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> AccountLedgerData(string accountNumber)
+        {
+            if (string.IsNullOrWhiteSpace(accountNumber) || accountNumber.Trim().Length > 50)
+                return BadRequest(new { message = "A valid account number is required." });
+            try
+            {
+                var ledger = await _billingTrans.GetAccountLedger(accountNumber.Trim());
+                return ledger == null ? NotFound(new { message = "Account not found." }) : Json(ledger);
+            }
+            catch (HttpRequestException ex)
+            {
+                var status = ex.StatusCode.HasValue ? (int)ex.StatusCode.Value : 502;
+                return StatusCode(status, new { message = status is 401 or 403 ? "You are not authorized to view this account ledger." : "Unable to load the account ledger. Please try again." });
+            }
+        }
+
         public async Task<IActionResult> BillAdjustment()
         {
             var readers = await _userTrans.GetUsersByRole(UserRole.MeterReader) ?? new List<User>();
@@ -293,13 +310,29 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetPenaltyChargeEntries(DateTime? billingPeriod, DateTime? dueDate)
-        {
-            if (!ModelState.IsValid) return BadRequest("Invalid billing date.");
-            try { return Ok(await _penaltyTrans.GetChargeEntries(billingPeriod, dueDate)); }
-            catch (HttpRequestException) { return StatusCode(502, "Could not load overdue bills. Please try again."); }
-        }
+[HttpGet]
+public async Task<IActionResult> GetPenaltyChargeEntries(
+    DateTime? billingPeriod,
+    DateTime? dueDate,
+    DateTime? postingDate)
+{
+    if (!ModelState.IsValid)
+        return BadRequest("Invalid billing date.");
 
+    try
+    {
+        return Ok(await _penaltyTrans.GetChargeEntries(
+            billingPeriod,
+            dueDate,
+            postingDate));
+    }
+    catch (HttpRequestException)
+    {
+        return StatusCode(
+            502,
+            "Could not load overdue bills. Please try again.");
+    }
+}
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PostPenaltyCharges([FromBody] PostPenaltyChargesRequest request)
@@ -581,7 +614,15 @@ namespace TMCWD.Application.Controllers
 
             foreach (var billing in accountBillings)
             {
-                var charges = await _otherChargeTrans.GetByReference(billing.BillingReferenceId) ?? new List<Model.Billing.OtherCharge>();
+                List<Model.Billing.OtherCharge> charges;
+                CollectionBill? summary;
+                try
+                {
+                    summary = await _billingTrans.GetCollectionBill(billing.BillingReferenceId);
+                    charges = await _otherChargeTrans.GetByReference(billing.BillingReferenceId) ?? new();
+                }
+                catch (HttpRequestException error) when (error.StatusCode == System.Net.HttpStatusCode.Conflict)
+                { return Conflict(new { message = "An Other Charge has an invalid installment ledger. Contact the billing administrator." }); }
                 var activeCharges = charges.Where(c => c.IsActive
                     && c.PaymentStatus != PaymentStatus.Paid
                     && c.PaymentStatus != PaymentStatus.Waived).ToList();
@@ -596,6 +637,9 @@ namespace TMCWD.Application.Controllers
                         payableIn = charge.PayableIn,
                         particulars = charge.Particulars,
                         amount = charge.Amount,
+                        installmentCount = charge.InstallmentCount,
+                        installments = charge.Installments,
+                        collectibleAmount = summary?.CollectibleOtherCharges.Where(c => c.Id == charge.Id).Sum(c => c.Amount) ?? 0m,
                         isPosted = charge.PaymentStatus != PaymentStatus.Draft,
                         status = charge.PaymentStatus.ToString()
                     });
@@ -620,6 +664,13 @@ namespace TMCWD.Application.Controllers
 
             if (request.Amount <= 0)
                 return BadRequest("Amount must be greater than zero.");
+            int installmentCount;
+            try
+            {
+                installmentCount = OtherChargeInstallments.ParseCount(request.PayableIn);
+                _ = OtherChargeInstallments.BaseAmount(request.Amount, installmentCount);
+            }
+            catch (InvalidOperationException error) { return BadRequest(error.Message); }
 
             var account = await _accountTrans.GetByAccountNumber(request.AccountNumber);
             if (account == null)
@@ -628,13 +679,15 @@ namespace TMCWD.Application.Controllers
             var allBillings = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
             var currentBilling = allBillings
                 .Where(b => b.AccountId == account.Id
-                    && b.PaymentStatus != PaymentStatus.Paid
-                    && b.PaymentStatus != PaymentStatus.Waived)
+                    && (installmentCount > 1 ? b.ReadingId > 0
+                        : b.PaymentStatus != PaymentStatus.Paid && b.PaymentStatus != PaymentStatus.Waived))
                 .OrderByDescending(b => b.DateCreated)
                 .FirstOrDefault();
 
             if (currentBilling == null)
             {
+                if (installmentCount > 1)
+                    return BadRequest("An installment charge requires an existing billing period.");
                 // New connection accounts have no billing history yet —
                 // create an initial pre-billing stub so charges can be attached.
                 // This stub has zero amounts and Unpaid status; it will be
@@ -681,10 +734,10 @@ namespace TMCWD.Application.Controllers
             {
                 saved = await _otherChargeTrans.SaveUpdate(_user.User.Id, otherCharge);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"EXCEPTION calling OtherChargeTransaction.SaveUpdate: {ex.Message} | INNER: {ex.InnerException?.Message}");
-            }
+            catch (InvalidOperationException error) { return BadRequest(error.Message); }
+            catch (HttpRequestException error) when (error.StatusCode == System.Net.HttpStatusCode.Conflict)
+            { return Conflict(error.Message); }
+            catch (Exception) { return StatusCode(500, "The charge could not be saved. Try again."); }
 
             if (saved == null)
             {
@@ -700,6 +753,8 @@ namespace TMCWD.Application.Controllers
                 payableIn = saved.PayableIn,
                 particulars = saved.Particulars,
                 amount = saved.Amount,
+                installmentCount = saved.InstallmentCount,
+                collectibleAmount = 0m,
                 isPosted = false,
                 status = PaymentStatus.Draft.ToString()
             });

@@ -328,7 +328,7 @@ void penaltyParsingTests() {
   );
 
   testWidgets(
-    'ServiceInvoicePreview shows Penalty After Due and Total After Due rows when present',
+    'ServiceInvoicePreview shows issued Penalty and Total After Due rows when present',
     (tester) async {
       tester.view.physicalSize = const Size(800, 2400);
       tester.view.devicePixelRatio = 1;
@@ -344,7 +344,7 @@ void penaltyParsingTests() {
       );
       await tester.pumpAndSettle();
       expect(find.text('TOTAL DUE'), findsOneWidget);
-      expect(find.text('Penalty After Due'), findsOneWidget);
+      expect(find.text('Penalty'), findsOneWidget);
       expect(find.text('TOTAL AFTER DUE'), findsOneWidget);
       // currentPenaltyAmount is null so 'Penalty (Applied)' must NOT appear.
       expect(find.text('Penalty (Applied)'), findsNothing);
@@ -352,7 +352,7 @@ void penaltyParsingTests() {
   );
 
   testWidgets(
-    'ServiceInvoicePreview shows both penalty rows when current penalty is applied',
+    'ServiceInvoicePreview prints one issued penalty when current penalty is applied',
     (tester) async {
       tester.view.physicalSize = const Size(800, 2400);
       tester.view.devicePixelRatio = 1;
@@ -367,32 +367,32 @@ void penaltyParsingTests() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Penalty (Applied)'), findsOneWidget);
-      expect(find.text('Penalty After Due'), findsOneWidget);
+      expect(find.text('Penalty'), findsOneWidget);
+      expect(find.text('Penalty (Applied)'), findsNothing);
+      expect(find.text('Penalty After Due'), findsNothing);
       expect(find.text('TOTAL AFTER DUE'), findsOneWidget);
     },
   );
 
-  testWidgets(
-    'ServiceInvoicePreview omits all penalty rows when not present',
-    (tester) async {
-      tester.view.physicalSize = const Size(800, 2400);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      final soa = OfficialSoa.fromJson(official());
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ServiceInvoicePreview(
-            result: SoaResult(SoaState.available, soa: soa),
-          ),
+  testWidgets('ServiceInvoicePreview omits all penalty rows when not present', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final soa = OfficialSoa.fromJson(official());
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ServiceInvoicePreview(
+          result: SoaResult(SoaState.available, soa: soa),
         ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Penalty'), findsNothing);
-      expect(find.text('TOTAL AFTER DUE'), findsNothing);
-    },
-  );
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Penalty'), findsNothing);
+    expect(find.text('TOTAL AFTER DUE'), findsNothing);
+  });
 }
 
 // Register penalty parsing tests inside the existing main().

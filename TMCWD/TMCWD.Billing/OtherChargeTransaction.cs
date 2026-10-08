@@ -71,9 +71,9 @@ namespace TMCWD.Billing
 
             var data = await response.Content.ReadAsStringAsync();
 
-            if (!response.IsSuccessStatusCode)
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return new List<OtherCharge>();
-
+            response.EnsureSuccessStatusCode();
             return ConvertJsonToOtherCharges(data);
         }
 
@@ -91,7 +91,16 @@ namespace TMCWD.Billing
             var response = await _service.Client.PostAsync($"api/OtherCharge/SaveUpdate/{userId}", content);
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                throw new Exception($"SaveUpdate failed with status {response.StatusCode}: {data}");
+            {
+                if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                    throw new HttpRequestException("The charge changed. Reload and try again.", null, response.StatusCode);
+                if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    using var json = System.Text.Json.JsonDocument.Parse(data);
+                    throw new InvalidOperationException(json.RootElement.GetProperty("message").GetString());
+                }
+                throw new HttpRequestException("The charge could not be saved.", null, response.StatusCode);
+            }
             return ConvertJsonToOtherCharge(data);
         }
 
@@ -126,7 +135,7 @@ namespace TMCWD.Billing
             return result.RootElement.GetProperty("postedCount").GetInt32();
         }
 
-        public async Task<(bool Success, string Message, string InvoiceNumber)> ProcessPayment(
+        public async Task<(bool Success, string Message, string InvoiceNumber, int StatusCode)> ProcessPayment(
             int userId,
             TMCWD.Model.Billing.Requests.OtherChargePaymentRequest request)
         {
@@ -137,7 +146,7 @@ namespace TMCWD.Billing
             {
                 var body = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
                 body.TryGetProperty("invoiceNumber", out var invEl);
-                return (true, string.Empty, invEl.GetString() ?? string.Empty);
+                return (true, string.Empty, invEl.GetString() ?? throw new InvalidOperationException("Payment reference was not returned."), 200);
             }
 
             var data = await response.Content.ReadAsStringAsync();
@@ -145,13 +154,13 @@ namespace TMCWD.Billing
             {
                 using var json = System.Text.Json.JsonDocument.Parse(data);
                 if (json.RootElement.TryGetProperty("message", out var message))
-                    return (false, message.GetString() ?? "Payment could not be completed.", string.Empty);
+                    return (false, message.GetString() ?? "Payment could not be completed.", string.Empty, (int)response.StatusCode);
             }
             catch (System.Text.Json.JsonException) { }
 
             return (false,
                 $"Other-charge payment service returned {(int)response.StatusCode} ({response.ReasonPhrase}).",
-                string.Empty);
+                string.Empty, (int)response.StatusCode);
         }
 
         #endregion

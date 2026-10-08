@@ -16,6 +16,7 @@ namespace TMCWD.Data.Entities
 
         [Column("Amount")]
         public decimal Amount { get; set; }
+        public long? SettledPaymentId { get; set; }
 
         [Column("PaymentStatus")]
         public int PaymentStatus { get; set; }

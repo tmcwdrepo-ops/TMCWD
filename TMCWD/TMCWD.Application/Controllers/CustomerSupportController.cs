@@ -107,8 +107,9 @@ namespace TMCWD.Application.Controllers
                                          ?? model.CustomerAccounts.FirstOrDefault();
             }
 
-            ViewData["ActivePage"] = "customers";
-            return View(model);
+                ViewData["ActivePage"] = "customers";
+                ViewData["PageTitle"] = "Customer Information";
+                return View(model);
         }
 
         /// <summary>

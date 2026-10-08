@@ -6,10 +6,12 @@ namespace TMCWD.Application.Models
     /// Request body posted by the Other Charges payment modal to
     /// <c>POST /Collections/PayOtherCharges</c>.
     /// </summary>
+    [System.Text.Json.Serialization.JsonUnmappedMemberHandling(System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow)]
     public class CollectionOtherChargePaymentRequest
     {
-        /// <summary>Unique OR / invoice number generated on the client.</summary>
+        /// <summary>Legacy compatibility only; backend generates the receipt reference.</summary>
         public string InvoiceNumber { get; set; } = string.Empty;
+        public string? ExternalReference { get; set; }
 
         /// <summary>Payment method chosen by the cashier.</summary>
         public PaymentMethod Method { get; set; }
@@ -17,7 +19,7 @@ namespace TMCWD.Application.Models
         /// <summary>Amount handed over by the customer.</summary>
         public decimal AmountTendered { get; set; }
 
-        /// <summary>IDs of the <c>other_charges</c> rows being settled.</summary>
-        public List<int> OtherChargeIds { get; set; } = new();
+        /// <summary>Exact IDs of the collectible installment rows being settled.</summary>
+        public List<long> InstallmentIds { get; set; } = new();
     }
 }

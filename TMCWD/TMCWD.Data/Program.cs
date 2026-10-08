@@ -91,6 +91,7 @@
     builder.Services.AddScoped<IApprovalHistoryService, ApprovalHistoryService>();
     builder.Services.AddScoped<IRequestFileService, RequestFileService>();
     builder.Services.AddScoped<IBillingService, BillingService>();
+    builder.Services.AddScoped<AccountLedgerService>();
     builder.Services.AddScoped<IReadingService, ReadingService>();
     builder.Services.AddScoped<IWaterRateService, WaterRateService>(); 
     builder.Services.AddScoped<IBillingAdjustmentService, BillingAdjustmentService>();

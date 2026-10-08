@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Text.Json;
 using TMCWD.Data.Context;
@@ -90,8 +90,6 @@ namespace TMCWD.Data.Services
         {
             if (userId <= 0)
                 throw new InvalidOperationException("A valid cashier is required.");
-            if (string.IsNullOrWhiteSpace(request.InvoiceNumber))
-                throw new InvalidOperationException("Invoice number is required.");
             if (!Enum.IsDefined(typeof(PaymentMethod), request.Method))
                 throw new InvalidOperationException("A valid payment method is required.");
             if (request.Bills == null || request.Bills.Count == 0)
@@ -108,11 +106,6 @@ namespace TMCWD.Data.Services
                     throw new InvalidOperationException("The Senior Citizen name is required.");
             }
 
-            var invoiceNumber = request.InvoiceNumber.Trim().ToUpperInvariant();
-            await using var referenceLock = await PaymentReferenceLock.Acquire(_context, invoiceNumber);
-            if (await _context.Payments.AnyAsync(x => x.PaymentReference == invoiceNumber))
-                throw new InvalidOperationException("This invoice number has already been used.");
-
             var requestedBills = request.Bills
                 .Where(x => !string.IsNullOrWhiteSpace(x.BillingReferenceId))
                 .GroupBy(x => x.BillingReferenceId.Trim(), StringComparer.OrdinalIgnoreCase)
@@ -125,8 +118,9 @@ namespace TMCWD.Data.Services
                 throw new InvalidOperationException("Every selected bill must have a valid payment amount.");
 
             var references = requestedBills.Select(x => x.BillingReferenceId.Trim())
-                .OrderBy(x => x, StringComparer.Ordinal).ToList();
-            await using var transaction = await _context.Database.BeginTransactionAsync();
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList();
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+            var now = DateTime.Now;
             var billings = new List<Billing>();
             foreach (var reference in references)
                 billings.AddRange(await _context.Billings
@@ -135,9 +129,28 @@ namespace TMCWD.Data.Services
 
             if (billings.Count != requestedBills.Count)
                 throw new InvalidOperationException("One or more selected bills no longer exist.");
-            if (billings.Any(x => x.PaymentStatus == (int)PaymentStatus.Paid ||
-                                  x.PaymentStatus == (int)PaymentStatus.Waived))
-                throw new InvalidOperationException("One or more selected bills have already been settled.");
+            await new OtherChargeService(_context).ValidatePostedPlans(references);
+            var installmentPayments = new List<OtherChargeInstallment>();
+            foreach (var reference in references)
+                installmentPayments.AddRange(await _context.OtherChargeInstallments.FromSqlInterpolated($@"
+                    SELECT i.* FROM other_charge_installments i
+                    INNER JOIN other_charges c ON c.Id = i.OtherChargeId
+                    WHERE c.BillingReferenceId = {reference} AND c.IsActive = 1
+                      AND c.PaymentStatus IN (1,3) AND i.PaymentStatus IN (1,3)
+                    ORDER BY i.Id FOR UPDATE").ToListAsync());
+            var installmentParents = await _context.OtherCharges
+                .Where(c => references.Contains(c.BillingReferenceId)
+                    && _context.OtherChargeInstallments.Any(i => i.OtherChargeId == c.Id)).ToListAsync();
+            foreach (var billRequest in requestedBills)
+            {
+                var expected = installmentPayments.Where(i => installmentParents.Any(c => c.Id == i.OtherChargeId
+                    && c.BillingReferenceId == billRequest.BillingReferenceId.Trim())).Select(i => i.Id).OrderBy(id => id).ToList();
+                if (billRequest.InstallmentIds == null || !billRequest.InstallmentIds.OrderBy(id => id).SequenceEqual(expected))
+                    throw new TMCWD.Model.Billing.PaymentConflictException();
+            }
+            if (billings.Any(b => (b.PaymentStatus == (int)PaymentStatus.Paid || b.PaymentStatus == (int)PaymentStatus.Waived)
+                && !installmentPayments.Any(i => installmentParents.Any(c => c.Id == i.OtherChargeId && c.BillingReferenceId == b.BillingReferenceId))))
+                throw new TMCWD.Model.Billing.PaymentConflictException();
 
             Dictionary<long, Account> accounts = new();
             Dictionary<long, Customer> customers = new();
@@ -167,7 +180,7 @@ namespace TMCWD.Data.Services
             if (request.AmountTendered < totalToPay)
                 throw new InvalidOperationException("Amount tendered is less than the selected bills.");
 
-            var now = DateTime.Now;
+            var invoiceNumber = await PaymentReferenceAllocator.Allocate(_context, userId, request.Method, now, request.ExternalReference);
             var payments = new List<Payment>();
             var discountAdjustments = new List<BillingAdjustment>();
             var discountRecords = new List<SeniorCitizenDiscount>();
@@ -182,11 +195,6 @@ namespace TMCWD.Data.Services
                     .Where(p => p.BillingReferenceId == billing.BillingReferenceId
                         && (p.PaymentStatus == (int)PaymentStatus.Unpaid || p.PaymentStatus == (int)PaymentStatus.Overdue))
                     .SumAsync(p => p.Amount);
-                var outstandingOtherCharges = await _context.OtherCharges
-                    .Where(c => c.BillingReferenceId == billing.BillingReferenceId && c.IsActive
-                        && (c.PaymentStatus == (int)PaymentStatus.Unpaid
-                         || c.PaymentStatus == (int)PaymentStatus.Overdue))
-                    .SumAsync(c => (decimal?)c.Amount) ?? 0m;
                 var discountAmount = 0m;
                 if (seniorDiscount != null)
                 {
@@ -230,13 +238,15 @@ namespace TMCWD.Data.Services
                     });
                 }
 
-                // Legacy new-connection stubs can have a zero RemainingAmount
-                // even though a posted charge exists. Never collect less than
-                // the active posted Other Charges balance.
-                var collectibleBalance = Math.Max(0m, Math.Max(billing.RemainingAmount, outstandingOtherCharges));
-                var amountDue = collectibleBalance - discountAmount + outstandingPenalty;
+                var alreadySettled = billing.PaymentStatus == (int)PaymentStatus.Paid || billing.PaymentStatus == (int)PaymentStatus.Waived;
+                var collectibleBalance = alreadySettled ? 0m : Math.Max(0m, billing.RemainingAmount);
+                var installmentAmount = installmentPayments.Where(i => installmentParents.Any(c => c.Id == i.OtherChargeId
+                    && c.BillingReferenceId == billing.BillingReferenceId)).Sum(i => i.Amount);
+                if (alreadySettled && seniorDiscount != null)
+                    throw new InvalidOperationException("A settled water bill cannot receive another discount.");
+                var amountDue = collectibleBalance - discountAmount + (alreadySettled ? 0m : outstandingPenalty) + installmentAmount;
                 if (billRequest.PaidAmount != amountDue)
-                    throw new InvalidOperationException("The bill amount changed. Reload the account to include its current penalty before collecting payment.");
+                    throw new TMCWD.Model.Billing.PaymentConflictException();
 
                 payments.Add(new Payment
                 {
@@ -244,12 +254,15 @@ namespace TMCWD.Data.Services
                     PaymentReference = invoiceNumber,
                     MacAddress = "WEB",
                     PaidAmount = billRequest.PaidAmount,
+                    BalanceBefore = collectibleBalance,
+                    ChargesOnly = alreadySettled,
                     Method = (int)request.Method,
                     Success = true,
                     CreatedBy = userId,
                     DateCreated = now
                 });
 
+                if (alreadySettled) continue;
                 billing.PaymentStatus = (int)PaymentStatus.Paid;
                 billing.PaymentTransactionId = invoiceNumber;
                 billing.BillingAdjustment += discountAmount;
@@ -258,9 +271,10 @@ namespace TMCWD.Data.Services
                 billing.DateUpdated = now;
             }
 
+            var waterReferences = payments.Where(p => !p.ChargesOnly).Select(p => p.BillingReference).ToList();
             var penalties = await _context.Penalties
-                .Where(x => references.Contains(x.BillingReferenceId) &&
-                            x.PaymentStatus != (int)PaymentStatus.Waived)
+                .Where(x => waterReferences.Contains(x.BillingReferenceId) &&
+                            (x.PaymentStatus == (int)PaymentStatus.Unpaid || x.PaymentStatus == (int)PaymentStatus.Overdue))
                 .ToListAsync();
             foreach (var penalty in penalties)
             {
@@ -269,16 +283,11 @@ namespace TMCWD.Data.Services
                 penalty.DateUpdated = now;
             }
 
-            var otherCharges = await _context.OtherCharges
-                .Where(x => references.Contains(x.BillingReferenceId) && x.IsActive
-                    && (x.PaymentStatus == (int)PaymentStatus.Unpaid
-                     || x.PaymentStatus == (int)PaymentStatus.Overdue))
-                .ToListAsync();
-            foreach (var charge in otherCharges)
+            foreach (var installment in installmentPayments)
             {
-                charge.PaymentStatus = (int)PaymentStatus.Paid;
-                charge.UpdatedBy = userId;
-                charge.DateUpdated = now;
+                installment.PaymentStatus = (int)PaymentStatus.Paid;
+                installment.UpdatedBy = userId;
+                installment.DateUpdated = now;
             }
 
             var paidAccountIds = billings.Select(x => x.AccountId).Distinct().ToList();
@@ -304,6 +313,12 @@ namespace TMCWD.Data.Services
             _context.BillingAdjustments.AddRange(discountAdjustments);
             _context.SeniorCitizenDiscounts.AddRange(discountRecords);
             await _context.SaveChangesAsync();
+            foreach (var penalty in penalties)
+                penalty.SettledPaymentId = payments.Single(p => p.BillingReference == penalty.BillingReferenceId).Id;
+            foreach (var installment in installmentPayments)
+                installment.SettledPaymentId = payments.Single(p => p.BillingReference == installmentParents.Single(c => c.Id == installment.OtherChargeId).BillingReferenceId).Id;
+            await new OtherChargeService(_context).RefreshParents(installmentPayments.Select(i => i.OtherChargeId), userId);
+            await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return payments;
@@ -318,7 +333,7 @@ namespace TMCWD.Data.Services
             limit = Math.Clamp(limit, 1, 100);
 
             // Normalise to uppercase so the comparison is consistent regardless
-            // of how the user typed it — invoice numbers are stored uppercase.
+            // of how the user typed it � invoice numbers are stored uppercase.
             var upper = query.ToUpperInvariant();
 
             var references = await _context.Payments.AsNoTracking()
@@ -368,7 +383,14 @@ namespace TMCWD.Data.Services
             if (reason.Length < 3 || reason.Length > 200)
                 throw new InvalidOperationException("A cancellation reason between 3 and 200 characters is required.");
 
-            await using var transaction = await _context.Database.BeginTransactionAsync();
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+            var preview = await _context.Payments.AsNoTracking().Where(p => p.PaymentReference == invoiceNumber).ToListAsync();
+            if (preview.Count == 0) throw new InvalidOperationException("Payment receipt was not found.");
+            if (preview.Any(p => p.CreatedBy != userId) && !await _context.Users.AnyAsync(u => u.Id == userId && u.Role == (int)UserRole.SuperAdmin))
+                throw new UnauthorizedAccessException("Only the collecting cashier or SuperAdmin can cancel this payment.");
+            var lockedBills = new List<Billing>();
+            foreach (var reference in preview.Select(p => p.BillingReference).Distinct().OrderBy(r => r, StringComparer.OrdinalIgnoreCase))
+                lockedBills.AddRange(await _context.Billings.FromSqlInterpolated($"SELECT * FROM `Billings` WHERE BillingReferenceId = {reference} FOR UPDATE").ToListAsync());
             var payments = await _context.Payments
                 .FromSqlInterpolated($"SELECT * FROM `payments` WHERE `PaymentReference` = {invoiceNumber} FOR UPDATE")
                 .ToListAsync();
@@ -377,54 +399,58 @@ namespace TMCWD.Data.Services
             if (payments.Any(x => !x.Success)
                 || await _context.InvoiceCancellations.AnyAsync(x => x.PaymentReference == invoiceNumber))
                 throw new InvalidOperationException("This invoice has already been cancelled.");
+            await new OtherChargeService(_context).ValidatePostedPlans(payments.Select(p => p.BillingReference));
 
             var now = DateTime.Now;
             foreach (var payment in payments)
             {
-                var billing = (await _context.Billings
-                    .FromSqlInterpolated($"SELECT * FROM `Billings` WHERE `BillingReferenceId` = {payment.BillingReference} FOR UPDATE")
-                    .ToListAsync()).SingleOrDefault()
-                    ?? throw new InvalidOperationException(
-                        $"Billing record {payment.BillingReference} could not be restored.");
+                var billing = lockedBills.SingleOrDefault(b => b.BillingReferenceId == payment.BillingReference);
+                if ((!payment.ChargesOnly && (billing == null || payment.BalanceBefore == null
+                        || billing.PaymentStatus != (int)PaymentStatus.Paid || billing.PaymentTransactionId != invoiceNumber))
+                    || await _context.Payments.AnyAsync(p => p.Success && p.BillingReference == payment.BillingReference && p.Id > payment.Id))
+                    throw new TMCWD.Model.Billing.PaymentConflictException();
 
                 var paidPenalties = await _context.Penalties
                     .Where(x => x.BillingReferenceId == payment.BillingReference
                         && x.PaymentStatus == (int)PaymentStatus.Paid
-                        && x.UpdatedBy == payment.CreatedBy
-                        && x.DateUpdated == payment.DateCreated)
+                        && x.SettledPaymentId == payment.Id)
                     .ToListAsync();
-                var penaltyAmount = paidPenalties.Sum(x => x.Amount);
-                var paidOtherCharges = await _context.OtherCharges
-                    .Where(x => x.BillingReferenceId == payment.BillingReference
-                        && x.PaymentStatus == (int)PaymentStatus.Paid
-                        && x.UpdatedBy == payment.CreatedBy
-                        && x.DateUpdated == payment.DateCreated)
+                var paidInstallments = await _context.OtherChargeInstallments
+                    .FromSqlInterpolated($"SELECT * FROM other_charge_installments WHERE SettledPaymentId = {payment.Id} AND PaymentStatus = 2 ORDER BY Id FOR UPDATE")
                     .ToListAsync();
+                if (payment.ChargesOnly && (paidInstallments.Count == 0 || paidInstallments.Sum(i => i.Amount) != payment.PaidAmount))
+                    throw new InvalidOperationException("This receipt has an invalid installment settlement. Contact the billing administrator.");
                 var discounts = await _context.SeniorCitizenDiscounts
-                    .Where(x => x.BillingReferenceId == payment.BillingReference && !x.IsCancelled)
+                    .Where(x => !payment.ChargesOnly && x.BillingReferenceId == payment.BillingReference && !x.IsCancelled)
                     .ToListAsync();
                 var discountAmount = discounts.Sum(x => x.DiscountAmount);
 
-                billing.RemainingAmount = payment.PaidAmount - penaltyAmount + discountAmount;
-                billing.BillingAdjustment = Math.Max(0m, billing.BillingAdjustment - discountAmount);
-                billing.PaymentStatus = (int)PaymentStatus.Unpaid;
-                billing.PaymentTransactionId = string.Empty;
-                billing.UpdatedBy = userId;
-                billing.DateUpdated = now;
+                if (billing != null && !payment.ChargesOnly) {
+                    billing.RemainingAmount = payment.BalanceBefore ?? throw new InvalidOperationException("Historical receipt requires manual balance review before cancellation.");
+                    billing.BillingAdjustment = Math.Max(0m, billing.BillingAdjustment - discountAmount);
+                    billing.PaymentStatus = (int)PaymentStatus.Unpaid;
+                    billing.PaymentTransactionId = string.Empty;
+                    billing.UpdatedBy = userId;
+                    billing.DateUpdated = now;
+                }
 
                 foreach (var penalty in paidPenalties)
                 {
                     penalty.PaymentStatus = (int)PaymentStatus.Unpaid;
+                    penalty.SettledPaymentId = null;
                     penalty.UpdatedBy = userId;
                     penalty.DateUpdated = now;
                 }
 
-                foreach (var charge in paidOtherCharges)
+                foreach (var installment in paidInstallments)
                 {
-                    charge.PaymentStatus = (int)PaymentStatus.Unpaid;
-                    charge.UpdatedBy = userId;
-                    charge.DateUpdated = now;
+                    installment.PaymentStatus = (int)PaymentStatus.Unpaid;
+                    installment.SettledPaymentId = null;
+                    installment.UpdatedBy = userId;
+                    installment.DateUpdated = now;
                 }
+                await _context.SaveChangesAsync();
+                await new OtherChargeService(_context).RefreshParents(paidInstallments.Select(i => i.OtherChargeId), userId);
 
                 foreach (var discount in discounts)
                 {
@@ -480,6 +506,10 @@ namespace TMCWD.Data.Services
             var cancellations = await _context.InvoiceCancellations.AsNoTracking()
                 .Where(x => invoiceNumbers.Contains(x.PaymentReference))
                 .ToDictionaryAsync(x => x.PaymentReference);
+            var cashiers = await _context.Users.AsNoTracking().Where(u => payments.Select(p => p.CreatedBy).Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u.Name);
+            var receiptHeaders = await _context.PaymentReceipts.AsNoTracking().Where(r => invoiceNumbers.Contains(r.PaymentReference!))
+                .ToDictionaryAsync(r => r.PaymentReference!);
 
             return payments.GroupBy(x => x.PaymentReference, StringComparer.OrdinalIgnoreCase)
                 .Select(group =>
@@ -512,6 +542,9 @@ namespace TMCWD.Data.Services
                         TransactionType = Enum.IsDefined(typeof(PaymentMethod), first.Method)
                             ? ((PaymentMethod)first.Method).ToString() : "Unknown",
                         DateIssued = first.DateCreated,
+                        CashierId = first.CreatedBy,
+                        CashierName = cashiers.GetValueOrDefault(first.CreatedBy) ?? $"User #{first.CreatedBy}",
+                        ExternalReference = receiptHeaders.GetValueOrDefault(group.Key)?.ExternalReference,
                         Status = group.All(x => x.Success) ? "Paid" : "Cancelled",
                         CancellationReason = cancellation?.Reason ?? string.Empty,
                         Lines = lines

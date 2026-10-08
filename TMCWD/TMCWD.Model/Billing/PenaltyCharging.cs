@@ -43,6 +43,7 @@ public class PostPenaltyChargesRequest
     /// Defaults to yesterday (today − 1) when not provided.
     /// </summary>
     public DateTime? DueDate { get; set; }
+    public DateTime? PostingDate { get; set; }
     public List<string> BillingReferenceIds { get; set; } = new();
 }
 

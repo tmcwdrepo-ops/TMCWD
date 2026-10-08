@@ -1,0 +1,124 @@
+<link rel="stylesheet" href="~/css/account-ledger.css" asp-append-version="true" />
+<dialog id="accountLedger" class="account-ledger" aria-labelledby="accountLedgerTitle">
+    <div class="account-ledger__shell">
+        <header class="account-ledger__topbar">
+            <div class="account-ledger__title-group">
+                <span class="account-ledger__eyebrow">Financial Record</span>
+                <h2 id="accountLedgerTitle">Account Ledger</h2>
+            </div>
+            <div class="account-ledger__actions">
+                <button type="button" class="account-ledger__icon-button" data-ledger-refresh aria-label="Refresh account ledger" title="Refresh" aria-describedby="accountLedgerTitle">
+                    <span aria-hidden="true">↻</span>
+                </button>
+                <form method="dialog">
+                    <button type="submit" class="account-ledger__icon-button" aria-label="Close account ledger" title="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <div class="account-ledger__message" data-ledger-message role="status" aria-live="polite"></div>
+
+        <section class="account-ledger__content" data-ledger-content hidden>
+            <div class="account-ledger__header-panel">
+                <div class="account-ledger__account-grid">
+                    <div class="account-ledger__info-row">
+                        <span class="account-ledger__label">Account Name</span>
+                        <span class="account-ledger__value" data-header="accountName">—</span>
+                    </div>
+                    <div class="account-ledger__info-row">
+                        <span class="account-ledger__label">Account Number</span>
+                        <span class="account-ledger__value" data-header="accountNumber">—</span>
+                    </div>
+                    <div class="account-ledger__info-row account-ledger__info-row--wide">
+                        <span class="account-ledger__label">Service Address</span>
+                        <span class="account-ledger__value" data-header="serviceAddress">—</span>
+                    </div>
+                    <div class="account-ledger__info-row">
+                        <span class="account-ledger__label">Classification</span>
+                        <span class="account-ledger__value" data-header="classification">—</span>
+                    </div>
+                    <div class="account-ledger__info-row">
+                        <span class="account-ledger__label">Rate Code</span>
+                        <span class="account-ledger__value" data-header="rateCode">—</span>
+                    </div>
+                    <div class="account-ledger__info-row">
+                        <span class="account-ledger__label">Meter Number</span>
+                        <span class="account-ledger__value" data-header="meterNumber">—</span>
+                    </div>
+                    <div class="account-ledger__info-row">
+                        <span class="account-ledger__label">Account Status</span>
+                        <span class="account-ledger__status" data-header="status">—</span>
+                    </div>
+                </div>
+                <aside class="account-ledger__balance-card" aria-label="Total balance">
+                    <span class="account-ledger__balance-label">Total Balance</span>
+                    <strong class="account-ledger__balance-value" data-ledger-balance>₱0.00</strong>
+                </aside>
+            </div>
+
+            <nav class="account-ledger__tabs" role="tablist" aria-label="Account Ledger">
+                <button id="al-tab-bills" type="button" class="account-ledger__tab" role="tab" data-ledger-tab="bills" aria-controls="al-panel-bills" aria-selected="true" tabindex="0">Bills</button>
+                <button id="al-tab-otherCharges" type="button" class="account-ledger__tab" role="tab" data-ledger-tab="otherCharges" aria-controls="al-panel-otherCharges" aria-selected="false" tabindex="-1">Other Charges</button>
+                <button id="al-tab-history" type="button" class="account-ledger__tab" role="tab" data-ledger-tab="history" aria-controls="al-panel-history" aria-selected="false" tabindex="-1">History</button>
+            </nav>
+
+            <section id="al-panel-bills" class="account-ledger__panel" role="tabpanel" aria-labelledby="al-tab-bills" tabindex="0">
+                <p class="account-ledger__panel-note">Live water balances and persisted penalties. Prior bills are listed separately; arrears are not added again.</p>
+                <div class="account-ledger__table-wrap">
+                    <table>
+                        <caption class="account-ledger__sr-only">Water bills</caption>
+                        <thead>
+                            <tr>
+                                <th>Bill Month</th>
+                                <th>Service Invoice</th>
+                                <th>Billing Reference</th>
+                                <th>Reading Date</th>
+                                <th>Billing Date</th>
+                                <th>Due Date</th>
+                                <th>Water Bill</th>
+                                <th>Maintenance</th>
+                                <th>Active Penalty</th>
+                                <th>Remaining Water</th>
+                                <th>Status</th>
+                                <th>Payment Reference</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ledger-bills></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="al-panel-otherCharges" class="account-ledger__panel" role="tabpanel" aria-labelledby="al-tab-otherCharges" tabindex="0" hidden>
+                <div class="account-ledger__panel-summary">
+                    <span class="account-ledger__panel-label">Collectible Now</span>
+                    <strong data-ledger-collectible>₱0.00</strong>
+                </div>
+                <div class="account-ledger__charges" data-ledger-charges></div>
+            </section>
+
+            <section id="al-panel-history" class="account-ledger__panel" role="tabpanel" aria-labelledby="al-tab-history" tabindex="0" hidden>
+                <p class="account-ledger__panel-note">Persisted financial events, newest first. Contract creation and adjustment details are informational; no running balance is reconstructed.</p>
+                <div class="account-ledger__table-wrap">
+                    <table>
+                        <caption class="account-ledger__sr-only">Account financial history</caption>
+                        <thead>
+                            <tr>
+                                <th>Date / Time</th>
+                                <th>Transaction</th>
+                                <th>Reference</th>
+                                <th>Description</th>
+                                <th>Charge / Debit</th>
+                                <th>Payment / Credit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ledger-history></tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+    </div>
+</dialog>
+<script src="~/js/account-ledger.js" asp-append-version="true" defer></script>

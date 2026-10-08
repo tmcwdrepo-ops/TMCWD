@@ -94,17 +94,6 @@ document.addEventListener('DOMContentLoaded', function () {
     clearDiscount();
   });
 
-  // ---------- Invoice Input ----------
-  invoiceInput.addEventListener('input', function() {
-    // Allow only alphanumeric characters
-    this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-  });
-
-  function getFullInvoiceNo() {
-    const suffix = invoiceInput.value.trim();
-    return suffix ? `CR00${suffix}` : '';
-  }
-
   // ---------- Initial empty state ----------
   function initializePage() {
     forceClearAccountData();
@@ -325,6 +314,7 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       bills: apiAccount.bills.map(bill => ({
         billingReferenceId: bill.billingReferenceId,
+        installmentIds: Array.isArray(bill.installmentIds) ? bill.installmentIds : [],
         serviceInvoiceNumber: bill.serviceInvoiceNumber,
         billMonth: bill.billingPeriod,
         dueDate: bill.dueDate,
@@ -707,7 +697,7 @@ document.addEventListener('DOMContentLoaded', function () {
     statusBadge.className = acc.status === 'Connected' ? 'badge connected' : 'badge disconnected';
     
     // Update invoice info
-    document.getElementById('invoiceInput').value = accountData.invoiceNo.replace(/^CR00/i, '');
+    document.getElementById('invoiceInput').value = '';
     const acctCount = accountData.accountsInInvoice != null ? accountData.accountsInInvoice : 1;
     document.getElementById('acctCountNum').textContent = acctCount;
     document.getElementById('acctCountLabel').textContent = acctCount === 1 ? 'ACCOUNT' : 'ACCOUNTS';
@@ -784,7 +774,7 @@ document.addEventListener('DOMContentLoaded', function () {
       
       row.innerHTML = `
         <td><input class="bill-checkbox" type="checkbox" ${bill.selected ? 'checked' : ''} aria-label="Select bill for ${escapeHtml(billMonth)}"></td>
-        <td><b>${escapeHtml(billMonth)}</b><br><small>Service Invoice: ${escapeHtml(bill.serviceInvoiceNumber || 'Historical — unavailable')}</small></td>
+        <td style="white-space:nowrap;"><b>${escapeHtml(formatSummaryBillMonth(billMonth, 'long'))}</b></td>
         <td class="muted">${escapeHtml(bill.dueDate)}</td>
         <td class="mono">${bill.amount == null ? '\u2014' : fmt(bill.amount)}</td>
         <td class="mono muted">${bill.mmf == null ? '\u2014' : fmt(mmf)}</td>
@@ -923,11 +913,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const psCancelBtn = document.getElementById('psCancelBtn');
   let pendingPayment = null;
 
-  function formatSummaryBillMonth(value) {
+  function formatSummaryBillMonth(value, month = 'short') {
     const match = /^(\d{4})-(\d{2})$/.exec(String(value || ''));
     if (!match) return value || '\u2014';
     return new Date(Number(match[1]), Number(match[2]) - 1, 1)
-      .toLocaleDateString('en-PH', { month: 'short', year: 'numeric' });
+      .toLocaleDateString('en-PH', { month, year: 'numeric' });
   }
 
   function getBillsForPaymentSummary() {
@@ -942,6 +932,7 @@ document.addEventListener('DOMContentLoaded', function () {
         amount: Number(bill.amount) || 0,
         hasAuthoritativeWater: bill.amount != null,
         amountDue: bill.amountDue,
+        installmentIds: bill.installmentIds,
         pca: Number(bill.pca) || 0,
         mmf: Number(bill.mmf) || 0,
         otherCharges: Number(bill.otherCharges) || 0,
@@ -1028,6 +1019,7 @@ document.addEventListener('DOMContentLoaded', function () {
       allocatedAmount += paidAmount;
       paymentBills.push({
         billingReferenceId: bill.billingReferenceId,
+        installmentIds: bill.installmentIds,
         paidAmount
       });
     });
@@ -1071,7 +1063,7 @@ document.addEventListener('DOMContentLoaded', function () {
           'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
         },
         body: JSON.stringify({
-          invoiceNumber: payment.invoiceNo,
+          externalReference: payment.payMode === 'check' ? document.getElementById('checkNumber').value : payment.payMode === 'online' ? document.getElementById('onlineRef').value : null,
           method: methodIds[payment.payMode],
           amountTendered: payment.amountTendered,
           bills: payment.bills,
@@ -1079,15 +1071,20 @@ document.addEventListener('DOMContentLoaded', function () {
         })
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.success) {
+      if (!response.ok || !result.success || !result.paymentReference) {
+        if (response.status === 409) {
+          closePaymentSummary();
+          for (const account of multipleAccountsMode ? selectedAccounts.slice() : currentAccountData ? [currentAccountData] : [])
+            await window.refreshCollectionsAccount(account.account.accountNumber).catch(() => {});
+        }
         throw new Error(result.message || 'Payment could not be completed.');
       }
 
       closePaymentSummary();
       resetBtn.click();
-      if (payment.payMode === 'cash' && typeof window.recordCashCollection === 'function') {
-        window.recordCashCollection(payment.amount);
-      }
+      invoiceInput.value = result.paymentReference;
+      payment.invoiceNo = result.paymentReference;
+      document.dispatchEvent(new Event('collectionChanged'));
       showToast(`Payment of ${fmt(payment.amount)} recorded via ${payment.payMode.toUpperCase()} \u2014 Payment Reference ${payment.invoiceNo}.`);
     } catch (error) {
       showToast(error.message || 'Payment could not be completed.', true);
@@ -1101,7 +1098,7 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('payBtn').addEventListener('click', function () {
     const toPay    = parseAmount(amountToPay.value);
     const tendered = parseAmount(amountTendered.value);
-    const invoiceNo = getFullInvoiceNo();
+    const invoiceNo = 'Generated upon payment';
     const payMode = currentPayMode();
 
     const hasSelectedBills = multipleAccountsMode
@@ -1114,11 +1111,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!payMode) {
       showToast('Please select a payment method.', true);
-      return;
-    }
-    if (!invoiceNo) {
-      showToast('Please enter an invoice number before proceeding.', true);
-      invoiceInput.focus();
       return;
     }
     if (tendered < toPay) {
@@ -1153,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // ---------- Popover link chips ----------
-  document.querySelectorAll('.link-chip').forEach(chip => {
+  document.querySelectorAll('.link-chip:not([data-modal="ledger"])').forEach(chip => {
     chip.addEventListener('click', function () {
       const modal = this.dataset.modal;
       if (modal === 'conversion') {
@@ -2082,6 +2074,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const opt = document.createElement('option');
         opt.value = collector.id;
         opt.textContent = collector.name;
+        if (collector.date) tellerDate.value = collector.date;
         tellerName.appendChild(opt);
       }
     } catch (error) {
@@ -2090,7 +2083,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Seed today's date into the date picker
     const today = new Date();
-    tellerDate.value = today.toISOString().slice(0, 10);
+    if (!tellerDate.value) tellerDate.value = today.toLocaleDateString('en-CA');
 
     // Avatar initials from selected teller name
     function updateAvatar() {
@@ -2105,39 +2098,27 @@ document.addEventListener('DOMContentLoaded', function () {
     // Update avatar whenever selection changes
     tellerName.addEventListener('change', updateAvatar);
 
-    // Cash on-hand \u2014 numeric only, formats on blur
-    tellerCash.addEventListener('keydown', function (e) {
-      const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
-      if (allowed.includes(e.key)) return;
-      if (e.key === '.' && !this.value.includes('.')) return;
-      if (!/^\d$/.test(e.key)) e.preventDefault();
-    });
-
-    tellerCash.addEventListener('input', function () {
-      let val = this.value.replace(/[^0-9.]/g, '');
-      const parts = val.split('.');
-      if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
-      this.value = val;
-    });
-
-    tellerCash.addEventListener('blur', function () {
-      const num = parseFloat(this.value) || 0;
-      this.value = num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    });
-
-    tellerCash.addEventListener('focus', function () {
-      // Strip formatting so user can edit the raw number
-      this.value = this.value.replace(/,/g, '');
-    });
-
-    window.recordCashCollection = function (amount) {
-      const current = parseFloat(String(tellerCash.value).replace(/,/g, '')) || 0;
-      const collected = Number(amount) || 0;
-      tellerCash.value = (current + collected).toLocaleString('en-PH', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-    };
+    let totalsRequest = 0;
+    async function refreshCashierTotals() {
+      const requestId = ++totalsRequest;
+      tellerCash.value = '';
+      tellerCash.placeholder = 'Loading...';
+      try {
+        const response = await fetch('/Collections/RemittanceExpected?date=' + encodeURIComponent(tellerDate.value));
+        if (!response.ok) throw new Error('Collection totals could not be loaded.');
+        const totals = await response.json();
+        if (requestId !== totalsRequest) return;
+        if (!Number.isFinite(Number(totals.cashOnHand))) throw new Error('Collection totals could not be loaded.');
+        tellerCash.value = Number(totals.cashOnHand).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      } catch (error) {
+        if (requestId !== totalsRequest) return;
+        tellerCash.placeholder = 'Unavailable';
+        tellerCash.title = error.message;
+      }
+    }
+    tellerDate.addEventListener('change', refreshCashierTotals);
+    document.addEventListener('collectionChanged', refreshCashierTotals);
+    await refreshCashierTotals();
   }());
 
   // ---------- Kick things off ----------

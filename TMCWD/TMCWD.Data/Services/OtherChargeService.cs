@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
@@ -26,20 +26,56 @@ namespace TMCWD.Data.Services
             return otherCharges;
         }
 
-        public async Task<List<OtherCharge>> GetByReference(string referenceId)
+        public Task<List<OtherCharge>> GetByReference(string referenceId) => GetByReference(referenceId, false);
+
+        public async Task<List<OtherCharge>> GetByReference(string referenceId, bool includeInactive)
         {
-            var otherCharges = await _context.OtherCharges
-                .Where(x => x.BillingReferenceId == referenceId && x.IsActive)
+            await ValidatePostedPlans(new[] { referenceId });
+            var otherCharges = await _context.OtherCharges.AsNoTracking()
+                .Where(x => x.BillingReferenceId == referenceId && (includeInactive || x.IsActive))
+                .OrderBy(x => x.DateCreated).ThenBy(x => x.Id)
                 .ToListAsync();
+            foreach (var charge in otherCharges)
+                charge.Installments = await (from i in _context.OtherChargeInstallments.AsNoTracking()
+                    join p in _context.Payments.AsNoTracking() on i.SettledPaymentId equals (long?)p.Id into receipts
+                    from p in receipts.DefaultIfEmpty()
+                    where i.OtherChargeId == charge.Id
+                    orderby i.InstallmentNumber
+                    select new TMCWD.Model.Billing.OtherChargeInstallmentRecord {
+                        Id = i.Id, InstallmentNumber = i.InstallmentNumber, DueBillingPeriod = i.DueBillingPeriod,
+                        Amount = i.Amount, PaymentStatus = (PaymentStatus)i.PaymentStatus,
+                        SettledPaymentId = i.SettledPaymentId, PaymentReference = p == null ? null : p.PaymentReference,
+                        ActivatedAt = i.ActivatedAt, ActivatedBillingReferenceId = i.ActivatedBillingReferenceId
+                    }).ToListAsync();
             return otherCharges;
         }
 
         public async Task<OtherCharge> SaveUpdate(int userId, OtherCharge otherCharge)
         {
-            if(otherCharge.Id > 0)
+            if (userId <= 0) throw new InvalidOperationException("A valid user is required.");
+            otherCharge.InstallmentCount = TMCWD.Model.Billing.OtherChargeInstallments.ParseCount(otherCharge.PayableIn);
+            _ = TMCWD.Model.Billing.OtherChargeInstallments.BaseAmount(otherCharge.Amount, otherCharge.InstallmentCount.Value);
+            if (otherCharge.Type <= 0 || !await _context.OtherFeeTypes.AnyAsync(t => t.Id == otherCharge.Type))
+                throw new InvalidOperationException("Charge type is required.");
+            if (string.IsNullOrWhiteSpace(otherCharge.BillingReferenceId))
+                throw new InvalidOperationException("A billing record is required.");
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+            var original = otherCharge.Id > 0 ? await _context.OtherCharges.AsNoTracking().SingleOrDefaultAsync(c => c.Id == otherCharge.Id) : null;
+            var bills = await LockBillings(new[] { original?.BillingReferenceId, otherCharge.BillingReferenceId });
+            if (!bills.Any(b => b.BillingReferenceId == otherCharge.BillingReferenceId))
+                throw new InvalidOperationException("The linked billing record was not found.");
+            if (otherCharge.Id > 0)
             {
-                otherCharge.UpdatedBy = userId;
-                otherCharge.DateUpdated = DateTime.Now;
+                var current = (await _context.OtherCharges.FromSqlInterpolated($"SELECT * FROM other_charges WHERE Id = {otherCharge.Id} FOR UPDATE")
+                    .AsNoTracking().ToListAsync()).SingleOrDefault();
+                if (current == null || current.BillingReferenceId != original?.BillingReferenceId)
+                    throw new TMCWD.Model.Billing.PaymentConflictException();
+                if (current.PaymentStatus != (int)PaymentStatus.Draft
+                    || await _context.OtherChargeInstallments.AnyAsync(i => i.OtherChargeId == current.Id))
+                    throw new InvalidOperationException("Only draft plans without installments can be edited.");
+                otherCharge.CreatedBy = current.CreatedBy;
+                otherCharge.DateCreated = current.DateCreated;
                 _context.OtherCharges.Update(otherCharge);
             }
             else
@@ -48,34 +84,13 @@ namespace TMCWD.Data.Services
                 otherCharge.DateCreated = DateTime.Now;
                 _context.OtherCharges.Add(otherCharge);
             }
-
+            otherCharge.PaymentStatus = (int)PaymentStatus.Draft;
+            otherCharge.SettledPaymentId = null;
+            otherCharge.UpdatedBy = userId;
+            otherCharge.DateUpdated = DateTime.Now;
             await _context.SaveChangesAsync();
-
-            if (!string.IsNullOrWhiteSpace(otherCharge.BillingReferenceId))
-                await UpdateBillingOtherCharges(otherCharge.BillingReferenceId, userId);
-
+            await transaction.CommitAsync();
             return otherCharge;
-        }
-
-        private async Task UpdateBillingOtherCharges(string billingReferenceId, int userId)
-        {
-            var billing = await _context.Billings
-                .FirstOrDefaultAsync(x => x.BillingReferenceId == billingReferenceId);
-            if (billing == null) return;
-
-            var postedTotal = await _context.OtherCharges
-                .Where(x => x.BillingReferenceId == billingReferenceId && x.IsActive
-                    && (x.PaymentStatus == (int)PaymentStatus.Unpaid
-                     || x.PaymentStatus == (int)PaymentStatus.Overdue))
-                .SumAsync(x => (decimal?)x.Amount) ?? 0m;
-            var difference = postedTotal - billing.OtherCharges;
-
-            billing.OtherCharges = postedTotal;
-            billing.TotalBillAmount = Math.Max(postedTotal, billing.TotalBillAmount + difference);
-            billing.RemainingAmount = Math.Max(postedTotal, billing.RemainingAmount + difference);
-            billing.UpdatedBy = userId;
-            billing.DateUpdated = DateTime.Now;
-            await _context.SaveChangesAsync();
         }
 
         public async Task<int> PostToCollection(int userId, List<int> otherChargeIds)
@@ -89,7 +104,8 @@ namespace TMCWD.Data.Services
             if (ids.Any(x => x <= 0))
                 throw new InvalidOperationException("The selected charges are invalid.");
 
-            await using var transaction = await _context.Database.BeginTransactionAsync();
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+            var billings = await LockBillingsForCharges(ids);
             var charges = new List<OtherCharge>();
             foreach (var id in ids)
             {
@@ -109,24 +125,44 @@ namespace TMCWD.Data.Services
                 .Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
             if (references.Count == 0 || charges.Any(x => string.IsNullOrWhiteSpace(x.BillingReferenceId)))
                 throw new InvalidOperationException("A selected charge is not attached to a billing record.");
-            var billings = await _context.Billings
-                .Where(x => references.Contains(x.BillingReferenceId)).ToListAsync();
             if (billings.Count != references.Count
-                || billings.Any(x => x.PaymentStatus == (int)PaymentStatus.Paid
-                                  || x.PaymentStatus == (int)PaymentStatus.Waived))
-                throw new InvalidOperationException("The billing record for a selected charge is already settled.");
+                || references.Any(r => !billings.Any(b => b.BillingReferenceId == r)))
+                throw new InvalidOperationException("The linked billing record for a selected charge was not found.");
 
+            await ValidatePostedPlans(references);
             var now = DateTime.Now;
             foreach (var charge in charges.Where(x => x.PaymentStatus == (int)PaymentStatus.Draft))
             {
+                var count = TMCWD.Model.Billing.OtherChargeInstallments.ParseCount(charge.PayableIn);
+                if (charge.InstallmentCount != count) throw new InvalidOperationException("The installment count is inconsistent. Reload the draft.");
+                var baseAmount = TMCWD.Model.Billing.OtherChargeInstallments.BaseAmount(charge.Amount, count);
+                var anchor = billings.Single(b => b.BillingReferenceId == charge.BillingReferenceId);
+                var authoritative = anchor.ReadingId > 0 && await _context.Readings.AnyAsync(r => r.Id == anchor.ReadingId
+                    && r.AccountId == anchor.AccountId && r.Status == ReadingStatus.Completed);
+                if (count > 1 && (!authoritative || anchor.BillingPeriod == default))
+                    throw new InvalidOperationException("An installment charge requires an existing billing period.");
+                if (anchor.BillingPeriod == default)
+                    throw new InvalidOperationException("The linked billing record has no billing period.");
+                var period = new DateTime(anchor.BillingPeriod.Year, anchor.BillingPeriod.Month, 1);
+                if (count > (9999 - period.Year) * 12 + 13 - period.Month)
+                    throw new InvalidOperationException("The installment schedule exceeds the supported billing periods.");
+                if (await _context.OtherChargeInstallments.AnyAsync(i => i.OtherChargeId == charge.Id))
+                    throw new TMCWD.Model.Billing.PaymentConflictException();
+                for (var sequence = 1; sequence <= count; sequence++)
+                    _context.OtherChargeInstallments.Add(new OtherChargeInstallment {
+                        OtherChargeId = charge.Id, InstallmentNumber = sequence,
+                        DueBillingPeriod = period.AddMonths(sequence - 1),
+                        Amount = sequence == count ? charge.Amount - baseAmount * (count - 1) : baseAmount,
+                        PaymentStatus = (int)(sequence == 1 ? PaymentStatus.Unpaid : PaymentStatus.Draft),
+                        ActivatedBillingReferenceId = sequence == 1 ? anchor.BillingReferenceId : null,
+                        ActivatedAt = sequence == 1 ? now : null,
+                        CreatedBy = userId, UpdatedBy = userId, DateCreated = now, DateUpdated = now
+                    });
                 charge.PaymentStatus = (int)PaymentStatus.Unpaid;
                 charge.UpdatedBy = userId;
                 charge.DateUpdated = now;
             }
             await _context.SaveChangesAsync();
-
-            foreach (var reference in references)
-                await UpdateBillingOtherCharges(reference, userId);
 
             // Posting the connection fee completes the Charging queue step.
             // Keep this in the same transaction as the ledger update so the
@@ -143,7 +179,7 @@ namespace TMCWD.Data.Services
                 application.ChargingData = JsonSerializer.Serialize(new
                 {
                     reference = billing.BillingReferenceId,
-                    amount = billing.OtherCharges
+                    amount = (await GetCollectibleByReference(billing.BillingReferenceId)).Sum(c => c.Amount)
                 });
                 application.Stage = "payment";
                 application.UpdatedAt = now;
@@ -156,8 +192,12 @@ namespace TMCWD.Data.Services
 
         public async Task<OtherCharge> Deactivate(int id, int userId)
         {
-            var otherCharge = await _context.OtherCharges.Where(x => x.Id == id).FirstOrDefaultAsync();
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+            var bills = await LockBillingsForCharges(new() { id });
+            var otherCharge = (await _context.OtherCharges.FromSqlInterpolated($"SELECT * FROM `other_charges` WHERE Id = {id} FOR UPDATE").ToListAsync()).SingleOrDefault();
             if (otherCharge == null) return null;
+            if (!string.IsNullOrWhiteSpace(otherCharge.BillingReferenceId) && !bills.Any(b => b.BillingReferenceId == otherCharge.BillingReferenceId))
+                throw new TMCWD.Model.Billing.PaymentConflictException();
             if (otherCharge.PaymentStatus != (int)PaymentStatus.Draft)
                 throw new InvalidOperationException("Posted charges cannot be removed from Collection.");
 
@@ -167,8 +207,7 @@ namespace TMCWD.Data.Services
 
             _context.OtherCharges.Update(otherCharge);
             await _context.SaveChangesAsync();
-            if (!string.IsNullOrWhiteSpace(otherCharge.BillingReferenceId))
-                await UpdateBillingOtherCharges(otherCharge.BillingReferenceId, userId);
+            await transaction.CommitAsync();
             return otherCharge;
         }
 
@@ -178,124 +217,64 @@ namespace TMCWD.Data.Services
         {
             if (userId <= 0)
                 throw new InvalidOperationException("A valid cashier is required.");
-            if (string.IsNullOrWhiteSpace(request.InvoiceNumber))
-                throw new InvalidOperationException("Invoice number is required.");
             if (!Enum.IsDefined(typeof(PaymentMethod), request.Method))
                 throw new InvalidOperationException("A valid payment method is required.");
-            if (request.OtherChargeIds == null || request.OtherChargeIds.Count == 0)
-                throw new InvalidOperationException("Select at least one charge to pay.");
+            if (request.InstallmentIds == null || request.InstallmentIds.Count == 0 || request.InstallmentIds.Count > 1000)
+                throw new InvalidOperationException("Select at least one installment to pay.");
+            var installmentIds = request.InstallmentIds.Distinct().OrderBy(x => x).ToList();
+            if (installmentIds.Any(id => id <= 0) || installmentIds.Count != request.InstallmentIds.Count)
+                throw new InvalidOperationException("The selected installments are invalid or duplicated.");
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+            var installmentParents = await _context.OtherChargeInstallments.AsNoTracking()
+                .Where(i => installmentIds.Contains(i.Id)).Select(i => i.OtherChargeId).ToListAsync();
+            var lockedBillings = await LockBillingsForCharges(installmentParents.Select(id => checked((int)id)).Distinct().ToList());
 
-            var invoiceNumber = request.InvoiceNumber.Trim().ToUpperInvariant();
-            await using var referenceLock = await PaymentReferenceLock.Acquire(_context, invoiceNumber);
-            if (await _context.Payments.AnyAsync(x => x.PaymentReference == invoiceNumber))
-                throw new InvalidOperationException("This invoice number has already been used.");
+            var installments = new List<OtherChargeInstallment>();
+            foreach (var id in installmentIds)
+                installments.AddRange(await _context.OtherChargeInstallments
+                    .FromSqlInterpolated($"SELECT * FROM `other_charge_installments` WHERE Id = {id} FOR UPDATE").ToListAsync());
+            var parents = await _context.OtherCharges.Where(c => installmentParents.Contains(c.Id)).ToListAsync();
+            if (installments.Count != installmentIds.Count || parents.Count != installmentParents.Distinct().Count() || parents.Any(c => !c.IsActive
+                    || (c.PaymentStatus != (int)PaymentStatus.Unpaid && c.PaymentStatus != (int)PaymentStatus.Overdue))
+                || installments.Any(i => i.PaymentStatus != (int)PaymentStatus.Unpaid && i.PaymentStatus != (int)PaymentStatus.Overdue)
+                || parents.Any(c => !lockedBillings.Any(b => b.BillingReferenceId == c.BillingReferenceId)))
+                throw new TMCWD.Model.Billing.PaymentConflictException();
 
-            // Lock and load the charge rows atomically.
-            var ids = request.OtherChargeIds.Distinct().OrderBy(x => x).ToList();
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
-            var charges = new List<OtherCharge>();
-            foreach (var id in ids)
-            {
-                var rows = await _context.OtherCharges
-                    .FromSqlInterpolated($"SELECT * FROM `other_charges` WHERE Id = {id} FOR UPDATE")
-                    .ToListAsync();
-                charges.AddRange(rows);
-            }
-
-            if (charges.Count != ids.Count)
-                throw new InvalidOperationException("One or more selected charges no longer exist.");
-
-            var inactive = charges.Where(c => !c.IsActive).ToList();
-            if (inactive.Count > 0)
-                throw new InvalidOperationException("One or more selected charges are no longer active.");
-
-            var notCollectible = charges.Where(c => c.PaymentStatus != (int)PaymentStatus.Unpaid
-                                                 && c.PaymentStatus != (int)PaymentStatus.Overdue).ToList();
-            if (notCollectible.Count > 0)
-                throw new InvalidOperationException("One or more selected charges have not been posted or were already paid.");
-
-            var totalDue = charges.Sum(c => c.Amount);
+            await ValidatePostedPlans(parents.Select(c => c.BillingReferenceId));
+            var totalDue = installments.Sum(i => i.Amount);
             if (request.AmountTendered < totalDue)
                 throw new InvalidOperationException("Amount tendered is less than the total due.");
 
             var now = DateTime.Now;
+            var invoiceNumber = await PaymentReferenceAllocator.Allocate(_context, userId, request.Method, now, request.ExternalReference);
             var payments = new List<Payment>();
 
-            var billingReferences = charges
-                .Select(x => x.BillingReferenceId)
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            var lockedBillings = new List<Billing>();
-            foreach (var reference in billingReferences)
+            foreach (var group in installments.GroupBy(i => parents.Single(c => c.Id == i.OtherChargeId).BillingReferenceId))
             {
-                lockedBillings.AddRange(await _context.Billings
-                    .FromSqlInterpolated($"SELECT * FROM `Billings` WHERE BillingReferenceId = {reference} FOR UPDATE")
-                    .ToListAsync());
-            }
-
-            foreach (var charge in charges)
-            {
-                charge.PaymentStatus = (int)PaymentStatus.Paid;
-                charge.UpdatedBy = userId;
-                charge.DateUpdated = now;
-
-                payments.Add(new Payment
-                {
-                    // Re-use BillingReference as the natural FK anchor;
-                    // for standalone other-charges (no billing ref) we write a synthetic key.
-                    BillingReference = string.IsNullOrWhiteSpace(charge.BillingReferenceId)
-                        ? $"OC-{charge.Id}"
-                        : charge.BillingReferenceId,
-                    PaymentReference = invoiceNumber,
-                    MacAddress = "WEB",
-                    PaidAmount = charge.Amount,
-                    Method = (int)request.Method,
-                    Success = true,
-                    CreatedBy = userId,
-                    DateCreated = now
+                payments.Add(new Payment {
+                    BillingReference = group.Key, PaymentReference = invoiceNumber, MacAddress = "WEB",
+                    PaidAmount = group.Sum(i => i.Amount), ChargesOnly = true,
+                    BalanceBefore = lockedBillings.Single(b => b.BillingReferenceId == group.Key).RemainingAmount,
+                    Method = (int)request.Method, Success = true, CreatedBy = userId, DateCreated = now
                 });
+                foreach (var installment in group)
+                {
+                    installment.PaymentStatus = (int)PaymentStatus.Paid;
+                    installment.UpdatedBy = userId;
+                    installment.DateUpdated = now;
+                }
             }
 
-            _context.OtherCharges.UpdateRange(charges);
             _context.Payments.AddRange(payments);
             await _context.SaveChangesAsync();
+            foreach (var installment in installments)
+                installment.SettledPaymentId = payments.Single(p => p.BillingReference == parents.Single(c => c.Id == installment.OtherChargeId).BillingReferenceId).Id;
+            await RefreshParents(installments.Select(i => i.OtherChargeId), userId);
+            await _context.SaveChangesAsync();
 
-            // Remove paid charges from their billing balance. When the charge was
-            // the billing's only collectible item (new-connection stubs), close
-            // that billing so it no longer appears as an empty unpaid row.
-            foreach (var reference in billingReferences)
-                await UpdateBillingOtherCharges(reference, userId);
-
-            // Re-fetch billings after the rollup so RemainingAmount/OtherCharges
-            // reflect the updates made by UpdateBillingOtherCharges (lockedBillings
-            // were loaded before that call and would still hold the stale values).
-            var refreshedBillings = await _context.Billings
-                .Where(x => billingReferences.Contains(x.BillingReferenceId))
-                .ToListAsync();
-
-            var referencesWithPenalty = await _context.Penalties
-                .Where(x => billingReferences.Contains(x.BillingReferenceId)
-                    && (x.PaymentStatus == (int)PaymentStatus.Unpaid
-                     || x.PaymentStatus == (int)PaymentStatus.Overdue))
-                .Select(x => x.BillingReferenceId)
-                .Distinct()
-                .ToListAsync();
-            var penaltySet = referencesWithPenalty.ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var settledBillings = refreshedBillings
-                .Where(x => x.RemainingAmount <= 0m && x.OtherCharges <= 0m
-                    && !penaltySet.Contains(x.BillingReferenceId))
-                .ToList();
-            foreach (var billing in settledBillings)
-            {
-                billing.PaymentStatus = (int)PaymentStatus.Paid;
-                billing.PaymentTransactionId = invoiceNumber;
-                billing.UpdatedBy = userId;
-                billing.DateUpdated = now;
-            }
-
-            var settledAccountIds = settledBillings.Select(x => x.AccountId).Distinct().ToList();
+            var oneTimeAccountIds = parents.Where(p => p.InstallmentCount == 1 && p.PaymentStatus == (int)PaymentStatus.Paid)
+                .Select(p => lockedBillings.Single(b => b.BillingReferenceId == p.BillingReferenceId).AccountId);
+            var settledAccountIds = oneTimeAccountIds.Distinct().ToList();
             if (settledAccountIds.Count > 0)
             {
                 var applications = await _context.WaterConnectionApplications
@@ -321,6 +300,105 @@ namespace TMCWD.Data.Services
             await transaction.CommitAsync();
 
             return invoiceNumber;
+        }
+
+        private async Task<List<Billing>> LockBillingsForCharges(List<int> ids)
+        {
+            var references = await _context.OtherCharges.AsNoTracking().Where(c => ids.Contains((int)c.Id))
+                .Select(c => c.BillingReferenceId).Distinct().ToListAsync();
+            return await LockBillings(references);
+        }
+
+        public async Task<List<TMCWD.Model.Billing.CollectibleOtherCharge>> GetCollectibleByReference(string referenceId)
+        {
+            await ValidatePostedPlans(new[] { referenceId });
+            var installments = await (from i in _context.OtherChargeInstallments.AsNoTracking()
+                join c in _context.OtherCharges.AsNoTracking() on i.OtherChargeId equals c.Id
+                where c.BillingReferenceId == referenceId && c.IsActive
+                    && (c.PaymentStatus == (int)PaymentStatus.Unpaid || c.PaymentStatus == (int)PaymentStatus.Overdue)
+                    && (i.PaymentStatus == (int)PaymentStatus.Unpaid || i.PaymentStatus == (int)PaymentStatus.Overdue)
+                select new TMCWD.Model.Billing.CollectibleOtherCharge {
+                    Id = (int)c.Id, InstallmentId = i.Id, InstallmentNumber = i.InstallmentNumber,
+                    DueBillingPeriod = i.DueBillingPeriod, Type = c.Type, BillingReferenceId = c.BillingReferenceId,
+                    PayableIn = c.PayableIn, Particulars = c.Particulars, Amount = i.Amount
+                }).ToListAsync();
+            return installments;
+        }
+
+        internal async Task RefreshParents(IEnumerable<long> parentIds, int userId)
+        {
+            foreach (var id in parentIds.Distinct())
+            {
+                var parent = await _context.OtherCharges.SingleAsync(c => c.Id == id);
+                await ValidatePostedPlans(new[] { parent.BillingReferenceId });
+                parent.PaymentStatus = await _context.OtherChargeInstallments.AnyAsync(i => i.OtherChargeId == id && i.PaymentStatus != (int)PaymentStatus.Paid)
+                    ? (int)PaymentStatus.Unpaid : (int)PaymentStatus.Paid;
+                parent.SettledPaymentId = null;
+                parent.UpdatedBy = userId;
+                parent.DateUpdated = DateTime.Now;
+            }
+        }
+
+        internal async Task ActivateForBillings(List<Billing> billings, int userId)
+        {
+            var accountIds = billings.Select(b => b.AccountId).Distinct().ToList();
+            var references = await (from c in _context.OtherCharges.AsNoTracking()
+                join b in _context.Billings.AsNoTracking() on c.BillingReferenceId equals b.BillingReferenceId
+                where accountIds.Contains(b.AccountId) && c.IsActive
+                    && (c.PaymentStatus == (int)PaymentStatus.Unpaid || c.PaymentStatus == (int)PaymentStatus.Overdue)
+                select c.BillingReferenceId).Distinct().ToListAsync();
+            await LockBillings(references);
+            await ValidatePostedPlans(references);
+            foreach (var billing in billings.OrderBy(b => b.BillingPeriod))
+            {
+                var period = new DateTime(billing.BillingPeriod.Year, billing.BillingPeriod.Month, 1);
+                var accountReferences = await _context.Billings.AsNoTracking().Where(b => b.AccountId == billing.AccountId
+                    && references.Contains(b.BillingReferenceId)).Select(b => b.BillingReferenceId).ToListAsync();
+                foreach (var reference in accountReferences.OrderBy(r => r, StringComparer.OrdinalIgnoreCase))
+                {
+                    var parents = await _context.OtherCharges.Where(c => c.BillingReferenceId == reference && c.IsActive
+                        && (c.PaymentStatus == (int)PaymentStatus.Unpaid || c.PaymentStatus == (int)PaymentStatus.Overdue))
+                        .Select(c => c.Id).ToListAsync();
+                    var ids = await _context.OtherChargeInstallments.AsNoTracking().Where(i => parents.Contains(i.OtherChargeId)
+                        && i.PaymentStatus == (int)PaymentStatus.Draft && i.DueBillingPeriod <= period)
+                        .Select(i => i.Id).OrderBy(i => i).ToListAsync();
+                    foreach (var id in ids)
+                    {
+                        var installment = (await _context.OtherChargeInstallments
+                            .FromSqlInterpolated($"SELECT * FROM `other_charge_installments` WHERE Id = {id} FOR UPDATE").ToListAsync()).Single();
+                        if (installment.PaymentStatus != (int)PaymentStatus.Draft) continue;
+                        installment.PaymentStatus = (int)PaymentStatus.Unpaid;
+                        installment.ActivatedBillingReferenceId = billing.BillingReferenceId;
+                        installment.ActivatedAt = DateTime.Now;
+                        installment.UpdatedBy = userId;
+                        installment.DateUpdated = DateTime.Now;
+                    }
+                }
+            }
+        }
+
+        internal async Task ValidatePostedPlans(IEnumerable<string> references)
+        {
+            var refs = references.Distinct().ToList();
+            var ledgerTotals = _context.OtherChargeInstallments.AsNoTracking().GroupBy(i => i.OtherChargeId)
+                .Select(g => new { ParentId = g.Key, Count = (int?)g.Count(), Amount = (decimal?)g.Sum(i => i.Amount) });
+            var invalidId = await (from c in _context.OtherCharges.AsNoTracking()
+                join totals in ledgerTotals on c.Id equals totals.ParentId into ledger
+                from totals in ledger.DefaultIfEmpty()
+                where refs.Contains(c.BillingReferenceId) && c.IsActive && c.PaymentStatus != (int)PaymentStatus.Draft
+                    && (c.InstallmentCount == null || c.InstallmentCount < 1
+                        || totals.Count == null || totals.Count != c.InstallmentCount || totals.Amount != c.Amount)
+                select (long?)c.Id).FirstOrDefaultAsync();
+            if (invalidId.HasValue)
+                throw new InvalidOperationException($"Other Charge {invalidId.Value} has an invalid installment ledger. Contact the billing administrator.");
+        }
+
+        private async Task<List<Billing>> LockBillings(IEnumerable<string?> references)
+        {
+            var result = new List<Billing>();
+            foreach (var reference in references.Where(r => !string.IsNullOrWhiteSpace(r)).Distinct().OrderBy(r => r, StringComparer.OrdinalIgnoreCase))
+                result.AddRange(await _context.Billings.FromSqlInterpolated($"SELECT * FROM `Billings` WHERE BillingReferenceId = {reference} FOR UPDATE").ToListAsync());
+            return result;
         }
     }
 }

@@ -1,10 +1,31 @@
+# =====================================================
+# TMCWD - Development and Build Exclusions
+# =====================================================
 
-TMCWD/TMCWD.Application/Controllers/BillingController.cs
-
-TMCWD/TMCWD.Application/Views/Billing/BillAdjustment.cshtml
-
-TMCWD/TMCWD.Application/Models/BillAdjustmentViewModel.cs
-
+# Database recovery files (stored separately)
 /recovery/
 
+# Temporary folders
+/.tmp/
 /tmp/
+
+# Visual Studio
+.vs/
+**/.vs/
+*.user
+*.suo
+
+# .NET generated build artifacts
+**/bin/
+**/obj/
+**/TestResults/
+
+# Flutter generated files
+**/.dart_tool/
+TMCWD.MeterReader.Mobile/build/
+TMCWD.MeterReader.Mobile/.gradle/
+
+# Diagnostic logs
+*.log
+
+/.codex-temp/

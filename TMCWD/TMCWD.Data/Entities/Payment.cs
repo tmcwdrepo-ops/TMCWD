@@ -23,6 +23,8 @@ namespace TMCWD.Data.Entities
 
         [Column("PaidAmount")]
         public decimal PaidAmount { get; set; }
+        public decimal? BalanceBefore { get; set; }
+        public bool ChargesOnly { get; set; }
 
         [Required, Column("Method")]
         public int Method { get; set; }

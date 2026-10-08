@@ -51,6 +51,7 @@ namespace TMCWD.Data.Context
         public DbSet<ChargeType> ChargeTypes { get; set; }
 
         public DbSet<OtherCharge> OtherCharges { get; set; }
+        public DbSet<OtherChargeInstallment> OtherChargeInstallments { get; set; }
 
         public DbSet<BillingAdjustment> BillingAdjustments { get; set; }
 
@@ -63,6 +64,7 @@ namespace TMCWD.Data.Context
         public DbSet<WebHook> WebHooks { get; set; }
 
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<PaymentReceipt> PaymentReceipts { get; set; }
 
         public DbSet<CollectionRemittance> CollectionRemittances { get; set; }
 
@@ -114,6 +116,14 @@ namespace TMCWD.Data.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<OtherChargeInstallment>(entity =>
+            {
+                entity.HasIndex(x => new { x.OtherChargeId, x.InstallmentNumber }).IsUnique();
+                entity.HasIndex(x => new { x.PaymentStatus, x.DueBillingPeriod });
+                entity.HasIndex(x => x.SettledPaymentId);
+                entity.Property(x => x.ActivatedBillingReferenceId).HasMaxLength(50);
+            });
+            modelBuilder.Entity<PaymentReceipt>().HasIndex(x => x.PaymentReference).IsUnique().HasDatabaseName("UQ_payment_receipts_reference");
 
             modelBuilder.Entity<Request>().HasIndex(x => x.LegacyServiceRequestId).IsUnique();
 

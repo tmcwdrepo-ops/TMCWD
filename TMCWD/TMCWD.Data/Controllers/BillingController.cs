@@ -39,8 +39,26 @@ namespace TMCWD.Data.Controllers
         [HttpGet("Collection/{billingReferenceId}")]
         public async Task<IActionResult> Collection(string billingReferenceId)
         {
-            var bill = await _billingService.GetCollectionBill(billingReferenceId);
-            return bill == null ? NotFound() : Ok(bill);
+            try
+            {
+                var bill = await _billingService.GetCollectionBill(billingReferenceId);
+                return bill == null ? NotFound() : Ok(bill);
+            }
+            catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
+        [HttpGet("AccountLedger/{accountNumber}")]
+        public async Task<IActionResult> AccountLedger(string accountNumber, [FromServices] AccountLedgerService ledger)
+        {
+            try
+            {
+                var data = await ledger.Get(accountNumber);
+                return data == null ? NotFound(new { message = "Account not found." }) : Ok(data);
+            }
+            catch (ArgumentException) { return BadRequest(new { message = "A valid account number is required." }); }
+            catch (InvalidOperationException) { return Conflict(new { message = "The account ledger could not be reconciled. Please contact billing support." }); }
+            catch (System.Text.Json.JsonException) { return Conflict(new { message = "An authoritative invoice is unavailable. Please contact billing support." }); }
         }
 
         [HttpGet("GetAll")]

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
@@ -36,6 +37,48 @@ namespace TMCWD.Data.Services
         #endregion
 
         #region methods
+
+        private static decimal? ComputeBillArrearsAmount(
+            long accountId,
+            DateTime currentBillingDate,
+            IEnumerable<Billing> priorBills,
+            IReadOnlyDictionary<string, decimal> activePriorPenaltyAmounts)
+        {
+            var eligible = priorBills
+                .Where(b => b.AccountId == accountId
+                    && b.BillingPeriod.Date < currentBillingDate.Date
+                    && (b.PaymentStatus == (int)PaymentStatus.Unpaid || b.PaymentStatus == (int)PaymentStatus.Overdue))
+                .ToList();
+
+            if (!eligible.Any())
+                return 0m;
+
+            decimal total = 0m;
+            foreach (var priorBill in eligible)
+            {
+                if (string.IsNullOrWhiteSpace(priorBill.InvoiceSnapshotJson))
+                    return null;
+
+                try
+                {
+                    var snapshot = JsonSerializer.Deserialize<TMCWD.Model.Billing.OfficialInvoiceSnapshot>(priorBill.InvoiceSnapshotJson);
+                    if (snapshot == null || snapshot.BillAmount < 0m || snapshot.MeterMaintenance < 0m)
+                        return null;
+
+                    var activePenalty = activePriorPenaltyAmounts.TryGetValue(priorBill.BillingReferenceId, out var priorPenaltyAmount)
+                        ? priorPenaltyAmount
+                        : 0m;
+
+                    total += snapshot.BillAmount + snapshot.MeterMaintenance + activePenalty;
+                }
+                catch (Exception ex) when (ex is JsonException or NotSupportedException)
+                {
+                    return null;
+                }
+            }
+
+            return total;
+        }
 
         public async Task<ReadingSheet> Get(int id)
         {
@@ -369,6 +412,22 @@ namespace TMCWD.Data.Services
             var accounts = await _context.Accounts
                 .Where(a => accountIds.Contains(a.Id))
                 .ToListAsync();
+            var priorBills = await _context.Billings
+                .Where(b => accountIds.Contains(b.AccountId)
+                    && b.BillingPeriod.Date < readingSheet.BillingDate.Value.Date
+                    && (b.PaymentStatus == (int)PaymentStatus.Unpaid || b.PaymentStatus == (int)PaymentStatus.Overdue))
+                .ToListAsync();
+            var priorBillingReferenceIds = priorBills
+                .Select(b => b.BillingReferenceId)
+                .Distinct()
+                .ToList();
+            var activePriorPenaltyAmounts = await _context.Penalties
+                .AsNoTracking()
+                .Where(p => priorBillingReferenceIds.Contains(p.BillingReferenceId)
+                    && (p.PaymentStatus == (int)PaymentStatus.Unpaid || p.PaymentStatus == (int)PaymentStatus.Overdue))
+                .GroupBy(p => p.BillingReferenceId)
+                .Select(g => new { BillingReferenceId = g.Key, Amount = g.Sum(p => p.Amount) })
+                .ToDictionaryAsync(x => x.BillingReferenceId, x => x.Amount);
 
             int postedCount = 0;
 
@@ -417,11 +476,15 @@ namespace TMCWD.Data.Services
                 // post time so they are immune to future rate changes.
                 // OtherCharges and BillingAdjustment start at zero — those are
                 // posted after billing and are not part of the water invoice.
-                // TotalDue = waterAmount + maintenance (the authoritative posted amount).
-                // Freeze the consumption period from authoritative reading dates, not sheet scheduling dates.
-                // PowerCostAdjustment and ArrearsAmount are not yet authoritative.
+                // Snapshot TotalDue = current posted amount + known prior water-bill arrears.
+                // Live Billing RemainingAmount remains current-bill-only to avoid double collection.                // Freeze the consumption period from authoritative reading dates, not sheet scheduling dates.
+                // Arrears are authoritative only when every eligible prior bill has a valid prior snapshot.
                 // Penalty must NOT be stored in the snapshot.
                 var previousReading = await _readingService.GetPreviousBeforeReading(reading.AccountId, reading.DateCreated);
+                var arrearsAmount = ComputeBillArrearsAmount(account.Id, readingSheet.BillingDate.Value.Date, priorBills, activePriorPenaltyAmounts);
+                var invoiceTotalDue = arrearsAmount.HasValue
+                    ? amount + arrearsAmount.Value
+                    : amount;
                 var snapshot = new TMCWD.Model.Billing.OfficialInvoiceSnapshot(
                     SchemaVersion: 1,
                     PeriodFrom: previousReading?.DateCreated,
@@ -429,10 +492,10 @@ namespace TMCWD.Data.Services
                     BillAmount: waterAmount,
                     MeterMaintenance: maintenance,
                     PowerCostAdjustment: null,
-                    ArrearsAmount: null,
+                    ArrearsAmount: arrearsAmount,
                     OtherCharges: 0m,
                     BillingAdjustment: 0m,
-                    TotalDue: amount,       // waterAmount + maintenance = TotalBillAmount at post time
+                    TotalDue: invoiceTotalDue,       // waterAmount + maintenance = TotalBillAmount at post time
                     ChargeLines: lines);
                 var billing = new Billing
                 {
@@ -442,6 +505,7 @@ namespace TMCWD.Data.Services
                     BillingPeriod = readingSheet.BillingDate.Value.Date,
                     TotalBillAmount = amount,
                     RemainingAmount = amount,
+                    BillArrearsAmount = arrearsAmount,
                     InvoiceSnapshotJson = System.Text.Json.JsonSerializer.Serialize(snapshot),
                     PaymentStatus = (int)PaymentStatus.Unpaid,
                     CreatedBy = userId,
@@ -466,6 +530,12 @@ namespace TMCWD.Data.Services
                 postedCount++;
             }
 
+            await _context.SaveChangesAsync();
+
+            var postedReadingIds = pendingReadings.Where(r => r.Status == ReadingStatus.Completed).Select(r => r.Id).ToList();
+            var postedBillings = await _context.Billings.Where(b => postedReadingIds.Contains(b.ReadingId)).ToListAsync();
+            var chargeService = new OtherChargeService(_context);
+            await chargeService.ActivateForBillings(postedBillings, userId);
             await _context.SaveChangesAsync();
 
             await transaction.CommitAsync();

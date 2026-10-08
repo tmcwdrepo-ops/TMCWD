@@ -62,9 +62,17 @@ namespace TMCWD.Data.Controllers
             => Ok(await _service.GetActiveEntries(dueDate));
 
         [HttpGet("ChargeEntries")]
-        public async Task<IActionResult> ChargeEntries(DateTime? billingPeriod, DateTime? dueDate)
-            => Ok(await _service.GetChargeEntries(billingPeriod, dueDate));
-
+        public async Task<IActionResult> ChargeEntries(
+            DateTime? billingPeriod,
+            DateTime? dueDate,
+            DateTime? postingDate)
+        {
+            return Ok(await _service.GetChargeEntries(
+                billingPeriod,
+                dueDate,
+                postingDate));
+        }
+        
         [HttpPost("PostCharges/{userId}")]
         [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         public async Task<IActionResult> PostCharges(int userId, [FromBody] TMCWD.Model.Billing.PostPenaltyChargesRequest request)

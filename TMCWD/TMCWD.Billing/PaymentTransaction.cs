@@ -79,7 +79,8 @@ namespace TMCWD.Billing
         public async Task<List<PaymentHistoryRecord>> GetPaymentHistoryByCashier(int userId)
         {
             var response = await _service.Client.GetAsync($"api/Payment/GetByCashier/{userId}");
-            if (!response.IsSuccessStatusCode) return new List<PaymentHistoryRecord>();
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return new();
+            response.EnsureSuccessStatusCode();
 
             var data = await response.Content.ReadAsStringAsync();
             var serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
@@ -120,28 +121,30 @@ namespace TMCWD.Billing
             return ConvertJsonToPaymentBase(data);
         }
 
-        public async Task<(bool Success, string Message)> ProcessCollectionPayment(
+        public async Task<(bool Success, string Message, string? PaymentReference, int StatusCode)> ProcessCollectionPayment(
             int userId,
             TMCWD.Model.Billing.Requests.CollectionPaymentRequest request)
         {
             var response = await _service.Client.PostAsJsonAsync(
                 $"api/Payment/ProcessCollection/{userId}", request);
 
-            if (response.IsSuccessStatusCode)
-                return (true, string.Empty);
+            if (response.IsSuccessStatusCode) {
+                using var receipt = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                return (true, string.Empty, receipt.RootElement.GetProperty("paymentReference").GetString(), (int)response.StatusCode);
+            }
 
             var data = await response.Content.ReadAsStringAsync();
             try
             {
                 using var json = JsonDocument.Parse(data);
                 if (json.RootElement.TryGetProperty("message", out var message))
-                    return (false, message.GetString() ?? "Payment could not be completed.");
+                    return (false, message.GetString() ?? "Payment could not be completed.", null, (int)response.StatusCode);
                 if (json.RootElement.TryGetProperty("detail", out var detail) &&
                     !string.IsNullOrWhiteSpace(detail.GetString()))
-                    return (false, detail.GetString()!);
+                    return (false, detail.GetString()!, null, (int)response.StatusCode);
                 if (json.RootElement.TryGetProperty("title", out var title) &&
                     !string.IsNullOrWhiteSpace(title.GetString()))
-                    return (false, title.GetString()!);
+                    return (false, title.GetString()!, null, (int)response.StatusCode);
             }
             catch (JsonException)
             {
@@ -149,7 +152,7 @@ namespace TMCWD.Billing
             }
 
             return (false,
-                $"Payment service returned {(int)response.StatusCode} ({response.ReasonPhrase}).");
+                $"Payment service returned {(int)response.StatusCode} ({response.ReasonPhrase}).", null, (int)response.StatusCode);
         }
 
         public async Task<List<InvoiceRecord>> SearchInvoices(string query)
@@ -183,22 +186,22 @@ namespace TMCWD.Billing
             return await response.Content.ReadFromJsonAsync<InvoiceRecord>();
         }
 
-        public async Task<(bool Success, string Message)> CancelInvoice(
+        public async Task<(bool Success, string Message, int StatusCode)> CancelInvoice(
             int userId,
             CancelInvoiceRequest request)
         {
             var response = await _service.Client.PostAsJsonAsync(
                 $"api/Payment/CancelInvoice/{userId}", request);
-            if (response.IsSuccessStatusCode) return (true, string.Empty);
+            if (response.IsSuccessStatusCode) return (true, string.Empty, (int)response.StatusCode);
             var data = await response.Content.ReadAsStringAsync();
             try
             {
                 using var json = JsonDocument.Parse(data);
                 if (json.RootElement.TryGetProperty("message", out var message))
-                    return (false, message.GetString() ?? "Invoice could not be cancelled.");
+                    return (false, message.GetString() ?? "Invoice could not be cancelled.", (int)response.StatusCode);
             }
             catch (JsonException) { }
-            return (false, "Invoice could not be cancelled.");
+            return (false, response.StatusCode == System.Net.HttpStatusCode.Forbidden ? "Only the collecting cashier or SuperAdmin can cancel this payment." : "Invoice could not be cancelled.", (int)response.StatusCode);
         }
 
         #endregion

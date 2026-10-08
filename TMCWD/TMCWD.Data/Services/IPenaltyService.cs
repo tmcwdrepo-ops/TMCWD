@@ -19,7 +19,7 @@ namespace TMCWD.Data.Services
         Task<int> ReviewWaiverRequest(int userId, TMCWD.Model.Billing.ReviewPenaltyWaiverRequest request);
 
         Task<List<TMCWD.Model.Billing.ActivePenaltyEntry>> GetActiveEntries(DateTime dueDate);
-        Task<List<TMCWD.Model.Billing.PenaltyChargeEntry>> GetChargeEntries(DateTime? billingPeriod, DateTime? dueDate = null);
+        Task<List<TMCWD.Model.Billing.PenaltyChargeEntry>> GetChargeEntries(DateTime? billingPeriod, DateTime? dueDate = null, DateTime? postingDate = null);
         Task<TMCWD.Model.Billing.PostPenaltyChargesResult> PostCharges(int userId, TMCWD.Model.Billing.PostPenaltyChargesRequest request);
 
     }

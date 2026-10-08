@@ -8,6 +8,7 @@ public sealed class CollectionBill
     public decimal? BillAmount { get; init; }
     public decimal? MeterMaintenanceFee { get; init; }
     public decimal OtherCharges { get; init; }
+    public List<CollectibleOtherCharge> CollectibleOtherCharges { get; init; } = new();
     public decimal BillingAdjustment { get; init; }
     public decimal RemainingAmount { get; init; }
     public decimal Penalty { get; init; }

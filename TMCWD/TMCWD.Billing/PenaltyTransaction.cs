@@ -106,16 +106,50 @@ namespace TMCWD.Billing
             return await response.Content.ReadFromJsonAsync<int>();
         }
 
-        public async Task<List<PenaltyChargeEntry>> GetChargeEntries(DateTime? billingPeriod, DateTime? dueDate = null)
+public async Task<List<PenaltyChargeEntry>> GetChargeEntries(
+    DateTime? billingPeriod,
+    DateTime? dueDate = null,
+    DateTime? postingDate = null)
+{
+    var parts = new List<string>();
+
+    if (billingPeriod.HasValue)
+        parts.Add($"billingPeriod={billingPeriod.Value:yyyy-MM-dd}");
+
+    if (dueDate.HasValue)
+        parts.Add($"dueDate={dueDate.Value:yyyy-MM-dd}");
+
+    if (postingDate.HasValue)
+        parts.Add($"postingDate={postingDate.Value:yyyy-MM-dd}");
+
+    var query = parts.Count > 0
+        ? "?" + string.Join("&", parts)
+        : "";
+
+    var url = "api/Penalty/ChargeEntries" + query;
+
+    Console.WriteLine($"Penalty API request: {url}");
+
+    using var response = await _service.Client.GetAsync(url);
+
+    var responseBody =
+        await response.Content.ReadAsStringAsync();
+
+    if (!response.IsSuccessStatusCode)
+    {
+        throw new HttpRequestException(
+            $"Penalty API returned {(int)response.StatusCode} " +
+            $"{response.StatusCode}: {responseBody}");
+    }
+
+    return JsonSerializer.Deserialize<List<PenaltyChargeEntry>>(
+        responseBody,
+        new JsonSerializerOptions
         {
-            var parts = new List<string>();
-            if (billingPeriod.HasValue) parts.Add($"billingPeriod={billingPeriod:yyyy-MM-dd}");
-            if (dueDate.HasValue)       parts.Add($"dueDate={dueDate:yyyy-MM-dd}");
-            var query = parts.Count > 0 ? "?" + string.Join("&", parts) : "";
-            using var response = await _service.Client.GetAsync("api/Penalty/ChargeEntries" + query);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<List<PenaltyChargeEntry>>() ?? new();
-        }
+            PropertyNameCaseInsensitive = true
+        })
+        ?? new List<PenaltyChargeEntry>();
+}
 
         public async Task<List<ActivePenaltyEntry>> GetActiveEntries(DateTime dueDate)
         {

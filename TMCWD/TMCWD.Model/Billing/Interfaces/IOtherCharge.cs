@@ -10,7 +10,7 @@ namespace TMCWD.Model.Billing.Interfaces
         public string BillingReferenceId { get; set; }
         public decimal Amount { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
-        public string PayableIn { get; set; }
+        public string? PayableIn { get; set; }
         public string Particulars { get; set; }
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }

@@ -1430,17 +1430,6 @@ body:has(.dashboard-modal.is-open) { overflow: hidden; }
 .sr-document-links a:focus-visible { outline: 2px solid var(--db-row-control); outline-offset: 2px; }
 .sr-document-links svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .sr-document-links a[hidden] { display: none; }
-#srAccountLedgerModal { z-index: 1202; }
-.service-dashboard .sr-account-ledger-panel { width: min(1180px, 100%); }
-.sr-account-ledger-content { padding: 10px 16px 16px; }
-.sr-account-ledger-content p { margin: 0 0 10px; font-size: 13px; overflow-wrap: anywhere; }
-.sr-account-ledger-table { width: 100%; border-collapse: collapse; font-size: 12px; color: #102449; background: #fff; }
-.sr-account-ledger-table th, .sr-account-ledger-table td { padding: 8px; text-align: right; overflow-wrap: anywhere; }
-.sr-account-ledger-table th:first-child, .sr-account-ledger-table td:first-child { text-align: left; }
-.sr-account-ledger-table thead, .sr-account-ledger-table tfoot { background: #eaf3ff; }
-.sr-account-ledger-table tbody tr:nth-child(even) { background: #eaf3ff; }
-.sr-account-ledger-table small { display: block; margin-top: 3px; }
-
 /* Completed requests retain readable text and scroll within the viewport. */
 .sr-list-toolbar { display: flex; gap: 16px; align-items: end; }
 .sr-list-search { flex: 1; min-width: 0; }

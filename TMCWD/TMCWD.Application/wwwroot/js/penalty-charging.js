@@ -5,6 +5,7 @@
     const els = {
         billingPeriod: document.getElementById("pcBillingPeriod"),
         dueDate: document.getElementById("pcDueDate"),
+        postingDate: document.getElementById("pcPostingDate"),
         loadBtn: document.getElementById("pcLoadBtn"),
         resetBtn: document.getElementById("pcResetBtn"),
         postBtn: document.getElementById("pcPostBtn"),
@@ -55,9 +56,12 @@
     }
 
     function setDefaultBillingPeriod() {
-        els.billingPeriod.value = ""; // All overdue billing dates by default.
-        document.getElementById("pcPostingDate").value =
-            new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        els.billingPeriod.value = "";
+
+        els.postingDate.value =
+            new Date(Date.now() + 8 * 60 * 60 * 1000)
+                .toISOString()
+                .slice(0, 10);
     }
 
     function setBusy(value) {
@@ -128,8 +132,15 @@
         setLoadingState();
         try {
             const params = new URLSearchParams();
-            if (els.billingPeriod.value) params.set("billingPeriod", els.billingPeriod.value);
-            if (els.dueDate?.value)      params.set("dueDate", els.dueDate.value);
+
+            if (els.billingPeriod.value)
+                params.set("billingPeriod", els.billingPeriod.value);
+
+            if (els.dueDate?.value)
+                params.set("dueDate", els.dueDate.value);
+
+            if (els.postingDate?.value)
+                params.set("postingDate", els.postingDate.value);
             const query = params.toString() ? "?" + params.toString() : "";
             const res = await fetch("/Billing/GetPenaltyChargeEntries" + query);
             if (!res.ok) throw new Error("Could not load overdue bills. Please try again.");
@@ -393,6 +404,7 @@
                 body: JSON.stringify({
                     billingPeriod: period || null,
                     dueDate: els.dueDate?.value || null,
+                    postingDate: els.postingDate?.value || null,
                     billingReferenceIds: references
                 })
             });
@@ -405,8 +417,8 @@
             currentPage = 1;
             closeConfirmModal();
             openSuccessModal(result.postedCount, result.totalPenalty, period);
-            document.getElementById("pcPostingDate").value = result.postingDate.slice(0, 10);
-        } catch (error) {
+            els.postingDate.value =
+                result.postingDate.slice(0, 10);        } catch (error) {
             closeConfirmModal();
             showToast(error.message, true);
         } finally {

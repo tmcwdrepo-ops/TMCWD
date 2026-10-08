@@ -32,7 +32,6 @@
     const paymentDetailModal = document.getElementById('paymentDetailModal');
     const serviceRequestModal = document.getElementById('serviceRequestModal');
     const srDetailModal       = document.getElementById('srDetailModal');
-    const srAccountLedgerModal = document.getElementById('srAccountLedgerModal');
     const applicationList    = document.getElementById('applicationList');
     const search             = document.getElementById('applicationSearch');
     const token              = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
@@ -85,11 +84,10 @@
     });
 
     document.addEventListener('keydown', event => {
-        if (event.key !== 'Escape') return;
+        if (event.key !== 'Escape' || document.getElementById('accountLedger')?.open) return;
         if (installationRequestModal.classList.contains('is-open')) closeModal(installationRequestModal);
         else if (houseTappingModal.classList.contains('is-open'))    closeModal(houseTappingModal);
         else if (workOrderModal.classList.contains('is-open'))       closeModal(workOrderModal);
-        else if (srAccountLedgerModal?.classList.contains('is-open')) closeModal(srAccountLedgerModal);
         else if (srDetailModal?.classList.contains('is-open'))       closeModal(srDetailModal);
         else if (serviceRequestModal?.classList.contains('is-open')) closeModal(serviceRequestModal);
         else if (paymentDetailModal.classList.contains('is-open')) closeModal(paymentDetailModal);
@@ -518,43 +516,8 @@
         if (serviceRequestPdfUrl) URL.revokeObjectURL(serviceRequestPdfUrl);
     });
 
-    let ledgerLoad = 0;
-    async function openServiceRequestLedger() {
-        const request = selectedServiceRequest;
-        if (!request || !request.accountNumber) return;
-        const load = ++ledgerLoad;
-        const rows = document.getElementById('srAccountLedgerRows');
-        rows.innerHTML = '';
-        textValue('srAccountLedgerIdentity', request.accountNumber + ' · ' + (request.accountName || request.reportedBy || ''));
-        textValue('srAccountLedgerMessage', 'Loading billing history...');
-        textValue('srAccountLedgerBalance', '—');
-        openModal(srAccountLedgerModal);
-        try {
-            const response = await fetch('/Billing/History?accountNumber=' + encodeURIComponent(request.accountNumber), {
-                headers: { Accept: 'application/json' }
-            });
-            if (!response.ok) throw new Error('Unable to load billing history.');
-            const history = await response.json();
-            if (!Array.isArray(history)) throw new Error('Invalid billing history.');
-            if (load !== ledgerLoad || request !== selectedServiceRequest) return;
-            let balance = 0;
-            rows.innerHTML = history.map(entry => {
-                const debit = Number(entry.debit ?? entry.amount) || 0;
-                const credit = Number(entry.credit) || 0;
-                const outstanding = Math.max(0, debit - credit);
-                balance += outstanding;
-                return `<tr><td>${html(entry.referenceNo || '—')}<small>${html(dateText(entry.billingDate))}</small></td>` +
-                    `<td>${html(entry.previous ?? '—')}</td><td>${html(entry.present ?? '—')}</td><td>${html(entry.usage ?? '—')}</td>` +
-                    `<td>₱${money(debit)}</td><td>₱${money(credit)}</td><td>₱${money(outstanding)}</td><td>${html(entry.processedBy || '—')}</td></tr>`;
-            }).join('');
-            textValue('srAccountLedgerBalance', '₱' + money(balance));
-            textValue('srAccountLedgerMessage', history.length ? 'Water billing and payments for this account.' : 'No billing entries found for this account.');
-        } catch {
-            if (load === ledgerLoad && request === selectedServiceRequest) {
-                textValue('srAccountLedgerMessage', 'Unable to load this account’s billing ledger. Close and reopen it to try again.');
-            }
-        }
-        scheduleModalFit();
+    function openServiceRequestLedger() {
+        if (selectedServiceRequest?.accountNumber) window.openAccountLedger(selectedServiceRequest.accountNumber);
     }
 
     async function saveServiceRequestDetail(accomplish) {
@@ -1405,13 +1368,18 @@
     /* ============================================================
        CHARGE MODAL  (Charging, Payment, New, Online Applications, Tickets)
        ============================================================ */
+    document.getElementById('chargeAccountLedger')?.addEventListener('click', () => {
+        if (state.selected?.accountNumber) window.openAccountLedger(state.selected.accountNumber, { initialTab: 'otherCharges' });
+    });
     async function openChargeWorkspace(application) {
+        const ledgerButton = document.getElementById('chargeAccountLedger');
+        if (ledgerButton) ledgerButton.disabled = !application.accountNumber;
         state.selected = application;
         document.getElementById('dashboardAccountNumber').textContent = application.accountNumber || '—';
         document.getElementById('dashboardAccountName').textContent   = application.accountName   || '—';
         document.getElementById('dashboardServiceName').textContent   = application.serviceName   || '—';
         document.getElementById('dashboardParticulars').value = '';   // blank — user fills in
-        document.getElementById('dashboardPayableIn').value  = '';   // blank — optional
+        document.getElementById('dashboardPayableIn').value  = '';   // blank — required before saving
 
         // Update the "Full page" link to pre-load this account
         const fullPageLink = document.getElementById('chargeModalFullPageLink');
@@ -1456,6 +1424,9 @@
         if (!state.selected) return;
         const type       = Number(document.getElementById('dashboardChargeType').value);
         const payableIn  = document.getElementById('dashboardPayableIn').value;
+        if (!/^[0-9]+$/.test(payableIn) || Number(payableIn) < 1 || !Number.isSafeInteger(Number(payableIn))) {
+            alert('Number of Installments must be a positive whole number.'); return;
+        }
         const particulars = document.getElementById('dashboardParticulars').value.trim();
         const amount     = Number(document.getElementById('dashboardAmount').value);
         if (!type || !Number.isFinite(amount) || amount <= 0)
@@ -1516,7 +1487,7 @@
         });
 
         document.getElementById('dashboardChargeTotal').textContent =
-            '₱' + money(state.charges.reduce((sum, x) => sum + Number(x.amount || 0), 0));
+            '₱' + money(state.charges.reduce((sum, x) => sum + Number(x.collectibleAmount || 0), 0));
         const postButton = document.getElementById('dashboardPostCharges');
         if (postButton) {
             const hasDrafts = state.charges.some(x => !x.isPosted);
@@ -1562,6 +1533,9 @@
                 }
             });
             state.selected.stage = 'payment';
+            const updated = await fetch('/Billing/GetOtherChargesByAccount?accountNumber=' + encodeURIComponent(state.selected.accountNumber));
+            if (!updated.ok) throw new Error('Charges posted. Reload to confirm the current collectible amount.');
+            state.charges = await updated.json();
             setMessage(drafts.length
                 ? `${result.postedCount || drafts.length} charge(s) posted to Collection. Application moved to Payment.`
                 : 'Application moved to Payment. The existing posted charge remains collectible.', true);

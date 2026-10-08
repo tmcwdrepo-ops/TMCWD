@@ -50,6 +50,200 @@ Map<String, dynamic> invoice() => {
 };
 
 void main() {
+  testWidgets('official charge rows have printed order and separate arrears', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ServiceInvoicePreview(
+          result: SoaResult(
+            SoaState.available,
+            soa: OfficialSoa.fromJson(invoice()),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    const order = [
+      'Bill Amount',
+      'Meter Maintenance',
+      'Power Cost Adjustm',
+      'Arrears',
+      'TOTAL DUE',
+      'Penalty',
+      'TOTAL AFTER DUE',
+      'Other Charges',
+    ];
+    double previousY = tester.getTopLeft(find.text('Minimum (0-10 cu.m)')).dy;
+    for (final label in order) {
+      expect(find.text(label), findsOneWidget);
+      final y = tester.getTopLeft(find.text(label)).dy;
+      expect(y, greaterThan(previousY), reason: '$label is out of print order');
+      previousY = y;
+    }
+    final otherChargesRow = find.ancestor(
+      of: find.text('Other Charges'),
+      matching: find.byType(Row),
+    );
+    expect(
+      find.descendant(of: otherChargesRow, matching: find.text('₱4.00')),
+      findsOneWidget,
+    );
+    final arrearsRow = find.ancestor(
+      of: find.text('Arrears'),
+      matching: find.byType(Row),
+    );
+    expect(
+      find.descendant(of: arrearsRow, matching: find.text('₱100.00')),
+      findsOneWidget,
+    );
+    for (final omitted in [
+      'Billing Adjustment',
+      'Miscellaneous Charges',
+      'Remaining Amount',
+      'Penalty (Applied)',
+      'Penalty After Due',
+    ]) {
+      expect(find.text(omitted), findsNothing);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('payment state cannot change issued invoice rendering', (
+    tester,
+  ) async {
+    final issued = {
+      ...invoice(),
+      'billAmount': '170.00',
+      'meterMaintenance': '20.00',
+      'powerCostAdjustment': '0.00',
+      'arrearsAmount': '0.00',
+      'totalDue': '190.00',
+      'penaltyAfterDueAmount': '17.00',
+      'totalAfterDue': '207.00',
+      'otherCharges': '0.00',
+      'totalBillAmount': '190.00',
+      'remainingAmount': '190.00',
+      'currentPenaltyAmount': '17.00',
+      'chargeLines': [
+        {
+          'description': 'Minimum (0-10 cu.m)',
+          'quantity': null,
+          'unitCost': '170.00',
+          'amount': '170.00',
+          'sortOrder': 0,
+        },
+      ],
+    };
+    Future<List<String?>> render(Map<String, dynamic> payload) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ServiceInvoicePreview(
+            result: SoaResult(
+              SoaState.available,
+              soa: OfficialSoa.fromJson(payload),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(QrImageView), findsOneWidget);
+      expect(find.text('TMCWD|SI|TEST-00077'), findsOneWidget);
+      expect(find.text('Remaining Amount'), findsNothing);
+      return tester
+          .widgetList<Text>(
+            find.descendant(
+              of: find.byType(ServiceInvoicePreview),
+              matching: find.byType(Text),
+            ),
+          )
+          .map((text) => text.data)
+          .toList();
+    }
+
+    final before = await render(issued);
+    final after = await render({
+      ...issued,
+      'paymentStatus': 2,
+      'remainingAmount': '0.00',
+      'currentPenaltyAmount': '0.00',
+      'paymentReference': 'CR000999',
+    });
+    expect(after, before);
+    expect(find.text('₱170.00'), findsWidgets);
+    expect(find.text('₱20.00'), findsOneWidget);
+    expect(find.text('₱190.00'), findsOneWidget);
+    expect(find.text('₱17.00'), findsOneWidget);
+    expect(find.text('₱207.00'), findsOneWidget);
+    expect(find.text('CR000999'), findsNothing);
+  });
+
+  testWidgets(
+    'first invoice omits unknown period and blank meter stays blank',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ServiceInvoicePreview(
+            result: SoaResult(
+              SoaState.available,
+              soa: OfficialSoa.fromJson({
+                ...invoice(),
+                'periodFrom': null,
+                'meterNumber': '',
+                'powerCostAdjustment': null,
+                'arrearsAmount': null,
+              }),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Period From'), findsNothing);
+      expect(find.text('Period To'), findsOneWidget);
+      expect(find.text('Reading Date'), findsNothing);
+      expect(find.text('Meter No.'), findsOneWidget);
+      expect(find.text('M20'), findsNothing);
+      expect(find.text('Power Cost Adjustm'), findsNothing);
+      expect(find.text('Arrears'), findsNothing);
+    },
+  );
+
+  testWidgets('historical bills never print mutable financial fallbacks', (
+    tester,
+  ) async {
+    Future<List<String?>> render(int status, String remaining) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ServiceInvoicePreview(
+            result: SoaResult(
+              SoaState.available,
+              soa: OfficialSoa.fromJson({
+                ...official(paymentStatus: status),
+                'remainingAmount': remaining,
+              }),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final absent in [
+        'Total Bill Amount',
+        'Remaining Amount',
+        'Other Charges',
+        'Billing Adjustment',
+        'Miscellaneous Charges',
+      ]) {
+        expect(find.text(absent), findsNothing);
+      }
+      return tester
+          .widgetList<Text>(find.byType(Text))
+          .map((w) => w.data)
+          .toList();
+    }
+
+    expect(await render(2, '0.00'), await render(1, '1234.56'));
+  });
+
   testWidgets(
     'consumption period displays exact server dates in fresh and cached previews',
     (tester) async {
@@ -196,16 +390,14 @@ void main() {
         '10',
         'Usage',
         '99',
-        'Billing Adjustment',
-        '₱-2.50',
         'Other Charges',
         '₱4.00',
         'Bill Amount',
         'Meter Maintenance',
-        'Power Cost Adjustment',
+        'Power Cost Adjustm',
         'Arrears',
         'TOTAL DUE',
-        'Penalty After Due',
+        'Penalty',
         'TOTAL AFTER DUE',
         'Period From',
         'Period To',
@@ -216,9 +408,6 @@ void main() {
         '₱9,997.79',
         '₱10,010.13',
         '₱9,876.54',
-        'Remaining Amount',
-        '₱1,234.56',
-        'Billing Date',
         'Due Date',
         'Disconnection Date',
         'Synthetic Reader',
@@ -237,6 +426,12 @@ void main() {
         'OFFICIAL-300',
         'PCA',
         'Water Bill',
+        'Billing Adjustment',
+        'Miscellaneous Charges',
+        'Remaining Amount',
+        '₱1,234.56',
+        'Billing Date',
+        'Reading Date',
         'Not available',
         'Offline copy',
         'Series Prefix',

@@ -55,7 +55,7 @@ var failure = new FailAfterSave();
 var options = new DbContextOptionsBuilder<UserDbContext>()
     .UseMySql(connection, ServerVersion.AutoDetect(connection)).AddInterceptors(failure).Options;
 await using var db = new UserDbContext(options);
-var tables = new[] { typeof(Account), typeof(ReadingSheet), typeof(Reading), typeof(Billing), typeof(WaterRate), typeof(Penalty), typeof(OtherCharge), typeof(Customer), typeof(Payment), typeof(TMCWD.Data.Entities.BillingAdjustment), typeof(User), typeof(PenaltyWaiverRequest), typeof(Request), typeof(RequestDetail), typeof(JobOrder), typeof(InspectionType), typeof(ZoneBook), typeof(Inventory), typeof(BirInvoiceConfig), typeof(ServiceInvoiceSeq) }
+var tables = new[] { typeof(Account), typeof(ReadingSheet), typeof(Reading), typeof(Billing), typeof(WaterRate), typeof(Penalty), typeof(OtherCharge), typeof(OtherChargeInstallment), typeof(OtherFeeType), typeof(Customer), typeof(Payment), typeof(PaymentReceipt), typeof(TMCWD.Data.Entities.BillingAdjustment), typeof(User), typeof(PenaltyWaiverRequest), typeof(Request), typeof(RequestDetail), typeof(JobOrder), typeof(InspectionType), typeof(ZoneBook), typeof(Inventory), typeof(BirInvoiceConfig), typeof(ServiceInvoiceSeq) }
     .Select(t => db.Model.FindEntityType(t)!.GetTableName()!)
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
@@ -209,6 +209,7 @@ async Task Test(string name, Func<Task> action)
     db.Inventories.Add(new Inventory { Id = 1, Name = "Test Meter Brand", Division = 1, UOM = "unit", Quantity = 1, UnitCost = 0, UnitSellingPrice = 0, IsActive = true, DateCreated = now, DateUpdated = now });
     db.InspectionTypes.Add(new InspectionType { Id = 1, Name = "Service Request", IsActive = true, DateCreated = now, DateUpdated = now });
     db.ReadingSheets.Add(new ReadingSheet { Id = 1, ZoneBookId = 1, Status = ReadingStatus.InProgress, BillingDate = now.AddDays(1), DueDate = now.AddDays(10), BillingPeriodStart = now });
+    db.OtherFeeTypes.Add(new OtherFeeType { Id = 1, Name = "Synthetic Other Fee", DateCreated = now, DateUpdate = now });
     db.WaterRates.Add(new WaterRate { Id = 1, Classification = 1, MeterSize = .5m, MinimumCharge = 100, Rate11To20 = 10, Rate21To30 = 20, Rate31To40 = 30, Rate41Up = 40, IsActive = true, EffectiveDate = now, DateCreated = now, DateUpdated = now });
     db.BirInvoiceConfigs.Add(new BirInvoiceConfig { Id = 1, PTUNumber = "SYNTHETIC-PTU", PermitDateIssued = new DateOnly(2026, 1, 1),
         SeriesFrom = 1, SeriesTo = 999999, InvoicePrefix = "TEST-", SeriesWidth = 6, IsActive = true, DateCreated = now, DateUpdated = now });
@@ -377,6 +378,92 @@ await Test("Synced mobile readings stay InProgress until web posting and final c
     var completed = await sheetService.CompleteReadingSheet(1, 1);
     Check(completed?.Status == ReadingStatus.Completed && completed.DateUpload != null,
         "Only web final completion should complete the reading sheet.");
+});
+await Test("Prior unpaid and overdue bills populate authoritative arrears from prior snapshots", async () => {
+    var sheet = await db.ReadingSheets.SingleAsync();
+    sheet.BillingDate = DateTime.Today;
+    var account = await db.Accounts.SingleAsync();
+    account.Status = (int)AccountStatus.Active;
+    account.Sequence = 1;
+    var priorBill = new Billing
+    {
+        AccountId = 1,
+        ReadingId = 999,
+        BillingReferenceId = "ARREARS-VALID",
+        BillingPeriod = DateTime.Today.AddDays(-5),
+        TotalBillAmount = 500m,
+        RemainingAmount = 500m,
+        PaymentStatus = (int)PaymentStatus.Unpaid,
+        InvoiceSnapshotJson = JsonSerializer.Serialize(new TMCWD.Model.Billing.OfficialInvoiceSnapshot(
+            SchemaVersion: 1,
+            PeriodFrom: DateTime.Today.AddDays(-10),
+            PeriodTo: DateTime.Today.AddDays(-5),
+            BillAmount: 170m,
+            MeterMaintenance: 20m,
+            PowerCostAdjustment: null,
+            ArrearsAmount: null,
+            OtherCharges: 0m,
+            BillingAdjustment: 0m,
+            TotalDue: 190m,
+            ChargeLines: Array.Empty<TMCWD.Model.Billing.InvoiceChargeLine>())),
+        CreatedBy = 1,
+        UpdatedBy = 1,
+        DateCreated = DateTime.Now,
+        DateUpdated = DateTime.Now
+    };
+    db.Billings.Add(priorBill);
+    db.Penalties.Add(new Penalty
+    {
+        BillingReferenceId = priorBill.BillingReferenceId,
+        Amount = 17m,
+        PaymentStatus = (int)PaymentStatus.Unpaid,
+        PenaltyTypeId = 1,
+        CreatedBy = 1,
+        UpdatedBy = 1,
+        DateCreated = DateTime.Now,
+        DateUpdated = DateTime.Now
+    });
+    await db.SaveChangesAsync();
+    var reading = await readingService.SaveUpdate(1, NewReading(15, 0));
+    Check(reading != null, "Synthetic reading was not saved.");
+    Check(await sheetService.PartialPost(1, 1) == 1, "Prior invoice snapshot arrears bill was not posted.");
+    db.ChangeTracker.Clear();
+    var billing = await db.Billings.OrderByDescending(x => x.Id).FirstAsync();
+    Check(billing.BillArrearsAmount == 207m, "Prior unpaid bill did not include maintenance and active prior penalties in the authoritative arrears amount.");
+    var snapshot = JsonSerializer.Deserialize<TMCWD.Model.Billing.OfficialInvoiceSnapshot>(billing.InvoiceSnapshotJson!);
+    Check(snapshot != null && snapshot.ArrearsAmount == 207m,
+        "Official invoice snapshot did not freeze prior arrears including maintenance and active penalties.");
+});
+await Test("Malformed eligible prior bills force arrears to null instead of guessing", async () => {
+    var sheet = await db.ReadingSheets.SingleAsync();
+    sheet.BillingDate = DateTime.Today;
+    var account = await db.Accounts.SingleAsync();
+    account.Status = (int)AccountStatus.Active;
+    account.Sequence = 1;
+    db.Billings.Add(new Billing
+    {
+        AccountId = 1,
+        ReadingId = 1000,
+        BillingReferenceId = "ARREARS-INVALID",
+        BillingPeriod = DateTime.Today.AddDays(-2),
+        TotalBillAmount = 200m,
+        RemainingAmount = 200m,
+        PaymentStatus = (int)PaymentStatus.Overdue,
+        InvoiceSnapshotJson = "{ not valid json }",
+        CreatedBy = 1,
+        UpdatedBy = 1,
+        DateCreated = DateTime.Now,
+        DateUpdated = DateTime.Now
+    });
+    await db.SaveChangesAsync();
+    var reading = await readingService.SaveUpdate(1, NewReading(20, 0));
+    Check(reading != null, "Synthetic reading for invalid arrears was not saved.");
+    Check(await sheetService.PartialPost(1, 1) == 1, "Posting should still succeed but leave arrears null when the prior snapshot is malformed.");
+    db.ChangeTracker.Clear();
+    var billing = await db.Billings.OrderByDescending(x => x.Id).FirstAsync();
+    Check(billing.BillArrearsAmount == null, "Malformed prior snapshot must force arrears to null.");
+    var snapshot = JsonSerializer.Deserialize<TMCWD.Model.Billing.OfficialInvoiceSnapshot>(billing.InvoiceSnapshotJson!);
+    Check(snapshot != null && snapshot.ArrearsAmount == null, "Malformed prior snapshot must not populate the official invoice snapshot arrears.");
 });
 await Test("Official mobile SOA reads persisted partial-post billing without mutations or rate recalculation", async () => {
     var sheet = await db.ReadingSheets.SingleAsync();
@@ -615,6 +702,7 @@ await Test("Draft other charges enter Collection only after posting", async () =
         BillingReferenceId = bill.BillingReferenceId,
         Type = 1,
         Amount = 50,
+        PayableIn = "1",
         PaymentStatus = (int)PaymentStatus.Draft,
         IsActive = true
     });
@@ -636,8 +724,9 @@ await Test("Draft other charges enter Collection only after posting", async () =
         "The draft charge was not posted.");
     db.ChangeTracker.Clear();
     bill = await db.Billings.SingleAsync();
-    Check(bill.RemainingAmount == 170 && bill.OtherCharges == 50,
-        "The posted charge was not added to the collectible balance.");
+    Check(bill.RemainingAmount == 120 && bill.OtherCharges == 0
+        && (await new BillingService(db).GetCollectionBill(bill.BillingReferenceId))?.AmountDue == 170,
+        "The posted installment was not separate from the water balance.");
     Check((await db.OtherCharges.SingleAsync()).PaymentStatus == (int)PaymentStatus.Unpaid,
         "The posted charge is not awaiting collection.");
     var application = await db.WaterConnectionApplications.SingleAsync();
@@ -646,7 +735,7 @@ await Test("Draft other charges enter Collection only after posting", async () =
     Check(await otherChargeService.PostToCollection(1, new() { (int)charge.Id }) == 1,
         "Reposting an existing charge should safely reconcile the application.");
     db.ChangeTracker.Clear();
-    Check((await db.Billings.SingleAsync()).RemainingAmount == 170,
+    Check((await db.Billings.SingleAsync()).RemainingAmount == 120 && await db.OtherChargeInstallments.CountAsync() == 1,
         "Reconciliation charged the posted amount twice.");
 
     var paymentService = new PaymentService(db);
@@ -656,155 +745,14 @@ await Test("Draft other charges enter Collection only after posting", async () =
             InvoiceNumber = "OTHER-CHARGE-INVOICE",
             Method = PaymentMethod.Cash,
             AmountTendered = 170,
-            Bills = new() { new() { BillingReferenceId = bill.BillingReferenceId, PaidAmount = 170 } }
+            Bills = new() { new() { BillingReferenceId = bill.BillingReferenceId, PaidAmount = 170, InstallmentIds = new() { (await db.OtherChargeInstallments.SingleAsync()).Id } } }
         });
     db.ChangeTracker.Clear();
     Check((await db.OtherCharges.SingleAsync()).PaymentStatus == (int)PaymentStatus.Paid,
         "Collection did not settle the posted charge.");
     application = await db.WaterConnectionApplications.SingleAsync();
-    Check(application.Stage == "installation" && (application.PaymentData ?? "").Contains("OTHER-CHARGE-INVOICE"),
+    Check(application.Stage == "installation" && (application.PaymentData ?? "").Contains((await db.Payments.SingleAsync()).PaymentReference),
         "Paying the connection charge did not move the application to Installation.");
-});
-await Test("Legacy zero-balance connection charge is restored for Collection", async () => {
-    var now = DateTime.Now;
-    db.Billings.Add(new Billing
-    {
-        AccountId = 1, BillingReferenceId = "LEGACY-CHARGE", BillingPeriod = now,
-        OtherCharges = 2000, TotalBillAmount = 0, RemainingAmount = 0,
-        PaymentStatus = (int)PaymentStatus.Unpaid, DateCreated = now, DateUpdated = now
-    });
-    db.OtherCharges.Add(new OtherCharge
-    {
-        BillingReferenceId = "LEGACY-CHARGE", Type = 1, Amount = 2000,
-        PaymentStatus = (int)PaymentStatus.Unpaid, IsActive = true, DateCreated = now
-    });
-    db.WaterConnectionApplications.Add(new WaterConnectionApplication
-    {
-        TrackingNumber = "APP-LEGACY-0001", FullName = "Legacy Applicant",
-        Address = "Test Address", Barangay = "Test Barangay",
-        ContactNumber = "09000000000", Email = "legacy@example.invalid",
-        ConnectionType = "residential", Source = "walk_in", Stage = "charging",
-        AccountId = 1, CustomerId = 1, CreatedAt = now, UpdatedAt = now
-    });
-    await db.SaveChangesAsync();
-    var chargeId = (int)(await db.OtherCharges.SingleAsync()).Id;
-
-    Check(await otherChargeService.PostToCollection(1, new() { chargeId }) == 1,
-        "The existing posted charge could not be reconciled.");
-    db.ChangeTracker.Clear();
-    var bill = await db.Billings.SingleAsync();
-    Check(bill.RemainingAmount == 2000,
-        "The legacy posted charge was not restored to the collectible balance.");
-    Check((await db.WaterConnectionApplications.SingleAsync()).Stage == "payment",
-        "The reconciled application did not enter Payment.");
-
-    var paymentService = new PaymentService(db);
-    await paymentService.ProcessCollectionPayment(1,
-        new TMCWD.Model.Billing.Requests.CollectionPaymentRequest
-        {
-            InvoiceNumber = "LEGACY-CHARGE-INVOICE", Method = PaymentMethod.Cash,
-            AmountTendered = 2000,
-            Bills = new() { new() { BillingReferenceId = "LEGACY-CHARGE", PaidAmount = 2000 } }
-        });
-    db.ChangeTracker.Clear();
-    Check((await db.OtherCharges.SingleAsync()).PaymentStatus == (int)PaymentStatus.Paid,
-        "The restored charge was not paid.");
-    Check((await db.WaterConnectionApplications.SingleAsync()).Stage == "installation",
-        "The paid legacy application did not enter Installation.");
-});
-await Test("Red Other Charges payment closes its billing stub", async () => {
-    var now = DateTime.Now;
-    db.Billings.Add(new Billing
-    {
-        AccountId = 1, BillingReferenceId = "DIRECT-OTHER-CHARGE", BillingPeriod = now,
-        OtherCharges = 2000, TotalBillAmount = 2000, RemainingAmount = 2000,
-        PaymentStatus = (int)PaymentStatus.Unpaid, DateCreated = now, DateUpdated = now
-    });
-    db.OtherCharges.Add(new OtherCharge
-    {
-        BillingReferenceId = "DIRECT-OTHER-CHARGE", Type = 1, Amount = 2000,
-        PaymentStatus = (int)PaymentStatus.Unpaid, IsActive = true, DateCreated = now
-    });
-    db.WaterConnectionApplications.Add(new WaterConnectionApplication
-    {
-        TrackingNumber = "APP-DIRECT-OC-0001", FullName = "Direct Charge Applicant",
-        Address = "Test Address", Barangay = "Test Barangay",
-        ContactNumber = "09000000000", Email = "direct@example.invalid",
-        ConnectionType = "residential", Source = "walk_in", Stage = "payment",
-        AccountId = 1, CustomerId = 1, CreatedAt = now, UpdatedAt = now
-    });
-    await db.SaveChangesAsync();
-    var chargeId = (int)(await db.OtherCharges.SingleAsync()).Id;
-
-    var invoice = await otherChargeService.ProcessPayment(1,
-        new TMCWD.Model.Billing.Requests.OtherChargePaymentRequest
-        {
-            InvoiceNumber = "DIRECT-OC-INVOICE", Method = PaymentMethod.Cash,
-            AmountTendered = 2000, OtherChargeIds = new() { chargeId }
-        });
-
-    db.ChangeTracker.Clear();
-    var bill = await db.Billings.SingleAsync();
-    Check(invoice == "DIRECT-OC-INVOICE"
-        && bill.PaymentStatus == (int)PaymentStatus.Paid
-        && bill.RemainingAmount == 0 && bill.OtherCharges == 0
-        && bill.PaymentTransactionId == invoice,
-        "Direct Other Charges payment left an empty unpaid bill.");
-    Check((await db.OtherCharges.SingleAsync()).PaymentStatus == (int)PaymentStatus.Paid,
-        "Direct Other Charges payment did not settle the charge.");
-    var application = await db.WaterConnectionApplications.SingleAsync();
-    Check(application.Stage == "installation" && (application.PaymentData ?? "").Contains(invoice),
-        "Direct Other Charges payment did not move the application to Installation.");
-});
-await Test("Dashboard reconciles an earlier paid connection charge", async () => {
-    var now = DateTime.Now;
-    db.Billings.Add(new Billing
-    {
-        AccountId = 1, BillingReferenceId = "STALE-DASHBOARD-PAYMENT", BillingPeriod = now,
-        OtherCharges = 2000, TotalBillAmount = 2000, RemainingAmount = 2000,
-        PaymentStatus = (int)PaymentStatus.Unpaid, DateCreated = now, DateUpdated = now
-    });
-    db.OtherCharges.Add(new OtherCharge
-    {
-        BillingReferenceId = "STALE-DASHBOARD-PAYMENT", Type = 1, Amount = 2000,
-        PaymentStatus = (int)PaymentStatus.Paid, IsActive = true,
-        CreatedBy = 1, DateCreated = now, UpdatedBy = 1, DateUpdated = now
-    });
-    db.Payments.Add(new Payment
-    {
-        BillingReference = "STALE-DASHBOARD-PAYMENT", PaymentReference = "STALE-OC-INVOICE",
-        MacAddress = "WEB", PaidAmount = 2000, Method = (int)PaymentMethod.Cash,
-        Success = true, CreatedBy = 1, DateCreated = now
-    });
-    var application = new WaterConnectionApplication
-    {
-        TrackingNumber = "APP-STALE-OC-0001", FullName = "Stale Payment Applicant",
-        Address = "Test Address", Barangay = "Test Barangay",
-        ContactNumber = "09000000000", Email = "stale@example.invalid",
-        ConnectionType = "residential", Source = "walk_in", Stage = "payment",
-        AccountId = 1, CustomerId = 1,
-        ChargingData = JsonSerializer.Serialize(new { reference = "STALE-DASHBOARD-PAYMENT", amount = 2000 }),
-        CreatedAt = now, UpdatedAt = now
-    };
-    db.WaterConnectionApplications.Add(application);
-    await db.SaveChangesAsync();
-
-    var dashboard = new TMCWD.Data.Controllers.DashboardController(db);
-    var response = await dashboard.ApplicationPayment(application.Id);
-    var ok = response.Result as Microsoft.AspNetCore.Mvc.OkObjectResult;
-    var detail = ok?.Value as TMCWD.Model.Dashboard.ApplicationPaymentRecord;
-
-    db.ChangeTracker.Clear();
-    var reconciledApplication = await db.WaterConnectionApplications.SingleAsync();
-    var reconciledBilling = await db.Billings.SingleAsync();
-    Check(detail?.PaymentReference == "STALE-OC-INVOICE" && detail.PaymentStatus == "Paid",
-        "Dashboard payment details did not use the successful charge payment.");
-    Check(reconciledApplication.Stage == "installation"
-        && (reconciledApplication.PaymentData ?? "").Contains("STALE-OC-INVOICE"),
-        "Paid application remained on the dashboard Payment card.");
-    Check(reconciledBilling.PaymentStatus == (int)PaymentStatus.Paid
-        && reconciledBilling.RemainingAmount == 0 && reconciledBilling.OtherCharges == 0,
-        "Dashboard reconciliation did not close the stale billing record.");
 });
 await Test("Installation work order resolves its linked account number", async () => {
     var now = DateTime.Now;
@@ -1055,7 +1003,7 @@ await Test("Cancelling a discounted invoice reopens the bill and preserves an au
     await paymentService.CancelInvoice(1,
         new TMCWD.Model.Billing.CancelInvoiceRequest
         {
-            InvoiceNo = "CANCEL-ME",
+            InvoiceNo = (await db.Payments.SingleAsync()).PaymentReference,
             Reason = "Wrong amount"
         });
     db.ChangeTracker.Clear();
@@ -1066,7 +1014,7 @@ await Test("Cancelling a discounted invoice reopens the bill and preserves an au
         "Cancelled payment remains successful.");
     Check((await db.SeniorCitizenDiscounts.SingleAsync()).IsCancelled,
         "Cancelled discount was not retained and marked cancelled.");
-    Check(await db.InvoiceCancellations.AnyAsync(x => x.PaymentReference == "CANCEL-ME"
+    Check(await db.InvoiceCancellations.AnyAsync(x => x.PaymentReference == db.Payments.Single().PaymentReference
             && x.Reason == "Wrong amount"),
         "Invoice cancellation audit record is missing.");
     Check(await db.BillingAdjustments.AnyAsync(x =>
@@ -1343,8 +1291,8 @@ await Test("Penalty uses persisted Penalty rows; PCA and arrears are absent from
     // PenaltyAfterDueAmount: informational 10% of BillAmount (server-derived, same rounding).
     // TotalAfterDue: TotalDue + PenaltyAfterDueAmount.
     // PCA and Arrears remain NULL (no authoritative rule).
-    Check(soa.PowerCostAdjustment == null && soa.ArrearsAmount == null,
-        "Unsupported invoice values must remain NULL after penalty posting.");
+    Check(soa.PowerCostAdjustment == null && soa.ArrearsAmount == 0m,
+        "No eligible prior unpaid bills must report zero arrears after penalty posting.");
     Check(soa.CurrentPenaltyAmount == 10m,
         $"CurrentPenaltyAmount must be the sum of persisted Penalty rows (10); got {soa.CurrentPenaltyAmount}.");
     Check(soa.TotalDue == 120m,
@@ -1450,7 +1398,7 @@ await Test("Collection payment keeps the invoice number, internal billing key an
     db.ChangeTracker.Clear();
     var paid = await db.Billings.SingleAsync(); var payment = await db.Payments.SingleAsync();
     Check(paid.ServiceInvoiceNumber == invoice && paid.BillingReferenceId == reference
-        && payment.BillingReference == reference && payment.PaymentReference == "OR-SYNTHETIC-001"
+        && payment.BillingReference == reference && payment.PaymentReference == (await db.PaymentReceipts.SingleAsync()).PaymentReference
         && paid.PaymentTransactionId == payment.PaymentReference && payment.PaymentReference != invoice,
         "Collection replaced or conflated invoice, billing or payment identifiers.");
 });
@@ -1576,9 +1524,9 @@ await Test("Official invoice snapshots preserve tier lines, maintenance, periods
         "Snapshot must carry schemaVersion 1.");
     Check(snapshot.TotalDue == 920m,
         $"Snapshot TotalDue must be BillAmount + MeterMaintenance (920); got {snapshot.TotalDue}.");
-    Check(snapshot.PeriodFrom == null && snapshot.PeriodTo?.Date == date.Date && snapshot.ArrearsAmount == null
+    Check(snapshot.PeriodFrom == null && snapshot.PeriodTo?.Date == date.Date && snapshot.ArrearsAmount == 0m
         && snapshot.PowerCostAdjustment == null,
-        "Period end must be the stored reading date; unsupported rules must remain NULL.");
+        "Period end must be the stored reading date; no prior arrears must be zero, unsupported rules remain NULL.");
     var rate = await db.WaterRates.SingleAsync(); rate.MinimumCharge = 999m; rate.Rate41Up = 500m;
     var bir = await db.BirInvoiceConfigs.SingleAsync(); bir.PTUNumber = "SYNTHETIC-UPDATED-PTU";
     var postedReading = await db.Readings.SingleAsync(); postedReading.DateCreated = date.AddDays(2);
@@ -1830,9 +1778,42 @@ await Test($"Collection uses issued water/maintenance and applied-only penalty (
     db.ChangeTracker.Clear();
     var paid = await summaryService.GetCollectionBill(bill.BillingReferenceId);
     Check(paid?.AmountDue == 0m && paid.RemainingAmount == 0m && paid.Penalty == 0m
-        && paid.PaymentReference == "COLLECTION-PAYMENT" && paid.ServiceInvoiceNumber == before!.ServiceInvoiceNumber
+        && paid.PaymentReference == (await db.Payments.SingleAsync()).PaymentReference && paid.ServiceInvoiceNumber == before!.ServiceInvoiceNumber
         && (await db.Billings.SingleAsync()).InvoiceSnapshotJson == frozen,
         "Collection payment lost identity, snapshot or settled balance.");
+});
+await Test("Issued mobile Service Invoice financial snapshot survives actual collection payment", async () => {
+    await SeedReaderAndAccount();
+    var account = await db.Accounts.SingleAsync(); account.MeterNumber = "SYNTHETIC-METER";
+    var rate = await db.WaterRates.SingleAsync(); rate.MinimumCharge = 170m;
+    await db.SaveChangesAsync();
+    await readingService.Sync(10, 1, new() { AccountId = 1, CurrentReading = 0, ReadingDate = DateTime.Now });
+    await sheetService.PartialPost(1, 1);
+    db.ChangeTracker.Clear();
+    var bill = await db.Billings.SingleAsync();
+    var frozen = bill.InvoiceSnapshotJson;
+    var sheet = await db.ReadingSheets.SingleAsync(); sheet.DueDate = TMCWD.Model.Billing.LatePaymentPenalty.Today.AddDays(-1);
+    await db.SaveChangesAsync();
+    await penaltyService.PostCharges(1, new() { BillingReferenceIds = new() { bill.BillingReferenceId } });
+    var controller = MobileController(pen: penaltyService);
+    async Task<TMCWD.Model.Billing.Responses.MobileSoaDto> ReadInvoice() =>
+        (TMCWD.Model.Billing.Responses.MobileSoaDto)((await controller.Soa(1, 1)).Result as Microsoft.AspNetCore.Mvc.OkObjectResult)!.Value!;
+    string IssuedFields(TMCWD.Model.Billing.Responses.MobileSoaDto soa) => JsonSerializer.Serialize(new {
+        soa.BillAmount, soa.MeterMaintenance, soa.PowerCostAdjustment, soa.ArrearsAmount, soa.OtherCharges,
+        soa.BillingAdjustment, soa.TotalDue, soa.PenaltyAfterDueAmount, soa.TotalAfterDue, soa.ChargeLines,
+        soa.PeriodFrom, soa.PeriodTo, soa.ServiceInvoiceNumber, soa.QrPayload, soa.MeterNumber });
+    var before = await ReadInvoice();
+    Check(before.BillAmount == 170m && before.MeterMaintenance == 20m && before.TotalDue == 190m
+        && before.PenaltyAfterDueAmount == 17m && before.TotalAfterDue == 207m && before.CurrentPenaltyAmount == 17m
+        && before.MeterNumber == "SYNTHETIC-METER", "Issued values or authoritative meter mapping are incorrect.");
+    await new PaymentService(db).ProcessCollectionPayment(1, new() { Method = PaymentMethod.Cash, AmountTendered = 207m,
+        Bills = new() { new() { BillingReferenceId = bill.BillingReferenceId, PaidAmount = 207m } } });
+    db.ChangeTracker.Clear();
+    var after = await ReadInvoice();
+    Check(after.RemainingAmount == 0m && after.PaymentStatus == PaymentStatus.Paid && after.CurrentPenaltyAmount == 0m,
+        "Regression did not exercise actual payment/penalty settlement.");
+    Check(IssuedFields(after) == IssuedFields(before) && (await db.Billings.SingleAsync()).InvoiceSnapshotJson == frozen,
+        "Actual collection payment or subsequent SOA GET changed issued invoice fields.");
 });
 await Test("Collection adjustment changes payable balance without inventing water or maintenance", async () => {
     await SeedReaderAndAccount();
@@ -1877,11 +1858,52 @@ await Test("Collection rejects partial, overpayment and duplicate submissions wi
 await Test("Collection payment failure rolls back payment and balance atomically", async () => {
     var bill = await OverdueBill();
     failure.Enabled = true;
+    failure.PaymentsOnly = true;
     await Reject(async () => await new PaymentService(db).ProcessCollectionPayment(1, new() { InvoiceNumber = "ROLLBACK", Method = PaymentMethod.Cash,
         AmountTendered = 1000m, Bills = new() { new() { BillingReferenceId = bill.BillingReferenceId, PaidAmount = 1000m } } }));
     failure.Enabled = false; db.ChangeTracker.Clear();
     Check(await db.Payments.CountAsync() == 0 && (await db.Billings.SingleAsync()).RemainingAmount == 1000m,
         "Failed Collection transaction left partial financial writes.");
+    Check(!await db.PaymentReceipts.AnyAsync(), "Failed payment left a committed receipt header.");
+    failure.PaymentsOnly = false;
+});
+await Test("One receipt covers multiple bill lines with a shared authoritative cashier", async () => {
+    db.Billings.AddRange(new[] { "MULTI-A", "MULTI-B" }.Select(reference => new Billing { BillingReferenceId = reference,
+        AccountId = 1, TotalBillAmount = 100m, RemainingAmount = 100m, PaymentStatus = (int)PaymentStatus.Unpaid,
+        BillingPeriod = DateTime.Today, DateCreated = DateTime.Now, DateUpdated = DateTime.Now }));
+    await db.SaveChangesAsync();
+    var lines = await new PaymentService(db).ProcessCollectionPayment(7, new() { Method = PaymentMethod.Cash,
+        InvoiceNumber = "IGNORE-CLIENT", AmountTendered = 200m, Bills = new() {
+            new() { BillingReferenceId = "MULTI-A", PaidAmount = 100m }, new() { BillingReferenceId = "MULTI-B", PaidAmount = 100m } } });
+    Check(lines.Count == 2 && lines.Select(p => p.PaymentReference).Distinct().Count() == 1
+        && lines.All(p => p.CreatedBy == 7 && p.PaymentReference != "IGNORE-CLIENT") && await db.PaymentReceipts.CountAsync() == 1,
+        "Multi-bill payment created separate receipts or trusted browser reference.");
+});
+await Test("Cancellation restores exact linked charges independently of timestamps", async () => {
+    db.Billings.Add(new Billing { BillingReferenceId = "LINKED", AccountId = 1, TotalBillAmount = 100m,
+        RemainingAmount = 100m, PaymentStatus = (int)PaymentStatus.Unpaid, BillingPeriod = DateTime.Today,
+        DateCreated = DateTime.Now, DateUpdated = DateTime.Now });
+    db.Penalties.Add(new Penalty { BillingReferenceId = "LINKED", Amount = 10m, PaymentStatus = (int)PaymentStatus.Unpaid,
+        DateCreated = DateTime.Now, DateUpdated = DateTime.Now });
+    db.OtherCharges.Add(new OtherCharge { BillingReferenceId = "LINKED", Amount = 20m, PayableIn = "1", InstallmentCount = 1, PaymentStatus = (int)PaymentStatus.Unpaid,
+        IsActive = true, DateCreated = DateTime.Now, DateUpdated = DateTime.Now });
+    await db.SaveChangesAsync();
+    var parent = await db.OtherCharges.SingleAsync();
+    db.OtherChargeInstallments.Add(new OtherChargeInstallment { OtherChargeId = parent.Id, InstallmentNumber = 1, DueBillingPeriod = DateTime.Today, Amount = 20m, PaymentStatus = (int)PaymentStatus.Unpaid });
+    await db.SaveChangesAsync();
+    var childId = (await db.OtherChargeInstallments.SingleAsync()).Id;
+    var service = new PaymentService(db);
+    var payment = (await service.ProcessCollectionPayment(7, new() { Method = PaymentMethod.Cash, AmountTendered = 130m,
+        Bills = new() { new() { BillingReferenceId = "LINKED", PaidAmount = 130m, InstallmentIds = new() { childId } } } })).Single();
+    var penalty = await db.Penalties.SingleAsync(); var charge = await db.OtherChargeInstallments.SingleAsync();
+    Check(penalty.SettledPaymentId == payment.Id && charge.SettledPaymentId == payment.Id, "Settlement did not link exact payment ID.");
+    penalty.DateUpdated = DateTime.Today.AddDays(-5); charge.DateUpdated = DateTime.Today.AddDays(-6);
+    await db.SaveChangesAsync(); db.ChangeTracker.Clear();
+    await service.CancelInvoice(7, new() { InvoiceNo = payment.PaymentReference, Reason = "Synthetic correction" });
+    db.ChangeTracker.Clear();
+    Check((await db.Billings.SingleAsync()).RemainingAmount == 100m && (await db.Penalties.SingleAsync()).PaymentStatus == (int)PaymentStatus.Unpaid
+        && (await db.OtherCharges.SingleAsync()).PaymentStatus == (int)PaymentStatus.Unpaid && !await db.Payments.AnyAsync(p => p.Success),
+        "Cancellation depended on timestamp precision or restored penalty into principal.");
 });
 await Test("Legacy penalty creation uses authoritative posting validation, not caller amounts", async () => {
     await SeedReaderAndAccount();
@@ -1900,17 +1922,20 @@ await Test("Legacy penalty creation uses authoritative posting validation, not c
     await Reject(async () => await penaltyService.SaveUpdate(1, new() { Id = posted.Id, BillingReferenceId = bill.BillingReferenceId, Amount = 999m }));
     Check((await db.Penalties.SingleAsync()).Amount == 10m, "Legacy route rewrote a posted penalty.");
 });
+await OtherChargeInstallmentsRegression.Run(db, sheetService, Test);
+await AccountLedgerRegression.Run(db, Test);
 Console.WriteLine($"{passed} database regression checks passed using temporary tables only.");
 await InvoiceConcurrency.Run(connectionOptions, Path.Combine(root,
     "TMCWD/TMCWD.Data/Database/20261006_add_service_invoice_bir_config.sql"));
-await PaymentConcurrency.Run(connectionOptions);
+await PaymentConcurrency.Run(connectionOptions, root);
 
 sealed class FailAfterSave : SaveChangesInterceptor
 {
     public bool Enabled { get; set; }
+    public bool PaymentsOnly { get; set; }
     public override ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
     {
-        if (Enabled) throw new InvalidOperationException("Injected failure after SQL save and before transaction commit.");
+        if (Enabled && (!PaymentsOnly || eventData.Context!.ChangeTracker.Entries<Payment>().Any(p => p.Entity.Success))) throw new InvalidOperationException("Injected failure after SQL save and before transaction commit.");
         return ValueTask.FromResult(result);
     }
 }

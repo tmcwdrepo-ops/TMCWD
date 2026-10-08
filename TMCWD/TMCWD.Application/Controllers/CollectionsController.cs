@@ -29,6 +29,8 @@ namespace TMCWD.Application.Controllers
         private readonly OtherFeeTypeTransaction _otherFeeTypeTrans;
         private readonly UserTransaction _userTrans;
         private readonly BatchPaymentUploadTransaction _batchUploadTrans;
+        private readonly WebService _api;
+        private readonly ILogger<CollectionsController> _logger;
 
         #endregion
 
@@ -46,7 +48,9 @@ namespace TMCWD.Application.Controllers
             OtherChargeTransaction otherChargeTrans,
             OtherFeeTypeTransaction otherFeeTypeTrans,
             UserTransaction userTrans,
-            BatchPaymentUploadTransaction batchUploadTrans)
+            BatchPaymentUploadTransaction batchUploadTrans,
+            WebService api,
+            ILogger<CollectionsController> logger)
         {
             _user = user;
             _billingTrans = billingTrans;
@@ -61,6 +65,8 @@ namespace TMCWD.Application.Controllers
             _otherFeeTypeTrans = otherFeeTypeTrans;
             _userTrans = userTrans;
             _batchUploadTrans = batchUploadTrans;
+            _api = api;
+            _logger = logger;
         }
 
         public override void OnActionExecuting(ActionExecutingContext context)
@@ -95,7 +101,8 @@ namespace TMCWD.Application.Controllers
             return Ok(new
             {
                 id = user.Id,
-                name = user.Name
+                name = user.Name,
+                date = DateTime.Today.ToString("yyyy-MM-dd")
             });
         }
 
@@ -108,7 +115,7 @@ namespace TMCWD.Application.Controllers
 
             var payments = await _paymentTrans.GetPaymentHistoryByCashier(collector.Id);
             var successfulCashPayments = payments
-                .Where(payment => payment.Success && payment.Method == (int)PaymentMethod.Cash)
+                .Where(payment => payment.Success && payment.Method == (int)PaymentMethod.Cash && payment.DateCreated.Date == DateTime.Today)
                 .OrderBy(payment => payment.DateCreated)
                 .ToList();
 
@@ -192,7 +199,9 @@ namespace TMCWD.Application.Controllers
                     .Sum(payment => payment.PaidAmount),
                 online = dailyPayments
                     .Where(payment => payment.Method == (int)PaymentMethod.EWallet)
-                    .Sum(payment => payment.PaidAmount)
+                    .Sum(payment => payment.PaidAmount),
+                totalCollected = dailyPayments.Sum(payment => payment.PaidAmount),
+                paymentCount = dailyPayments.Select(payment => payment.PaymentReference).Distinct().Count()
             });
         }
 
@@ -202,14 +211,14 @@ namespace TMCWD.Application.Controllers
         {
             if (_user.User == null || _user.User.Id <= 0)
                 return Unauthorized(new { success = false, message = "A valid cashier session is required." });
-            if (request == null || !Enum.IsDefined(typeof(PaymentMethod), request.Method))
+            if (!ModelState.IsValid || request == null || !Enum.IsDefined(typeof(PaymentMethod), request.Method))
                 return BadRequest(new { success = false, message = "Please select a payment method." });
 
             var result = await _paymentTrans.ProcessCollectionPayment(_user.User.Id, request);
             if (!result.Success)
-                return BadRequest(new { success = false, message = result.Message });
+                return StatusCode(result.StatusCode, new { success = false, message = result.Message });
 
-            return Ok(new { success = true });
+            return Ok(new { success = true, paymentReference = result.PaymentReference });
         }
 
         [HttpGet]
@@ -238,7 +247,7 @@ namespace TMCWD.Application.Controllers
             var result = await _paymentTrans.CancelInvoice(_user.User.Id, request);
             return result.Success
                 ? Ok(new { success = true })
-                : BadRequest(new { success = false, message = result.Message });
+                : StatusCode(result.StatusCode, new { success = false, message = result.Message });
         }
 
         [HttpPost]
@@ -253,15 +262,15 @@ namespace TMCWD.Application.Controllers
 
             var inner = new TMCWD.Model.Billing.Requests.OtherChargePaymentRequest
             {
-                InvoiceNumber  = request.InvoiceNumber,
+                ExternalReference = request.ExternalReference,
                 Method         = request.Method,
                 AmountTendered = request.AmountTendered,
-                OtherChargeIds = request.OtherChargeIds
+                InstallmentIds = request.InstallmentIds
             };
 
             var result = await _otherChargeTrans.ProcessPayment(_user.User.Id, inner);
             if (!result.Success)
-                return BadRequest(new { success = false, message = result.Message });
+                return StatusCode(result.StatusCode, new { success = false, message = result.Message });
 
             return Ok(new { success = true, invoiceNumber = result.InvoiceNumber });
         }
@@ -346,9 +355,8 @@ namespace TMCWD.Application.Controllers
                 // Get all billings for this account using GetByAccountId
                 var billings = await _billingTrans.GetByAccountId(account.Id);
 
-                // Filter unpaid bills
+                // A paid water bill can still anchor collectible installments.
                 var unpaidBills = billings?
-                    .Where(b => b.PaymentStatus != PaymentStatus.Paid && b.PaymentStatus != PaymentStatus.Waived)
                     .OrderBy(b => b.BillingPeriod)
                     .ToList() ?? new List<Model.Billing.Interfaces.BillingBase>();
 
@@ -363,23 +371,37 @@ namespace TMCWD.Application.Controllers
 
                 foreach (var billing in unpaidBills)
                 {
-                    var summary = await _billingTrans.GetCollectionBill(billing.BillingReferenceId);
+                    CollectionBill? summary;
+                    try { summary = await _billingTrans.GetCollectionBill(billing.BillingReferenceId); }
+                    catch (HttpRequestException error) when (error.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+                    {
+                        var authorization = _api.Client.DefaultRequestHeaders.Authorization;
+                        _logger.LogWarning("Data API {Endpoint} returned {Status}; authorization present: {Present}, scheme: {Scheme}, user: {UserId}, role: {Role}",
+                            "api/Billing/Collection/" + Uri.EscapeDataString(billing.BillingReferenceId),
+                            (int)error.StatusCode.Value, authorization != null, authorization?.Scheme, _user.User.Id, _user.User.Role);
+                        return StatusCode((int)error.StatusCode.Value, new { message = error.StatusCode == System.Net.HttpStatusCode.Unauthorized
+                            ? "Data API authentication failed. Check the shared JWT configuration and restart both applications."
+                            : "The Data API denied access to Collection details." });
+                    }
+                    catch (HttpRequestException error) when (error.StatusCode == System.Net.HttpStatusCode.Conflict)
+                    {
+                        return Conflict(new { message = "An Other Charge has an invalid installment ledger. Contact the billing administrator." });
+                    }
                     if (summary == null || summary.AmountDue <= 0m) continue;
                     totalAmountDue += summary.AmountDue;
 
-                    // Load posted charges before splitting the collectible bill,
-                    // because RemainingAmount already includes them on new data.
-                    var otherCharges = await _otherChargeTrans.GetByReference(billing.BillingReferenceId);
-                    var activeUnpaidCharges = otherCharges?
-                        .Where(c => c.IsActive && (c.PaymentStatus == PaymentStatus.Unpaid
-                                               || c.PaymentStatus == PaymentStatus.Overdue))
-                        .ToList() ?? new List<Model.Billing.OtherCharge>();
+                    // The API returns currently collectible installment rows only.
+                    var activeUnpaidCharges = summary.CollectibleOtherCharges;
                     var otherChargeAmount = summary.OtherCharges;
                     totalOtherCharges += otherChargeAmount;
                     accountOtherCharges.AddRange(activeUnpaidCharges.Select(c => (object)new
                     {
                         id = c.Id,
-                        chargeType = feeTypeNames.GetValueOrDefault(c.Type, $"Charge #{c.Type}"),
+                        installmentId = c.InstallmentId,
+                        installmentNumber = c.InstallmentNumber,
+                        dueBillingPeriod = c.DueBillingPeriod.ToString("yyyy-MM"),
+                        chargeType = feeTypeNames.GetValueOrDefault(c.Type, $"Charge #{c.Type}")
+                            + $" — installment {c.InstallmentNumber}/{c.PayableIn}",
                         amount = c.Amount,
                         payableIn = c.PayableIn,
                         particulars = c.Particulars,
@@ -393,6 +415,7 @@ namespace TMCWD.Application.Controllers
                     bills.Add(new
                     {
                         billingReferenceId = billing.BillingReferenceId,
+                        installmentIds = activeUnpaidCharges.Select(c => c.InstallmentId).ToList(),
                         serviceInvoiceNumber = summary.ServiceInvoiceNumber,
                         paymentReference = summary.PaymentReference,
                         billingPeriod = summary.BillingDate.ToString("yyyy-MM"),

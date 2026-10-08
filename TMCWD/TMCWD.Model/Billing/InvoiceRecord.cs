@@ -7,6 +7,9 @@ public sealed class InvoiceRecord
     public decimal TotalAmount { get; set; }
     public string TransactionType { get; set; } = string.Empty;
     public DateTime DateIssued { get; set; }
+    public long CashierId { get; set; }
+    public string CashierName { get; set; } = string.Empty;
+    public string? ExternalReference { get; set; }
     public string Status { get; set; } = string.Empty;
     public string CancellationReason { get; set; } = string.Empty;
     public List<InvoiceLineRecord> Lines { get; set; } = new();

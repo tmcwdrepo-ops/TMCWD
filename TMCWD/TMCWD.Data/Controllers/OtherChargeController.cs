@@ -51,9 +51,13 @@ namespace TMCWD.Data.Controllers
         public async Task<IActionResult> GetByReference(string reference)
         {
             if (String.IsNullOrEmpty(reference)) return BadRequest();
-            var otherCharges = await _service.GetByReference(reference);
-            if (otherCharges == null || !otherCharges.Any()) return NotFound();
-            return Ok(otherCharges);
+            try
+            {
+                var otherCharges = await _service.GetByReference(reference);
+                if (otherCharges == null || !otherCharges.Any()) return NotFound();
+                return Ok(otherCharges);
+            }
+            catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
         }
 
         [HttpPost("SaveUpdate/{userId}")]
@@ -74,13 +78,11 @@ namespace TMCWD.Data.Controllers
 
                 return Ok(savedOtherCharge);
             }
-            catch (Exception ex)
+            catch (TMCWD.Model.Billing.PaymentConflictException ex) { return Conflict(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception)
             {
-                Console.WriteLine("========== SAVE OTHER CHARGE ERROR ==========");
-                Console.WriteLine(ex.ToString());
-                Console.WriteLine("=============================================");
-
-                return BadRequest(ex.Message);
+                return StatusCode(500, new { message = "The charge could not be saved. Try again." });
             }
         }
 
@@ -133,6 +135,7 @@ namespace TMCWD.Data.Controllers
                 var invoiceNumber = await _service.ProcessPayment(userId, request);
                 return Ok(new { success = true, invoiceNumber });
             }
+            catch (TMCWD.Model.Billing.PaymentConflictException ex) { return Conflict(new { success = false, message = ex.Message }); }
             catch (InvalidOperationException ex)
             {
                 return BadRequest(new { success = false, message = ex.Message });

@@ -6,7 +6,7 @@ namespace TMCWD.Data.Services
     public interface IReadingSheetService
     {
 
-        public Task<ReadingSheet> Get(int id);
+        public Task<ReadingSheet?> Get(int id);
 
         public Task<List<ReadingSheet>> GetAll();
 
@@ -20,11 +20,11 @@ namespace TMCWD.Data.Services
 
         public Task<List<ReadingSheet>> GetByBillingDate(int zone, int book, DateTime billingDate);
 
-        public Task<ReadingSheet> GetByBillingDateAndAssignedTo(int zone, int book, DateTime billingDate, int assignedTo);
+        public Task<ReadingSheet?> GetByBillingDateAndAssignedTo(int zone, int book, DateTime billingDate, int assignedTo);
 
-        public Task<ReadingSheet> GetByBillingPeriodStart(int zone, int book, DateTime billingPeriodStart);
+        public Task<ReadingSheet?> GetByBillingPeriodStart(int zone, int book, DateTime billingPeriodStart);
 
-        public Task<ReadingSheet> GetCurrentByAssignedTo(int zone, int book, int assignedTo);
+        public Task<ReadingSheet?> GetCurrentByAssignedTo(int zone, int book, int assignedTo);
 
         Task<IEnumerable<ReadingSheet>> GetRangeReadingSheets(IEnumerable<long> ids);
 

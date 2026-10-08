@@ -17,7 +17,7 @@
     if (!rows.length) {
       const empty = document.createElement('div');
       empty.className = 'is-empty-state';
-      empty.textContent = message || 'No invoices found';
+      empty.textContent = message || 'No payment receipts found';
       results.appendChild(empty);
       return;
     }
@@ -45,14 +45,14 @@
 
   async function search() {
     const query = input.value.trim();
-    if (!query) { render([], 'Enter an invoice number.'); return; }
+    if (!query) { render([], 'Enter a payment reference.'); return; }
     searchBtn.disabled = true;
     try {
       const response = await fetch('/Collections/SearchInvoices?q=' + encodeURIComponent(query));
-      if (!response.ok) throw new Error('Invoice search failed.');
+      if (!response.ok) throw new Error('Payment receipt search failed.');
       render(await response.json());
     } catch (error) {
-      render([], error.message || 'Invoice search failed.');
+      render([], error.message || 'Payment receipt search failed.');
     } finally {
       searchBtn.disabled = false;
     }

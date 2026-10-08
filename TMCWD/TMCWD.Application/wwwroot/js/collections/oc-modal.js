@@ -1,3 +1,8 @@
+function escapeOtherChargeText(value) {
+  var span = document.createElement('span');
+  span.textContent = value == null ? '' : String(value);
+  return span.innerHTML;
+}
 // ============================================================
 //  Other Charges Modal  (oc-*)
 // ============================================================
@@ -131,7 +136,7 @@
     var grand = 0;
     tableBody.innerHTML = rows.map(function (c) {
       var amt = c.amount || 0; grand += amt;
-      return '<tr><td>' + (c.chargeType || '\u2014') + '</td>' +
+      return '<tr><td>' + escapeOtherChargeText((c.chargeType || '\u2014')) + '</td>' +
              '<td class="oc-receipt-col-amount">' + fmtPHP(amt) + '</td></tr>';
     }).join('');
     if (totalEl) totalEl.textContent = fmtPHP(grand);
@@ -179,7 +184,7 @@
     }
     suggestionsEl.innerHTML = matches.map(function (r, i) {
       return '<div class="oc-sugg-item" data-idx="' + i + '">' +
-        '<div class="oc-sugg-accno">' + r.accountNumber + '</div>' +
+        '<div class="oc-sugg-accno">' + escapeOtherChargeText(r.accountNumber) + '</div>' +
         '<div class="oc-sugg-name">'  + r.name + '</div>' +
         '<div class="oc-sugg-meta">'  + (r.tin ? 'TIN: ' + r.tin + ' \u2022 ' : '') + (r.address || '') + '</div>' +
       '</div>';
@@ -302,32 +307,15 @@
       return false;
     }
 
-    // Resolve charge type label from the select option text
-    var chargeTypeLabel = chargeTypeId;
-    if (chargeTypeSelect) {
-      var selOpt = chargeTypeSelect.querySelector('option[value="' + chargeTypeId + '"]');
-      if (selOpt) chargeTypeLabel = selOpt.textContent;
-    }
-    var row = { chargeType: chargeTypeLabel, chargeTypeId: chargeTypeId, amount: amount };
     // Lookup mode — must have an account loaded
     var acc = window._ocCurrentAccount;
     if (!acc) {
       showAddError('No account selected. Search for an account first.');
       return false;
     }
-    if (!Array.isArray(acc.otherCharges)) acc.otherCharges = [];
-    acc.otherCharges.push(row);
-
-    var newBal = acc.otherCharges.reduce(function (s, c) { return s + (c.amount || 0); }, 0);
-    acc.otherChargesBalance = newBal;
-    var badge = document.getElementById('fOtherCharges');
-    if (badge) badge.textContent = fmtPHP(newBal);
-
-    renderTable();
-
-    if (chargeTypeSelect) chargeTypeSelect.value = '';
-    if (amountInput)      amountInput.value      = '';
-    if (chargeTypeSelect) chargeTypeSelect.focus();
+    closeModal();
+    window.openOceModal();
+    document.getElementById('oceAmount').value = amount;
     return true;
   }
 
@@ -489,7 +477,7 @@
     othTableBody.innerHTML = _ocOthCharges.map(function (c) {
       total += c.amount || 0;
       return '<tr>' +
-        '<td>' + (c.chargeType || '\u2014') + '</td>' +
+        '<td>' + escapeOtherChargeText((c.chargeType || '\u2014')) + '</td>' +
         '<td style="text-align:right;font-family:\'IBM Plex Mono\',monospace;">' + fmtPHP(c.amount || 0) + '</td>' +
         '<td class="oc-receipt-col-amount">' + fmtPHP(c.amount || 0) + '</td>' +
       '</tr>';
@@ -542,16 +530,9 @@
       var amount = othAmount     ? parseFloat(othAmount.value) : NaN;
       if (!typeId) { if (othChargeType) othChargeType.focus(); return; }
       if (!amount || amount <= 0) { if (othAmount) othAmount.focus(); return; }
-      // Resolve charge type label from the select option text
-      var othLabel = typeId;
-      if (othChargeType) {
-        var othOpt = othChargeType.querySelector('option[value="' + typeId + '"]');
-        if (othOpt) othLabel = othOpt.textContent;
-      }
-      _ocOthCharges.push({ chargeType: othLabel, chargeTypeId: typeId, amount: amount });      if (othChargeType) othChargeType.value = '';
-      if (othAmount)     othAmount.value     = '';
-      renderOthTable();
-      if (othChargeType) othChargeType.focus();
+      closeModal();
+      window.openOceModal();
+      document.getElementById('oceAmount').value = amount;
     });
   }
 
@@ -657,7 +638,7 @@
     }
     othSuggestionsEl.innerHTML = matches.map(function (r, i) {
       return '<div class="oc-sugg-item" data-idx="' + i + '">' +
-        '<div class="oc-sugg-accno">' + r.accountNumber + '</div>' +
+        '<div class="oc-sugg-accno">' + escapeOtherChargeText(r.accountNumber) + '</div>' +
         '<div class="oc-sugg-name">'  + r.name + '</div>' +
         '<div class="oc-sugg-meta">'  + (r.tin ? 'TIN: ' + r.tin + ' \u2022 ' : '') + (r.address || '') + '</div>' +
       '</div>';
@@ -709,11 +690,7 @@
       this.disabled = true;
       this.textContent = 'Processing\u2026';
       var csrfToken  = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
-      var invoiceNo  = 'OCO-' + Date.now();
       var methodNum  = _ocOthPayMethod === 'check' ? 2 : _ocOthPayMethod === 'ewallet' ? 3 : 1;
-      var chargeIds  = _ocOthCharges.map(function (c) {
-        return Number(c.id || c.otherChargeId);
-      }).filter(Boolean);
       var paidAccountNumber = othAccNoInput ? othAccNoInput.value.trim() : '';
       var self       = this;
 
@@ -724,22 +701,23 @@
           'RequestVerificationToken': csrfToken
         },
         body: JSON.stringify({
-          invoiceNumber:  invoiceNo,
+          externalReference: methodNum === 2 ? document.getElementById('ocCheckNumber2').value.trim() : null,
           method:         methodNum,
           amountTendered: tendered,
-          otherChargeIds: chargeIds
+          installmentIds: _ocOthCharges.map(function (c) { return c.installmentId; }).filter(Boolean)
         })
       })
         .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
         .then(function (r) {
-          if (!r.ok) throw new Error(r.body.message || 'Payment failed.');
+          if (!r.ok || !r.body.invoiceNumber) throw new Error(r.body.message || 'Payment was not confirmed.');
+          document.dispatchEvent(new Event('collectionChanged'));
           setOthersView(false);
           var card = document.getElementById('toast');
           var bd   = document.getElementById('toastBackdrop');
           if (card) {
             document.getElementById('toastTitle').textContent = 'Success';
             document.getElementById('toastMsg').textContent   =
-              'Other Charges (Others) payment of ' + fmtPHP(due) + ' recorded. OR: ' + (r.body.invoiceNumber || invoiceNo);
+              'Other Charges (Others) payment of ' + fmtPHP(due) + ' recorded. OR: ' + r.body.invoiceNumber;
             document.getElementById('toastIconSuccess').style.display = 'block';
             document.getElementById('toastIconDanger').style.display  = 'none';
             card.className = 'toast-card show'; bd.className = 'toast-backdrop show';
@@ -759,6 +737,7 @@
         })
         .catch(function (err) {
           console.error('[OC Others Pay] error:', err);
+          showAddError(err.message || 'Payment failed. Please refresh and try again.');
           self.disabled    = false;
           self.textContent = 'Pay';
         });    });
@@ -808,9 +787,7 @@
     payBtn.textContent = 'Processing\u2026';
 
     var csrfToken = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
-    var invoiceNo = 'OC-' + Date.now();
     var methodNum = _ocPayMethod === 'check' ? 2 : _ocPayMethod === 'ewallet' ? 3 : 1;
-    var chargeIds = charges.map(function (c) { return c.id || c.otherChargeId || c.chargeTypeId; }).filter(Boolean);
 
     fetch('/Collections/PayOtherCharges', {
       method: 'POST',
@@ -819,22 +796,23 @@
         'RequestVerificationToken': csrfToken
       },
       body: JSON.stringify({
-        invoiceNumber:  invoiceNo,
+        externalReference: methodNum === 2 ? document.getElementById('ocCheckNumber').value.trim() : null,
         method:         methodNum,
         amountTendered: tendered,
-        otherChargeIds: chargeIds.map(Number)
+        installmentIds: charges.map(function (c) { return c.installmentId; }).filter(Boolean)
       })
     })
       .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
       .then(function (r) {
-        if (!r.ok) throw new Error(r.body.message || 'Payment failed.');
+        if (!r.ok || !r.body.invoiceNumber) throw new Error(r.body.message || 'Payment was not confirmed.');
+        document.dispatchEvent(new Event('collectionChanged'));
         closeModal();
         var card = document.getElementById('toast');
         var bd   = document.getElementById('toastBackdrop');
         if (card) {
           document.getElementById('toastTitle').textContent = 'Success';
           document.getElementById('toastMsg').textContent   =
-            'Other Charges payment of ' + fmtPHP(due) + ' recorded (' + _ocPayMethod.toUpperCase() + '). OR: ' + (r.body.invoiceNumber || invoiceNo);
+            'Other Charges payment of ' + fmtPHP(due) + ' recorded (' + _ocPayMethod.toUpperCase() + '). OR: ' + r.body.invoiceNumber;
           document.getElementById('toastIconSuccess').style.display = 'block';
           document.getElementById('toastIconDanger').style.display  = 'none';
           card.className = 'toast-card show'; bd.className = 'toast-backdrop show';
@@ -1031,16 +1009,7 @@
         })
         .catch(function () { /* leave empty */ });
     }
-    // Payable In — static options
-    if (payableIn && payableIn.dataset.populated !== '1') {
-      var opts = ['Cash', 'Check', 'E-Wallet'];
-      opts.forEach(function (o) {
-        var opt = document.createElement('option');
-        opt.value = o; opt.textContent = o;
-        payableIn.appendChild(opt);
-      });
-      payableIn.dataset.populated = '1';
-    }
+
   }
 
   // Render table + total
@@ -1055,9 +1024,9 @@
     tableBody.innerHTML = _charges.map(function (c) {
       total += c.amount || 0;
       return '<tr>' +
-        '<td>' + (c.description || '\u2014') + '</td>' +
-        '<td>' + (c.payableIn   || '\u2014') + '</td>' +
-        '<td>' + (c.particulars || '\u2014') + '</td>' +
+        '<td>' + escapeOtherChargeText((c.description || '\u2014')) + '</td>' +
+        '<td>' + escapeOtherChargeText((c.payableIn   || '\u2014')) + '</td>' +
+        '<td>' + escapeOtherChargeText((c.particulars || '\u2014')) + '</td>' +
         '<td class="oce-col-right" style="font-family:\'IBM Plex Mono\',monospace;">' +
           '\u20B1' + Number(c.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 }) +
         '</td>' +
@@ -1129,7 +1098,7 @@
     }
     suggestEl.innerHTML = matches.map(function (r, i) {
       return '<div class="oc-sugg-item" data-idx="' + i + '">' +
-        '<div class="oc-sugg-accno">' + r.accountNumber + '</div>' +
+        '<div class="oc-sugg-accno">' + escapeOtherChargeText(r.accountNumber) + '</div>' +
         '<div class="oc-sugg-name">'  + r.name + '</div>' +
       '</div>';
     }).join('');
@@ -1182,6 +1151,12 @@
   if (addBtn) {
     addBtn.addEventListener('click', function () {
       var typeId = chargeType ? chargeType.value : '';
+      if (!typeId) { alert('Select a charge type.'); return; }
+      if (!payableIn || !/^[0-9]+$/.test(payableIn.value) || Number(payableIn.value) < 1 || !Number.isSafeInteger(Number(payableIn.value))) {
+        alert('Number of Installments must be a positive whole number.');
+        if (payableIn) payableIn.focus();
+        return;
+      }
       var amt    = amountInput ? parseFloat(amountInput.value) : NaN;
       var valid  = true;
 
@@ -1194,24 +1169,25 @@
       }
       if (!valid) return;
 
-      // Resolve label from the select option text (populated dynamically from the API)
-      var oceLabel = typeId;
-      if (chargeType) {
-        var oceOpt = chargeType.querySelector('option[value="' + typeId + '"]');
-        if (oceOpt) oceLabel = oceOpt.textContent;
-      }
-      _charges.push({
-        description: oceLabel || (typeId || '\u2014'),
-        payableIn:   payableIn   ? payableIn.value   : '',
-        particulars: particulars ? particulars.value  : '',
-        amount:      amt
-      });
-      if (chargeType)  chargeType.value  = '';
-      if (payableIn)   payableIn.value   = '';
-      if (particulars) particulars.value = '';
-      if (amountInput) amountInput.value = '';
-      renderTable();
-      if (chargeType) chargeType.focus();
+      var accountNumber = accNoInput ? accNoInput.value.trim() : '';
+      if (!accountNumber) { alert('Select an account first.'); return; }
+      addBtn.disabled = true;
+      fetch('/Billing/SaveOtherCharge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '' },
+        body: JSON.stringify({ accountNumber: accountNumber, chargeType: Number(typeId), payableIn: payableIn.value,
+          particulars: particulars ? particulars.value.trim() : '', amount: amt })
+      }).then(function (response) {
+        if (!response.ok) return response.text().then(function (message) { throw new Error(message); });
+        return response.json();
+      }).then(function () {
+        alert('Draft charge saved. Post it from Other Charges to make it collectible.');
+        chargeType.value = ''; payableIn.value = '';
+        if (particulars) particulars.value = '';
+        if (amountInput) amountInput.value = '';
+        return loadAccountWithCharges(accountNumber);
+      }).catch(function (error) { alert(error.message || 'Unable to save the draft charge.'); })
+        .finally(function () { addBtn.disabled = false; });
     });
   }
 

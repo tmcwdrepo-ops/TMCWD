@@ -65,6 +65,14 @@
                 return await response.Content.ReadFromJsonAsync<CollectionBill>();
             }
 
+            public async Task<AccountLedgerDto?> GetAccountLedger(string accountNumber)
+            {
+                using var response = await _service.Client.GetAsync($"api/Billing/AccountLedger/{Uri.EscapeDataString(accountNumber)}");
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<AccountLedgerDto>();
+            }
+
             public async Task<List<BillingBase>> GetAll()
             {
                 var response = await _service.Client.GetAsync($"api/Billing/GetAll");

@@ -48,24 +48,22 @@ namespace TMCWD.Data.Services
             var sheet = await (from reading in _dbContext.Readings.AsNoTracking()
                                join s in _dbContext.ReadingSheets.AsNoTracking() on reading.ReadingSheetId equals s.Id
                                where reading.Id == bill.ReadingId select s).SingleOrDefaultAsync();
-            var charges = await _dbContext.OtherCharges.AsNoTracking()
-                .Where(c => c.BillingReferenceId == billingReferenceId && c.IsActive
-                    && (c.PaymentStatus == (int)PaymentStatus.Unpaid || c.PaymentStatus == (int)PaymentStatus.Overdue))
-                .SumAsync(c => (decimal?)c.Amount) ?? 0m;
+            var chargeRows = await new OtherChargeService(_dbContext).GetCollectibleByReference(billingReferenceId);
+            var charges = chargeRows.Sum(c => c.Amount);
             var penalty = await _dbContext.Penalties.AsNoTracking()
                 .Where(p => p.BillingReferenceId == billingReferenceId
                     && (p.PaymentStatus == (int)PaymentStatus.Unpaid || p.PaymentStatus == (int)PaymentStatus.Overdue))
                 .SumAsync(p => (decimal?)p.Amount) ?? 0m;
             var settled = bill.PaymentStatus == (int)PaymentStatus.Paid || bill.PaymentStatus == (int)PaymentStatus.Waived;
-            // Preserve legacy connection-stub recovery; never infer a water-charge component.
-            var remaining = settled ? 0m : Math.Max(0m, Math.Max(bill.RemainingAmount, charges));
+            var remaining = settled ? 0m : Math.Max(0m, bill.RemainingAmount);
             var futurePenalty = invoice == null ? (decimal?)null : TMCWD.Model.Billing.LatePaymentPenalty.Calculate(invoice.BillAmount);
             return new TMCWD.Model.Billing.CollectionBill {
                 BillingReferenceId = bill.BillingReferenceId, ServiceInvoiceNumber = bill.ServiceInvoiceNumber,
                 PaymentReference = string.IsNullOrWhiteSpace(bill.PaymentTransactionId) ? null : bill.PaymentTransactionId,
                 BillAmount = invoice?.BillAmount, MeterMaintenanceFee = invoice?.MeterMaintenance,
-                OtherCharges = charges, BillingAdjustment = bill.BillingAdjustment, RemainingAmount = remaining,
-                Penalty = settled ? 0m : penalty, AmountDue = settled ? 0m : remaining + penalty,
+                OtherCharges = charges, CollectibleOtherCharges = chargeRows,
+                BillingAdjustment = bill.BillingAdjustment, RemainingAmount = remaining,
+                Penalty = settled ? 0m : penalty, AmountDue = remaining + (settled ? 0m : penalty) + charges,
                 TotalDue = invoice?.TotalDue, PenaltyAfterDue = futurePenalty,
                 TotalAfterDue = invoice == null ? null : invoice.TotalDue + futurePenalty,
                 BillingDate = sheet?.BillingDate ?? bill.BillingPeriod, DueDate = sheet?.DueDate,

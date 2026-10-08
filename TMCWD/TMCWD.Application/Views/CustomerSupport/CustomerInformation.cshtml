@@ -1,6 +1,8 @@
 @{
     Layout = "_InsideLayout";
     ViewData["ActivePage"] = "customers";
+    ViewData["Title"] = "Customer Information";
+    ViewData["PageTitle"] = "Customer Information";
 }
 @model TMCWD.Application.Models.CustomerInformationViewModel
 
@@ -363,137 +365,7 @@
 <div id="ciToast" class="ci-toast ci-toast--hidden" role="status" aria-live="polite"></div>
 <vc:modal-dialog type="deactivate"></vc:modal-dialog>
 
-@* ── Ledger Modal (reused from Collections) ──────────────────── *@
-<div class="ldg-overlay" id="ledgerOverlay" style="display:none;" aria-modal="true" role="dialog" aria-labelledby="ldgModalTitle">
-  <div class="ldg-modal">
-    <div class="ldg-header">
-      <div class="ldg-header-left">
-        <div class="ldg-header-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-        </div>
-        <h2 class="ldg-title" id="ldgModalTitle">Ledger</h2>
-      </div>
-      <div class="ldg-header-right">
-        <button class="ldg-menu-btn" id="ldgMenuBtn" type="button" aria-label="More options">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18"><circle cx="12" cy="5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg>
-        </button>
-        <button class="ldg-close" id="ldgCloseBtn" type="button" aria-label="Close Ledger modal">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <div class="ldg-account-strip">
-      <div class="ldg-account-fields">
-        <div class="ldg-field"><span class="ldg-field-label">Account Name</span><span class="ldg-field-value" id="ldgAccName">—</span></div>
-        <div class="ldg-field"><span class="ldg-field-label">Account No.</span><span class="ldg-field-value ldg-mono" id="ldgAccNo">—</span></div>
-        <div class="ldg-field ldg-field--wide"><span class="ldg-field-label">Address</span><span class="ldg-field-value" id="ldgAddress">—</span></div>
-      </div>
-      <div class="ldg-account-meta">
-        <div class="ldg-field"><span class="ldg-field-label">Rate Code</span><span class="ldg-field-value ldg-mono" id="ldgRateCode">—</span></div>
-        <div class="ldg-field"><span class="ldg-field-label">Meter No.</span><span class="ldg-field-value ldg-mono" id="ldgMeterNo">—</span></div>
-        <div class="ldg-field"><span class="ldg-field-label">Status</span><span class="ldg-status-badge" id="ldgStatus">—</span></div>
-      </div>
-      <div class="ldg-balance-block">
-        <span class="ldg-balance-label">Total Balance</span>
-        <span class="ldg-balance-value ldg-mono" id="ldgTotalBalance">₱0.00</span>
-      </div>
-    </div>
-
-    <div class="ldg-actions-row">
-      <button class="ldg-action-btn ldg-action-btn--pdf"   data-action="export-bills-pdf"    type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg> Bills (PDF)</button>
-      <button class="ldg-action-btn ldg-action-btn--excel" data-action="export-bills-excel"  type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Bills (Excel)</button>
-      <button class="ldg-action-btn ldg-action-btn--pdf"   data-action="export-others-pdf"   type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg> Others (PDF)</button>
-      <button class="ldg-action-btn ldg-action-btn--excel" data-action="export-others-excel" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Others (Excel)</button>
-      <button class="ldg-action-btn ldg-action-btn--sanitize" data-action="sanitize"          type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Sanitize</button>
-    </div>
-
-    <div class="ldg-tabs-row">
-      <div class="ldg-tabs" role="tablist">
-        <button class="ldg-tab ldg-tab--active" id="ldgTabBills"  role="tab" aria-selected="true"  aria-controls="ldgPanelBills"  type="button">Bills</button>
-        <button class="ldg-tab"                 id="ldgTabOthers" role="tab" aria-selected="false" aria-controls="ldgPanelOthers" type="button">Other Charges</button>
-      </div>
-      <a href="#" class="ldg-history-link" id="ldgHistoryLink" aria-label="View full history">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> History
-      </a>
-    </div>
-
-    <div class="ldg-panel" id="ldgPanelBills" role="tabpanel" aria-labelledby="ldgTabBills">
-      <div class="ldg-table-wrap">
-        <table class="ldg-table" id="ldgBillsTable">
-          <thead><tr>
-            <th class="ldg-col-ref">Ref No.</th>
-            <th class="ldg-col-particulars">Particulars</th>
-            <th class="ldg-col-num">Prev</th>
-            <th class="ldg-col-num">Pres</th>
-            <th class="ldg-col-num">Usage</th>
-            <th class="ldg-col-num">Debit</th>
-            <th class="ldg-col-num">Credit</th>
-            <th class="ldg-col-num">Balance</th>
-            <th class="ldg-col-by">Processed By</th>
-          </tr></thead>
-          <tbody id="ldgBillsBody">
-            <tr class="ldg-empty-row" id="ldgBillsEmpty"><td colspan="9">No ledger entries found.</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="ldg-pagination">
-        <div class="ldg-pagination-left">
-          <span class="ldg-rows-label">Rows per page:</span>
-          <div class="ldg-select-wrap">
-            <select class="ldg-rows-select" id="ldgRowsPerPage">
-              <option value="10" selected>10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-            </select>
-            <svg class="ldg-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M6 9l6 6 6-6"/></svg>
-          </div>
-        </div>
-        <div class="ldg-pagination-right">
-          <span class="ldg-range-label" id="ldgRangeLabel">0–0 of 0</span>
-          <button class="ldg-page-btn" id="ldgFirstBtn" aria-label="First page"    type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M11 17l-5-5 5-5"/><path d="M18 17l-5-5 5-5"/></svg></button>
-          <button class="ldg-page-btn" id="ldgPrevBtn"  aria-label="Previous page" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M15 18l-6-6 6-6"/></svg></button>
-          <button class="ldg-page-btn" id="ldgNextBtn"  aria-label="Next page"     type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M9 18l6-6-6-6"/></svg></button>
-          <button class="ldg-page-btn" id="ldgLastBtn"  aria-label="Last page"     type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M13 17l5-5-5-5"/><path d="M6 17l5-5-5-5"/></svg></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="ldg-panel" id="ldgPanelOthers" role="tabpanel" aria-labelledby="ldgTabOthers" style="display:none;">
-      <div class="ldg-table-wrap">
-        <table class="ldg-table" id="ldgOthersTable">
-          <thead><tr>
-            <th class="ldg-col-ref">Ref No.</th>
-            <th class="ldg-col-particulars">Particulars</th>
-            <th class="ldg-col-num">Prev</th><th class="ldg-col-num">Pres</th>
-            <th class="ldg-col-num">Usage</th><th class="ldg-col-num">Debit</th>
-            <th class="ldg-col-num">Credit</th><th class="ldg-col-num">Balance</th>
-            <th class="ldg-col-by">Processed By</th>
-          </tr></thead>
-          <tbody id="ldgOthersBody">
-            <tr class="ldg-empty-row" id="ldgOthersEmpty"><td colspan="9">No other charges on record.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-@* Toast used by ledger-modal.js *@
-<div class="toast-backdrop" id="toastBackdrop"></div>
-<div class="toast-card" id="toast">
-  <div class="toast-icon-wrap" id="toastIconWrap">
-    <svg id="toastIconSuccess" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
-    <svg id="toastIconDanger"  width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-  </div>
-  <div class="toast-body">
-    <div class="toast-title" id="toastTitle">Notice</div>
-    <div class="toast-msg"   id="toastMsg"></div>
-  </div>
-</div>
-
-<script src="~/js/collections/ledger-modal.js" asp-append-version="true"></script>
+<partial name="_AccountLedger" />
 
 @* ── Adjustments Modal ───────────────────────────────────────── *@
 <div id="adjModal" class="adj-backdrop adj-hidden" role="dialog" aria-modal="true" aria-labelledby="adjModalTitle">
@@ -547,51 +419,6 @@
                     <tr><td colspan="5" class="adj-empty">No bill adjustments found.</td></tr>
                 </tbody>
             </table>
-        </div>
-    </div>
-</div>
-
-@* ── Bills Modal ─────────────────────────────────────────────── *@<div id="billsModal" class="ci-bills-backdrop ci-hidden" role="dialog" aria-modal="true" aria-labelledby="billsModalTitle">
-    <div class="ci-bills-dialog">
-        <div class="ci-bills-header">
-            <h3 id="billsModalTitle" class="ci-bills-title">Bills</h3>
-            <button id="btnCloseBills" type="button" class="ci-bills-close" aria-label="Close">
-                <svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            </button>
-        </div>
-
-        <div class="ci-bills-body">
-            <table class="ci-bills-table">
-                <thead>
-                    <tr>
-                        <th>Reference No.</th>
-                        <th>Date</th>
-                        <th class="ci-num">Prev</th>
-                        <th class="ci-num">Pres</th>
-                        <th class="ci-num">Usage</th>
-                        <th class="ci-num">Amount</th>
-                    </tr>
-                </thead>
-                <tbody id="billsTbody">
-                    <tr><td colspan="6" class="ci-bills-empty">No billing records found.</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="ci-bills-footer">
-            <span class="ci-bills-rows-label">Rows per page:</span>
-            <select id="billsPageSize" class="ci-bills-pagesize">
-                <option value="5" selected>5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-            </select>
-            <span id="billsPageInfo" class="ci-bills-pageinfo">1–0 of 0</span>
-            <button id="billsPrevPage" type="button" class="ci-bills-nav" disabled aria-label="Previous page">
-                <svg viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <button id="billsNextPage" type="button" class="ci-bills-nav" disabled aria-label="Next page">
-                <svg viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
         </div>
     </div>
 </div>
@@ -802,61 +629,6 @@ select.ci-readonly-field:disabled {
 .adj-memo-debit  { color:#dc2626; font-weight:600; font-size:.75rem; }
 .adj-memo-credit { color:#065f46; font-weight:600; font-size:.75rem; }
 
-/* ── Bills modal ──────────────────────────────────────────── */
-.ci-bills-backdrop {
-    position:fixed; inset:0; background:rgba(0,0,0,.45);
-    display:flex; align-items:center; justify-content:center; z-index:500;
-}
-.ci-bills-dialog {
-    background:#fff; border-radius:.75rem; width:min(900px,95vw);
-    max-height:88vh; display:flex; flex-direction:column;
-    box-shadow:0 20px 60px rgba(0,0,0,.25); overflow:hidden;
-}
-.ci-bills-header {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:.85rem 1.25rem; border-bottom:1px solid #e5e7eb; flex-shrink:0;
-}
-.ci-bills-title { font-size:1rem; font-weight:600; color:#111827; margin:0; }
-.ci-bills-close {
-    background:none; border:none; cursor:pointer; color:#6b7280; padding:.25rem;
-    border-radius:.375rem; display:flex; align-items:center;
-    transition:background .12s, color .12s;
-}
-.ci-bills-close:hover { background:#f3f4f6; color:#111827; }
-.ci-bills-close svg { width:1.1rem; height:1.1rem; }
-.ci-bills-body { overflow-y:auto; flex:1; }
-.ci-bills-table { width:100%; border-collapse:collapse; font-size:.875rem; }
-.ci-bills-table thead tr { background:#4a7c59; color:#fff; }
-.ci-bills-table th {
-    padding:.6rem 1rem; text-align:left; font-weight:600; font-size:.8rem; white-space:nowrap;
-}
-.ci-bills-table th.ci-num { text-align:right; }
-.ci-bills-table td {
-    padding:.6rem 1rem; color:#111827; border-bottom:1px solid #f3f4f6; vertical-align:middle;
-}
-.ci-bills-table td.ci-num { text-align:right; font-variant-numeric:tabular-nums; }
-.ci-bills-table tbody tr:nth-child(even) { background:#f7f9f7; }
-.ci-bills-table tbody tr:hover { background:#e8f5e9; }
-.ci-bills-empty { text-align:center; color:#9ca3af; padding:2.5rem; }
-.ci-bills-footer {
-    display:flex; align-items:center; gap:.6rem; justify-content:flex-end;
-    padding:.65rem 1rem; border-top:1px solid #e5e7eb; flex-shrink:0;
-    font-size:.8rem; color:#374151;
-}
-.ci-bills-pagesize {
-    padding:.2rem .4rem; border:1px solid #d1d5db; border-radius:.375rem;
-    font-size:.8rem; cursor:pointer; appearance:none;
-    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right .3rem center / .9rem;
-    padding-right:1.4rem;
-}
-.ci-bills-pageinfo { color:#6b7280; min-width:75px; text-align:right; }
-.ci-bills-nav {
-    background:none; border:none; cursor:pointer; color:#374151; padding:.2rem .3rem;
-    border-radius:.375rem; display:flex; align-items:center; transition:background .12s;
-}
-.ci-bills-nav:hover:not(:disabled) { background:#f3f4f6; }
-.ci-bills-nav:disabled { opacity:.35; cursor:default; }
-.ci-bills-nav svg { width:1rem; height:1rem; }
 </style>
 }
 
@@ -878,7 +650,6 @@ select.ci-readonly-field:disabled {
     const URL_DEACTIVATE    = '@Url.Action("DeactivateCustomer",         "CustomerSupport")';
     const URL_CI            = '@Url.Action("CustomerInformation",        "CustomerSupport")';
     const URL_ACCT_INDEX    = '@Url.Action("Index",                      "Account")';
-    const URL_BILLS_DATA    = '@Url.Action("GetBillsData",               "CustomerSupport")';
 
     /* ── Refs ───────────────────────────────────────────────── */
     const $ = id => document.getElementById(id);
@@ -1105,20 +876,9 @@ select.ci-readonly-field:disabled {
         // Adjustments and Ledger are now modals — nothing to href-update
     }
 
-    /* ── Ledger button — opens the existing ledger modal ── */
     $('btnLedger').addEventListener('click', () => {
         if (!_currentAccountNumber) { showToast('No account selected.', 'error'); return; }
-        // Populate window._ocCurrentAccount so ledger-modal.js can build the header
-        const acctNo = _currentAccountNumber;
-        window._ocCurrentAccount = {
-            accountNumber: acctNo,
-            name:          txtCustomerName.value || '—',
-            address:       fldAddress?.value     || '—',
-            type:          fldConsumerType?.options[fldConsumerType.selectedIndex]?.text || '—',
-            meterNumber:   fldMeterNumber?.value  || '—',
-            status:        fldMeterStatus?.options[fldMeterStatus.selectedIndex]?.text   || '—',
-        };
-        if (window.openLedgerModal) window.openLedgerModal(acctNo);
+        window.openAccountLedger(_currentAccountNumber);
     });
 
     /* ── Load customer via AJAX ─────────────────────────────── */
@@ -1254,95 +1014,12 @@ select.ci-readonly-field:disabled {
         }).show();
     });
 
-    /* ── Bills modal ─────────────────────────────────────────── */
-    let _billsData    = [];
-    let _billsPage    = 0;
-    let _billsPerPage = 5;
     let _currentAccountNumber = '@(currentAcct?.AccountNumber ?? string.Empty)';
-
-    // Update _currentAccountNumber whenever an account is active
     function setActiveAccountNumber(acctNo) { _currentAccountNumber = acctNo; }
-
-    // Open modal
-    $('btnBills').addEventListener('click', async () => {
+    $('btnBills').addEventListener('click', () => {
         if (!_currentAccountNumber) { showToast('No account selected.', 'error'); return; }
-        openBillsModal(_currentAccountNumber);
+        window.openAccountLedger(_currentAccountNumber, { initialTab: 'bills' });
     });
-
-    async function openBillsModal(accountNumber) {
-        $('billsModal').classList.remove('ci-hidden');
-        document.body.style.overflow = 'hidden';
-        $('billsTbody').innerHTML = '<tr><td colspan="6" class="ci-bills-empty">Loading…</td></tr>';
-
-        try {
-            // Use the richer Application-layer History endpoint (better reading fallback)
-            const res = await fetch(`/Billing/History?accountNumber=${encodeURIComponent(accountNumber)}`);
-            _billsData = res.ok ? (await res.json()) : [];
-        } catch {
-            _billsData = [];
-        }
-
-        _billsPage    = 0;
-        _billsPerPage = parseInt($('billsPageSize').value, 10);
-        renderBillsTable(_billsData);
-    }
-
-    function renderBillsTable(data) {
-        const tbody = $('billsTbody');
-        const total = data.length;
-        const start = _billsPage * _billsPerPage;
-        const end   = Math.min(start + _billsPerPage, total);
-        const page  = data.slice(start, end);
-
-        tbody.innerHTML = '';
-
-        if (!page.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="ci-bills-empty">No billing records found.</td></tr>';
-        } else {
-            page.forEach(b => {
-                const date = b.paymentDate
-                    ? new Date(b.paymentDate).toLocaleDateString('en-US')
-                    : (b.billingDate ? new Date(b.billingDate).toLocaleDateString('en-US') : '—');
-                const prev = (b.previous ?? 0).toLocaleString('en-US', { maximumFractionDigits:2 });
-                const pres = (b.present  ?? 0).toLocaleString('en-US', { maximumFractionDigits:2 });
-                const usg  = (b.usage    ?? 0).toLocaleString('en-US', { maximumFractionDigits:2 });
-                const amt  = (b.amount   ?? 0).toLocaleString('en-US', { maximumFractionDigits:2 });
-                const tr   = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${b.referenceNo ?? '—'}</td>
-                    <td>${date}</td>
-                    <td class="ci-num">${prev}</td>
-                    <td class="ci-num">${pres}</td>
-                    <td class="ci-num">${usg}</td>
-                    <td class="ci-num">${amt}</td>`;
-                tbody.appendChild(tr);
-            });
-        }
-
-        $('billsPageInfo').textContent = total === 0 ? '1–0 of 0' : `${start + 1}–${end} of ${total}`;
-        $('billsPrevPage').disabled = _billsPage === 0;
-        $('billsNextPage').disabled = end >= total;
-    }
-
-    $('billsPageSize').addEventListener('change', () => {
-        _billsPerPage = parseInt($('billsPageSize').value, 10);
-        _billsPage = 0;
-        renderBillsTable(_billsData);
-    });
-    $('billsPrevPage').addEventListener('click', () => { if (_billsPage > 0) { _billsPage--; renderBillsTable(_billsData); } });
-    $('billsNextPage').addEventListener('click', () => {
-        if ((_billsPage + 1) * _billsPerPage < _billsData.length) { _billsPage++; renderBillsTable(_billsData); }
-    });
-
-    // Close modal
-    $('btnCloseBills').addEventListener('click', closeBillsModal);
-    $('billsModal').addEventListener('click', e => { if (e.target === $('billsModal')) closeBillsModal(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBillsModal(); });
-
-    function closeBillsModal() {
-        $('billsModal').classList.add('ci-hidden');
-        document.body.style.overflow = '';
-    }
 
     // Keep _currentAccountNumber in sync whenever populatePage or switchToAccount fires
 

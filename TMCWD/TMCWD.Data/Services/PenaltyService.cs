@@ -42,7 +42,17 @@ namespace TMCWD.Data.Services
         public async Task<int> WaiveUnpaid(int userId, List<string> billingReferences)
         {
             await RequireRole(userId, UserRole.CustomerServiceOic, UserRole.SuperAdmin);
-            return await WaiveUnpaidInternal(userId, billingReferences);
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+            await LockBills(billingReferences);
+            var affected = await WaiveUnpaidInternal(userId, billingReferences);
+            await transaction.CommitAsync();
+            return affected;
+        }
+
+        private async Task LockBills(IEnumerable<string> references)
+        {
+            foreach (var reference in references.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(r => r, StringComparer.OrdinalIgnoreCase))
+                await _context.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM `Billings` WHERE BillingReferenceId = {reference} FOR UPDATE");
         }
 
         private async Task<int> WaiveUnpaidInternal(int userId, List<string> billingReferences)
@@ -81,7 +91,8 @@ namespace TMCWD.Data.Services
 
             var references = request.BillingReferenceIds.Select(x => x.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            await using var transaction = await _context.Database.BeginTransactionAsync();
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+            await LockBills(references);
             foreach (var reference in references)
             {
                 await _context.Database.ExecuteSqlInterpolatedAsync(
@@ -150,7 +161,11 @@ namespace TMCWD.Data.Services
             if (request == null || request.RequestId <= 0 || (request.Remarks?.Length ?? 0) > 500)
                 throw new InvalidOperationException("Invalid waiver review.");
 
-            await using var transaction = await _context.Database.BeginTransactionAsync();
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+            var reference = await _context.PenaltyWaiverRequests.AsNoTracking().Where(w => w.Id == request.RequestId)
+                .Select(w => w.BillingReferenceId).SingleOrDefaultAsync()
+                ?? throw new InvalidOperationException("The waiver request no longer exists.");
+            await LockBills(new[] { reference });
             var waiver = (await _context.PenaltyWaiverRequests
                 .FromSqlInterpolated($"SELECT * FROM penalty_waiver_requests WHERE Id = {request.RequestId} FOR UPDATE")
                 .ToListAsync()).SingleOrDefault()
@@ -179,7 +194,7 @@ namespace TMCWD.Data.Services
 
         private IQueryable<TMCWD.Model.Billing.PenaltyChargeEntry> ChargeEntries(DateTime? billingPeriod, DateTime today, DateTime? dueDateCutoff = null)
         {
-            // Use the provided due-date cutoff (≤) or fall back to strictly before today (<)
+            // Use the provided due-date cutoff (<=) or fall back to strictly before today (<)
             var cutoff = dueDateCutoff.HasValue && dueDateCutoff.Value.Date < today
                 ? dueDateCutoff.Value.Date : today.AddDays(-1);
 
@@ -206,16 +221,43 @@ namespace TMCWD.Data.Services
                    };
         }
 
-        public async Task<List<TMCWD.Model.Billing.PenaltyChargeEntry>> GetChargeEntries(DateTime? billingPeriod, DateTime? dueDate = null)
-        {
-            var today = TMCWD.Model.Billing.LatePaymentPenalty.Today;
-            var entries = await ChargeEntries(billingPeriod, today, dueDate)
-                .OrderBy(x => x.DueDate).ThenBy(x => x.BillingReferenceId).ToListAsync();
-            foreach (var entry in entries)
-                SetWaterPenalty(entry);
-            return entries;
-        }
+                public async Task<List<TMCWD.Model.Billing.PenaltyChargeEntry>> GetChargeEntries(
+                    DateTime? billingPeriod,
+                    DateTime? dueDate = null,
+                    DateTime? postingDate = null)
+                {
+                    var effectivePostingDate =
+                        postingDate?.Date
+                        ?? TMCWD.Model.Billing.LatePaymentPenalty.Today.Date;
 
+var entries = await ChargeEntries(
+        billingPeriod,
+        effectivePostingDate,
+        dueDate)
+    .OrderBy(x => x.DueDate)
+    .ThenBy(x => x.BillingReferenceId)
+    .ToListAsync();
+
+var safeEntries = new List<TMCWD.Model.Billing.PenaltyChargeEntry>();
+
+foreach (var entry in entries)
+{
+    try
+    {
+        SetWaterPenalty(entry);
+        safeEntries.Add(entry);
+    }
+    catch (InvalidOperationException)
+    {
+        // Historical/legacy billing rows without an authoritative
+        // water-charge snapshot cannot have a safe penalty calculated.
+        // Do not fabricate an amount and do not break the whole list.
+        continue;
+    }
+}
+
+return safeEntries;
+                }
         private static void SetWaterPenalty(TMCWD.Model.Billing.PenaltyChargeEntry entry)
         {
             var invoice = entry.InvoiceSnapshotJson == null ? null
@@ -267,9 +309,10 @@ namespace TMCWD.Data.Services
                 throw new InvalidOperationException("Select valid bills to charge.");
 
             var references = request.BillingReferenceIds.Select(x => x.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.Ordinal).ToList();
-            var today = TMCWD.Model.Billing.LatePaymentPenalty.Today;
-            await using var transaction = await _context.Database.BeginTransactionAsync();
+                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList();
+            var effectivePostingDate =
+                request.PostingDate?.Date
+                ?? TMCWD.Model.Billing.LatePaymentPenalty.Today;            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
             // The same bill locks are used by collection payments. Recheck all
             // eligibility after locking to prevent duplicate or stale postings.
             foreach (var reference in references)
@@ -281,8 +324,12 @@ namespace TMCWD.Data.Services
                     throw new InvalidOperationException("A selected bill no longer exists. Reload the list.");
             }
 
-            var entries = await ChargeEntries(request.BillingPeriod, today, request.DueDate)
-                .Where(x => references.Contains(x.BillingReferenceId)).ToListAsync();
+                var entries = await ChargeEntries(
+                        request.BillingPeriod,
+                        effectivePostingDate,
+                        request.DueDate)
+                    .Where(x => references.Contains(x.BillingReferenceId))
+                    .ToListAsync();
             if (entries.Count != references.Count)
                 throw new InvalidOperationException("A selected bill was paid, already charged, or is not overdue. Reload the list; no penalties were posted.");
 
@@ -305,10 +352,12 @@ namespace TMCWD.Data.Services
             }
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            return new TMCWD.Model.Billing.PostPenaltyChargesResult
-            {
-                PostedCount = entries.Count, TotalPenalty = total, PostingDate = today
-            };
+                return new TMCWD.Model.Billing.PostPenaltyChargesResult
+                {
+                    PostedCount = entries.Count,
+                    TotalPenalty = total,
+                    PostingDate = effectivePostingDate
+                };
         }
 
     }

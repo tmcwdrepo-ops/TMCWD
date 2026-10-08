@@ -238,9 +238,7 @@ class ServiceInvoicePreview extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     fontSize:
                         field.key == 'TOTAL DUE' ||
-                            field.key == 'TOTAL AFTER DUE' ||
-                            field.key == 'Total Bill Amount' ||
-                            field.key == 'Remaining Amount'
+                            field.key == 'TOTAL AFTER DUE'
                         ? 15
                         : fontSize,
                   ),
@@ -398,38 +396,26 @@ class ServiceInvoicePreview extends StatelessWidget {
                     _section(null, {
                       if (soa.billAmount != null)
                         'Bill Amount': soaPeso(soa.billAmount!),
-                    }),
-                    _section('Other Charges', {
                       if (soa.meterMaintenance != null)
                         'Meter Maintenance': soaPeso(soa.meterMaintenance!),
                       if (soa.powerCostAdjustment != null)
-                        'Power Cost Adjustment': soaPeso(
-                          soa.powerCostAdjustment!,
-                        ),
+                        'Power Cost Adjustm': soaPeso(soa.powerCostAdjustment!),
                       if (soa.arrearsAmount != null)
                         'Arrears': soaPeso(soa.arrearsAmount!),
-                      'Billing Adjustment': soaPeso(soa.billingAdjustment),
-                      'Miscellaneous Charges': soaPeso(soa.otherCharges),
-                      if (soa.billAmount == null)
-                        'Total Bill Amount': soaPeso(soa.totalBillAmount),
                       if (soa.totalDue != null)
                         'TOTAL DUE': soaPeso(soa.totalDue!),
-                      if (soa.currentPenaltyAmount != null)
-                        'Penalty (Applied)': soaPeso(soa.currentPenaltyAmount!),
+                      // The applied liability changes after payment; the issued
+                      // invoice uses the server's snapshot-based penalty only.
                       if (soa.penaltyAfterDueAmount != null)
-                        'Penalty After Due': soaPeso(
-                          soa.penaltyAfterDueAmount!,
-                        ),
+                        'Penalty': soaPeso(soa.penaltyAfterDueAmount!),
                       if (soa.totalAfterDue != null)
                         'TOTAL AFTER DUE': soaPeso(soa.totalAfterDue!),
-                      'Remaining Amount': soaPeso(soa.remainingAmount),
+                      // Without an invoice snapshot this field is a live balance.
+                      if (soa.billAmount != null)
+                        'Other Charges': soaPeso(soa.otherCharges),
                     }),
                     const Divider(height: 8, color: Colors.black),
                     _section(null, {
-                      if (soa.billingDate != null)
-                        'Billing Date': labels.formatMediumDate(
-                          soa.billingDate!,
-                        ),
                       if (soa.dueDate != null)
                         'Due Date': labels.formatMediumDate(soa.dueDate!),
                       if (soa.disconnectionDate != null)
@@ -472,7 +458,6 @@ class ServiceInvoicePreview extends StatelessWidget {
                           semanticsLabel: 'Service Invoice lookup QR code',
                         ),
                       ),
-                      Text(soa.qrPayload!, textAlign: TextAlign.center),
                     ],
                   ],
                 ),
