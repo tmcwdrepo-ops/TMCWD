@@ -36,8 +36,10 @@ namespace TMCWD.Model.Administrator
         [DisplayName("Date Verified")]
         public DateTime? DateVerified { get; set; }
         [DisplayName("Password")]
+        [System.Text.Json.Serialization.JsonIgnore]
         public string? Password { get; set; }
         [DisplayName("Remember Token")]
+        [System.Text.Json.Serialization.JsonIgnore]
         public string? RememberToken { get; set; }
         [DisplayName("Created")]
         public DateTime? DateCreated { get; set; }

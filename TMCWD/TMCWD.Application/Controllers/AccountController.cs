@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Text.Json;
 using TMCWD.Application.Models;
@@ -56,6 +56,7 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveAccount(AccountViewModel model)
         {
             User currentUser = _authenticatedUserService.User;
@@ -64,20 +65,11 @@ namespace TMCWD.Application.Controllers
             return RedirectToAction("Index", "Account", new { customerId = model.AddEditAccount.CustomerId });
         }
 
-        public async Task<IActionResult> DeactivateAccount(int accountId)
-        {
-            Account acct = new();
-            acct =  await _accountTransaction.Get(accountId);
-            if(acct != null)
-            {
-                acct.Status = AccountStatus.Closed;
-                await _accountTransaction.SaveUpdate(_authenticatedUserService.User.Id, acct);
-                RedirectToAction("Index", "Account", new { customerId = acct.CustomerId });
-            }
-            return RedirectToAction("Index", "Account");
-        }
+        [HttpGet]
+        public IActionResult DeactivateAccount(int accountId) => Conflict("Account status changes require an approved service workflow.");
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddAccount([FromBody] object content)
         {
             if(content != null)
@@ -103,6 +95,7 @@ namespace TMCWD.Application.Controllers
                         AccountNumber = "TMCWD-" + DateTime.Now.Ticks.ToString(),
                         CreatedBy = _authenticatedUserService.User.Id,
                         CustomerId = customerId,
+                        HouseNumber = Uri.UnescapeDataString(address),
                         DateCreated = DateTime.Now,
                         Status = AccountStatus.Pending,
                         DateUpdated = DateTime.Now,
@@ -120,6 +113,7 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveUpdateAccount([FromBody] Account account)
         {
             var updatedAccount = await _accountTransaction.SaveUpdate(_authenticatedUserService.User.Id, account);
@@ -173,3 +167,4 @@ namespace TMCWD.Application.Controllers
     }
 
 }
+

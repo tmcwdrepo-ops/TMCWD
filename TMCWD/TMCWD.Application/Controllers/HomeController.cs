@@ -50,6 +50,9 @@ namespace TMCWD.Application.Controllers
                 currentUser.Password = null;
                 currentUser.RememberToken = null;
                 _authenticatedUserService.SetUser(currentUser);
+                _authenticatedUserService.SecurityStamp = _applicationLoginTransaction.SecurityStamp;
+                HttpContext.Session.SetString(AuthenticatedUserService.SecurityStampSessionKey,
+                    _applicationLoginTransaction.SecurityStamp!);
                 HttpContext.Session.SetString(
                     AuthenticatedUserService.SessionKey,
                     JsonSerializer.Serialize(currentUser));

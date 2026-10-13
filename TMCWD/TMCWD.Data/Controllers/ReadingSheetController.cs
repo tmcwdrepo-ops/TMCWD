@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
@@ -22,6 +24,7 @@ namespace TMCWD.Data.Controllers
             _readingSheetService = readingSheetService;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -30,6 +33,7 @@ namespace TMCWD.Data.Controllers
             return Ok(readingSheet);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -38,6 +42,7 @@ namespace TMCWD.Data.Controllers
             return Ok(readingSheets);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByAssignedTo/{assignedTo}")]
         public async Task<IActionResult> GetByAssignedTo(int assignedTo)
         {
@@ -46,6 +51,7 @@ namespace TMCWD.Data.Controllers
             return Ok(readingSheets);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByZoneAndBook/{zone}/{book}")]
         public async Task<IActionResult> GetByZoneAndBook(int zone, int book)
         {
@@ -54,6 +60,7 @@ namespace TMCWD.Data.Controllers
             return Ok(readingSheets);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByZoneBookAndAssignedTo/{zone}/{book}/{assignedTo}")]
         public async Task<IActionResult> GetByZoneBookAndAssignedTo(int zone, int book, int assignedTo)
         {
@@ -62,6 +69,7 @@ namespace TMCWD.Data.Controllers
             return Ok(readingSheets);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByBillingDate/{zone}/{book}/{billingDate}")]
         public async Task<IActionResult> GetByBillingDate(int zone, int book, DateTime billingDate)
         {
@@ -71,12 +79,16 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
+        [Authorize(Policy = "BillingOperations")]
         public async Task<IActionResult> SaveUpdate(int userId, [FromBody] ReadingSheet readingSheet)
         {
+            userId = ActorId;
+            if (userId <= 0) return Unauthorized();
             var savedReadingSheet = await _readingSheetService.SaveUpdate(userId, readingSheet);
             return Ok(savedReadingSheet);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetCurrentByAssignedTo/{zone}/{book}/{assignedTo}")]
         public async Task<IActionResult> GetCurrentByAssignedTo(int zone, int book, int assignedTo)
         {
@@ -85,6 +97,7 @@ namespace TMCWD.Data.Controllers
             return Ok(readingSheet);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet]
         [Route("GetReadingSheetAccounts")]
         public async Task<IActionResult> GetReadingSheetAccounts(int readingSheetId)
@@ -94,8 +107,10 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("UpdateZoneProgress")]
+        [Authorize(Policy = "BillingOperations")]
         public async Task<IActionResult> UpdateZoneProgress([FromBody] UpdateZoneProgressRequest request)
         {
+            if (ActorId <= 0) return Unauthorized();
             if (request == null || request.ReadingSheetId <= 0)
             {
                 return BadRequest(new { message = "Invalid request data" });
@@ -115,8 +130,11 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPatch("UpdateReadingSheetsStatus/{userId}/{status}")]
+        [Authorize(Policy = "BillingOperations")]
         public async Task<IActionResult> UpdateReadingSheetsStatus(int userId, int status, [FromQuery] long[] ids)
         {
+            userId = ActorId;
+            if (userId <= 0) return Unauthorized();
             if (ids == null || !ids.Any())
             {
                 return BadRequest(new { message = "Sheet IDs are required" });
@@ -133,8 +151,11 @@ namespace TMCWD.Data.Controllers
 
         [HttpPost]
         [Route("PartialPostReadingSheet")]
-        public async Task<IActionResult> PartialPostReadingSheet(int readingSheetId, int userId)
+        [Authorize(Policy = "BillingOperations")]
+        public async Task<IActionResult> PartialPostReadingSheet(int readingSheetId)
         {
+            var userId = ActorId;
+            if (userId <= 0) return Unauthorized();
             try
             {
                 var postedCount = await _readingSheetService.PartialPost(readingSheetId, userId);
@@ -144,20 +165,28 @@ namespace TMCWD.Data.Controllers
             {
                 return Conflict(ex.Message);
             }
+            catch (KeyNotFoundException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
 
         [HttpPost]
         [Route("CompleteReadingSheet")]
-        public async Task<IActionResult> CompleteReadingSheet(int readingSheetId, int userId)
+        [Authorize(Policy = "BillingOperations")]
+        public async Task<IActionResult> CompleteReadingSheet(int readingSheetId)
         {
+            var userId = ActorId;
+            if (userId <= 0) return Unauthorized();
             var sheet = await _readingSheetService.CompleteReadingSheet(readingSheetId, userId);
 
             if (sheet == null)
-                return BadRequest("Cannot complete — some accounts are still pending, or the reading sheet was not found.");
+                return BadRequest("Cannot complete ï¿½ some accounts are still pending, or the reading sheet was not found.");
 
             return Ok(sheet);
         }
         #endregion
+        private int ActorId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var id) ? id : 0;
     }
 
     // Request model for UpdateZoneProgress

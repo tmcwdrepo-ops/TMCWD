@@ -39,6 +39,11 @@ namespace TMCWD.Data.Services
         {
             if (otherFeeType.Id > 0)
             {
+                var existing = await Get(checked((int)otherFeeType.Id))
+                    ?? throw new InvalidOperationException("Other fee type was not found.");
+                existing.Name = otherFeeType.Name;
+                existing.DefaultValue = otherFeeType.DefaultValue;
+                otherFeeType = existing;
                 otherFeeType.UpdatedBy = userId;
                 otherFeeType.DateUpdate = DateTime.Now;
 

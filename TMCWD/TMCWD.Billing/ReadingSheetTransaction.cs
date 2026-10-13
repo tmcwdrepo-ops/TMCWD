@@ -186,14 +186,16 @@ namespace TMCWD.Billing
             return JsonSerializer.Deserialize<List<ReadingSheetAccountDto>>(data, serializerOptions) ?? new();
         }
 
-        public async Task<int> PartialPostReadingSheet(int readingSheetId, int userId)
+        public async Task<int> PartialPostReadingSheet(int readingSheetId)
         {
             var response = await _webService.Client.PostAsync(
-                $"api/ReadingSheet/PartialPostReadingSheet?readingSheetId={readingSheetId}&userId={userId}",
+                $"api/ReadingSheet/PartialPostReadingSheet?readingSheetId={readingSheetId}",
                 null);
 
             if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
                 throw new InvalidOperationException(await response.Content.ReadAsStringAsync());
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+                response.EnsureSuccessStatusCode();
             if (!response.IsSuccessStatusCode) return -1;
 
             var data = await response.Content.ReadAsStringAsync();
@@ -203,14 +205,16 @@ namespace TMCWD.Billing
             return result.GetProperty("postedCount").GetInt32();
         }
 
-        public async Task<ReadingSheet> CompleteReadingSheet(int readingSheetId, int userId)
+        public async Task<ReadingSheet> CompleteReadingSheet(int readingSheetId)
         {
             var response = await _webService.Client.PostAsync(
-                $"api/ReadingSheet/CompleteReadingSheet?readingSheetId={readingSheetId}&userId={userId}",
+                $"api/ReadingSheet/CompleteReadingSheet?readingSheetId={readingSheetId}",
                 null);
 
             var data = await response.Content.ReadAsStringAsync();
 
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+                response.EnsureSuccessStatusCode();
             if (!response.IsSuccessStatusCode) return null;
 
             return ConvertJsonToReadingSheet(data);

@@ -14,353 +14,72 @@
 }
 
 <div class="ci-page">
-
-    @* ═══════════════════════════════════════════════
-       TOOLBAR
-       ═══════════════════════════════════════════ *@
+    @Html.AntiForgeryToken()
     <div class="ci-toolbar">
-        <div class="ci-toolbar__search-group">
-            <div class="ci-toolbar__search-wrap">
-                <input id="txtSearch" type="text" placeholder="Search account number…"
-                       class="ci-input ci-input--search" autocomplete="off" />
-                <ul id="searchDropdown" class="ci-search-dropdown hidden" role="listbox"></ul>
-            </div>
-            <input id="txtCustomerName" type="text" placeholder="Customer Name"
-                   class="ci-input ci-input--acct" autocomplete="off" readonly
-                   value="@(Model.Customer.Id > 0 ? Model.Customer.FullName : string.Empty)" />
+        <div class="ci-toolbar__search-wrap"><label for="txtSearch" class="ci-label">Search Account</label>
+            <input id="txtSearch" type="search" placeholder="Account number or meter number" class="ci-input" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="searchDropdown" aria-expanded="false" />
+            <ul id="searchDropdown" class="ci-search-dropdown hidden" role="listbox" aria-label="Matching accounts"></ul>
         </div>
-
-        <div class="ci-toolbar__actions">
-
-            @* Previous — always an <a>, JS updates href *@
-            <a id="btnPrev" href="#" class="ci-toolbar-btn ci-toolbar-btn--disabled" title="Previous customer">
-                <svg viewBox="0 0 20 20" fill="none"><path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Previous</span>
-            </a>
-
-            @* Next — always an <a>, JS updates href *@
-            <a id="btnNext" href="#" class="ci-toolbar-btn ci-toolbar-btn--disabled" title="Next customer">
-                <svg viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Next</span>
-            </a>
-
-            @* Ledger — button, opens ledger modal *@
-            <button id="btnLedger" type="button" class="ci-toolbar-btn ci-toolbar-btn--disabled" title="View ledger" disabled>
-                <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M6 6h8M6 9h8M6 12h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-                <span>Ledger</span>
-            </button>
-
-            @* Adjustments — button, opens adjustments modal *@
-            <button id="btnAdjustments" type="button" class="ci-toolbar-btn ci-toolbar-btn--disabled" title="Bill adjustments" disabled>
-                <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M6 6h8M6 9h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M6 13l1.5 1.5L11 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Adjust...</span>
-            </button>
-
-            @* Bills — button, opens modal *@
-            <button id="btnBills" type="button" class="ci-toolbar-btn ci-toolbar-btn--disabled" title="View bills" disabled>
-                <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h8M6 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <span>Bills</span>
-            </button>
-
-            @* Delete — button *@
-            <button id="btnDelete" type="button" class="ci-toolbar-btn ci-toolbar-btn--danger ci-toolbar-btn--disabled" title="Delete customer" disabled>
-                <svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                <span>Delete</span>
-            </button>
-
-        </div>
+        <label class="ci-account-selector"><span class="ci-label">Customer accounts</span><select id="ciAccounts" class="ci-input" disabled></select></label>
+        <nav class="ci-navigation" aria-label="Customer navigation">
+            <a id="btnPrev" href="#" class="ci-toolbar-btn ci-toolbar-btn--disabled" aria-disabled="true">Previous</a>
+            <a id="btnNext" href="#" class="ci-toolbar-btn ci-toolbar-btn--disabled" aria-disabled="true">Next</a>
+        </nav>
     </div>
-
-    @* ═══════════════════════════════════════════════
-       BODY – two-column panels
-       ═══════════════════════════════════════════ *@
+    <header class="ci-profile ci-panel">
+        <div class="ci-profile-heading"><div><span class="ci-label">Customer profile</span><h2 id="ciCustomerName">—</h2><p class="ci-account-number">Account <strong id="ciAccountNumber">—</strong></p></div>
+        </div>
+        <input id="txtCustomerName" type="hidden" />
+        <dl class="ci-profile-facts"><div><dt>Service Address</dt><dd id="ciProfileAddress">—</dd></div><div><dt>Meter Number</dt><dd id="ciProfileMeter">—</dd></div><div><dt>Classification</dt><dd id="ciProfileClassification">—</dd></div><div><dt>Current Balance</dt><dd id="ciProfileBalance">—</dd></div></dl>
+        <div class="ci-account-actions" aria-label="Selected account actions">
+            <button id="btnLedger" type="button" class="ci-btn ci-btn--primary" disabled>Ledger</button>
+            <button id="btnBills" type="button" class="ci-btn" disabled>Bills</button>
+            <button id="btnAdjustments" type="button" class="ci-btn" disabled>Adjustments</button>
+            <details id="ciMore" class="ci-more"><summary class="ci-btn">More</summary><div class="ci-more-menu"><button id="btnDelete" type="button" class="ci-btn ci-btn--danger" disabled>Delete customer</button></div></details>
+        </div>
+    </header>
     <div class="ci-body">
-
-        @* ── LEFT: Customer Information ─────────────────── *@
-        <section class="ci-panel" aria-label="Customer information">
-            <div class="ci-panel-header">
-                <h2 class="ci-panel__title" style="margin:0">
-                    Customer Information
-                    <svg class="ci-panel__title-icon" viewBox="0 0 20 20" fill="none">
-                        <path d="M10 2l2.09 4.26L17 7.27l-3.5 3.41.83 4.82L10 13.27l-4.33 2.23.83-4.82L3 7.27l4.91-.71L10 2z"
-                              stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-                    </svg>
-                </h2>
-                <button id="btnEditCustomer" type="button" class="ci-btn ci-btn--edit">
-                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 16l1.5-4L14 3.5a1.5 1.5 0 0 1 2 2L7.5 14.5 4 16z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-                    <span>Edit</span>
-                </button>
-            </div>
-
-            <div class="ci-fields" id="customerFields">
-
-                @* Address (always readonly – computed) *@
-                <div class="ci-field ci-field--full">
-                    <input id="fldAddress" type="text" class="ci-input ci-readonly-field"
-                           placeholder="Address" value="@(currentAcct?.FullAddress ?? string.Empty)" readonly />
-                </div>
-
-                @* Block / Lot *@
-                <div class="ci-field">
-                    <input id="fldBlock" type="text" class="ci-input ci-readonly-field"
-                           placeholder="Block" value="@(currentAcct?.Building ?? string.Empty)" readonly />
-                </div>
-                <div class="ci-field">
-                    <input id="fldLot" type="text" class="ci-input ci-readonly-field"
-                           placeholder="Lot" value="@(currentAcct?.UnitNumber ?? string.Empty)" readonly />
-                </div>
-
-                @* Gender *@
-                <div class="ci-field">
-                    <select id="fldGender" class="ci-input ci-select ci-readonly-field" disabled>
-                        <option value="">Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-
-                @* Email *@
-                <div class="ci-field">
-                    <input id="fldEmail" type="email" class="ci-input ci-readonly-field"
-                           placeholder="Email Address" value="@Model.Customer.Email" readonly />
-                </div>
-
-                @* Mobile *@
-                <div class="ci-field">
-                    <input id="fldMobile" type="text" class="ci-input ci-readonly-field"
-                           placeholder="Mobile Number" value="@Model.Customer.PhoneNumber" readonly />
-                </div>
-
-                @* Birthdate *@
-                <div class="ci-field ci-field--has-icon">
-                    <input id="fldBirthdate" type="text" class="ci-input ci-readonly-field"
-                           placeholder="Birthdate" readonly />
-                    <button type="button" class="ci-field-icon ci-date-trigger" aria-label="Pick date" disabled>
-                        <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M2 8h16M6 2v4M14 2v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-                    </button>
-                </div>
-
-                @* TIN *@
-                <div class="ci-field">
-                    <input id="fldTin" type="text" class="ci-input ci-readonly-field"
-                           placeholder="TIN" readonly />
-                </div>
-
-                @* Guaranty Deposit *@
-                <div class="ci-field">
-                    <input id="fldDeposit" type="text" class="ci-input ci-readonly-field"
-                           placeholder="Guaranty Deposit" readonly />
-                </div>
-
-                @* SC/PWD Discount *@
-                <div class="ci-field ci-field--full">
-                    <label class="ci-label">SC/PWD Discount</label>
-                </div>
-
-                <div class="ci-field ci-field--has-icon">
-                    <select id="fldDiscountType" class="ci-input ci-select ci-readonly-field" disabled>
-                        <option value="">Discount Type</option>
-                        <option value="SeniorCitizen">Senior Citizen</option>
-                        <option value="PWD">PWD</option>
-                    </select>
-                    <button type="button" class="ci-field-icon" aria-label="Discount history">
-                        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.4"/><path d="M10 6v4l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
-                </div>
-
-                <div class="ci-field">
-                    <select id="fldDiscountSubtype" class="ci-input ci-select ci-readonly-field" disabled>
-                        <option value=""></option>
-                    </select>
-                </div>
-
-                @* Consumer Type *@
-                <div class="ci-field ci-field--full">
-                    <select id="fldConsumerType" class="ci-input ci-select ci-readonly-field" disabled>
-                        <option value="">Consumer Type</option>
-                        @foreach (var item in Model.AccountClassifications)
-                        {
-                            if (currentAcct != null && (int)currentAcct.Classification == int.Parse(item.Value))
-                            {
-                                <option value="@item.Value" selected>@item.Text</option>
-                            }
-                            else
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        }
-                    </select>
-                </div>
-
-                @* Zone *@
-                <div class="ci-field ci-field--full">
-                    <select id="fldZone" class="ci-input ci-select ci-readonly-field" disabled>
-                        <option value="">Zone</option>
-                        @if (currentAcct != null)
-                        {
-                            <option value="@currentAcct.ZoneBookId" selected>Zone Book #@currentAcct.ZoneBookId</option>
-                        }
-                    </select>
-                </div>
-
-                @* Book *@
-                <div class="ci-field ci-field--full">
-                    <select id="fldBook" class="ci-input ci-select ci-readonly-field" disabled>
-                        <option value="">Book</option>
-                    </select>
-                </div>
-
-                @* Sequence Number *@
-                <div class="ci-field ci-field--full">
-                    <input id="fldSequence" type="number" class="ci-input ci-readonly-field"
-                           placeholder="Sequence Number"
-                           value="@(currentAcct?.Sequence > 0 ? currentAcct.Sequence.ToString() : string.Empty)"
-                           readonly />
-                </div>
-
-                @* Action buttons — hidden until Edit clicked *@
-                <div id="customerActions" class="ci-field ci-field--full ci-field--actions ci-hidden">
-                    <button id="btnSaveCustomer" type="button" class="ci-btn ci-btn--primary">Save</button>
-                    <button id="btnCancelCustomer" type="button" class="ci-btn ci-btn--secondary">Cancel</button>
-                </div>
-
+        <section class="ci-panel" aria-labelledby="ciDetailsTitle"><div class="ci-panel-header"><h2 id="ciDetailsTitle">Customer Details</h2><button id="btnEditCustomer" type="button" class="ci-btn" disabled>Edit customer</button></div>
+            <div class="ci-fields" id="customerFields"><div class="ci-field ci-field--full"><label class="ci-label" for="fldAddress">Service Address</label><span class="ci-value" data-ci-value="fldAddress">—</span><input id="fldAddress" type="text" class="ci-input" readonly /></div>
+<div class="ci-field"><label class="ci-label" for="fldBlock">Block</label><span class="ci-value" data-ci-value="fldBlock">—</span><input id="fldBlock" type="text" class="ci-input" readonly /></div>
+<div class="ci-field"><label class="ci-label" for="fldLot">Lot</label><span class="ci-value" data-ci-value="fldLot">—</span><input id="fldLot" type="text" class="ci-input" readonly /></div>
+<div class="ci-field"><label class="ci-label" for="fldEmail">Email</label><span class="ci-value" data-ci-value="fldEmail">—</span><input id="fldEmail" type="email" class="ci-input ci-readonly-field" readonly /></div>
+<div class="ci-field"><label class="ci-label" for="fldMobile">Mobile Number</label><span class="ci-value" data-ci-value="fldMobile">—</span><input id="fldMobile" type="text" class="ci-input ci-readonly-field" readonly /></div>
+<div class="ci-field"><span class="ci-label">Gender</span><span class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">Birthdate</span><span class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">TIN</span><span class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">Guaranty Deposit</span><span class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">SC/PWD Discount</span><span class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">Zone</span><span id="fldZone" class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">Book</span><span id="fldBook" class="ci-value">—</span></div>
+<div class="ci-field"><label class="ci-label" for="fldSequence">Sequence Number</label><span class="ci-value" data-ci-value="fldSequence">—</span><input id="fldSequence" type="number" class="ci-input" readonly /></div>
+                <div id="customerActions" class="ci-field ci-field--full ci-field--actions ci-hidden"><button id="btnSaveCustomer" type="button" class="ci-btn ci-btn--primary">Save</button><button id="btnCancelCustomer" type="button" class="ci-btn">Cancel</button></div>
             </div>
         </section>
-
-        @* ── RIGHT: Meter Information ────────────────────── *@
-        <section class="ci-panel" aria-label="Meter information">
-            <div class="ci-panel-header">
-                <h2 class="ci-panel__title" style="margin:0">Meter Information</h2>
-                <button id="btnEditAccount" type="button" class="ci-btn ci-btn--edit">
-                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 16l1.5-4L14 3.5a1.5 1.5 0 0 1 2 2L7.5 14.5 4 16z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-                    <span>Edit</span>
-                </button>
+        <section class="ci-panel" aria-labelledby="ciMeterTitle"><div class="ci-panel-header"><h2 id="ciMeterTitle">Meter &amp; Service</h2><button id="btnEditAccount" type="button" class="ci-btn" disabled>Edit account</button></div>
+            <div class="ci-fields" id="meterFields"><div class="ci-field ci-field--full"><label class="ci-label" for="fldMeterNumber">Meter Number</label><span class="ci-value" data-ci-value="fldMeterNumber">—</span><input id="fldMeterNumber" type="text" class="ci-input ci-readonly-field" readonly /></div>
+<div class="ci-field"><label class="ci-label" for="fldMeterSize">Meter Size</label><span class="ci-value" data-ci-value="fldMeterSize">—</span><select id="fldMeterSize" class="ci-input ci-readonly-field" disabled><option value="">—</option><option value="0.5">0.5 inch</option><option value="0.75">0.75 inch</option><option value="1">1 inch</option><option value="1.5">1.5 inch</option><option value="2">2 inch</option><option value="3">3 inch</option><option value="4">4 inch</option></select></div>
+<div class="ci-field"><label class="ci-label" for="fldConsumerType">Classification</label><span class="ci-value" data-ci-value="fldConsumerType">—</span><select id="fldConsumerType" class="ci-input ci-readonly-field" disabled><option value="">—</option>@foreach (var item in Model.AccountClassifications) { <option value="@item.Value">@item.Text</option> }</select></div>
+<div class="ci-field"><label class="ci-label" for="fldInitialReading">Initial Reading</label><span class="ci-value" data-ci-value="fldInitialReading">—</span><input id="fldInitialReading" type="number" class="ci-input" readonly /></div>
+<div class="ci-field"><label class="ci-label" for="fldInstallationDate">Account Enrolled</label><span class="ci-value" data-ci-value="fldInstallationDate">—</span><input id="fldInstallationDate" type="text" class="ci-input" readonly /></div>
+<div class="ci-field"><span class="ci-label">Meter Brand</span><span class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">Meter Status</span><span class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">Installation Date</span><span class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">Previous Reading</span><span class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">Unbilled Usage</span><span class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">Penalty Exempt</span><span class="ci-value">—</span></div>
+<div class="ci-field"><label class="ci-label" for="fldMeterStatus">Operational Account Status</label><span id="ciOperationalStatus" class="ci-status ci-status--neutral" data-ci-value="fldMeterStatus">—</span><select id="fldMeterStatus" class="ci-input" disabled><option value="">—</option>@foreach (var item in Model.AccountStatuses) { <option value="@item.Value">@item.Text</option> }</select></div>
+<div class="ci-field ci-field--full"><span class="ci-label">Physical Service Status</span><span id="ciPhysicalStatus" class="ci-status ci-status--neutral">—</span></div>
+<div class="ci-field ci-field--full"><span class="ci-label">Monitoring Status</span><span id="ciMonitoringStatus" class="ci-status ci-status--neutral">—</span></div>
+<div class="ci-field"><span class="ci-label">Disconnection Date</span><span id="ciDisconnectionDate" class="ci-value">—</span></div>
+<div class="ci-field"><span class="ci-label">Reconnection Date</span><span id="ciReconnectionDate" class="ci-value">—</span></div>
+                <div id="meterActions" class="ci-field ci-field--full ci-field--actions ci-hidden"><button id="btnSaveAccount" type="button" class="ci-btn ci-btn--primary">Save</button><button id="btnCancelAccount" type="button" class="ci-btn">Cancel</button></div>
             </div>
-
-            <div class="ci-fields" id="meterFields">
-
-                @* Meter Number *@
-                <div class="ci-field ci-field--full ci-field--has-icon">
-                    <input id="fldMeterNumber" type="text" class="ci-input ci-readonly-field"
-                           placeholder="Meter Number" value="@(currentAcct?.MeterNumber ?? string.Empty)" readonly />
-                    <button type="button" class="ci-field-icon" aria-label="Locate meter">
-                        <svg viewBox="0 0 20 20" fill="none"><path d="M10 2C7.24 2 5 4.24 5 7c0 4.25 5 11 5 11s5-6.75 5-11c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 10 5a1.5 1.5 0 0 1 0 3.5z" fill="currentColor"/></svg>
-                    </button>
-                </div>
-
-                @* Meter Brand *@
-                <div class="ci-field">
-                    <select id="fldMeterBrand" class="ci-input ci-select ci-readonly-field" disabled>
-                        <option value="">Meter Brand</option>
-                        <option value="Sensus">Sensus</option>
-                        <option value="Amco">Amco</option>
-                        <option value="Elster">Elster</option>
-                        <option value="Kent">Kent</option>
-                        <option value="Itron">Itron</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-
-                @* Initial Reading *@
-                <div class="ci-field">
-                    <input id="fldInitialReading" type="number" step="0.01"
-                           class="ci-input ci-readonly-field" placeholder="Initial Reading"
-                           value="@(currentAcct?.InitialReading.ToString("0.##") ?? string.Empty)" readonly />
-                </div>
-
-                @* Installation Date *@
-                <div class="ci-field ci-field--full ci-field--has-icon">
-                    <input id="fldInstallationDate" type="text" class="ci-input ci-readonly-field"
-                           placeholder="Installation Date"
-                           value="@(currentAcct?.DateCreated.ToString("MM/dd/yyyy") ?? string.Empty)" readonly />
-                    <button type="button" class="ci-field-icon ci-date-trigger" aria-label="Pick installation date" disabled>
-                        <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M2 8h16M6 2v4M14 2v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-                    </button>
-                </div>
-
-                @* Disconnection / Reconnection Date *@
-                <div class="ci-field">
-                    <input id="fldDisconnectionDate" type="text" class="ci-input ci-readonly-field"
-                           placeholder="Disconnection Date" readonly />
-                </div>
-                <div class="ci-field">
-                    <input id="fldReconnectionDate" type="text" class="ci-input ci-readonly-field"
-                           placeholder="Reconnection Date" readonly />
-                </div>
-
-                @* Meter Size *@
-                <div class="ci-field">
-                    <label class="ci-label--sm">Meter Size</label>
-                    <select id="fldMeterSize" class="ci-input ci-select ci-readonly-field" disabled>
-                        <option value="">Meter Size</option>
-                        @{
-                            var meterSizes = new[] {
-                                ("0.5",  "½\""),  ("0.75", "¾\""), ("1", "1\""),
-                                ("1.5",  "1½\""), ("2",    "2\""), ("3", "3\""), ("4", "4\""),
-                            };
-                            foreach (var (sv, sl) in meterSizes)
-                            {
-                                if (currentAcct != null && currentAcct.MeterSize.ToString("G") == sv)
-                                { <option value="@sv" selected>@sl</option> }
-                                else
-                                { <option value="@sv">@sl</option> }
-                            }
-                        }
-                    </select>
-                </div>
-
-                @* Meter Status *@
-                <div class="ci-field">
-                    <label class="ci-label--sm">Meter Status</label>
-                    <select id="fldMeterStatus" class="ci-input ci-select ci-readonly-field" disabled>
-                        @foreach (var item in Model.AccountStatuses)
-                        {
-                            if (currentAcct != null && (int)currentAcct.Status == int.Parse(item.Value))
-                            { <option value="@item.Value" selected>@item.Text</option> }
-                            else
-                            { <option value="@item.Value">@item.Text</option> }
-                        }
-                    </select>
-                </div>
-
-                @* Previous Reading *@
-                <div class="ci-field">
-                    <input id="fldPreviousReading" type="number" step="0.01"
-                           class="ci-input ci-readonly-field" placeholder="Previous Reading" readonly />
-                </div>
-
-                @* Unbilled *@
-                <div class="ci-field">
-                    <input id="fldUnbilled" type="number" step="0.01"
-                           class="ci-input" placeholder="Unbilled" readonly />
-                </div>
-
-                @* Penalty Exempt *@
-                <div class="ci-field ci-field--full">
-                    <label class="ci-label--sm">Penalty Exempt</label>
-                    @if (currentAcct != null && currentAcct.Status == AccountStatus.Suspended)
-                    {
-                        <input id="chkPenaltyExempt" type="checkbox" class="ci-checkbox ci-readonly-field" checked disabled />
-                    }
-                    else
-                    {
-                        <input id="chkPenaltyExempt" type="checkbox" class="ci-checkbox ci-readonly-field" disabled />
-                    }
-                </div>
-
-                @* Account save/cancel – hidden until Edit clicked *@
-                <div id="meterActions" class="ci-field ci-field--full ci-field--actions ci-hidden">
-                    <button id="btnSaveAccount" type="button" class="ci-btn ci-btn--primary">Save</button>
-                    <button id="btnCancelAccount" type="button" class="ci-btn ci-btn--secondary">Cancel</button>
-                </div>
-
-            </div>
+            <p id="ciServiceReadState" class="ci-muted" role="status" aria-live="polite" hidden></p>
+            <button id="ciRefreshService" type="button" class="ci-btn" disabled>Refresh service status</button>
         </section>
-
     </div>
-
-</div><!-- /.ci-page -->
+</div>
 
 <div id="ciToast" class="ci-toast ci-toast--hidden" role="status" aria-live="polite"></div>
 <vc:modal-dialog type="deactivate"></vc:modal-dialog>
@@ -425,211 +144,7 @@
 
 @section Styles {
 <link rel="stylesheet" href="~/css/collections.css" asp-append-version="true" />
-<style>
-/* ── Page ─────────────────────────────────────────────────── */
-.ci-page { display:flex; flex-direction:column; gap:.75rem; padding:1rem; }
-
-/* ── Toolbar ──────────────────────────────────────────────── */
-.ci-toolbar {
-    display:flex; flex-wrap:nowrap; align-items:center; gap:.5rem;
-    background:#fff; border:1px solid #e5e7eb; border-radius:.5rem;
-    padding:.6rem .75rem; box-shadow:0 1px 2px rgba(0,0,0,.05);
-    overflow:visible;
-}
-.ci-toolbar__search-group { display:flex; gap:.5rem; align-items:center; flex-shrink:0; }
-.ci-toolbar__actions      { display:flex; align-items:center; gap:0; flex-shrink:0; margin-left:auto; flex-wrap:nowrap; }
-.ci-toolbar__search-wrap  { position:relative; width:200px; flex-shrink:0; }
-.ci-input--search { width:100%; }
-.ci-input--acct   { width:200px; flex-shrink:0; font-style:italic; color:#374151 !important; }
-
-.ci-search-dropdown {
-    position:absolute; top:calc(100% + 4px); left:0; right:0;
-    background:#fff; border:1px solid #d1d5db; border-radius:.5rem;
-    box-shadow:0 4px 12px rgba(0,0,0,.12); max-height:260px;
-    overflow-y:auto; z-index:100; padding:.25rem 0; list-style:none; margin:0;
-    width:220px;
-}
-.ci-search-dropdown.hidden { display:none; }
-.ci-search-dropdown li { padding:.5rem .75rem; cursor:pointer; font-size:.875rem; color:#111827; }
-.ci-search-dropdown li:hover { background:#eff6ff; color:#1d4ed8; }
-.ci-search-dropdown li.ci-dropdown-empty { color:#9ca3af; cursor:default; }
-.ci-dd-acct { display:block; font-weight:600; font-size:.85rem; color:#111827; }
-.ci-dd-name { display:block; font-size:.75rem; color:#6b7280; margin-top:.1rem; }
-
-/* ── Toolbar buttons ──────────────────────────────────────── */
-.ci-toolbar-btn {
-    display:inline-flex; flex-direction:column; align-items:center; gap:.1rem;
-    padding:.3rem .4rem; border-radius:.375rem; font-size:.65rem; font-weight:500;
-    color:#374151; text-decoration:none; background:transparent; border:none; cursor:pointer;
-    transition:background .15s, color .15s; white-space:nowrap; flex-shrink:0;
-    max-width:60px;
-}
-.ci-toolbar-btn svg { width:1.1rem; height:1.1rem; flex-shrink:0; }
-.ci-toolbar-btn span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
-.ci-toolbar-btn:hover:not(.ci-toolbar-btn--disabled) { background:#f3f4f6; color:#1d4ed8; }
-.ci-toolbar-btn--disabled { opacity:.4; cursor:not-allowed; pointer-events:none; }
-.ci-toolbar-btn--danger:hover:not(.ci-toolbar-btn--disabled) { background:#fef2f2; color:#dc2626; }
-
-/* ── Body layout ──────────────────────────────────────────── */
-.ci-body { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; align-items:start; }
-@@media (max-width:900px) { .ci-body { grid-template-columns:1fr; } }
-
-/* ── Panels ───────────────────────────────────────────────── */
-.ci-panel {
-    background:#fff; border:1px solid #e5e7eb; border-radius:.5rem;
-    padding:1.25rem; box-shadow:0 1px 2px rgba(0,0,0,.05);
-}
-.ci-panel-header {
-    display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;
-}
-.ci-panel__title {
-    font-size:1rem; font-weight:600; color:#111827;
-    margin:0 0 1rem; display:flex; align-items:center; gap:.4rem;
-}
-.ci-panel__title-icon { width:1rem; height:1rem; color:#f59e0b; }
-
-/* ── Fields grid ──────────────────────────────────────────── */
-.ci-fields { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
-.ci-field   { display:flex; flex-direction:column; gap:.25rem; position:relative; }
-.ci-field--full { grid-column:1 / -1; }
-.ci-field--has-icon .ci-input { padding-right:2.5rem; }
-.ci-field--actions { flex-direction:row; gap:.5rem; margin-top:.5rem; }
-
-/* ── Inputs ───────────────────────────────────────────────── */
-.ci-input {
-    width:100%; padding:.5rem .75rem; font-size:.875rem; color:#111827;
-    background:#f9fafb; border:1px solid #d1d5db; border-radius:.5rem;
-    outline:none; transition:border-color .15s, box-shadow .15s; box-sizing:border-box;
-}
-.ci-input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.15); background:#fff; }
-.ci-input[readonly], .ci-input:disabled { background:#f3f4f6; color:#6b7280; cursor:default; }
-
-/* Readonly-state styling for selects disabled in view-mode */
-select.ci-readonly-field:disabled {
-    background:#f3f4f6; color:#6b7280; cursor:default; opacity:1;
-}
-
-.ci-select {
-    appearance:none;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position:right .6rem center;
-    background-size:1rem; padding-right:2.25rem;
-}
-.ci-label     { font-size:.8rem;  font-weight:600; color:#374151; }
-.ci-label--sm { font-size:.75rem; font-weight:500; color:#6b7280; }
-
-/* ── Field icon button ────────────────────────────────────── */
-.ci-field-icon {
-    position:absolute; right:.5rem; top:50%; transform:translateY(-50%);
-    background:none; border:none; cursor:pointer; color:#6b7280; padding:.2rem;
-    display:flex; align-items:center;
-}
-.ci-field-icon svg { width:1.1rem; height:1.1rem; }
-.ci-field-icon:hover:not(:disabled) { color:#1d4ed8; }
-.ci-field-icon:disabled { cursor:default; opacity:.45; }
-
-/* ── Checkbox ─────────────────────────────────────────────── */
-.ci-checkbox { width:1.1rem; height:1.1rem; accent-color:#3b82f6; cursor:pointer; }
-.ci-checkbox:disabled { cursor:default; opacity:.7; }
-
-/* ── Buttons ──────────────────────────────────────────────── */
-.ci-btn { padding:.45rem 1.1rem; font-size:.875rem; font-weight:600; border-radius:.375rem; border:none; cursor:pointer; transition:background .15s; display:inline-flex; align-items:center; gap:.35rem; }
-.ci-btn--primary   { background:#1d4ed8; color:#fff; }
-.ci-btn--primary:hover  { background:#1e40af; }
-.ci-btn--secondary { background:#e5e7eb; color:#374151; }
-.ci-btn--secondary:hover { background:#d1d5db; }
-.ci-btn--edit {
-    display:inline-flex; flex-direction:column; align-items:center; gap:.1rem;
-    background:transparent; color:#6b7280; font-size:.65rem; font-weight:500;
-    padding:.3rem .45rem; border:none; border-radius:.375rem; cursor:pointer;
-    transition:background .15s, color .15s;
-}
-.ci-btn--edit:hover { background:#f3f4f6; color:#1d4ed8; }
-.ci-btn--edit svg { width:1rem; height:1rem; flex-shrink:0; }
-.ci-btn--sm { padding:.3rem .75rem; font-size:.8rem; }
-
-/* ── Utility ──────────────────────────────────────────────── */
-.ci-hidden { display:none !important; }
-
-/* ── Toast ────────────────────────────────────────────────── */
-.ci-toast {
-    position:fixed; bottom:1.5rem; right:1.5rem;
-    padding:.75rem 1.25rem; border-radius:.5rem; font-size:.875rem; font-weight:500;
-    background:#111827; color:#fff; box-shadow:0 4px 12px rgba(0,0,0,.2);
-    z-index:1000; transition:opacity .3s;
-}
-.ci-toast--hidden  { opacity:0; pointer-events:none; }
-.ci-toast--success { background:#065f46; }
-.ci-toast--error   { background:#991b1b; }
-
-/* ── Adjustments modal ────────────────────────────────────── */
-.adj-backdrop {
-    position:fixed; inset:0; background:rgba(0,0,0,.45);
-    display:flex; align-items:center; justify-content:center; z-index:500;
-}
-.adj-hidden { display:none !important; }
-.adj-dialog {
-    background:#fff; border-radius:.75rem; width:min(900px,95vw);
-    max-height:90vh; display:flex; flex-direction:column;
-    box-shadow:0 20px 60px rgba(0,0,0,.25); overflow:hidden;
-}
-.adj-header {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:1rem 1.5rem; border-bottom:1px solid #e5e7eb; flex-shrink:0;
-}
-.adj-title {
-    font-size:.95rem; font-weight:700; color:#0f1623; margin:0;
-    letter-spacing:.04em; text-transform:uppercase;
-}
-.adj-close {
-    background:none; border:none; cursor:pointer; color:#6b7280; padding:.25rem;
-    border-radius:.375rem; display:flex; align-items:center;
-    transition:background .12s, color .12s;
-}
-.adj-close:hover { background:#f3f4f6; color:#111827; }
-.adj-close svg { width:1.1rem; height:1.1rem; }
-
-/* Tabs — matches the screenshot style (green underline on active) */
-.adj-tabs {
-    display:flex; border-bottom:1px solid #e5e7eb; flex-shrink:0; padding:0 1.5rem;
-    gap:2rem;
-}
-.adj-tab {
-    background:none; border:none; cursor:pointer; padding:.75rem 0;
-    font-size:.875rem; font-weight:500; color:#6b7280;
-    border-bottom:2.5px solid transparent; margin-bottom:-1px;
-    transition:color .15s, border-color .15s;
-}
-.adj-tab--active { color:#2d6a4f; border-bottom-color:#8b6914; }
-.adj-tab:hover:not(.adj-tab--active) { color:#111827; }
-
-.adj-panel { overflow-y:auto; flex:1; }
-
-.adj-table { width:100%; border-collapse:collapse; font-size:.875rem; }
-.adj-table th {
-    text-align:left; padding:.6rem .9rem; font-weight:600; font-size:.8rem;
-    color:#374151; background:#f9fafb; border-bottom:2px solid #e5e7eb;
-    white-space:nowrap;
-}
-.adj-table th.adj-num { text-align:right; }
-.adj-table td {
-    padding:.55rem .9rem; border-bottom:1px solid #f3f4f6; color:#111827; vertical-align:middle;
-}
-.adj-table td.adj-num { text-align:right; font-variant-numeric:tabular-nums; }
-.adj-table tbody tr:hover { background:#f9fafb; }
-.adj-empty { text-align:center; color:#9ca3af; padding:2.5rem; }
-
-.adj-status {
-    display:inline-block; padding:.2rem .55rem; border-radius:9999px;
-    font-size:.72rem; font-weight:600; text-transform:uppercase;
-}
-.adj-status--pending  { background:#fef3c7; color:#92400e; }
-.adj-status--approved { background:#d1fae5; color:#065f46; }
-.adj-status--rejected { background:#fee2e2; color:#991b1b; }
-.adj-memo-debit  { color:#dc2626; font-weight:600; font-size:.75rem; }
-.adj-memo-credit { color:#065f46; font-weight:600; font-size:.75rem; }
-
-</style>
+<link rel="stylesheet" href="~/css/customer-information.css" asp-append-version="true" />
 }
 
 @section Scripts {
@@ -641,6 +156,7 @@ select.ci-readonly-field:disabled {
     const CUSTOMER_ID  = @(Model.Customer.Id);
     const ACCOUNT_ID   = @(currentAcct?.Id ?? 0);
     const CUSTOMER_IDS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CustomerIds));
+    const SEED = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new { customer = Model.Customer, accounts = Model.CustomerAccounts, selectedAccount = Model.SelectedAccount }, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)));
 
     /* ── URLs ───────────────────────────────────────────────── */
     const URL_SEARCH_ACCOUNT = '@Url.Action("SearchByAccount",          "CustomerSupport")';
@@ -662,7 +178,6 @@ select.ci-readonly-field:disabled {
     const fldAddress      = $('fldAddress');
     const fldBlock        = $('fldBlock');
     const fldLot          = $('fldLot');
-    const fldGender       = $('fldGender');
     const fldEmail        = $('fldEmail');
     const fldMobile       = $('fldMobile');
     const fldConsumerType = $('fldConsumerType');
@@ -683,6 +198,25 @@ select.ci-readonly-field:disabled {
     // Snapshot for cancel
     let customerSnapshot  = {};
     let meterSnapshot     = {};
+    let selectedAccount = null, currentAccounts = [], zoneBooks = [];
+
+    function syncReadOnlyValues() {
+        document.querySelectorAll('[data-ci-value]').forEach(value => {
+            const field = $(value.dataset.ciValue);
+            const text = field.tagName === 'SELECT' ? field.selectedOptions[0]?.textContent : field.value;
+            value.textContent = text?.trim() || '—';
+        });
+        $('ciCustomerName').textContent = txtCustomerName.value.trim() || '—';
+        $('ciAccountNumber').textContent = selectedAccount?.accountNumber || '—';
+        $('ciProfileAddress').textContent = fldAddress.value.trim() || '—';
+        $('ciProfileMeter').textContent = fldMeterNumber.value.trim() || '—';
+        $('ciProfileClassification').textContent = fldConsumerType.selectedOptions[0]?.textContent || '—';
+    }
+    function renderZoneBook() {
+        const zoneBook = zoneBooks.find(z => z.id === selectedAccount?.zoneBookId);
+        $('fldZone').textContent = zoneBook?.zone ?? '—';
+        $('fldBook').textContent = zoneBook?.book ?? '—';
+    }
 
     /* ── Edit mode helpers ──────────────────────────────────── */
 
@@ -692,6 +226,7 @@ select.ci-readonly-field:disabled {
     }
 
     function enablePanel(containerId, actionsId, editBtnId) {
+        $(containerId).classList.add('ci-editing');
         getEditableFields(containerId).forEach(el => {
             if (el.tagName === 'SELECT' || el.type === 'checkbox') {
                 el.disabled = false;
@@ -703,13 +238,14 @@ select.ci-readonly-field:disabled {
         });
         // Enable date trigger buttons
         document.querySelectorAll(`#${containerId} .ci-date-trigger`).forEach(b => b.disabled = false);
-        $('chkPenaltyExempt') && ($('chkPenaltyExempt').disabled = false);
         $(actionsId).classList.remove('ci-hidden');
         const editBtn = $(editBtnId);
         if (editBtn) { editBtn.classList.add('ci-hidden'); }
+        getEditableFields(containerId)[0]?.focus();
     }
 
     function disablePanel(containerId, actionsId, editBtnId) {
+        $(containerId).classList.remove('ci-editing');
         getEditableFields(containerId).forEach(el => {
             if (el.tagName === 'SELECT' || el.type === 'checkbox') {
                 el.disabled = true;
@@ -718,10 +254,10 @@ select.ci-readonly-field:disabled {
             }
         });
         document.querySelectorAll(`#${containerId} .ci-date-trigger`).forEach(b => b.disabled = true);
-        $('chkPenaltyExempt') && ($('chkPenaltyExempt').disabled = true);
         $(actionsId).classList.add('ci-hidden');
         const editBtn = $(editBtnId);
         if (editBtn) { editBtn.classList.remove('ci-hidden'); }
+        syncReadOnlyValues();
     }
 
     // Snapshot current values so Cancel can restore them
@@ -771,12 +307,18 @@ select.ci-readonly-field:disabled {
 
         currentCustomerId = c.id;
         currentAccountId  = a ? a.id : 0;
+        selectedAccount = a || null;
+        currentAccounts = accounts;
+        $('ciAccounts').replaceChildren(...accounts.map(account => new Option(account.accountNumber, account.accountNumber)));
+        $('ciAccounts').disabled = accounts.length < 2;
+        $('ciAccounts').value = a?.accountNumber || '';
+        setActiveAccountNumber(a?.accountNumber ?? '');
 
         // Customer
         fldEmail.value  = c.email       ?? '';
         fldMobile.value = c.phoneNumber ?? '';
         // Show customer full name in the toolbar name field
-        txtCustomerName.value = `${c.lastname ?? ''}, ${c.firstname ?? ''} ${c.middlename ?? ''}`.trim();
+        txtCustomerName.value = c.fullName?.trim() || [c.lastname, [c.firstname, c.middlename].filter(Boolean).join(' ')].filter(Boolean).join(', ');
 
         // Account / meter
         if (a) {
@@ -793,8 +335,11 @@ select.ci-readonly-field:disabled {
             setSelect(fldMeterSize,    String(a.meterSize      ?? ''));
             setSelect(fldMeterStatus,  String(a.status         ?? ''));
             setSelect(fldConsumerType, String(a.classification ?? ''));
-            setActiveAccountNumber(a.accountNumber ?? '');
+        } else {
+            [fldAddress, fldBlock, fldLot, fldMeterNumber, fldInitReading, fldInstallDate, fldSequence].forEach(field => field.value = '');
+            [fldMeterSize, fldMeterStatus, fldConsumerType].forEach(field => field.value = '');
         }
+        renderZoneBook(); syncReadOnlyValues();
 
         // Always reload in view (readonly) mode after switching customer
         if (customerEditMode) {
@@ -812,13 +357,15 @@ select.ci-readonly-field:disabled {
         const nextId = idx < CUSTOMER_IDS.length - 1       ? CUSTOMER_IDS[idx + 1] : null;
         setNavBtn('btnPrev', prevId);
         setNavBtn('btnNext', nextId);
-        setToolbarEnabled(true);
+        setToolbarEnabled(!!a);
         updateToolbarLinks(c.id, a ? (a.accountNumber ?? '') : '');
     }
 
     /* ── Switch meter panel to a different account row ──────── */
     function switchToAccount(acct) {
+        selectedAccount = acct;
         currentAccountId = acct.id;
+        $('ciAccounts').value = acct.accountNumber;
 
         // Highlight
         document.querySelectorAll('.ci-account-row').forEach(r => {
@@ -844,24 +391,24 @@ select.ci-readonly-field:disabled {
         setSelect(fldMeterSize,    String(acct.meterSize      ?? ''));
         setSelect(fldMeterStatus,  String(acct.status         ?? ''));
         setSelect(fldConsumerType, String(acct.classification ?? ''));
-        // Update search box to show the selected account number
-        txtSearch.value = acct.accountNumber ?? '';
         updateToolbarLinks(currentCustomerId, acct.accountNumber ?? '');
         setActiveAccountNumber(acct.accountNumber ?? '');
+        setToolbarEnabled(true);
+        renderZoneBook(); syncReadOnlyValues();
 
-        const chk = $('chkPenaltyExempt');
-        if (chk) chk.checked = acct.status === 2; // Suspended
     }
 
     /* ── Helpers ────────────────────────────────────────────── */
     function setSelect(el, val) {
         if (!el) return;
         for (const o of el.options) if (o.value === val) { o.selected = true; return; }
+        el.value = '';
     }
     function setNavBtn(id, targetId) {
         const btn = $(id); if (!btn) return;
         if (targetId) { btn.href = `${URL_CI}?customerId=${targetId}`; btn.classList.remove('ci-toolbar-btn--disabled'); }
         else          { btn.href = '#'; btn.classList.add('ci-toolbar-btn--disabled'); }
+        btn.setAttribute('aria-disabled', String(!targetId)); btn.tabIndex = targetId ? 0 : -1;
     }
     function setToolbarEnabled(on) {
         ['btnLedger','btnAdjustments','btnBills','btnDelete'].forEach(id => {
@@ -869,6 +416,10 @@ select.ci-readonly-field:disabled {
             on ? el.classList.remove('ci-toolbar-btn--disabled') : el.classList.add('ci-toolbar-btn--disabled');
             if (el.tagName === 'BUTTON') el.disabled = !on;
         });
+        $('btnEditCustomer').disabled = !currentCustomerId;
+        $('btnEditAccount').disabled = !currentAccountId;
+        $('ciRefreshService').disabled = !selectedAccount;
+        $('btnDelete').disabled = !currentCustomerId;
     }
 
     /* ── Update toolbar link hrefs when a customer/account is loaded ── */
@@ -882,13 +433,23 @@ select.ci-readonly-field:disabled {
     });
 
     /* ── Load customer via AJAX ─────────────────────────────── */
-    async function loadCustomer(id) {
+    let customerLoadVersion = 0;
+    async function loadCustomer(id, accountId) {
         if (!id) return;
+        const version = ++customerLoadVersion;
         try {
             const res = await fetch(`${URL_LOAD}?customerId=${id}`);
+            if (version !== customerLoadVersion) return;
             if (!res.ok) { showToast('Customer not found.', 'error'); return; }
-            populatePage(await res.json());
-        } catch { showToast('Failed to load customer.', 'error'); }
+            const data = await res.json();
+            if (version !== customerLoadVersion) return;
+            // Search selects an exact account, not the customer's default account.
+            if (accountId != null) {
+                data.selectedAccount = (data.accounts || []).find(a => a.id === accountId);
+                if (!data.selectedAccount) { showToast('Selected account not found.', 'error'); return; }
+            }
+            populatePage(data);
+        } catch { if (version === customerLoadVersion) showToast('Failed to load customer.', 'error'); }
     }
 
     /* ── Search by account number ───────────────────────────── */
@@ -902,7 +463,8 @@ select.ci-readonly-field:disabled {
     async function doSearch(q) {
         try {
             const res = await fetch(`${URL_SEARCH_ACCOUNT}?q=${encodeURIComponent(q)}`);
-            renderDropdown(res.ok ? await res.json() : []);
+            const data = res.ok ? await res.json() : [];
+            if (txtSearch.value.trim() === q) renderDropdown(data);
         } catch { renderDropdown([]); }
     }
     function renderDropdown(list) {
@@ -915,22 +477,35 @@ select.ci-readonly-field:disabled {
                 const li = document.createElement('li');
                 li.setAttribute('role', 'option');
                 // Show account number + customer name
-                li.innerHTML = `<span class="ci-dd-acct">${item.accountNumber}</span>
-                                 <span class="ci-dd-name">${item.customerName}</span>`;
+                const number = document.createElement('span'), name = document.createElement('span');
+                number.className = 'ci-dd-acct'; number.textContent = item.accountNumber;
+                name.className = 'ci-dd-name'; name.textContent = item.customerName;
+                li.append(number, name); li.tabIndex = 0;
                 li.dataset.customerId = item.customerId;
                 li.dataset.accountId  = item.accountId;
                 li.addEventListener('click', () => {
-                    txtSearch.value = item.accountNumber;
-                    txtCustomerName.value = item.customerName;
                     hideDropdown();
-                    loadCustomer(item.customerId);
+                    setActiveAccountNumber(_currentAccountNumber);
+                    loadCustomer(item.customerId, item.accountId);
+                });
+                li.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); li.click(); }
+                    if (event.key === 'Escape') { hideDropdown(); txtSearch.focus(); }
+                    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                        event.preventDefault(); (event.key === 'ArrowDown' ? li.nextElementSibling : li.previousElementSibling)?.focus();
+                    }
                 });
                 dd.appendChild(li);
             });
         }
         dd.classList.remove('hidden');
+        txtSearch.setAttribute('aria-expanded', 'true');
     }
-    function hideDropdown() { $('searchDropdown').classList.add('hidden'); }
+    function hideDropdown() { $('searchDropdown').classList.add('hidden'); txtSearch.setAttribute('aria-expanded', 'false'); }
+    txtSearch.addEventListener('keydown', event => {
+        if (event.key === 'ArrowDown') { event.preventDefault(); $('searchDropdown').querySelector('[role=option]')?.focus(); }
+        if (event.key === 'Escape') hideDropdown();
+    });
     document.addEventListener('click', e => {
         if (!txtSearch.contains(e.target) && !$('searchDropdown').contains(e.target)) hideDropdown();
     });
@@ -939,19 +514,23 @@ select.ci-readonly-field:disabled {
 
     /* ── Save Customer ──────────────────────────────────────── */
     $('btnSaveCustomer').addEventListener('click', async () => {
+        const savingCustomerId = currentCustomerId;
+        const email = fldEmail.value.trim(), phoneNumber = fldMobile.value.trim();
         let base = {};
         try {
-            const r = await fetch(`${URL_LOAD}?customerId=${currentCustomerId}`);
+            const r = await fetch(`${URL_LOAD}?customerId=${savingCustomerId}`);
             if (r.ok) base = (await r.json()).customer ?? {};
         } catch { /* proceed */ }
 
-        const payload = { ...base, email: fldEmail.value.trim(), phoneNumber: fldMobile.value.trim(), dateUpdated: new Date().toISOString() };
+        const payload = { ...base, email, phoneNumber, dateUpdated: new Date().toISOString() };
         try {
-            const res = await fetch(URL_SAVE_CUSTOMER, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+            const res = await fetch(URL_SAVE_CUSTOMER, { method:'POST', headers:{'Content-Type':'application/json', 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value}, body:JSON.stringify(payload) });
             if (res.ok) {
                 showToast('Customer saved.');
-                customerEditMode = false;
-                disablePanel('customerFields', 'customerActions', 'btnEditCustomer');
+                if (currentCustomerId === savingCustomerId) {
+                    customerEditMode = false;
+                    disablePanel('customerFields', 'customerActions', 'btnEditCustomer');
+                }
             } else {
                 showToast('Failed to save customer.', 'error');
             }
@@ -968,29 +547,33 @@ select.ci-readonly-field:disabled {
     /* ── Save Account ───────────────────────────────────────── */
     $('btnSaveAccount').addEventListener('click', async () => {
         if (!currentAccountId) { showToast('No account selected.', 'error'); return; }
+        const accountId = currentAccountId, customerId = currentCustomerId;
+        const edited = { meterNumber: fldMeterNumber.value.trim(), meterSize: parseFloat(fldMeterSize?.value || '0') || 0,
+            status: parseInt(fldMeterStatus?.value || '1', 10), classification: parseInt(fldConsumerType?.value || '1', 10),
+            initialReading: parseFloat(fldInitReading?.value || '0') || 0 };
         let base = {};
         try {
-            const r = await fetch(`${URL_LOAD}?customerId=${currentCustomerId}`);
-            if (r.ok) { const d = await r.json(); base = d.accounts.find(a => a.id === currentAccountId) ?? {}; }
+            const r = await fetch(`${URL_LOAD}?customerId=${customerId}`);
+            if (r.ok) { const d = await r.json(); base = d.accounts.find(a => a.id === accountId) ?? {}; }
         } catch { /* proceed */ }
 
         const payload = {
             ...base,
-            id:             currentAccountId,
-            customerId:     currentCustomerId,
-            meterNumber:    fldMeterNumber.value.trim(),
-            meterSize:      parseFloat(fldMeterSize?.value  || '0') || 0,
-            status:         parseInt(fldMeterStatus?.value  || '1', 10),
-            classification: parseInt(fldConsumerType?.value || '1', 10),
-            initialReading: parseFloat(fldInitReading?.value || '0') || 0,
+            id: accountId, customerId,
+            ...edited,
             dateUpdated:    new Date().toISOString(),
         };
         try {
-            const res = await fetch(URL_SAVE_ACCOUNT, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+            const res = await fetch(URL_SAVE_ACCOUNT, { method:'POST', headers:{'Content-Type':'application/json', 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value}, body:JSON.stringify(payload) });
             if (res.ok) {
+                const saved = await res.json();
+                currentAccounts = currentAccounts.map(a => a.id === saved.id ? saved : a);
                 showToast('Account saved.');
-                meterEditMode = false;
-                disablePanel('meterFields', 'meterActions', 'btnEditAccount');
+                if (currentAccountId === saved.id) {
+                    meterEditMode = false;
+                    disablePanel('meterFields', 'meterActions', 'btnEditAccount');
+                    switchToAccount(saved);
+                }
             } else {
                 showToast('Failed to save account.', 'error');
             }
@@ -1010,12 +593,71 @@ select.ci-readonly-field:disabled {
         new ModalDialog({
             type: 'deactivate', title: 'Deactivate Customer',
             content: 'Are you sure you want to deactivate this customer? This action cannot be undone.',
-            submitCallback: () => { window.location.href = `${URL_DEACTIVATE}?customerId=${currentCustomerId}`; }
+            submitCallback: async () => {
+                const response = await fetch(`${URL_DEACTIVATE}?customerId=${currentCustomerId}`, { method: 'POST',
+                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value } });
+                if (response.ok) window.location.href = URL_CI;
+                else showToast('Could not deactivate customer.', 'error');
+            }
         }).show();
     });
 
-    let _currentAccountNumber = '@(currentAcct?.AccountNumber ?? string.Empty)';
-    function setActiveAccountNumber(acctNo) { _currentAccountNumber = acctNo; }
+    let _currentAccountNumber = '';
+    let serviceStatusVersion = 0;
+    const summaryMoney = value => typeof value === 'number' && Number.isFinite(value) ? new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value) : '—';
+    const summaryDate = value => value && !String(value).startsWith('0001-') ? new Date(String(value).slice(0, 10) + 'T00:00:00Z').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '—';
+    function setBadge(id, status) {
+        const value = String(status || '—').trim().toLowerCase();
+        const kind = ['active', 'paid', 'reconnected', 'eligible for reconnection'].includes(value) ? 'success' :
+            ['disconnected', 'for disconnection', 'unpaid'].includes(value) ? 'danger' :
+            value === 'financial / service state review required' ? 'review' :
+            value === 'subject for disconnection' ? 'subject' :
+            ['first bill unpaid', 'balance + reconnection fee pending'].includes(value) ? 'warning' : 'neutral';
+        $(id).className = 'ci-status ci-status--' + kind; $(id).textContent = status || '—';
+    }
+    function setActiveAccountNumber(acctNo) {
+        _currentAccountNumber = acctNo;
+        txtSearch.value = acctNo;
+        refreshServiceStatus(acctNo);
+    }
+    async function refreshServiceStatus(acctNo) {
+        const version = ++serviceStatusVersion;
+        const indicator = $('ciServiceReadState');
+        ['ciProfileBalance','ciPhysicalStatus','ciDisconnectionDate','ciReconnectionDate'].forEach(id => $(id).textContent = '—');
+        setBadge('ciMonitoringStatus', '—'); setBadge('ciPhysicalStatus', '—');
+        setBadge('ciOperationalStatus', ['—', 'Pending', 'Suspended', 'Active', 'Closed'][selectedAccount?.status] || '—');
+        indicator.textContent = acctNo ? 'Loading service status…' : '';
+        indicator.hidden = !acctNo;
+        indicator.dataset.accountNumber = acctNo;
+        if (!acctNo) return;
+        const read = async url => {
+            const response = await fetch(url + encodeURIComponent(acctNo));
+            if (!response.ok) throw new Error();
+            return response.json();
+        };
+        const [monitoring, financial] = await Promise.allSettled([
+            read('/CustomerSupport/DisconnectionStatus?accountNumber='), read('/Billing/AccountLedgerData?accountNumber=')
+        ]);
+        if (version !== serviceStatusVersion) return;
+        const state = monitoring.status === 'fulfilled' && monitoring.value.accountNumber === acctNo ? monitoring.value : null;
+        const ledger = financial.status === 'fulfilled' && financial.value.account?.accountNumber === acctNo ? financial.value : null;
+        $('ciProfileBalance').textContent = summaryMoney(ledger?.totalBalance ?? state?.totalCollectibleBalance);
+        if (!state) { indicator.textContent = 'Service monitoring unavailable. Account and Ledger remain available.'; return; }
+        const operational = [...fldMeterStatus.options].find(option => option.textContent === state.operationalAccountStatus);
+        if (operational) fldMeterStatus.value = operational.value;
+        setBadge('ciOperationalStatus', state.operationalAccountStatus);
+        setBadge('ciMonitoringStatus', state.status);
+        setBadge('ciPhysicalStatus', state.physicalServiceStatus);
+        $('ciDisconnectionDate').textContent = summaryDate(state.actualDisconnectionDateUtc);
+        $('ciReconnectionDate').textContent = summaryDate(state.actualReconnectionDateUtc);
+        indicator.textContent = '';
+        indicator.hidden = true;
+    }
+    $('ciRefreshService').addEventListener('click', () => refreshServiceStatus(_currentAccountNumber));
+    $('ciAccounts').addEventListener('change', event => {
+        const account = currentAccounts.find(a => a.accountNumber === event.target.value);
+        if (account) switchToAccount(account);
+    });
     $('btnBills').addEventListener('click', () => {
         if (!_currentAccountNumber) { showToast('No account selected.', 'error'); return; }
         window.openAccountLedger(_currentAccountNumber, { initialTab: 'bills' });
@@ -1036,8 +678,11 @@ select.ci-readonly-field:disabled {
     let _adjActiveTab = 'dcm';
     let _adjDcmData   = [];
     let _adjAdjData   = [];
+    let _adjLoadVersion = 0;
 
     async function openAdjModal(accountNumber) {
+        const version = ++_adjLoadVersion;
+        _adjDcmData = []; _adjAdjData = [];
         // Set header label: "LASTNAME, FIRSTNAME  ACCT-NO"
         $('adjCustomerLabel').textContent =
             `${(txtCustomerName.value || '').toUpperCase()}   ${accountNumber}`;
@@ -1054,9 +699,11 @@ select.ci-readonly-field:disabled {
                 fetch(`${URL_DCM_HISTORY}?accountNumber=${encodeURIComponent(accountNumber)}`),
                 fetch(`${URL_ADJ_HISTORY}?accountNumber=${encodeURIComponent(accountNumber)}`),
             ]);
-            _adjDcmData = dcmRes.ok ? await dcmRes.json() : [];
-            _adjAdjData = adjRes.ok ? await adjRes.json() : [];
+            const [dcm, adjustments] = await Promise.all([dcmRes.ok ? dcmRes.json() : [], adjRes.ok ? adjRes.json() : []]);
+            if (version !== _adjLoadVersion) return;
+            _adjDcmData = dcm; _adjAdjData = adjustments;
         } catch {
+            if (version !== _adjLoadVersion) return;
             _adjDcmData = [];
             _adjAdjData = [];
         }
@@ -1095,13 +742,17 @@ select.ci-readonly-field:disabled {
             const status  = (m.status || 'Pending').toLowerCase();
             const amt     = Number(m.amount || 0).toLocaleString('en-US', { minimumFractionDigits:2 });
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${date}</td>
-                <td>${m.dcmType ?? '—'}</td>
-                <td><span class="${memoCls}">${memLbl}</span></td>
-                <td class="adj-num">₱${amt}</td>
-                <td>${m.explanation ?? '—'}</td>
-                <td><span class="adj-status adj-status--${status}">${m.status ?? '—'}</span></td>`;
+            [date, m.dcmType ?? '—', memLbl, '₱' + amt, m.explanation ?? '—', m.status ?? '—'].forEach((value, index) => {
+                const td = document.createElement('td'); td.textContent = value;
+                if (index === 2) td.className = memoCls;
+                if (index === 3) td.className = 'adj-num';
+                if (index === 5) {
+                    const badge = document.createElement('span'); badge.textContent = value;
+                    badge.className = 'adj-status adj-status--' + (['pending', 'approved', 'rejected'].includes(status) ? status : 'pending');
+                    td.replaceChildren(badge);
+                }
+                tr.appendChild(td);
+            });
             tbody.appendChild(tr);
         });
     }
@@ -1118,12 +769,12 @@ select.ci-readonly-field:disabled {
             const period = a.billingPeriod ? new Date(a.billingPeriod).toLocaleDateString('en-US') : '—';
             const amt    = Number(a.amount || 0).toLocaleString('en-US', { minimumFractionDigits:2 });
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${date}</td>
-                <td class="adj-mono">${a.billingReference ?? '—'}</td>
-                <td>${period}</td>
-                <td>${a.type ?? '—'}</td>
-                <td class="adj-num">₱${amt}</td>`;
+            [date, a.billingReference ?? '—', period, a.type ?? '—', '₱' + amt].forEach((value, index) => {
+                const td = document.createElement('td'); td.textContent = value;
+                if (index === 1) td.className = 'adj-mono';
+                if (index === 4) td.className = 'adj-num';
+                tr.appendChild(td);
+            });
             tbody.appendChild(tr);
         });
     }
@@ -1138,17 +789,18 @@ select.ci-readonly-field:disabled {
     });
 
     function closeAdjModal() {
+        ++_adjLoadVersion;
         $('adjModal').classList.add('adj-hidden');
         document.body.style.overflow = '';
     }
 
     /* ── Seed toolbar state on page-load with customer ── */
-    if (CUSTOMER_ID > 0) {
-        setToolbarEnabled(true);
-        const seedAcctNo = '@(currentAcct?.AccountNumber ?? string.Empty)';
-        updateToolbarLinks(CUSTOMER_ID, seedAcctNo);
-        setActiveAccountNumber(seedAcctNo);
-    }
+    populatePage(SEED);
+    fetch('/ZoneBook/GetZones').then(response => {
+        if (!response.ok) throw new Error();
+        return response.json();
+    }).then(data => { zoneBooks = data; renderZoneBook(); })
+      .catch(() => { zoneBooks = []; renderZoneBook(); showToast('Zone and Book lookup unavailable.', 'error'); });
 
 })();
 </script>

@@ -190,9 +190,9 @@
 
 .account-ledger__status--active,
 .account-ledger__status--paid {
-    background: rgba(20, 184, 166, 0.12);
-    border-color: rgba(20, 184, 166, 0.3);
-    color: #0f766e;
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
 }
 
 .account-ledger__status--inactive,
@@ -272,6 +272,7 @@
 .account-ledger__tabs {
     display: flex;
     align-items: stretch;
+    flex: 0 0 auto;
     gap: 8px;
     border-bottom: 1px solid #dfe7f1;
     background: #ffffff;
@@ -409,9 +410,16 @@
 
 .account-ledger__badge.account-ledger__status--active,
 .account-ledger__badge.account-ledger__status--paid {
-    background: rgba(20, 184, 166, 0.12);
-    border-color: rgba(20, 184, 166, 0.3);
-    color: #0f766e;
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.account-ledger__status.account-ledger__status--danger,
+.account-ledger__badge.account-ledger__status--danger {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
 }
 
 .account-ledger__badge.account-ledger__status--inactive,
@@ -573,4 +581,3 @@
         grid-template-columns: 1fr;
     }
 }
-

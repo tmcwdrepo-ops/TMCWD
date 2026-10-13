@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
 
@@ -16,6 +16,8 @@ namespace TMCWD.Data.Controllers
             _service = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
+
         [HttpPost("Save/{userId}")]
         public async Task<IActionResult> Save(int userId, int jobOrderId, ApprovalHistory history)
         {
@@ -26,6 +28,7 @@ namespace TMCWD.Data.Controllers
             return Ok(updatedApprovalHistory);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll(int jobOrderId)
         {

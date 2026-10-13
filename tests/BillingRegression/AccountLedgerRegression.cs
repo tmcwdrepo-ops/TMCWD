@@ -43,6 +43,19 @@ static class AccountLedgerRegression
                 && x.Account.MeterNumber == "LEDGER-METER" && x.Account.ServiceAddress == "Synthetic Street"
                 && x.Account.Classification == "Residential" && x.Account.Status == "Active" && x.Account.RateCode == null, "Header invented or lost data.");
         });
+        await Case("exact account selection for two accounts of one customer", async () => {
+            var first = await db.Accounts.SingleAsync();
+            first.AccountNumber = "01-010003";
+            db.Accounts.Add(new Account { Id = 10, CustomerId = first.CustomerId, AccountNumber = "01-010010",
+                ZoneBookId = first.ZoneBookId, Classification = first.Classification, MeterSize = first.MeterSize,
+                Status = first.Status, DateCreated = stamp, DateUpdated = stamp });
+            await db.SaveChangesAsync(); db.ChangeTracker.Clear();
+            foreach (var number in new[] { "01-010003", "01-010010", "01-010003" }) {
+                var result = await ledger.Get(number);
+                Check(result?.Account.AccountNumber == number, "Ledger substituted another account for the same customer.");
+            }
+            Check(await ledger.Get("01-019999") == null, "Unknown account fell back to an existing account.");
+        });
         await Case("persisted water bill and exact reading", async () => {
             var b = (await Get()).Bills.Single(); Check(b.ReadingDate == stamp && b.Collection.BillAmount == 170m
                 && b.Collection.MeterMaintenanceFee == 20m && b.Collection.ServiceInvoiceNumber == "LEDGER-SI"

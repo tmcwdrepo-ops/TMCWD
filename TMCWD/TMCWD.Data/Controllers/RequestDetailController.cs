@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.CompilerServices;
 using TMCWD.Data.Context;
@@ -19,6 +19,7 @@ namespace TMCWD.Data.Controllers
             _requestDetailService = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<ActionResult> Get(int id)
         {
@@ -27,6 +28,8 @@ namespace TMCWD.Data.Controllers
             return Ok(requestDetail);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
+
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<ActionResult> SaveUpdate(int userId, [FromRoute] int requestId, [FromBody] RequestDetail detail)
         {
@@ -34,6 +37,8 @@ namespace TMCWD.Data.Controllers
             if (updateDetail == null) return BadRequest("Problem(s) encountered while saving request detail");
             return Ok(updateDetail);
         }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
 
         [HttpPost("SaveMultiple/{userId}")]
         public async Task<ActionResult> SaveMultiple(int userId, [FromRoute] int requestId, [FromBody] List<RequestDetail> details)
@@ -50,6 +55,7 @@ namespace TMCWD.Data.Controllers
             return Ok(updatedDetails);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByRequestId")]
         public async Task<ActionResult> GetByRequestId([FromRoute] int requestId)
         {
@@ -60,6 +66,8 @@ namespace TMCWD.Data.Controllers
             return Ok(requestDetails);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
+
         [HttpDelete("Delete/{id}")]
         public async Task<ActionResult> Delete(int id)
         {
@@ -68,6 +76,8 @@ namespace TMCWD.Data.Controllers
             var res = await _requestDetailService.Delete(requestDetail);
             return Ok(res);
         }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
 
         [HttpDelete("DeleteDetails")]
         public async Task<ActionResult> DeleteDetails(int requestId)

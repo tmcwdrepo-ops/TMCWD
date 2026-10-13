@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
 
@@ -26,6 +26,7 @@ namespace TMCWD.Data.Controllers
 
         #region methods
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -34,6 +35,7 @@ namespace TMCWD.Data.Controllers
             return Ok(template);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -42,6 +44,7 @@ namespace TMCWD.Data.Controllers
             return Ok(templates);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByUser/{userId}")]
         public async Task<IActionResult> GetByUser(int userId)
         {
@@ -51,15 +54,21 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         public async Task<IActionResult> SaveUpdate(int userId, ReadingSheetTemplate template)
         {
-            var savedTemplate = await _service.SaveUpdate(userId, template);
-            return Ok(savedTemplate);
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                return Unauthorized();
+            try { return Ok(await _service.SaveUpdate(userId, template)); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
         }
 
         [HttpPut("Deactivate/{id}/{userId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         public async Task<IActionResult> Deactivate(int id, int userId)
         {
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                return Unauthorized();
             var template = await _service.Deactivate(id, userId);
 
             if (template == null)

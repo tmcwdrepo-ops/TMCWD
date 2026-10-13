@@ -43,10 +43,12 @@ namespace TMCWD.Administration
 
         public async Task<User?> SaveUpdate(int userId, User user)
         {
-            var content = JsonContent.Create(user);
+            var content = JsonContent.Create(new UserWriteRequest { Id = user.Id,
+                Name = user.Name ?? "", Email = user.Email ?? "", Role = user.Role,
+                IsActive = user.IsActive, Password = user.Id == 0 ? user.Password : null });
             var response = await _webService.Client.PostAsync($"api/Users/SaveUpdate/{userId}", content);
             var data = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return null;
+            response.EnsureSuccessStatusCode();
             return this.ConvertJsonStringToUser(data);
         }
 
@@ -88,26 +90,12 @@ namespace TMCWD.Administration
 
         public async Task<bool> ChangePassword(int userId, int id, string currentPassword, string newPassword, string confirmPassword)
         {
-            StringBuilder sb = new();
-            var user = await this.Get(id);
-
-            currentPassword = StringEncyption.Encrypt(currentPassword);
-            newPassword = StringEncyption.Encrypt(newPassword);
-            confirmPassword = StringEncyption.Encrypt(confirmPassword);
-
-            if (user == null) throw new Exception("Change password failed, user not found");
-
-            if (user.Password != currentPassword) sb.AppendLine("Current password mismatch");
-            if (newPassword != confirmPassword) sb.AppendLine("New password confirmation failed");
-
-            if (String.IsNullOrEmpty(sb.ToString().Trim())) throw new Exception(sb.ToString());
-
-            user.Password = newPassword;
-
-            user = await this.SaveUpdate(userId, user);
-
-
-            return user != null && user.Id > 0;
+            if (userId != id) throw new InvalidOperationException("Administrative password reset requires an approved policy.");
+            using var response = await _webService.Client.PostAsJsonAsync("api/Users/password",
+                new PasswordChangeRequest { CurrentPassword = currentPassword, NewPassword = newPassword,
+                    ConfirmPassword = confirmPassword });
+            response.EnsureSuccessStatusCode();
+            return true;
         }
 
         public List<SelectListItem> GetRoles()

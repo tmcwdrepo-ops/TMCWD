@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using TMCWD.Model.CustomerSupport;
 using TMCWD.Model.Interfaces;
 using System.Text.Json;
@@ -36,13 +36,13 @@ namespace TMCWD.CustomerSupport
 
         public async Task<Customer> SaveUpdate(int userId, Customer customer)
         {
-            var content = JsonContent.Create(customer);
+            var content = JsonContent.Create(new CustomerWriteRequest { Id = customer.Id, Firstname = customer.Firstname, Middlename = customer.Middlename, Lastname = customer.Lastname, PhoneNumber = customer.PhoneNumber, Email = customer.Email, IsActive = customer.IsActive });
 
             var response = await _webService.Client.PostAsync($"api/Customer/SaveUpdate/{userId}", content);
 
             var data = await response.Content.ReadAsStringAsync();
 
-            if (!response.IsSuccessStatusCode) return null;
+            response.EnsureSuccessStatusCode();
 
             return this.ConvertJsonToCustomer(data);
         }

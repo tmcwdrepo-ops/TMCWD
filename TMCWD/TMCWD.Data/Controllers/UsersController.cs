@@ -1,145 +1,96 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Data;
-using System.Text;
-using TMCWD.Data.Entities;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Services;
+using TMCWD.Model.Administrator;
 using TMCWD.Utility.Encryption;
+using User = TMCWD.Data.Entities.User;
 
-namespace TMCWD.Data.Controllers
+namespace TMCWD.Data.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class UsersController(IUserService users) : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class UsersController : Controller
+    private int ActorId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) && id > 0 ? id : 0;
+
+    [HttpPost("SaveUpdate/{userId}")]
+    [Authorize(Policy = nameof(UserRole.SuperAdmin))]
+    public async Task<IActionResult> SaveUpdate(int userId, UserWriteRequest request)
     {
-
-        private readonly IUserService _userService;
-
-        public UsersController(IUserService userService)
-        {
-            _userService = userService;
-        }
-
-        [HttpPost("SaveUpdate/{userId}")]
-        public async Task<ActionResult> SaveUpdate(int userId, [FromBody] User user)
-        {
-            StringBuilder sb = new();
-
-            if (String.IsNullOrEmpty(user.Name.Trim())) sb.AppendLine("Name is required");
-            if (String.IsNullOrEmpty(user.Email.Trim())) sb.AppendLine("Email is required");
-            if (String.IsNullOrEmpty(user.Password.Trim())) sb.AppendLine("Password is required");
-
-            if (!String.IsNullOrEmpty(sb.ToString().Trim())) return BadRequest(sb.ToString());
-
-            if(user.Id > 0)
-            {
-                user.UpdatedBy = userId;
-            }
-            else
-            {
-
-                var existingUser = await _userService.GetByEmail(StringEncyption.Encrypt(user.Email));
-
-                if (existingUser != null)
-                    return BadRequest($"User with email {user.Email} already exists.");
-
-                user.CreatedBy = userId;
-                user.DateCreated = DateTime.Now;
-                user.DateVerified = DateTime.Now;
-            }
-            user.DateUpdated = DateTime.Now;
-
-
-            var updatedUser = await _userService.SaveUpdate(userId, user);
-
-            return Ok(updatedUser);
-        }
-
-        [HttpGet("Get/{id}")]
-        public async Task<ActionResult> Get(int id)
-        {
-
-            if (id <= 0) return BadRequest("To get user, id must be supplied");
-
-            var user = await _userService.Get(id);
-            if (user == null) return NotFound($"User with id {id} was not found");
-            return Ok(user);
-        }
-
-        [HttpGet("GetByName/{name}")]
-        public async Task<ActionResult> GetByName(string name)
-        {
-
-            if (String.IsNullOrEmpty(name.Trim())) return BadRequest("To get user, name must be supplied");
-
-            var user = await _userService.GetByName(name);
-            if (user == null) return NotFound($"User with name {name} was not found");
-            return Ok(user);
-        }
-
-        [HttpGet("GetByEmail/{email}")]
-        public async Task<ActionResult> GetByEmail(string email)
-        {
-
-            if (String.IsNullOrEmpty(email.Trim())) return BadRequest("To get user, email must be supplied");
-
-            var user = await _userService.GetByEmail(email);
-
-            if (user == null) return NotFound($"User with email {email} was not found.");
-
-            return Ok(user);
-        }
-
-        [HttpGet("GetUsers")]
-        public async Task<ActionResult> GetUsers()
-        {
-            var users = await _userService.GetUsers();
-            if (users == null || !users.Any()) return NotFound();
-            return Ok(users);
-        }
-
-        [HttpPut("ChangePassword/{id}/{userId}/{newPassword}")]
-        public async Task<ActionResult> ChangePassword(int id, int userId, string newPassword)
-        {
-            StringBuilder sb = new();
-            if (id <= 0) sb.AppendLine("To change password, user id must be supplied");
-            if (string.IsNullOrEmpty(newPassword.Trim())) sb.AppendLine("To change password, new password must be supplied");
-            if (!String.IsNullOrEmpty(sb.ToString().Trim())) return BadRequest(sb.ToString());
-
-            var existingUser = await _userService.Get(id);
-            if (existingUser == null) return NotFound($"User with id {id} was not found");
-            existingUser.Password = newPassword;
-
-            var updatedUser = await _userService.SaveUpdate(userId, existingUser);
-
-            return Ok(updatedUser.Id > 0);
-        }
-
-        [HttpGet("SearchUser/{searchString}")]
-        public async Task<ActionResult> SearchUser(string searchString)
-        {
-            var users = await _userService.SearchUser(searchString);
-
-            if(users == null  || !users.Any()) return NotFound($"User(s) with value {searchString} was not found.");
-
-            return Ok(users);
-        }
-
-        [HttpGet("GetUsersByRole/{role}")]
-        public async Task<IActionResult> GetUsersByRole(int role)
-        {
-            var users = await _userService.GetUsersByRole(role);
-            if (users == null || !users.Any()) return NotFound();
-            return Ok(users);
-        }
-
-        [HttpGet("GetUsersById")]
-        public async Task<IActionResult> GetUsersById([FromQuery] int[] ids)
-        {
-            var listIds = ids.AsEnumerable();
-            var users = await _userService.GetUsersByIds(listIds);
-            if (users == null || !users.Any()) return NotFound();
-            return Ok(users);
-        }
-
+        userId = ActorId;
+        if (userId == 0) return Unauthorized();
+        var actor = await users.Get(userId);
+        if (actor?.Role != (int)UserRole.SuperAdmin || actor.IsActive != true || actor.IsVerified != true)
+            return Forbid();
+        var existing = request.Id > 0 ? await users.Get(request.Id) : null;
+        if (request.Id > 0 && existing == null) return NotFound();
+        // Peer administrator changes and verification require a separately approved account-security workflow.
+        if (existing?.Role == (int)UserRole.SuperAdmin && existing.Id != userId) return Forbid();
+        if (existing?.Id == userId && ((request.Role.HasValue && request.Role != existing.Role)
+            || (request.IsActive.HasValue && request.IsActive != existing.IsActive))) return Forbid();
+        if (existing != null && !string.IsNullOrEmpty(request.Password))
+            return BadRequest("Use the password change command.");
+        if (existing == null && (!request.Role.HasValue || string.IsNullOrWhiteSpace(request.Password)))
+            return BadRequest("A role and initial password are required.");
+        var duplicate = await users.GetByEmail(request.Email.Trim());
+        if (duplicate != null && duplicate.Id != request.Id) return Conflict("Email is already registered.");
+        var saved = existing ?? new User { IsVerified = false, DateVerified = null };
+        saved.Name = request.Name.Trim();
+        saved.Email = request.Email.Trim();
+        saved.Role = request.Role ?? saved.Role;
+        saved.IsActive = request.IsActive ?? saved.IsActive ?? false;
+        if (existing == null) saved.Password = StringEncyption.Encrypt(request.Password!);
+        saved.UpdatedBy = userId;
+        saved.DateUpdated = DateTime.Now;
+        return Ok(Profile(await users.SaveUpdate(userId, saved)));
     }
+
+    [HttpPost("password")]
+    public async Task<IActionResult> ChangePassword(PasswordChangeRequest request)
+    {
+        var actorId = ActorId;
+        if (actorId == 0) return Unauthorized();
+        if (Request.Query.Count != 0) return BadRequest("Password changes accept a body and authenticated self identity only.");
+        var account = await users.Get(actorId);
+        if (account == null || account.IsActive != true || account.IsVerified != true) return Forbid();
+        if (account.Password != StringEncyption.Encrypt(request.CurrentPassword)) return Forbid();
+        if (request.NewPassword != request.ConfirmPassword) return BadRequest("Password confirmation failed.");
+        account.Password = StringEncyption.Encrypt(request.NewPassword);
+        await users.SaveUpdate(actorId, account);
+        return NoContent();
+    }
+
+    [HttpGet("Get/{id}")]
+    [Authorize(Policy = "BillingOperations")]
+    public async Task<IActionResult> Get(int id) => Result(await users.Get(id));
+    [HttpGet("GetByName/{name}")]
+    [Authorize(Policy = nameof(UserRole.SuperAdmin))]
+    public async Task<IActionResult> GetByName(string name) => Result(await users.GetByName(name));
+    [HttpGet("GetByEmail/{email}")]
+    [Authorize(Policy = nameof(UserRole.SuperAdmin))]
+    public async Task<IActionResult> GetByEmail(string email) => Result(await users.GetByEmail(email));
+    [HttpGet("GetUsers")]
+    [Authorize(Policy = "BillingOperations")]
+    public async Task<IActionResult> GetUsers() => Ok((await users.GetUsers() ?? []).Select(ReadProfile));
+    [HttpGet("SearchUser/{searchString}")]
+    [Authorize(Policy = nameof(UserRole.SuperAdmin))]
+    public async Task<IActionResult> SearchUser(string searchString) => Ok((await users.SearchUser(searchString) ?? []).Select(ReadProfile));
+    [HttpGet("GetUsersByRole/{role}")]
+    [Authorize(Policy = "BillingOperations")]
+    public async Task<IActionResult> GetUsersByRole(int role)
+    {
+        if (role != (int)UserRole.MeterReader && !User.IsInRole(((int)UserRole.SuperAdmin).ToString())) return Forbid();
+        return Ok((await users.GetUsersByRole(role)).Select(ReadProfile));
+    }
+    [HttpGet("GetUsersById")]
+    [Authorize(Policy = "BillingOperations")]
+    public async Task<IActionResult> GetUsersById([FromQuery] int[] ids) => Ok((await users.GetUsersByIds(ids)).Select(ReadProfile));
+
+    private object ReadProfile(User user) => User.IsInRole(((int)UserRole.SuperAdmin).ToString())
+        ? Profile(user) : new { user.Id, user.Name };
+    private IActionResult Result(User? user) => user == null ? NotFound() : Ok(ReadProfile(user));
+    internal static UserProfileDto Profile(User user) => new(user.Id, user.Name, user.Email, user.Role,
+        user.IsActive, user.IsVerified, user.DateCreated, user.DateUpdated);
 }

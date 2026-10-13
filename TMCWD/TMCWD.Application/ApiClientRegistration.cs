@@ -12,7 +12,8 @@ public static class ApiClientRegistration
         {
             var service = new WebService(services.GetRequiredService<IHttpClientFactory>());
             var user = services.GetRequiredService<AuthenticatedUserService>().User;
-            if (user.Id > 0 && user.Role.HasValue)
+            var stamp = services.GetRequiredService<AuthenticatedUserService>().SecurityStamp;
+            if (user.Id > 0 && user.Role.HasValue && !string.IsNullOrWhiteSpace(stamp))
             {
                 // Bridge the trusted server session to the API; never share user headers across requests.
                 var config = services.GetRequiredService<IConfiguration>();
@@ -20,7 +21,8 @@ public static class ApiClientRegistration
                 var token = handler.CreateToken(new SecurityTokenDescriptor {
                     Subject = new System.Security.Claims.ClaimsIdentity([
                         new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, user.Id.ToString()),
-                        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, user.Role.Value.ToString())]),
+                        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, user.Role.Value.ToString()),
+                        new System.Security.Claims.Claim(TMCWD.Utility.Encryption.UserSecurityStamp.ClaimType, stamp)]),
                     Issuer = config["Jwt:Issuer"], Audience = config["Jwt:Audience"], Expires = DateTime.UtcNow.AddMinutes(5),
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]!)), SecurityAlgorithms.HmacSha256)
                 });

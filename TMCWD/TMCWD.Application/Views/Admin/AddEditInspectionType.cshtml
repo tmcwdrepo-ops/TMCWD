@@ -12,6 +12,7 @@
     <p class="text-gray-700">
         @using(Html.BeginForm("SaveUpdateInspectionType", "Admin"))
         {
+            @Html.AntiForgeryToken()
             @Html.HiddenFor(x => x.AddEditInspectionType.Id)
             @Html.HiddenFor(x => x.AddEditInspectionType.DateCreated)
             @Html.HiddenFor(x => x.AddEditInspectionType.CreatedBy)

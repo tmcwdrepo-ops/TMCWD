@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.Metadata;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TMCWD.Data.Context;
@@ -22,13 +22,23 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
-        public async Task<ActionResult<Customer>> SaveUpdate(int userId, [FromBody] Customer customer)
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "CustomerService")]
+        public async Task<ActionResult<Customer>> SaveUpdate(int userId, [FromBody] TMCWD.Model.CustomerSupport.CustomerWriteRequest request)
         {
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                return Unauthorized();
+            var customer = request.Id > 0 ? await _customerService.Get(request.Id) : new Customer();
+            if (customer == null) return NotFound();
+            customer.Firstname = request.Firstname; customer.Middlename = request.Middlename;
+            customer.Lastname = request.Lastname; customer.PhoneNumber = request.PhoneNumber;
+            customer.Email = request.Email; customer.IsActive = request.IsActive;
+            customer.Updatedby = userId; customer.DateUpdated = DateTime.Now;
             var updatedCustomer = await _customerService.SaveUpdate(userId, customer);
             if (updatedCustomer == null || updatedCustomer?.Id <= 0) BadRequest("Customer was not saved due to some issue(s)");
             return Ok(updatedCustomer);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("Get/{id}")]
         public async Task<ActionResult<Customer>> Get(int id)
         {
@@ -37,6 +47,7 @@ namespace TMCWD.Data.Controllers
             return Ok(customer);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByName/{firstname}/{lastname}")]
         public async Task<ActionResult<IEnumerable<Customer>>> GetByName(string firstname, string lastname)
         {
@@ -46,6 +57,7 @@ namespace TMCWD.Data.Controllers
 
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetCustomers")]
         public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers()
         {
@@ -55,6 +67,7 @@ namespace TMCWD.Data.Controllers
             return Ok(customers);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("Search/{searchString}")]
         public async Task<ActionResult> Search(string searchString)
         {
@@ -63,6 +76,7 @@ namespace TMCWD.Data.Controllers
             return Ok(customers);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetCustomersFromIds")]
         public async Task<IActionResult> GetCustomersFromIds([FromQuery] int[] ids)
         {

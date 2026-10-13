@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Services;
 
 namespace TMCWD.Data.Controllers
@@ -25,6 +25,7 @@ namespace TMCWD.Data.Controllers
 
         #region methods
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -33,6 +34,7 @@ namespace TMCWD.Data.Controllers
             return Ok(endpoint);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByType/{type}")]
         public async Task<IActionResult> GetByType(int type)
         {
@@ -41,6 +43,7 @@ namespace TMCWD.Data.Controllers
             return Ok(endpoints);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByTypeAndName/{type}/{name}")]
         public async Task<IActionResult> GetByTypeAndName(int type, string name)
         {

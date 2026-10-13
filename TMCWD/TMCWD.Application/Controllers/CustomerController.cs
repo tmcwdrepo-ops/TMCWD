@@ -18,6 +18,7 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveUpdateCustomer(Customer customer)
         {
             var updateCustomer = await _customerTransaction.SaveUpdate(_authenticatedUserService.User.Id, customer);
@@ -27,3 +28,4 @@ namespace TMCWD.Application.Controllers
 
     }
 }
+

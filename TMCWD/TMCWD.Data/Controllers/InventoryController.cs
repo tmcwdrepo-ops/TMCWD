@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using TMCWD.Data.Context;
@@ -17,6 +17,8 @@ namespace TMCWD.Data.Controllers
 
         public InventoryController(IInventoryService service) { _inventoryService = service; }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
+
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<ActionResult> SaveUpdate(int userId, [FromBody] Inventory inventory)
         {
@@ -25,6 +27,7 @@ namespace TMCWD.Data.Controllers
             return Ok(updatedInventory);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<ActionResult> Get(int id)
         {
@@ -33,6 +36,7 @@ namespace TMCWD.Data.Controllers
             return Ok(inventory);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetAll")]
         public async Task<ActionResult> GetAll()
         {
@@ -41,6 +45,7 @@ namespace TMCWD.Data.Controllers
             return Ok(inventory);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByName/{name}")]
         public async Task<ActionResult> GetByName(string name)
         {

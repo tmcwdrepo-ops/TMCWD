@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Http.Json;
 using TMCWD.Utility.Generic;
 using TMCWD.Utility.Encryption;
@@ -37,6 +37,8 @@ namespace TMCWD.Administration
 
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public int LastFailureStatusCode { get; private set; }
+        public string? SecurityStamp { get; private set; }
 
         #endregion
 
@@ -44,27 +46,32 @@ namespace TMCWD.Administration
 
         public async Task<User> Login()
         {
+            SecurityStamp = null;
             if (String.IsNullOrEmpty(this.Email.Trim()) || String.IsNullOrEmpty(this.Password.Trim()))
                 return new User();
 
-            var encodedEmail = Uri.EscapeDataString(this.Email.Trim());
-            using var response = await _webService.Client.GetAsync($"api/Users/GetByEmail/{encodedEmail}");
+            LastFailureStatusCode = 0;
+            using var response = await _webService.Client.PostAsJsonAsync("api/auth/login",
+                new PasswordLoginRequest { Identifier = Email.Trim(), Password = Password });
 
             // Error responses from the API contain a JSON string/message, not a User object.
             // Do not pass those bodies to the User deserializer.
             if (!response.IsSuccessStatusCode)
+            {
+                LastFailureStatusCode = (int)response.StatusCode;
                 return new User();
+            }
 
             var data = await response.Content.ReadAsStringAsync();
             if (String.IsNullOrWhiteSpace(data))
                 return new User();
 
             var currentUser = ConvertJsonToUser(data);
-            if (currentUser.Id == 0) return new User();
+            using var login = JsonDocument.Parse(data);
+            SecurityStamp = login.RootElement.TryGetProperty("securityStamp", out var stamp) ? stamp.GetString() : null;
+            if (currentUser.Id == 0 || string.IsNullOrWhiteSpace(SecurityStamp)) return new User();
 
-            if (currentUser.Password == StringEncyption.Encrypt(this.Password)) return currentUser;
-
-            return new();
+            return currentUser;
         }
 
         public User ConvertJsonToUser(string json)

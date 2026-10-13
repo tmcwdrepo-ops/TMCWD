@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Services;
 
 namespace TMCWD.Data.Controllers
@@ -14,6 +14,7 @@ namespace TMCWD.Data.Controllers
             _service = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -25,6 +26,7 @@ namespace TMCWD.Data.Controllers
             return Ok(rate);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -33,6 +35,7 @@ namespace TMCWD.Data.Controllers
             return Ok(rates);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByClassification/{classification}")]
         public async Task<IActionResult> GetByClassification(int classification)
         {
@@ -41,6 +44,7 @@ namespace TMCWD.Data.Controllers
             return Ok(rates);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByClassificationAndMeterSize/{classification}/{meterSize}")]
          public async Task<IActionResult> GetByClassificationAndMeterSize(
          int classification,

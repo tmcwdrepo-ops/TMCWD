@@ -54,6 +54,8 @@ namespace TMCWD.Data.Context
         public DbSet<OtherChargeInstallment> OtherChargeInstallments { get; set; }
 
         public DbSet<BillingAdjustment> BillingAdjustments { get; set; }
+        public DbSet<BillingAdjustmentOperation> BillingAdjustmentOperations { get; set; }
+        public DbSet<ServiceDisconnectionEvent> ServiceDisconnectionEvents { get; set; }
 
         public DbSet<DebitCreditMemo> DebitCreditMemos { get; set; }
 
@@ -81,6 +83,8 @@ namespace TMCWD.Data.Context
         public DbSet<Tariff> Tariffs { get; set; }
 
         public DbSet<WaterRate> WaterRates { get; set; }
+
+        public DbSet<MeterMaintenanceRate> MeterMaintenanceRates { get; set; }
 
         public DbSet<ZoneBook> ZoneBooks { get; set; }
 
@@ -116,6 +120,13 @@ namespace TMCWD.Data.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            var serviceEvent = modelBuilder.Entity<ServiceDisconnectionEvent>();
+            serviceEvent.Property(e => e.ActiveAccountId).HasComputedColumnSql(
+                "CASE WHEN `ActualReconnectionDateUtc` IS NULL THEN `AccountId` ELSE NULL END", stored: true);
+            serviceEvent.HasIndex(e => e.ActiveAccountId).IsUnique();
+            serviceEvent.HasIndex(e => new { e.AccountId, e.SecondBillingId }).IsUnique();
+            serviceEvent.HasIndex(e => e.ReconnectionFeeOtherChargeId).IsUnique();
+            serviceEvent.HasIndex(e => e.ReconnectionOperationId).IsUnique();
             modelBuilder.Entity<OtherChargeInstallment>(entity =>
             {
                 entity.HasIndex(x => new { x.OtherChargeId, x.InstallmentNumber }).IsUnique();
@@ -165,6 +176,26 @@ namespace TMCWD.Data.Context
 
                 entity.Property(e => e.DateUpdated)
                     .IsRequired();
+            });
+            modelBuilder.Entity<MeterMaintenanceRate>(entity =>
+            {
+                entity.ToTable("meter_maintenance_rates", table =>
+                {
+                    table.HasCheckConstraint("CK_meter_maintenance_rates_amount", "`Amount` >= 0");
+                    table.HasCheckConstraint("CK_meter_maintenance_rates_interval",
+                        "`EffectiveTo` IS NULL OR `EffectiveTo` >= `EffectiveFrom`");
+                });
+                entity.HasKey(rate => rate.Id);
+                entity.Property(rate => rate.Amount).HasPrecision(12, 2).IsRequired();
+                entity.Property(rate => rate.EffectiveFrom).HasColumnType("date").IsRequired();
+                entity.Property(rate => rate.EffectiveTo).HasColumnType("date");
+                entity.Property(rate => rate.DateCreated).IsRequired();
+                entity.Property(rate => rate.DateUpdated).IsRequired();
+                entity.HasIndex(rate => rate.EffectiveFrom)
+                    .IsUnique()
+                    .HasDatabaseName("UQ_meter_maintenance_rates_effective_from");
+                entity.HasIndex(rate => new { rate.EffectiveFrom, rate.EffectiveTo })
+                    .HasDatabaseName("IX_meter_maintenance_rates_effective_interval");
             });
         }
 

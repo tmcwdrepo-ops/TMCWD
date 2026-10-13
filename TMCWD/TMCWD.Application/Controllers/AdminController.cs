@@ -241,8 +241,8 @@ namespace TMCWD.Application.Controllers
             AdminViewModel model = new()
             {
                 AddEditUser = editUser,
-                ConfirmPassword = editUser?.Id > 0 ? (editUser.Password ?? string.Empty) : string.Empty,
-                Password = editUser?.Id > 0 ? (editUser.Password ?? string.Empty) : string.Empty
+                ConfirmPassword = string.Empty,
+                Password = string.Empty
             };
 
 
@@ -252,6 +252,7 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost()]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveUser(AdminViewModel model)
         {
 
@@ -259,13 +260,15 @@ namespace TMCWD.Application.Controllers
                 return View("AddEditUser", model);
 
             if (!model.ConfirmPassword.Equals(model.Password) && model.AddEditUser.Id <= 0) return BadRequest("Password verification failed.");
-            if (model.AddEditUser.Id <= 0)    model.AddEditUser.Password = StringEncyption.Encrypt(model.Password);
+            if (model.AddEditUser.Id <= 0) model.AddEditUser.Password = model.Password;
 
 
             await _userTransaction.SaveUpdate(_authenticatedUserService.User.Id, model.AddEditUser);
             return RedirectToAction("Index", "Admin");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeactivateUser(int userId)
         {
             User currentUser = _authenticatedUserService.User;
@@ -310,6 +313,7 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveUpdateInspectionType(InspectionTypeViewModel model)
         {
             User currentUser = _authenticatedUserService.User;
@@ -328,6 +332,8 @@ namespace TMCWD.Application.Controllers
             return RedirectToAction("InspectionTypes", "Admin");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeactivateInspectionType(int inspectionTypeId)
         {
             InspectionType inspType = new();

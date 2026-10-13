@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
 
@@ -25,6 +25,7 @@ namespace TMCWD.Data.Controllers
 
         #region methods
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -33,6 +34,7 @@ namespace TMCWD.Data.Controllers
             return Ok(eWalletTransaction);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByPaymentReference/{reference}")]
         public async Task<IActionResult> GetByPaymentReference(string reference)
         {
@@ -41,6 +43,7 @@ namespace TMCWD.Data.Controllers
             return Ok(eWalletTransactions);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByProcessedBy/{processBy}")]
         public async Task<IActionResult> GetByProcessedBy(int processedBy)
         {
@@ -49,7 +52,8 @@ namespace TMCWD.Data.Controllers
             return Ok(eWalletTransactions);
         }
 
-        [HttpGet("SaveUpdate/{userId}")]
+        [HttpPost("SaveUpdate/{userId}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         public async Task<IActionResult> SaveUpdate(int userId, EWalletTransaction transaction)
         {
             var savedTransaction = await _service.SaveUpdate(userId, transaction);

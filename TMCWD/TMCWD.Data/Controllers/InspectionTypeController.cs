@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using TMCWD.Data.Context;
@@ -21,6 +21,7 @@ namespace TMCWD.Data.Controllers
             _inspectionTypeService = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "CustomerService")]
         [HttpGet("GetTypes")]
         public async Task<ActionResult> GetTypes()
         {
@@ -31,6 +32,7 @@ namespace TMCWD.Data.Controllers
             return Ok(inspectionTypes);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "CustomerService")]
         [HttpGet("Get/{id}")]
         public async Task<ActionResult> Get(int id)
         {
@@ -42,8 +44,11 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = nameof(UserRole.SuperAdmin))]
         public async Task<ActionResult> SaveUpdate(int userId, [FromBody] InspectionType type)
         {
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                return Unauthorized();
             StringBuilder sb = new();
 
             if (String.IsNullOrEmpty(type.Name.Trim())) return BadRequest("Name is required in creating inspection type.");
@@ -55,6 +60,7 @@ namespace TMCWD.Data.Controllers
             return Ok(updatedType);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "CustomerService")]
         [HttpGet("GetNewRequestType")]
         public async Task<ActionResult> GetNewRequestType()
         {

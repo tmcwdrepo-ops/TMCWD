@@ -3,11 +3,27 @@
 Date: 2026-10-08
 Repository: `D:\Projects 20260720\TMCWD`
 
-Status: PHASE 6G — VERIFICATION INCOMPLETE
+Status: PHASE 6G COMPLETE
+
+## Verification date and scope
+
+- Report updated: October 8, 2026.
+- Scope: Phase 6G Other Charges, installments, Collections integration, payments/cancellations, Dashboard Charging, and unified Account Ledger verification.
+- This pass adds a read-only live development schema inspection, authenticated zero-history ledger testing on existing mock data, responsive/theme browser checks, and database before/after signatures. No financial writes were issued and no migration was applied.
+- The build and BillingRegression results below are retained from the prior verification pass; the Collections browser suite was rerun in this pass. Environment and repository artifact observations are identified as agent-observed. The seven authenticated UI results are explicitly user-reported manual passes.
 
 ## Executive summary
 
-The solution build completed successfully and the billing regression suite passed in the local development/test environment. The repository also contains the required schema/implementation artifacts for the Other Charge installment model and the canonical shared Account Ledger. However, the final runtime/authenticated verification requirement remains blocked because a real authenticated development session for `/Collections` and the Account Ledger was not available in this environment. Because of that, the project cannot be declared complete under the strict completion rule in the task specification.
+The solution build and BillingRegression run passed in the recorded automated verification. The repository contains the Other Charge installment schema artifact and canonical shared Account Ledger. On October 8, 2026, the user reported successful completion of seven authenticated manual UI checks. Those results are recorded below as user-reported; they were not independently observed by the agent.
+
+The configured local development schema matches the migration requirements. The user confirmed that the configured development records are mock data. An existing zero-history mock account was used for authenticated empty-state, responsive/theme, and read-only persistence tests; its identifier and personal-looking fields are intentionally omitted. A mobile tab-bar collapse was found, fixed with a targeted CSS rule, and verified at all requested viewport sizes. The synthetic-only Collections browser regression now passes after its selectors were aligned with the canonical shared ledger markup.
+
+Evidence labels used in this report:
+
+- **Automated result**: command or regression/browser-suite result recorded during the verification pass.
+- **Agent-observed**: environment/repository fact directly checked during the verification pass.
+- **User-reported manual pass**: result supplied by the user, not independently observed by the agent.
+- **Not verified**: available evidence does not establish the requirement.
 
 ## Development environment verification
 
@@ -21,17 +37,44 @@ Status: PASS
 
 ## Database/schema verification
 
-Status: PASS
+Status: PASS — live development schema matches the migration requirements
 
-- The project contains the required schema migration for the Other Charge installment deployment:
+- **Agent-observed, read-only live query:** the Data API development settings target local database `tmcwd` at `127.0.0.1:3307`. The connection identity returned `tmcwd` on port `3307`; the server process is the local MySQL 8.0 service.
+- Metadata was read from `INFORMATION_SCHEMA` only. No migration or DDL/DML was run.
+- The live `other_charges` table has nullable `InstallmentCount INT` and the existing parent `SettledPaymentId BIGINT NULL`.
+- The live `other_charge_installments` table has all columns required by the migration:
+  - `Id BIGINT NOT NULL` primary key
+  - `OtherChargeId BIGINT NOT NULL`
+  - `InstallmentNumber INT NOT NULL`
+  - `DueBillingPeriod DATETIME NOT NULL`
+  - `Amount DECIMAL(6,2) NOT NULL`
+  - `PaymentStatus INT NOT NULL`
+  - `SettledPaymentId BIGINT NULL`
+  - `ActivatedBillingReferenceId VARCHAR(50) NULL`
+  - `ActivatedAt DATETIME NULL`
+  - `CreatedBy BIGINT NOT NULL`, `DateCreated DATETIME NOT NULL`
+  - `UpdatedBy BIGINT NOT NULL`, `DateUpdated DATETIME NOT NULL`
+- Required indexes are present:
+  - primary key on `Id`
+  - unique `(OtherChargeId, InstallmentNumber)` index `UQ_other_charge_installment_sequence`
+  - `(PaymentStatus, DueBillingPeriod)` index `IX_other_charge_installment_due`
+  - `SettledPaymentId` index `IX_other_charge_installment_payment`
+- No foreign keys reference either table. This matches the migration's explicit comment that the existing relationships rely on service-enforced integrity; foreign keys are not required by that migration.
+- Repository migration used for comparison:
   - `TMCWD/TMCWD.Data/Database/20261008_add_other_charge_installments.sql`
-- It includes:
-  - `other_charges.InstallmentCount`
-  - `other_charge_installments` table
-  - unique index on `(OtherChargeId, InstallmentNumber)`
-  - required due-date/payment indexes
-- The migration is guarded with `CREATE TABLE IF NOT EXISTS` and schema existence checks, so it is safe to re-run without destructive operations.
-- This was validated against the repository files and not by re-applying a migration or modifying live data.
+- The live schema matches the migration's installment table fields, parent column, unique sequence constraint, due/payment indexes, and no-FK design. Existing non-installment columns on `other_charges` were not treated as migration additions.
+
+## Account with no financial history
+
+Status: PASS — authenticated runtime and read-only database checks
+
+- The user confirmed the configured development database contains mock data. A pre-existing account with no billing or reading rows was selected; account identifiers and personal-looking fields are omitted from this report.
+- The authenticated Collections UI showed a `₱0.00` Collections balance. The Account Ledger returned HTTP 200 and showed `₱0.00`, with:
+  - Bills: `No bills found for this account.`
+  - Other Charges: `No Other Charges found for this account.`
+  - History: `No transaction history found for this account.`
+- The UI completed initial load, refresh, and reopen without an HTTP 500 or browser JavaScript exception. No financial rows were created.
+- The before/after database evidence is recorded in “Live database read-only before/after comparison”.
 
 ## Build result
 
@@ -169,11 +212,16 @@ Status: PASS
 
 ## Account Ledger UI / responsive tests
 
-Status: PASS
+Status: PASS — authenticated live browser checks completed
 
 - The ledger styling and shared UI implementation were unified and read-only by design.
 - Browser regression checks cover the shared ledger behavior and the absence of duplicate opening/old placeholder dialogs.
 - The repository documents the correct shared ledger design flow and runtime fix for duplicate “Coming Soon” handlers.
+- The live browser verified centered, in-bounds dialog geometry, readable header/balance placement, non-overlapping title/actions, and horizontally scrollable bills table at 1440×900, 768×1024, and 390×844.
+- Measured dialog sizes were approximately 1382×672, 737×822, and 374×818 respectively. The table wrapper remained horizontally scrollable at every size (table content width approximately 1383px).
+- The tab controls switched Bills, Other Charges, and History at all three sizes; close, refresh, and reopen worked. Reopening produced one ledger dialog and no visible Coming Soon overlay.
+- Light and dark theme switching was exercised and restored afterward. The ledger retained its light surface palette in dark mode; its dark text on the light surface remained high contrast and controls continued to work. This is recorded as a visual consistency note, not a functional failure.
+- Defect found and fixed: before the CSS change, the tab bar collapsed to 1px at 390×844 and its buttons were clipped/unhittable. Adding `flex: 0 0 auto` to `.account-ledger__tabs` keeps it 48px high and restores tab interaction.
 
 ## All ledger entry points tested
 
@@ -185,15 +233,31 @@ Status: PASS
 
 ## Read-only persistence verification
 
-Status: PASS
+Status: PASS — automated regression and live before/after comparison
 
 - The ledger read path is read-only in the retrieval and rendering logic.
 - Regression checks verify no mutation of billings, reading status, other charges, installments, payments, receipts, penalties, or invoice snapshots during ledger rendering.
 - The project explicitly avoids any record mutation on account-ledger read operations.
+- Read-only transaction snapshots were taken immediately before and after opening, switching tabs, refreshing, closing, reopening, and closing the ledger for the selected mock account. Each row below reports row count and whether the stable-field SHA-256 signature changed; identifiers and signature values are omitted.
+
+| Dataset | Before rows | After rows | Stable-field signature |
+|---|---:|---:|---|
+| Account key/status fields (PII excluded) | 1 | 1 | Unchanged |
+| Billings and `InvoiceSnapshotJson` | 0 | 0 | Empty / unchanged |
+| Readings | 0 | 0 | Empty / unchanged |
+| Other Charges | 0 | 0 | Empty / unchanged |
+| Other Charge Installments | 0 | 0 | Empty / unchanged |
+| Penalties | 0 | 0 | Empty / unchanged |
+| Payments | 0 | 0 | Empty / unchanged |
+| Payment receipts | 0 | 0 | Empty / unchanged |
+
+- No financial writes were issued during this verification pass. Database queries for the snapshots used read-only transactions.
 
 ## Browser regression results
 
 Status: PASS
+
+Evidence: automated synthetic browser regression rerun after the targeted mobile CSS fix and test-harness correction.
 
 The following browser tests are present and were used during validation:
 
@@ -201,35 +265,74 @@ The following browser tests are present and were used during validation:
 - `tests/BillingRegression/browser-regression.cjs`
 
 Relevant result:
-- The browser regression outputs in the `.tmp` verification logs show successful pass output for the ledger and collections browser scenarios.
+- `node tests/BillingRegression/collections-browser-regression.cjs` exited 0.
+- All 31 Account Ledger browser checks passed across the synthetic Collections and Dashboard entry points. The run also reported passing Collections reconciliation, stale-cashier conflict, installment payment/cancellation, Dashboard Charging, and Escape behavior scenarios.
+- The first run exposed stale assertions in the test file that still selected the old `.al-*` classes and expected old empty-state text. Those assertions were updated to match the canonical ledger classes/messages; the application markup and behavior were not changed for this test issue.
 - The repository does not include a separate `account-ledger-browser-regression.cjs`; the ledger checks are covered under the shared collections browser regression rather than a non-existent file.
+- The earlier `browser-regression.cjs` result remains PASS from the prior verification; it was not rerun because the changes were confined to the ledger CSS and Collections browser test.
 
 ## Authenticated runtime result
 
-Status: BLOCKED / NOT VERIFIED
+Status: PASS — seven user-reported manual passes plus agent-observed empty-history runtime
 
-The repository-level build and regression checks are green, but the requirement for real authenticated runtime verification against the development MVC app remains unfulfilled in this session.
+The following seven results were reported by the user as completed successfully on October 8, 2026. They remain user-reported manual results, not independently observed agent evidence:
 
-Evidence:
-- The app and API were started successfully on ports 5054 and 5178.
-- However, no actual authenticated session to `/Collections` was established in this environment, and no real user login flow was completed for a development account with financial records.
-- Because the task explicitly requires authenticated runtime verification to pass and the login/session was not available, this portion remains blocked rather than passed.
+1. **PASS — USER-REPORTED MANUAL PASS:** Authenticated login and Collections page load.
+2. **PASS — USER-REPORTED MANUAL PASS:** Account Ledger opens correctly from Collections.
+3. **PASS — USER-REPORTED MANUAL PASS:** Bills and Other Charges tabs load without server errors.
+4. **PASS — USER-REPORTED MANUAL PASS:** Ledger Total Balance matches Collections.
+5. **PASS — USER-REPORTED MANUAL PASS:** Payment and installment amounts display correctly.
+6. **PASS — USER-REPORTED MANUAL PASS:** Ledger opens from Customer Information and Billing Collections.
+7. **PASS — USER-REPORTED MANUAL PASS:** Reopening and refreshing the Ledger does not alter financial records.
 
-This is the only remaining blocking condition for full Phase 6G completion.
+Additional agent-observed authenticated results:
+
+- An existing mock account with no financial rows loaded from Collections and returned 200 from the ledger endpoint.
+- Collections and Ledger both showed `₱0.00`; Bills, Other Charges, and History displayed their empty states.
+- Initial load, refresh, and reopen each returned HTTP 200. No JavaScript page errors were recorded.
+- The responsive/theme, tab, close, and refresh checks and SQL snapshots are detailed above.
+- During a page reload, the browser also logged a blocked Google Fonts request (`net::ERR_BLOCKED_BY_ORB`) and an aborted `/_framework/clear-browser-cache` request (`net::ERR_ABORTED`). Neither was an HTTP 500 or a ledger/API failure.
+
+The MVC/API startup on ports 5054 and 5178 was agent-observed in the original verification pass. User-reported results and agent-observed results are kept distinct in this report.
+
+## Responsive and theme verification
+
+Status: PASS — browser interaction completed
+
+- The browser measurements and control checks at 1440×900, 768×1024, and 390×844 are recorded under “Account Ledger UI / responsive tests”.
+- After the mobile tab-bar fix, all three tabs were clickable at each requested size; the modal remained centered/in-bounds and the bills table remained horizontally scrollable.
+- The global light/dark toggle changed the application theme; ledger content stayed legible and interactive in both states. The ledger currently uses the same light surface palette in dark mode.
+
+## Live database read-only before/after comparison
+
+Status: PASS — no persisted changes observed
+
+- The before/after snapshot table is recorded under “Read-only persistence verification”.
+- The account header signature and all scoped financial row counts/signatures remained unchanged across the ledger interactions.
+- No fixture or financial records were written.
 
 ## Exact files changed in this verification pass
 
-This verification pass created the final report and did not require source changes for the financial logic.
+This verification pass changed the shared ledger stylesheet, corrected the synthetic browser regression assertions to match canonical markup, and updated this report. No financial business logic or schema files were changed.
 
+- `TMCWD/TMCWD.Application/wwwroot/css/account-ledger.css`
+- `tests/BillingRegression/collections-browser-regression.cjs`
 - `docs/Phase6G-Final-Verification.md`
 
-No production code fixes were required because the verified code paths build and the financial regression suites passed.
+No financial logic or migration changes were required. The confirmed mobile layout defect and stale test assertions were fixed.
 
 ## Remaining defects or limitations
 
-- Real authenticated UI validation against the live MVC app still requires a valid development login/session.
-- A full “PHASE 6G COMPLETE” claim is therefore not permitted under the task’s completion criteria until that runtime check is performed successfully.
+- The ledger keeps a light surface palette when the host is in dark mode. This was legible in the browser checks but remains a visual consistency consideration.
+- The earlier standalone `browser-regression.cjs` run did not retain numeric counts; the current Collections browser run reported 31 Account Ledger checks, all passing.
 - The NuGet advisory warnings (`NU1903` on `System.Security.Cryptography.Xml` 8.0.3) remain as package-management warnings, but they did not block this verification pass.
+
+## Phase 6I handoff
+
+- Phase 6G verification is complete against the stated gates. This does not authorize or start Phase 6I.
+- No Phase 6I implementation or database work was started as part of this report update.
+- The deployed development schema, authenticated empty-history behavior, responsive/theme behavior, and read-only persistence evidence are now recorded.
+- Phase 6I work should be scoped and authorized separately, preserving the existing Phase 6G financial rules and records.
 
 ## Final conclusion
 
@@ -237,13 +340,14 @@ The verified repository state shows:
 
 - Build: PASS
 - Billing regression: PASS
-- Other-charge/ledger schema and logic: PASS
-- Read-only ledger behavior: PASS
+- Other-charge/ledger schema: PASS; live development `tmcwd` metadata matches the migration
+- Read-only ledger behavior: PASS; before/after database snapshots unchanged
 - Browser regression and local validation: PASS
-- Authenticated runtime verification: BLOCKED / NOT VERIFIED
+- Authenticated runtime checks: seven USER-REPORTED MANUAL PASS plus agent-observed empty-history PASS
+- Responsive/theme matrix: PASS after mobile tab-bar fix
 
 Therefore:
 
-PHASE 6G — VERIFICATION INCOMPLETE
+PHASE 6G COMPLETE
 
-The hold-up is not a build regression or a financial/ledger logic failure. The blocker is the absence of a completed authenticated runtime pass for the live MVC application against a valid development user session.
+The recorded build and billing regressions passed, the live development schema matches the migration, the authenticated empty-history ledger passed, the responsive/theme checks passed after the targeted CSS fix, the live before/after database signatures were unchanged, and the Collections browser regression passed.

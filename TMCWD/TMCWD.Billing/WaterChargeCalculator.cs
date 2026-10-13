@@ -11,8 +11,6 @@ namespace TMCWD.Billing
     // TMCWD.Billing / WaterChargeCalculator.cs (revised)
     public static class WaterChargeCalculator
     {
-        public const decimal WaterMeterMaintenanceFee = BillingCharges.MeterMaintenanceFee;
-
         // Pure calculation — no I/O, works anywhere given a rate.
         public static decimal ComputeFromRate(
             int previousReading,
@@ -31,7 +29,17 @@ namespace TMCWD.Billing
             else if (usage <= 40) total = rate.MinimumCharge + (10 * rate.Rate11To20) + (10 * rate.Rate21To30) + ((usage - 30) * rate.Rate31To40);
             else total = rate.MinimumCharge + (10 * rate.Rate11To20) + (10 * rate.Rate21To30) + (10 * rate.Rate31To40) + ((usage - 40) * rate.Rate41Up);
 
-            return total + WaterMeterMaintenanceFee;
+            return total;
+        }
+
+        public static decimal ComputeBillAmount(
+            int previousReading,
+            int presentReading,
+            WaterRate rate,
+            decimal meterMaintenanceFee)
+        {
+            var waterAmount = ComputeFromRate(previousReading, presentReading, rate);
+            return waterAmount < 0m ? waterAmount : waterAmount + meterMaintenanceFee;
         }
 
         // Convenience overload for TMCWD.Application — fetches rate via transaction, then delegates.
@@ -52,6 +60,19 @@ namespace TMCWD.Billing
             }
 
             return ComputeFromRate(previousReading, presentReading, rate);
+        }
+
+        public static async Task<decimal> ComputeBillAmount(
+            WaterRateTransaction waterRateTrans,
+            int previousReading,
+            int presentReading,
+            AccountClassification classification,
+            decimal meterSize,
+            decimal meterMaintenanceFee)
+        {
+            var waterAmount = await ComputeWaterCharge(
+                waterRateTrans, previousReading, presentReading, classification, meterSize);
+            return waterAmount <= 0m ? waterAmount : waterAmount + meterMaintenanceFee;
         }
     }
 }

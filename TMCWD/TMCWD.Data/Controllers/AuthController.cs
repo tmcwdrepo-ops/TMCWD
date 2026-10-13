@@ -23,7 +23,28 @@ namespace TMCWD.Data.Controllers
             _bearerOptions = bearerOptions;
         }
 
+        [HttpPost("login")]
+        [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+        public async Task<IActionResult> Login(TMCWD.Model.Administrator.PasswordLoginRequest request)
+        {
+            var identifier = request.Identifier.Trim();
+            var user = int.TryParse(identifier, out var id)
+                ? (id > 0 ? await _userService.Get(id) : null)
+                : await _userService.GetByEmail(identifier);
+            if (user == null || !string.Equals(user.Password, StringEncyption.Encrypt(request.Password), StringComparison.OrdinalIgnoreCase))
+                return Unauthorized();
+            if (user.IsActive != true || user.IsVerified != true || !user.Role.HasValue
+                || !Enum.IsDefined(typeof(UserRole), user.Role.Value)) return Forbid();
+            var validation = _bearerOptions.Get(JwtBearerDefaults.AuthenticationScheme).TokenValidationParameters;
+            if (validation.IssuerSigningKey is not SymmetricSecurityKey key)
+                throw new InvalidOperationException("A symmetric authentication signing key is required.");
+            return Ok(new { user.Id, user.Name, user.Email, user.Role, user.IsActive, user.IsVerified,
+                user.DateCreated, user.DateUpdated,
+                securityStamp = UserSecurityStamp.Create(key.Key, user.Id, user.Password, user.Role, user.IsActive, user.IsVerified, user.DateUpdated, user.DateVerified) });
+        }
+
         [HttpPost("meter-reader/login")]
+        [Microsoft.AspNetCore.Authorization.AllowAnonymous]
         public async Task<IActionResult> MeterReaderLogin(
             [FromBody] MeterReaderLoginRequest request)
         {
@@ -101,7 +122,9 @@ namespace TMCWD.Data.Controllers
             {
                 Subject = new ClaimsIdentity([
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString(CultureInfo.InvariantCulture)),
-                    new Claim(ClaimTypes.Role, ((int)UserRole.MeterReader).ToString(CultureInfo.InvariantCulture))
+                    new Claim(ClaimTypes.Role, ((int)UserRole.MeterReader).ToString(CultureInfo.InvariantCulture)),
+                    new Claim(UserSecurityStamp.ClaimType, UserSecurityStamp.Create(
+                        ((SymmetricSecurityKey)validation.IssuerSigningKey).Key, user.Id, user.Password, user.Role, user.IsActive, user.IsVerified, user.DateUpdated, user.DateVerified))
                 ]),
                 Issuer = validation.ValidIssuer,
                 Audience = validation.ValidAudience,

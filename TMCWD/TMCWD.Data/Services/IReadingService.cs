@@ -25,7 +25,7 @@ namespace TMCWD.Data.Services
         public Task<List<Reading>> GetByReader(int readerId);
 
         public Task<Reading> SaveUpdate(int userId, Reading reading);
-        Task<Reading> Sync(int readerId, int sheetId, TMCWD.Model.Billing.Requests.MobileReadingUpload upload);
+        Task<Reading> Sync(int readerId, int sheetId, TMCWD.Model.Billing.Requests.MobileReadingUpload upload, bool requireAssignment = true);
 
         public Task<List<Reading>> SaveMultiple(List<Reading> readings);
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
@@ -17,6 +17,7 @@ namespace TMCWD.Data.Controllers
             _service = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -25,6 +26,7 @@ namespace TMCWD.Data.Controllers
             return Ok(requestFile);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetAll/{jobOrderId}")]
         public async Task<IActionResult> GetAll(int jobOrderId)
         {
@@ -32,6 +34,8 @@ namespace TMCWD.Data.Controllers
             if (requestFiles == null || !requestFiles.Any()) return NotFound();
             return Ok(requestFiles);
         }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
 
         [HttpPost("SaveUpdate/{userId}/{jobOrderId}")]
         public async Task<IActionResult> SaveUpdate(int userId, int jobOrderId, RequestFile file)
@@ -46,6 +50,8 @@ namespace TMCWD.Data.Controllers
             if (updateFile == null) return NoContent();
             return Ok(updateFile);
         }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
 
         [HttpPost("SaveRange")]
         public async Task<IActionResult> SaveRange(RequestFile[] files)

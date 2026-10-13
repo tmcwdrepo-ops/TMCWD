@@ -1,4 +1,4 @@
-﻿    using System.Net.Http.Json;
+    using System.Net.Http.Json;
     using System.Text.Json;
     using TMCWD.Services;
     using TMCWD.Model.Billing.Interfaces;
@@ -73,6 +73,37 @@
                 return await response.Content.ReadFromJsonAsync<AccountLedgerDto>();
             }
 
+            public async Task<List<DisconnectionMonitoringDto>> GetDisconnectionMonitoring(string? query, int? zone, int? book)
+            {
+                using var response = await _service.Client.GetAsync($"api/DisconnectionMonitoring?q={Uri.EscapeDataString(query ?? "")}&zone={zone}&book={book}");
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<List<DisconnectionMonitoringDto>>() ?? [];
+            }
+
+            public async Task<DisconnectionMonitoringDto?> GetDisconnectionStatus(string accountNumber)
+            {
+                using var response = await _service.Client.GetAsync($"api/DisconnectionMonitoring/{Uri.EscapeDataString(accountNumber)}");
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<DisconnectionMonitoringDto>();
+            }
+
+            public async Task<JsonElement> ConfirmDisconnection(string accountNumber, Guid operationId)
+            {
+                using var response = await _service.Client.PostAsJsonAsync(
+                    $"api/DisconnectionMonitoring/{Uri.EscapeDataString(accountNumber)}/disconnect", new ServiceConfirmationRequest(operationId));
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<JsonElement>();
+            }
+
+            public async Task<JsonElement> ConfirmReconnection(string accountNumber, Guid operationId)
+            {
+                using var response = await _service.Client.PostAsJsonAsync(
+                    $"api/DisconnectionMonitoring/{Uri.EscapeDataString(accountNumber)}/reconnect", new ServiceConfirmationRequest(operationId));
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<JsonElement>();
+            }
+
             public async Task<List<BillingBase>> GetAll()
             {
                 var response = await _service.Client.GetAsync($"api/Billing/GetAll");
@@ -93,8 +124,16 @@
                 var content = JsonContent.Create(billing);
                 var response = await _service.Client.PostAsync($"api/Billing/SaveUpdate/{userId}", content);
                 var data = await response.Content.ReadAsStringAsync();
-                if (!response.IsSuccessStatusCode) return null;
+                response.EnsureSuccessStatusCode();
                 return ConvertJsonToBilling(data);
+            }
+
+            public async Task<BillingBase> CreateChargeAnchor(int accountId)
+            {
+                using var response = await _service.Client.PostAsJsonAsync("api/Billing/ChargeAnchor",
+                    new ChargeAnchorRequest { AccountId = accountId });
+                response.EnsureSuccessStatusCode();
+                return ConvertJsonToBilling(await response.Content.ReadAsStringAsync());
             }
 
 

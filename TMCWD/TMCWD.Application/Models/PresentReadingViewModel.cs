@@ -16,6 +16,7 @@ namespace TMCWD.Application.Models
         public decimal PreviousReading { get; set; }
         public decimal Usage => Math.Max(0, PresentReading - PreviousReading);
         public decimal Amount { get; set; }
+        public decimal? MeterMaintenanceFee { get; set; }
         public decimal MeterSize { get; set; }
     }
 

@@ -211,6 +211,29 @@ namespace TMCWD.Data.Services
             return otherCharge;
         }
 
+        internal async Task<OtherCharge> CreateReconnectionFee(Billing anchor, int actorId, DateTime utcNow)
+        {
+            if (_context.Database.CurrentTransaction == null || actorId <= 0 || anchor.BillingPeriod == default)
+                throw new InvalidOperationException("A locked billing transaction is required.");
+            var types = await _context.OtherFeeTypes.Where(t => t.Name == "Reconnection Fee").Select(t => t.Id).ToListAsync();
+            if (types.Count != 1 || types[0] > int.MaxValue || types[0] <= 0)
+                throw new InvalidOperationException("One authoritative Reconnection Fee type must be configured.");
+            var charge = new OtherCharge { BillingReferenceId = anchor.BillingReferenceId, Type = (int)types[0],
+                PayableIn = "1", InstallmentCount = 1, Amount = 350m, PaymentStatus = (int)PaymentStatus.Unpaid,
+                Particulars = "Reconnection Fee after confirmed physical disconnection", IsActive = true,
+                CreatedBy = actorId, UpdatedBy = actorId, DateCreated = utcNow, DateUpdated = utcNow };
+            _context.OtherCharges.Add(charge);
+            await _context.SaveChangesAsync();
+            _context.OtherChargeInstallments.Add(new OtherChargeInstallment {
+                OtherChargeId = charge.Id, InstallmentNumber = 1,
+                DueBillingPeriod = new DateTime(anchor.BillingPeriod.Year, anchor.BillingPeriod.Month, 1),
+                Amount = charge.Amount, PaymentStatus = (int)PaymentStatus.Unpaid,
+                ActivatedBillingReferenceId = anchor.BillingReferenceId, ActivatedAt = utcNow,
+                CreatedBy = actorId, UpdatedBy = actorId, DateCreated = utcNow, DateUpdated = utcNow });
+            await _context.SaveChangesAsync();
+            return charge;
+        }
+
         public async Task<string> ProcessPayment(
             int userId,
             TMCWD.Model.Billing.Requests.OtherChargePaymentRequest request)

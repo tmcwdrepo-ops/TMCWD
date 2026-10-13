@@ -47,10 +47,28 @@ namespace TMCWD.Billing
             return ConvertJsonToAdjustments(data);
         }
 
-        public async Task<BillingAdjustment> SaveUpdate(int userId, BillingAdjustment adjustment)
+        /// <summary>
+        /// Returns the full audit history for a billing reference, newest first.
+        /// Returns an empty list on any failure rather than null so callers can
+        /// always iterate the result safely.
+        /// </summary>
+        public async Task<List<BillingAdjustmentHistoryDto>> GetHistory(string billingReferenceId)
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var response = await _service.Client.GetAsync(
+                $"api/BillingAdjustment/History/{Uri.EscapeDataString(billingReferenceId)}");
+            if (!response.IsSuccessStatusCode) return new List<BillingAdjustmentHistoryDto>();
+            var data = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<List<BillingAdjustmentHistoryDto>>(data, options)
+                ?? new List<BillingAdjustmentHistoryDto>();
+        }
+
+        public async Task<BillingAdjustment> SaveUpdate(int userId, BillingAdjustment adjustment, Guid operationId)
         {
             var content = JsonContent.Create(adjustment);
-            var response = await _service.Client.PostAsync($"api/BillingAdjustment/SaveUpdate/{userId}", content);
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"api/BillingAdjustment/SaveUpdate/{userId}") { Content = content };
+            request.Headers.Add("Idempotency-Key", operationId.ToString("D"));
+            var response = await _service.Client.SendAsync(request);
             var data = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return null;
             return ConvertJsonToAdjustment(data);
@@ -58,11 +76,13 @@ namespace TMCWD.Billing
 
         public async Task<List<BillingAdjustment>?> SaveBatch(
             int userId,
-            List<BillingAdjustment> adjustments)
+            List<BillingAdjustment> adjustments, Guid operationId)
         {
-            var response = await _service.Client.PostAsJsonAsync(
-                $"api/BillingAdjustment/SaveBatch/{userId}", adjustments);
-            if (!response.IsSuccessStatusCode) return null;
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"api/BillingAdjustment/SaveBatch/{userId}") {
+                Content = JsonContent.Create(adjustments) };
+            request.Headers.Add("Idempotency-Key", operationId.ToString("D"));
+            using var response = await _service.Client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
 
             var data = await response.Content.ReadAsStringAsync();
             return ConvertJsonToAdjustments(data);

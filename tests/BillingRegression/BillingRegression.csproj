@@ -8,5 +8,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="../../TMCWD/TMCWD.Data/TMCWD.Data.csproj" />
+    <ProjectReference Include="../../TMCWD/TMCWD.Billing/TMCWD.Billing.csproj" />
+    <ProjectReference Include="../../TMCWD/TMCWD.Application/TMCWD.Application.csproj" />
   </ItemGroup>
 </Project>

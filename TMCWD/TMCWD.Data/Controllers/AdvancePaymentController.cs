@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
 
@@ -25,6 +25,7 @@ namespace TMCWD.Data.Controllers
 
         #region methods
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -38,6 +39,7 @@ namespace TMCWD.Data.Controllers
 
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -48,6 +50,7 @@ namespace TMCWD.Data.Controllers
             return Ok(advancePayments);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
         [HttpGet("GetActiveByAccount/{accountId}")]
         public async Task<IActionResult> GetActiveByAccount(int accountId)
         {
@@ -61,6 +64,7 @@ namespace TMCWD.Data.Controllers
             return Ok(advancePayment);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
         [HttpGet("GetByAccount/{accountId}")]
         public async Task<IActionResult> GetByAccount(int accountId)
         {
@@ -74,9 +78,12 @@ namespace TMCWD.Data.Controllers
 
         }
 
-        [HttpGet("SaveUpdate/{userId}")]
+        [HttpPost("SaveUpdate/{userId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
         public async Task<IActionResult> SaveUpdate(int userId, AdvancePayment advancePayment)
         {
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                return Unauthorized();
             var savedAdvancePayment = await _service.SaveUpdate(userId, advancePayment);
             return Ok(savedAdvancePayment);
         }

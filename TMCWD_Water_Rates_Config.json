@@ -1,12 +1,11 @@
 {
-  "waterMeterMaintenanceFee": 20.00,
   "notes": [
     "Tier rates are constant across all meter sizes within a classification; only minimumCharge changes by size.",
     "minimumCharge covers usage from 1 to 10 cu.m flat (no per-cu.m add-on).",
     "Computation is cumulative/additive per tier, not usage x rate. Example: Residential/Government, size 0.5, usage 12 cu.m = 170.00 + (18.25 x 2) = 206.50.",
     "usage = presentReading - previousReading. If presentReading < previousReading, raise a validation error.",
-    "waterMeterMaintenanceFee (PHP 20.00) is added on top of minimumCharge + tier charges on every bill, regardless of classification, size, or usage.",
-    "Full example: Residential/Government, size 0.5, previousReading 1589, presentReading 1600 (usage 11) = 170.00 + 18.25 + 20.00 = 208.25 total.",
+    "Meter Maintenance is configured separately in the database and selected by ReadingSheet.BillingDate; it is not part of these water rates.",
+    "Water-only example: Residential/Government, size 0.5, previousReading 1589, presentReading 1600 (usage 11) = 170.00 + 18.25 = 188.25.",
     "If a classification+meterSize combination is not found below, throw a validation error rather than defaulting to a guessed rate.",
     "Flat Rate billing (accounts with no meter reading) is NOT yet in scope. Do not implement unless explicitly instructed."
   ],

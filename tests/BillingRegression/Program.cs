@@ -7,6 +7,7 @@ using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
 using TMCWD.Data.Controllers;
 
+
 // These pure calculation checks run even when the database is unavailable.
 foreach (var (bill, expected) in new[] { (1000m, 100m), (245.55m, 24.56m), (0m, 0m), (-10m, 0m), (100.04m, 10m) })
 {
@@ -14,6 +15,19 @@ foreach (var (bill, expected) in new[] { (1000m, 100m), (245.55m, 24.56m), (0m, 
         throw new Exception($"Incorrect 10% penalty calculation for {bill}.");
 }
 Console.WriteLine("PASS: 5 penalty calculation and currency-rounding cases.");
+var calculatorRate = new TMCWD.Model.Billing.WaterRate { MinimumCharge = 100m };
+Check(TMCWD.Billing.WaterChargeCalculator.ComputeFromRate(0, 0, calculatorRate) == 100m
+    && TMCWD.Billing.WaterChargeCalculator.ComputeBillAmount(0, 0, calculatorRate, 20m) == 120m,
+    "The shared water calculator must keep maintenance explicit and apply it exactly once.");
+var rateControllerType = typeof(MeterMaintenanceRateController);
+Check(rateControllerType.GetMethod(nameof(MeterMaintenanceRateController.SaveUpdate))!
+        .GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute), false)
+        .Cast<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>().Single().Policy == nameof(UserRole.SuperAdmin)
+    && rateControllerType.GetMethod(nameof(MeterMaintenanceRateController.GetForBillingDate))!
+        .GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute), false)
+        .Cast<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>().Single().Policy == "BillingOperations",
+    "Maintenance configuration write/read authorization policies changed.");
+Console.WriteLine("PASS: water-only calculator and explicit maintenance component.");
 
 // Verify both optional-date query shapes translate on the real MySQL
 // provider without opening a database connection.
@@ -35,6 +49,9 @@ Console.WriteLine("PASS: both penalty eligibility queries translate to MySQL.");
 // tests against persistent customer records, even in a development database.
 var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
 if (args.Length > 0) root = Path.GetFullPath(args[0]);
+var runMigrationChecks = !args.Contains("--no-migrations", StringComparer.Ordinal);
+var development6JBefore = args.Contains("--verify-disconnection-workflow", StringComparer.Ordinal) && args.Contains("--verify-development-deployment", StringComparer.Ordinal)
+    ? await DisconnectionWorkflowRegression.InspectDevelopment() : null;
 string? connectionString = Environment.GetEnvironmentVariable("BILLING_TEST_CONNECTION");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
@@ -55,8 +72,10 @@ var failure = new FailAfterSave();
 var options = new DbContextOptionsBuilder<UserDbContext>()
     .UseMySql(connection, ServerVersion.AutoDetect(connection)).AddInterceptors(failure).Options;
 await using var db = new UserDbContext(options);
-var tables = new[] { typeof(Account), typeof(ReadingSheet), typeof(Reading), typeof(Billing), typeof(WaterRate), typeof(Penalty), typeof(OtherCharge), typeof(OtherChargeInstallment), typeof(OtherFeeType), typeof(Customer), typeof(Payment), typeof(PaymentReceipt), typeof(TMCWD.Data.Entities.BillingAdjustment), typeof(User), typeof(PenaltyWaiverRequest), typeof(Request), typeof(RequestDetail), typeof(JobOrder), typeof(InspectionType), typeof(ZoneBook), typeof(Inventory), typeof(BirInvoiceConfig), typeof(ServiceInvoiceSeq) }
+var tables = new[] { typeof(ReadingSheetTemplate), typeof(InspectionTypeDetail), typeof(InspectionReport), typeof(Recommendation), typeof(Material), typeof(Workflow), typeof(Finding), typeof(ApprovalHistory), typeof(RequestFile), typeof(AdvancePayment), typeof(PaymentCheck), typeof(ChargeType), typeof(Account), typeof(ReadingSheet), typeof(Reading), typeof(Billing), typeof(WaterRate), typeof(MeterMaintenanceRate), typeof(Penalty), typeof(OtherCharge), typeof(OtherChargeInstallment), typeof(OtherFeeType), typeof(Customer), typeof(Payment), typeof(PaymentReceipt), typeof(TMCWD.Data.Entities.BillingAdjustment), typeof(User), typeof(PenaltyWaiverRequest), typeof(Request), typeof(RequestDetail), typeof(JobOrder), typeof(InspectionType), typeof(ZoneBook), typeof(Inventory), typeof(BirInvoiceConfig), typeof(ServiceInvoiceSeq) }
     .Select(t => db.Model.FindEntityType(t)!.GetTableName()!)
+    .Append(db.Model.FindEntityType(typeof(BillingAdjustmentOperation))!.GetTableName()!)
+    .Append(db.Model.FindEntityType(typeof(ServiceDisconnectionEvent))!.GetTableName()!)
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
 foreach (var table in tables)
@@ -72,6 +91,8 @@ foreach (var table in tables)
     }
 }
 // Allow the installation regression to run before the persistent schema migration.
+if (runMigrationChecks)
+{
 await using (var inspectInvoice = new MySqlCommand("SHOW COLUMNS FROM Billings LIKE 'ServiceInvoiceNumber'", connection))
 {
     if (await inspectInvoice.ExecuteScalarAsync() == null)
@@ -108,6 +129,7 @@ foreach (var statement in serviceSchema.Split(';', StringSplitOptions.TrimEntrie
     }
     await using var alter = new MySqlCommand(statement, connection);
     await alter.ExecuteNonQueryAsync();
+}
 }
 await using (var createApplicationsCommand = connection.CreateCommand())
 {
@@ -183,7 +205,8 @@ CREATE TEMPORARY TABLE `invoice_cancellations` (
 }
 tables = tables.Append("water_connection_applications").Append("senior_citizen_discounts").Append("invoice_cancellations").ToArray();
 var readingService = new ReadingService(db, new AccountService(db));
-var sheetService = new ReadingSheetService(db, new BillingService(db), new WaterRateService(db), new AccountService(db), readingService);
+var maintenanceRateService = new MeterMaintenanceRateService(db);
+var sheetService = new ReadingSheetService(db, new BillingService(db), new WaterRateService(db), new AccountService(db), readingService, maintenanceRateService);
 var penaltyService = new PenaltyService(db);
 var otherChargeService = new OtherChargeService(db);
 var passed = 0;
@@ -211,6 +234,9 @@ async Task Test(string name, Func<Task> action)
     db.ReadingSheets.Add(new ReadingSheet { Id = 1, ZoneBookId = 1, Status = ReadingStatus.InProgress, BillingDate = now.AddDays(1), DueDate = now.AddDays(10), BillingPeriodStart = now });
     db.OtherFeeTypes.Add(new OtherFeeType { Id = 1, Name = "Synthetic Other Fee", DateCreated = now, DateUpdate = now });
     db.WaterRates.Add(new WaterRate { Id = 1, Classification = 1, MeterSize = .5m, MinimumCharge = 100, Rate11To20 = 10, Rate21To30 = 20, Rate31To40 = 30, Rate41Up = 40, IsActive = true, EffectiveDate = now, DateCreated = now, DateUpdated = now });
+    db.MeterMaintenanceRates.Add(new MeterMaintenanceRate { Id = 1, Amount = 20m,
+        EffectiveFrom = new DateOnly(2025, 1, 1), CreatedBy = 3, UpdatedBy = 3,
+        DateCreated = now, DateUpdated = now });
     db.BirInvoiceConfigs.Add(new BirInvoiceConfig { Id = 1, PTUNumber = "SYNTHETIC-PTU", PermitDateIssued = new DateOnly(2026, 1, 1),
         SeriesFrom = 1, SeriesTo = 999999, InvoicePrefix = "TEST-", SeriesWidth = 6, IsActive = true, DateCreated = now, DateUpdated = now });
     db.Users.AddRange(
@@ -238,6 +264,103 @@ async Task RejectUnauthorized(Func<Task> action)
     catch (UnauthorizedAccessException) { return; }
     throw new Exception("Expected a role-authorization rejection.");
 }
+async Task ExpectMissingMaintenanceRate(DateOnly billingDate)
+{
+    try { await maintenanceRateService.GetForBillingDate(billingDate); }
+    catch (KeyNotFoundException) { return; }
+    throw new Exception($"Expected no Meter Maintenance rate for {billingDate:yyyy-MM-dd}.");
+}
+await PostingSecurity.Run(db, sheetService, Test, enabled => failure.Enabled = enabled);
+await Test("Meter Maintenance rate boundaries are selected by billing date", async () => {
+    await ExpectMissingMaintenanceRate(new DateOnly(2024, 12, 31));
+    foreach (var date in new[] { new DateOnly(2025, 1, 1), new DateOnly(2025, 7, 1),
+        new DateOnly(2026, 1, 1), new DateOnly(2027, 6, 1) })
+        Check((await maintenanceRateService.GetForBillingDate(date)).Amount == 20m,
+            $"Approved 2025-01-01 initial rate did not cover {date:yyyy-MM-dd}.");
+});
+await Test("BillingDate 2024-12-31 blocks posting before bill or invoice allocation", async () => {
+    var sheet = await db.ReadingSheets.SingleAsync();
+    sheet.BillingDate = new DateTime(2024, 12, 31);
+    sheet.BillingPeriodStart = new DateTime(2024, 12, 1);
+    sheet.DueDate = new DateTime(2025, 1, 15);
+    db.Readings.Add(new Reading { AccountId = 1, ReadingSheetId = 1, PreviousReading = 0,
+        CurrentReading = 0, Status = ReadingStatus.InProgress, DateCreated = new DateTime(2024, 12, 30) });
+    await db.SaveChangesAsync();
+    try
+    {
+        await sheetService.PartialPost(1, 1);
+    }
+    catch (KeyNotFoundException)
+    {
+        Check(!await db.Billings.AnyAsync() && !await db.ServiceInvoiceSeq.AnyAsync(),
+            "Missing pre-2025 configuration allocated a bill or invoice number.");
+        Check((await db.Readings.SingleAsync()).Status == ReadingStatus.InProgress,
+            "Missing pre-2025 configuration changed the pending reading.");
+        return;
+    }
+    throw new Exception("A 2024-12-31 reading sheet posted without an approved historical rate.");
+});
+foreach (var date in new[] { new DateTime(2025, 1, 1), new DateTime(2025, 7, 1),
+    new DateTime(2026, 1, 1), new DateTime(2027, 6, 1) })
+await Test($"BillingDate {date:yyyy-MM-dd} posts the approved maintenance fee once", async () => {
+    var sheet = await db.ReadingSheets.SingleAsync();
+    sheet.BillingDate = date;
+    sheet.BillingPeriodStart = date.AddMonths(-1);
+    sheet.DueDate = date.AddDays(15);
+    db.Readings.Add(new Reading { AccountId = 1, ReadingSheetId = 1, PreviousReading = 0,
+        CurrentReading = 0, Status = ReadingStatus.InProgress, DateCreated = date.AddDays(-1) });
+    await db.SaveChangesAsync();
+    Check(await sheetService.PartialPost(1, 1) == 1, "An approved covered billing date did not post.");
+    var bill = await db.Billings.SingleAsync();
+    var snapshot = JsonSerializer.Deserialize<TMCWD.Model.Billing.OfficialInvoiceSnapshot>(bill.InvoiceSnapshotJson!)!;
+    Check(bill.TotalBillAmount == 120m && bill.RemainingAmount == 120m
+        && snapshot.BillAmount == 100m && snapshot.MeterMaintenance == 20m
+        && snapshot.TotalDue == 120m && snapshot.OtherCharges == 0m,
+        "The approved fee was omitted, duplicated, or mixed into water/Other Charges.");
+});
+await Test("Meter Maintenance future schedule switches at its inclusive effective date", async () => {
+    var sheet = await db.ReadingSheets.SingleAsync();
+    sheet.BillingDate = new DateTime(2026, 6, 1);
+    sheet.BillingPeriodStart = new DateTime(2026, 5, 1);
+    sheet.DueDate = new DateTime(2026, 6, 16);
+    db.Readings.Add(new Reading { AccountId = 1, ReadingSheetId = 1, PreviousReading = 0,
+        CurrentReading = 0, Status = ReadingStatus.InProgress, DateCreated = new DateTime(2026, 5, 31) });
+    await db.SaveChangesAsync();
+    Check(await sheetService.PartialPost(1, 1) == 1, "The posted 2026 bill fixture did not post.");
+    var posted = await db.Billings.SingleAsync();
+    var frozenSnapshot = posted.InvoiceSnapshotJson;
+    var current = await db.MeterMaintenanceRates.SingleAsync();
+    current.EffectiveTo = new DateOnly(2026, 12, 31);
+    await maintenanceRateService.SaveUpdate(3, current);
+    await maintenanceRateService.SaveUpdate(3, new MeterMaintenanceRate {
+        Amount = 25m, EffectiveFrom = new DateOnly(2027, 1, 1)
+    });
+    Check((await maintenanceRateService.GetForBillingDate(new DateOnly(2026, 12, 31))).Amount == 20m,
+        "The current rate ended before its inclusive EffectiveTo date.");
+    Check((await maintenanceRateService.GetForBillingDate(new DateOnly(2027, 1, 1))).Amount == 25m,
+        "Future rate was not selected on its EffectiveFrom date.");
+    Check((await db.Billings.SingleAsync()).InvoiceSnapshotJson == frozenSnapshot,
+        "Changing a future rate schedule rewrote an already-issued invoice snapshot.");
+});
+await Test("Meter Maintenance overlapping configurations fail closed", async () => {
+    db.MeterMaintenanceRates.Add(new MeterMaintenanceRate { Id = 2, Amount = 30m,
+        EffectiveFrom = new DateOnly(2026, 6, 1), EffectiveTo = new DateOnly(2026, 6, 30),
+        CreatedBy = 3, UpdatedBy = 3, DateCreated = DateTime.Now, DateUpdated = DateTime.Now });
+    await db.SaveChangesAsync();
+    try
+    {
+        await maintenanceRateService.GetForBillingDate(new DateOnly(2026, 6, 15));
+    }
+    catch (InvalidOperationException)
+    {
+        return;
+    }
+    throw new Exception("Overlapping Meter Maintenance rates were not rejected.");
+});
+await Test("Only verified SuperAdmin may change Meter Maintenance configuration", async () => {
+    await RejectUnauthorized(async () => await maintenanceRateService.SaveUpdate(1,
+        new MeterMaintenanceRate { Amount = 25m, EffectiveFrom = new DateOnly(2027, 1, 1) }));
+});
 await Test("Reading Sheet detail returns 41 roster accounts with four saved and 37 pending readings", async () => {
     var sheet = await db.ReadingSheets.SingleAsync();
     sheet.SeqFrom = 1;
@@ -391,8 +514,8 @@ await Test("Prior unpaid and overdue bills populate authoritative arrears from p
         ReadingId = 999,
         BillingReferenceId = "ARREARS-VALID",
         BillingPeriod = DateTime.Today.AddDays(-5),
-        TotalBillAmount = 500m,
-        RemainingAmount = 500m,
+        TotalBillAmount = 190m,
+        RemainingAmount = 190m,
         PaymentStatus = (int)PaymentStatus.Unpaid,
         InvoiceSnapshotJson = JsonSerializer.Serialize(new TMCWD.Model.Billing.OfficialInvoiceSnapshot(
             SchemaVersion: 1,
@@ -433,6 +556,218 @@ await Test("Prior unpaid and overdue bills populate authoritative arrears from p
     var snapshot = JsonSerializer.Deserialize<TMCWD.Model.Billing.OfficialInvoiceSnapshot>(billing.InvoiceSnapshotJson!);
     Check(snapshot != null && snapshot.ArrearsAmount == 207m,
         "Official invoice snapshot did not freeze prior arrears including maintenance and active penalties.");
+});
+await Test("Arrears use outstanding prior bill balances, active penalties, and preserve snapshots", async () => {
+    var sheet = await db.ReadingSheets.SingleAsync();
+    sheet.BillingDate = new DateTime(2026, 12, 1);
+    var account = await db.Accounts.SingleAsync();
+    account.Status = (int)AccountStatus.Active;
+    account.Sequence = 1;
+    var date = new DateTime(2026, 10, 1);
+    string Snapshot(decimal water, decimal maintenance = 20m, decimal? arrears = null, decimal? totalDue = null) =>
+        JsonSerializer.Serialize(new TMCWD.Model.Billing.OfficialInvoiceSnapshot(
+            SchemaVersion: 1,
+            PeriodFrom: date.AddMonths(-1),
+            PeriodTo: date,
+            BillAmount: water,
+            MeterMaintenance: maintenance,
+            PowerCostAdjustment: null,
+            ArrearsAmount: arrears,
+            OtherCharges: 0m,
+            BillingAdjustment: 0m,
+            TotalDue: totalDue ?? water + maintenance,
+            ChargeLines: Array.Empty<TMCWD.Model.Billing.InvoiceChargeLine>()));
+    Billing PriorBill(string reference, DateTime period, decimal remaining, string snapshot,
+        int status = (int)PaymentStatus.Unpaid) => new()
+    {
+        AccountId = 1,
+        ReadingId = 900,
+        BillingReferenceId = reference,
+        BillingPeriod = period,
+        TotalBillAmount = 120m,
+        RemainingAmount = remaining,
+        PaymentStatus = status,
+        InvoiceSnapshotJson = snapshot,
+        CreatedBy = 1,
+        UpdatedBy = 1,
+        DateCreated = date,
+        DateUpdated = date
+    };
+
+    var unadjusted = PriorBill("ARREARS-UNADJUSTED", new DateTime(2026, 11, 1), 120m,
+        Snapshot(100m));
+    var adjusted = PriorBill("ARREARS-ADJUSTED", new DateTime(2026, 10, 1), 120m,
+        Snapshot(100m, arrears: 500m, totalDue: 620m), (int)PaymentStatus.Overdue);
+    var multiplePeriod = PriorBill("ARREARS-MULTI-PERIOD", new DateTime(2026, 9, 1), 120m,
+        Snapshot(100m));
+    var paid = PriorBill("ARREARS-PAID", new DateTime(2026, 8, 1), 0m,
+        Snapshot(100m), (int)PaymentStatus.Paid);
+    var zeroBalance = PriorBill("ARREARS-ZERO", new DateTime(2026, 7, 1), 0m,
+        Snapshot(100m));
+    var cancelled = PriorBill("ARREARS-CANCELLED", new DateTime(2026, 6, 1), 120m,
+        Snapshot(100m));
+    var samePeriod = PriorBill("ARREARS-SAME-PERIOD", new DateTime(2026, 12, 1), 25m,
+        Snapshot(100m));
+    var futurePeriod = PriorBill("ARREARS-FUTURE-PERIOD", new DateTime(2027, 1, 1), 35m,
+        Snapshot(100m));
+    var otherAccount = PriorBill("ARREARS-OTHER-ACCOUNT", new DateTime(2026, 5, 1), 45m,
+        Snapshot(100m));
+    otherAccount.AccountId = 9999;
+    db.Billings.AddRange(unadjusted, adjusted, multiplePeriod, paid, zeroBalance, cancelled,
+        samePeriod, futurePeriod, otherAccount);
+    await db.SaveChangesAsync();
+    var frozenSnapshots = new Dictionary<string, string>
+    {
+        [unadjusted.BillingReferenceId] = unadjusted.InvoiceSnapshotJson!,
+        [adjusted.BillingReferenceId] = adjusted.InvoiceSnapshotJson!,
+        [multiplePeriod.BillingReferenceId] = multiplePeriod.InvoiceSnapshotJson!,
+        [paid.BillingReferenceId] = paid.InvoiceSnapshotJson!,
+        [zeroBalance.BillingReferenceId] = zeroBalance.InvoiceSnapshotJson!,
+        [cancelled.BillingReferenceId] = cancelled.InvoiceSnapshotJson!,
+        [samePeriod.BillingReferenceId] = samePeriod.InvoiceSnapshotJson!,
+        [futurePeriod.BillingReferenceId] = futurePeriod.InvoiceSnapshotJson!,
+        [otherAccount.BillingReferenceId] = otherAccount.InvoiceSnapshotJson!
+    };
+
+    var adjustments = new BillingAdjustmentService(db);
+    await adjustments.SaveBatch(1, new()
+    {
+        new BillingAdjustment
+        {
+            BillingReferenceId = adjusted.BillingReferenceId,
+            Type = (int)AdjustmentLineType.CurrentBill,
+            Amount = 30m
+        }
+    }, Guid.NewGuid());
+    await adjustments.SaveBatch(1, new()
+    {
+        new BillingAdjustment
+        {
+            BillingReferenceId = multiplePeriod.BillingReferenceId,
+            Type = (int)AdjustmentLineType.CurrentBill,
+            Amount = 70m
+        }
+    }, Guid.NewGuid());
+    db.Penalties.AddRange(
+        new Penalty
+        {
+            BillingReferenceId = adjusted.BillingReferenceId,
+            Amount = 17m,
+            PaymentStatus = (int)PaymentStatus.Unpaid,
+            PenaltyTypeId = 1,
+            CreatedBy = 1,
+            UpdatedBy = 1,
+            DateCreated = date,
+            DateUpdated = date
+        },
+        new Penalty
+        {
+            BillingReferenceId = paid.BillingReferenceId,
+            Amount = 10m,
+            PaymentStatus = (int)PaymentStatus.Paid,
+            PenaltyTypeId = 1,
+            CreatedBy = 1,
+            UpdatedBy = 1,
+            DateCreated = date,
+            DateUpdated = date
+        });
+    var otherCharge = new OtherCharge
+    {
+        BillingReferenceId = adjusted.BillingReferenceId,
+        Type = 1,
+        Amount = 500m,
+        PayableIn = "1",
+        InstallmentCount = 1,
+        PaymentStatus = (int)PaymentStatus.Unpaid,
+        IsActive = true,
+        CreatedBy = 1,
+        UpdatedBy = 1,
+        DateCreated = date,
+        DateUpdated = date
+    };
+    db.OtherCharges.Add(otherCharge);
+    await db.SaveChangesAsync();
+    db.OtherChargeInstallments.Add(new OtherChargeInstallment
+    {
+        OtherChargeId = otherCharge.Id,
+        InstallmentNumber = 1,
+        DueBillingPeriod = new DateTime(2026, 12, 1),
+        Amount = 500m,
+        PaymentStatus = (int)PaymentStatus.Unpaid,
+        CreatedBy = 1,
+        UpdatedBy = 1,
+        DateCreated = date,
+        DateUpdated = date
+    });
+    await db.SaveChangesAsync();
+    Check((await db.Billings.SingleAsync(b => b.BillingReferenceId == adjusted.BillingReferenceId)).RemainingAmount == 90m
+        && (await db.Billings.SingleAsync(b => b.BillingReferenceId == multiplePeriod.BillingReferenceId)).RemainingAmount == 50m,
+        "Prior adjustments did not establish the expected authoritative outstanding balances.");
+
+    var payments = new PaymentService(db);
+    var receipt = (await payments.ProcessCollectionPayment(1, new()
+    {
+        Method = PaymentMethod.Cash,
+        AmountTendered = 120m,
+        Bills = new() { new() { BillingReferenceId = cancelled.BillingReferenceId, PaidAmount = 120m } }
+    })).Single().PaymentReference;
+    await payments.CancelInvoice(1, new TMCWD.Model.Billing.CancelInvoiceRequest
+    {
+        InvoiceNo = receipt,
+        Reason = "Synthetic arrears regression"
+    });
+    db.ChangeTracker.Clear();
+    Check((await db.Billings.SingleAsync(b => b.BillingReferenceId == cancelled.BillingReferenceId)).RemainingAmount == 120m
+        && (await db.Billings.SingleAsync(b => b.BillingReferenceId == cancelled.BillingReferenceId)).PaymentStatus == (int)PaymentStatus.Unpaid,
+        "Cancelled payment did not restore the qualifying prior bill balance.");
+
+    await readingService.SaveUpdate(1, NewReading(15, 0));
+    Check(await sheetService.PartialPost(1, 1) == 1, "Current bill was not posted with prior arrears.");
+    db.ChangeTracker.Clear();
+    var current = await db.Billings.SingleAsync(b => b.ReadingId != 900);
+    Check(current.BillArrearsAmount == 397m,
+        $"Expected 120 unadjusted + 90 adjusted + 17 active penalty + 50 adjusted older + 120 cancelled = 397; got {current.BillArrearsAmount}.");
+    var currentSnapshot = JsonSerializer.Deserialize<TMCWD.Model.Billing.OfficialInvoiceSnapshot>(current.InvoiceSnapshotJson!)!;
+    Check(currentSnapshot.ArrearsAmount == 397m,
+        "The new invoice snapshot did not freeze the non-recursive outstanding prior principal and active penalties.");
+    foreach (var (reference, frozen) in frozenSnapshots)
+        Check((await db.Billings.AsNoTracking().SingleAsync(b => b.BillingReferenceId == reference)).InvoiceSnapshotJson == frozen,
+            $"Previously issued snapshot {reference} was changed.");
+    Check(await db.OtherChargeInstallments.CountAsync() == 1,
+        "The future Other Charge installment fixture was unexpectedly changed.");
+});
+await Test("Missing eligible prior invoice snapshot leaves arrears unknown", async () => {
+    var sheet = await db.ReadingSheets.SingleAsync();
+    sheet.BillingDate = DateTime.Today;
+    var account = await db.Accounts.SingleAsync();
+    account.Status = (int)AccountStatus.Active;
+    account.Sequence = 1;
+    db.Billings.Add(new Billing
+    {
+        AccountId = 1,
+        ReadingId = 1001,
+        BillingReferenceId = "ARREARS-MISSING-SNAPSHOT",
+        BillingPeriod = DateTime.Today.AddDays(-2),
+        TotalBillAmount = 120m,
+        RemainingAmount = 90m,
+        BillingAdjustment = 30m,
+        PaymentStatus = (int)PaymentStatus.Unpaid,
+        InvoiceSnapshotJson = null,
+        CreatedBy = 1,
+        UpdatedBy = 1,
+        DateCreated = DateTime.Now,
+        DateUpdated = DateTime.Now
+    });
+    await db.SaveChangesAsync();
+    await readingService.SaveUpdate(1, NewReading(20, 0));
+    Check(await sheetService.PartialPost(1, 1) == 1, "Posting should succeed with unknown prior arrears.");
+    db.ChangeTracker.Clear();
+    var billing = await db.Billings.OrderByDescending(x => x.Id).FirstAsync();
+    Check(billing.BillArrearsAmount == null,
+        "Missing authoritative snapshot must leave arrears unknown, not infer it from RemainingAmount.");
+    var snapshot = JsonSerializer.Deserialize<TMCWD.Model.Billing.OfficialInvoiceSnapshot>(billing.InvoiceSnapshotJson!);
+    Check(snapshot?.ArrearsAmount == null,
+        "The issued snapshot must preserve unknown arrears instead of assuming zero.");
 });
 await Test("Malformed eligible prior bills force arrears to null instead of guessing", async () => {
     var sheet = await db.ReadingSheets.SingleAsync();
@@ -501,7 +836,7 @@ await Test("Official mobile SOA reads persisted partial-post billing without mut
     db.ChangeTracker.Clear();
     var billing = await db.Billings.SingleAsync();
     var persistedAmount = billing.TotalBillAmount;
-    Check(persistedAmount == 150m + TMCWD.Model.Billing.BillingCharges.MeterMaintenanceFee, "Posting fixture amount changed.");
+    Check(persistedAmount == 170m, "Posting fixture amount changed.");
     var rate = await db.WaterRates.SingleAsync();
     rate.MinimumCharge = 9876m; rate.Rate11To20 = 999m; rate.IsActive = false;
     await db.SaveChangesAsync();
@@ -902,7 +1237,7 @@ await Test("Adjusted bill collects the remaining balance with one maintenance fe
     Check(await sheetService.PartialPost(1, 1) == 1, "Bill was not posted.");
     var bill = await db.Billings.SingleAsync();
     Check(bill.TotalBillAmount == 120 && bill.RemainingAmount == 120,
-        "The original bill must contain the ₱100 minimum plus one ₱20 maintenance fee.");
+        "The original bill must contain the â‚±100 minimum plus one â‚±20 maintenance fee.");
 
     var adjustmentService = new BillingAdjustmentService(db);
     await adjustmentService.SaveBatch(1, new()
@@ -913,7 +1248,7 @@ await Test("Adjusted bill collects the remaining balance with one maintenance fe
             Type = (int)AdjustmentLineType.CurrentBill,
             Amount = 30
         }
-    });
+    }, Guid.NewGuid());
     db.ChangeTracker.Clear();
     bill = await db.Billings.SingleAsync();
     Check(bill.RemainingAmount == 90, "Adjustment did not update the collectible balance.");
@@ -1021,9 +1356,9 @@ await Test("Cancelling a discounted invoice reopens the bill and preserves an au
             x.Type == (int)AdjustmentLineType.SeniorCitizenDiscountReversal && x.Amount == -20),
         "Discount reversal adjustment is missing.");
 });
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // Phase 6D regression tests
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 // Helper: creates a MobileReadingSheetController wired to the test DB.
 MobileReadingSheetController MobileController(IBirInvoiceConfigService? bir = null, IPenaltyService? pen = null) =>
@@ -1077,7 +1412,7 @@ await Test("Retry PartialPost does not generate another ServiceInvoiceNumber", a
     Check(await sheetService.PartialPost(1, 1) == 1, "First post failed.");
     db.ChangeTracker.Clear();
     var first = (await db.Billings.SingleAsync()).ServiceInvoiceNumber;
-    // Second call: reading already billed — recovered idempotently, no new bill created.
+    // Second call: reading already billed â€” recovered idempotently, no new bill created.
     // Force reading back to InProgress so PartialPost sees it and enters the recovery branch.
     var reading = await db.Readings.SingleAsync();
     reading.Status = ReadingStatus.InProgress;
@@ -1139,7 +1474,7 @@ await Test("SOA returns ServiceInvoiceNumber and QR payload without personal dat
     Check(result!.ServiceInvoiceNumber == siNum,
         $"SOA ServiceInvoiceNumber mismatch: expected {siNum}, got {result.ServiceInvoiceNumber}.");
     Check(result.QrPayload == $"TMCWD|SI|{siNum}", "QR payload format incorrect.");
-    // QR must not embed personal data — only the lookup key.
+    // QR must not embed personal data â€” only the lookup key.
     Check(!result.QrPayload!.Contains(result.Name), "QR payload contains customer name.");
     Check(!result.QrPayload.Contains(result.Address), "QR payload contains address.");
     Check(!result.TotalBillAmount.ToString().All(c => result.QrPayload.Contains(c.ToString())),
@@ -1281,7 +1616,7 @@ await Test("Penalty uses persisted Penalty rows; PCA and arrears are absent from
     var penalty = await db.Penalties.SingleAsync();
     Check(penalty.Amount == 10m, // 10% of 100 = 10
         $"Persisted penalty must be 10% of bill; expected 10, got {penalty.Amount}.");
-    // SOA reads the persisted billing row — penalty is not embedded in TotalBillAmount.
+    // SOA reads the persisted billing row â€” penalty is not embedded in TotalBillAmount.
     var controller = MobileController(pen: penaltyService);
     var soa = ((await controller.Soa(1, 1)).Result as Microsoft.AspNetCore.Mvc.OkObjectResult)?.Value
         as TMCWD.Model.Billing.Responses.MobileSoaDto;
@@ -1573,7 +1908,7 @@ await Test("Day before DueDate: CurrentPenaltyAmount is null (no rows), PenaltyA
     var soa = ((await controller.Soa(1, 1)).Result as Microsoft.AspNetCore.Mvc.OkObjectResult)?.Value
         as TMCWD.Model.Billing.Responses.MobileSoaDto;
     Check(soa != null, "SOA null on day before DueDate.");
-    // No Penalty rows yet — CurrentPenaltyAmount must be null, not zero.
+    // No Penalty rows yet â€” CurrentPenaltyAmount must be null, not zero.
     Check(soa!.CurrentPenaltyAmount == null,
         $"CurrentPenaltyAmount must be null before DueDate (no rows); got {soa.CurrentPenaltyAmount}.");
     // PenaltyAfterDue is informational and must be available before DueDate.
@@ -1715,7 +2050,7 @@ await Test("Meter Maintenance is counted exactly once in TotalDue and TotalBillA
     // The persisted billing total must match.
     Check(billing.TotalBillAmount == 120m, $"TotalBillAmount must be 120; got {billing.TotalBillAmount}.");
     // The aggregate OtherCharges in the snapshot is zero at post time; Meter Maintenance
-    // is NOT an OtherCharge — it is already part of the water bill.
+    // is NOT an OtherCharge â€” it is already part of the water bill.
     Check(snapshot.OtherCharges == 0m,
         "OtherCharges in the snapshot must be zero at post time (no additional charges posted yet).");
     // TotalDue must NOT be BillAmount + MeterMaintenance + OtherCharges with MeterMaintenance in both.
@@ -1821,7 +2156,7 @@ await Test("Collection adjustment changes payable balance without inventing wate
     await sheetService.PartialPost(1, 1);
     var bill = await db.Billings.SingleAsync();
     await new BillingAdjustmentService(db).SaveBatch(1, new() { new() {
-        BillingReferenceId = bill.BillingReferenceId, Type = (int)AdjustmentLineType.CurrentBill, Amount = 30m } });
+        BillingReferenceId = bill.BillingReferenceId, Type = (int)AdjustmentLineType.CurrentBill, Amount = 30m } }, Guid.NewGuid());
     var summary = await new BillingService(db).GetCollectionBill(bill.BillingReferenceId);
     Check(summary?.BillAmount == 100m && summary.MeterMaintenanceFee == 20m && summary.BillingAdjustment == 30m
         && summary.AmountDue == 90m && summary.TotalDue == 120m,
@@ -1924,10 +2259,35 @@ await Test("Legacy penalty creation uses authoritative posting validation, not c
 });
 await OtherChargeInstallmentsRegression.Run(db, sheetService, Test);
 await AccountLedgerRegression.Run(db, Test);
+if (args.Contains("--verify-disconnection-workflow", StringComparer.Ordinal))
+    await DisconnectionWorkflowRegression.Run(db, Test, enabled => failure.Enabled = enabled);
+if (args.Contains("--verify-development-deployment", StringComparer.Ordinal))
+    await DevelopmentDeploymentVerification.Run(db, sheetService, readingService, Test);
 Console.WriteLine($"{passed} database regression checks passed using temporary tables only.");
+if (runMigrationChecks)
+{
 await InvoiceConcurrency.Run(connectionOptions, Path.Combine(root,
     "TMCWD/TMCWD.Data/Database/20261006_add_service_invoice_bir_config.sql"));
 await PaymentConcurrency.Run(connectionOptions, root);
+}
+else
+{
+    Console.WriteLine("NOT RUN (--no-migrations): migration SQL and invoice/payment concurrency suites that execute migrations.");
+}
+
+if (args.Contains("--verify-adjustment-workflow", StringComparer.Ordinal))
+{
+    if (!await AdjustmentWorkflowVerification.Run(db, sheetService, readingService, Test, enabled => failure.Enabled = enabled))
+        Environment.ExitCode = 1;
+    if (runMigrationChecks) await AdjustmentConcurrency.Run(connectionOptions, root);
+}
+
+if (args.Contains("--verify-disconnection-workflow", StringComparer.Ordinal) && runMigrationChecks)
+    await DisconnectionConcurrency.Run(connectionOptions, root);
+if (development6JBefore != null) {
+    Check(await DisconnectionWorkflowRegression.InspectDevelopment() == development6JBefore, "Development baseline or schema changed during Phase 6J tests.");
+    Console.WriteLine("PASS: Phase 6J development counts, sums, issued snapshot digests and inspected schemas unchanged.");
+}
 
 sealed class FailAfterSave : SaveChangesInterceptor
 {
@@ -1939,3 +2299,4 @@ sealed class FailAfterSave : SaveChangesInterceptor
         return ValueTask.FromResult(result);
     }
 }
+

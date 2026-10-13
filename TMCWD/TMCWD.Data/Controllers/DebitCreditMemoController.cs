@@ -15,6 +15,7 @@ namespace TMCWD.Data.Controllers
             _service = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(long id)
         {
@@ -22,10 +23,12 @@ namespace TMCWD.Data.Controllers
             return memo == null ? NotFound() : Ok(memo);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll() => Ok(await _service.GetAll());
 
         [HttpPost("Save/{userId}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         public async Task<IActionResult> Save(int userId, [FromBody] DebitCreditMemo memo)
         {
             if (memo == null || string.IsNullOrWhiteSpace(memo.AccountNumber)

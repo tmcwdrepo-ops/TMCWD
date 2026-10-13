@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
 
@@ -25,6 +25,7 @@ namespace TMCWD.Data.Controllers
 
         #region methods
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -37,6 +38,7 @@ namespace TMCWD.Data.Controllers
             return Ok(paymentCheck);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -49,6 +51,7 @@ namespace TMCWD.Data.Controllers
 
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
         [HttpGet("GetByReference/{reference}")]
         public async Task<IActionResult> GetByReference(string reference)
         {
@@ -62,8 +65,11 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Collection")]
         public async Task<IActionResult> SaveUpdate(int userId, PaymentCheck paymentCheck)
         {
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                return Unauthorized();
             var savedPaymentCheck = await _service.SaveUpdate(userId, paymentCheck);
             return Ok(savedPaymentCheck);
         }

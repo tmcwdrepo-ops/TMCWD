@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Services;
 using TMCWD.Data.Entities;
 
@@ -16,6 +16,7 @@ namespace TMCWD.Data.Controllers
             _service  = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -24,6 +25,7 @@ namespace TMCWD.Data.Controllers
             return Ok(workflow);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -32,6 +34,8 @@ namespace TMCWD.Data.Controllers
             return Ok(workflows);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
+
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<IActionResult> SaveUpdate(int userId, [FromBody] Workflow workflow)
         {
@@ -39,6 +43,8 @@ namespace TMCWD.Data.Controllers
             if (updatedWorkflow == null) return NoContent();
             return Ok(updatedWorkflow);
         }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
 
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)

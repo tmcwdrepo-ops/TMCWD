@@ -27,6 +27,17 @@ public sealed class AccountLedgerService(UserDbContext db, IBillingService billi
                 Status = Enum.GetName(typeof(AccountStatus), account.Status) ?? ""
             }
         };
+        result.Account.OperationalAccountStatus = result.Account.Status;
+        try {
+            var physical = await DisconnectionMonitoringService.GetLatestPhysicalEvent(db, account.Id);
+            if (physical != null && physical.ActualDisconnectionDateUtc != default) {
+                result.Account.PhysicalServiceStatus = physical.ActualReconnectionDateUtc.HasValue ? "RECONNECTED" : "DISCONNECTED";
+                if (!physical.ActualReconnectionDateUtc.HasValue) result.Account.Status = "Disconnected";
+            }
+        } catch (MySqlConnector.MySqlException e) when (e.Number == 1146) {
+            // Pre-Phase-6J deployments still support Ledger; unavailable evidence never implies disconnection.
+            result.Account.PhysicalServiceStatus = "UNAVAILABLE";
+        }
         var bills = await db.Billings.AsNoTracking().Where(b => b.AccountId == account.Id)
             .OrderByDescending(b => b.BillingPeriod).ThenByDescending(b => b.Id).ToListAsync();
         var references = bills.Select(b => b.BillingReferenceId).ToList();

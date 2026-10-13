@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 
@@ -44,10 +44,18 @@ namespace TMCWD.Data.Services
 
         public async Task<ReadingSheetTemplate> SaveUpdate(int userId, ReadingSheetTemplate template)
         {
+            if (!await _context.Users.AnyAsync(u => u.Id == template.ReaderId && u.Role == (int)UserRole.MeterReader
+                && u.IsActive == true && u.IsVerified == true)
+                || !await _context.ZoneBooks.AnyAsync(z => z.Id == template.ZoneBookId)
+                || template.SeqFrom < 0 || template.SeqTo < 0
+                || (template.SeqFrom > 0 && template.SeqTo > 0 && template.SeqFrom > template.SeqTo))
+                throw new InvalidOperationException("An active verified reader, valid zone/book and sequence range are required.");
             if (template.Id == 0)
             {
                 template.CreatedBy = userId;
                 template.DateCreated = DateTime.Now;
+                template.UpdatedBy = userId;
+                template.DateUpdated = DateTime.Now;
                 _context.ReadingSheetTemplates.Add(template);
             }
             else

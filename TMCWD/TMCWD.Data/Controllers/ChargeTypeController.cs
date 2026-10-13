@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
 
@@ -27,6 +27,7 @@ namespace TMCWD.Data.Controllers
 
         #region methods
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -38,6 +39,7 @@ namespace TMCWD.Data.Controllers
             return Ok(chargeType);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -49,6 +51,7 @@ namespace TMCWD.Data.Controllers
             return Ok(chargeTypes);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByClassification/{classificationId}")]
         public async Task<IActionResult> GetByClassification(int classificationId)
         {
@@ -61,8 +64,11 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "SuperAdmin")]
         public async Task<IActionResult> SaveUpdate(int userId, ChargeType chargeType)
         {
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                return Unauthorized();
             var result = await _service.SaveUpdate(userId, chargeType);
             if (result == null)
             {

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.Runtime.CompilerServices;
 using TMCWD.Data.Services;
 
@@ -26,6 +26,7 @@ namespace TMCWD.Data.Controllers
 
         #region methods
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -34,6 +35,7 @@ namespace TMCWD.Data.Controllers
             return Ok(zoneBook);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -42,6 +44,7 @@ namespace TMCWD.Data.Controllers
             return Ok(zoneBooks);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByZone/{zone}")]
         public async Task<IActionResult> GetByZone(int zone)
         {
@@ -50,6 +53,7 @@ namespace TMCWD.Data.Controllers
             return Ok(zoneBooks);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByZoneAndBook/{zone}/{book}")]
         public async Task<IActionResult> GetByZoneAndBook(int zone, int book)
         {
@@ -58,6 +62,7 @@ namespace TMCWD.Data.Controllers
             return Ok(zoneBook);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetZones")]
         public async Task<IActionResult> GetZones()
         {
@@ -66,6 +71,7 @@ namespace TMCWD.Data.Controllers
             return Ok(zones);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetBooksByZone/{zone}")]
         public async Task<IActionResult> GetBooksByZone(int zone)
         {
@@ -74,6 +80,7 @@ namespace TMCWD.Data.Controllers
             return Ok(books);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByWeek/{week}")]
         public async Task<IActionResult> GetByWeek(int week)
         {
@@ -82,6 +89,7 @@ namespace TMCWD.Data.Controllers
             return Ok(zoneBooks);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByIds")]
         public async Task<IActionResult> GetByIds([FromQuery] int[] ids)
         {

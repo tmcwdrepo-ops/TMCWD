@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 
@@ -109,6 +109,27 @@ namespace TMCWD.Data.Services
             }
 
             await _dbContext.SaveChangesAsync();
+            return billing;
+        }
+
+        public async Task<Billing> CreateChargeAnchor(int userId, int accountId)
+        {
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            var account = await _dbContext.Accounts.FromSqlInterpolated($"SELECT * FROM accounts WHERE Id = {accountId} FOR UPDATE")
+                .SingleOrDefaultAsync() ?? throw new InvalidOperationException("Account not found.");
+            var billing = await _dbContext.Billings.Where(b => b.AccountId == account.Id
+                && b.PaymentStatus != (int)PaymentStatus.Paid && b.PaymentStatus != (int)PaymentStatus.Waived)
+                .OrderByDescending(b => b.DateCreated).FirstOrDefaultAsync();
+            if (billing == null)
+            {
+                billing = new Billing { AccountId = account.Id,
+                    BillingReferenceId = Guid.NewGuid().ToString("N")[..12].ToUpperInvariant(),
+                    BillingPeriod = DateTime.Now, PaymentStatus = (int)PaymentStatus.Unpaid,
+                    CreatedBy = userId, UpdatedBy = userId, DateCreated = DateTime.Now, DateUpdated = DateTime.Now };
+                _dbContext.Billings.Add(billing);
+                await _dbContext.SaveChangesAsync();
+            }
+            await transaction.CommitAsync();
             return billing;
         }
 

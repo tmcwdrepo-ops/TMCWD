@@ -1,0 +1,72 @@
+@inject TMCWD.Services.AuthenticatedUserService AuthenticatedUser
+@{
+    Layout = "_InsideLayout";
+    ViewData["PageTitle"] = "Disconnection Monitoring";
+    ViewData["ActivePage"] = "disconnection";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/disconnection-monitoring.css" asp-append-version="true" />
+}
+<section class="disconnection-monitoring" aria-labelledby="pageTitle" data-can-disconnect="@((AuthenticatedUser.User.Role == (int)UserRole.CustomerServiceOic || AuthenticatedUser.User.Role == (int)UserRole.SuperAdmin) ? "true" : "false")" data-can-reconnect="@((AuthenticatedUser.User.Role == (int)UserRole.CustomerServiceOic || AuthenticatedUser.User.Role == (int)UserRole.SuperAdmin) ? "true" : "false")">
+    @Html.AntiForgeryToken()
+    <header class="dm-intro">
+        <p>Track accounts subject to disconnection, scheduled field action, physical service status, and reconnection eligibility.</p>
+        <p class="dm-muted">Second unpaid billing triggers monitoring. Physical disconnection requires authorized staff confirmation.</p>
+    </header>
+    <form id="dmFilters" class="dm-card dm-toolbar" aria-label="Monitoring filters">
+        <label class="dm-field dm-field--search"><span>Account or customer name</span><input id="dmQuery" maxlength="100" placeholder="Search account or customer" /></label>
+        <label class="dm-field"><span>Zone</span><input id="dmZone" type="number" min="0" step="1" /></label>
+        <label class="dm-field"><span>Book</span><input id="dmBook" type="number" min="0" step="1" /></label>
+        <label class="dm-field dm-field--status"><span>Status</span><select id="dmStatus">
+            <option value="">All</option><option>CURRENT</option><option>FIRST BILL UNPAID</option>
+            <option>SUBJECT FOR DISCONNECTION</option><option>FOR DISCONNECTION</option>
+            <option>BALANCE + RECONNECTION FEE PENDING</option><option>ELIGIBLE FOR RECONNECTION</option>
+            <option>DISCONNECTED</option><option>RECONNECTED</option><option>FINANCIAL / SERVICE STATE REVIEW REQUIRED</option>
+        </select></label>
+        <div class="dm-toolbar-actions"><button type="submit" class="dm-button dm-button--primary">Apply Filters</button>
+        <button type="button" class="dm-button" data-dm-clear>Clear</button></div>
+    </form>
+    <div id="dmNotice" class="dm-alert dm-alert--success" role="status" hidden></div>
+    <div id="dmSummary" class="dm-summary" aria-label="Current result summary" hidden>
+        <div class="dm-card"><span>Total Accounts</span><strong data-dm-count="total">0</strong></div>
+        <div class="dm-card"><span>First Bill Unpaid</span><strong data-dm-count="FIRST BILL UNPAID">0</strong></div>
+        <div class="dm-card"><span>Subject for Disconnection</span><strong data-dm-count="SUBJECT FOR DISCONNECTION">0</strong></div>
+        <div class="dm-card"><span>For Disconnection</span><strong data-dm-count="FOR DISCONNECTION">0</strong></div>
+        <div class="dm-card"><span>Disconnected</span><strong data-dm-count="DISCONNECTED">0</strong></div>
+        <div class="dm-card"><span>Eligible for Reconnection</span><strong data-dm-count="ELIGIBLE FOR RECONNECTION">0</strong></div>
+    </div>
+    <p id="dmMessage" role="status" aria-live="polite"></p>
+    <div id="dmLoading" class="dm-card dm-state" hidden><span class="dm-spinner" aria-hidden="true"></span> Loading disconnection monitoring…</div>
+    <div id="dmEmpty" class="dm-card dm-state" hidden><h2>No matching accounts</h2><p>Try changing the account, zone, book, or status filters.</p><button type="button" class="dm-button" data-dm-clear>Clear Filters</button></div>
+    <div id="dmError" class="dm-alert" hidden><h2>Unable to load disconnection monitoring.</h2><button type="button" id="dmRetry" class="dm-button">Retry</button></div>
+    <div class="dm-card dm-table-wrap" id="dmResults" aria-busy="false" tabindex="-1">
+        <table class="dm-table"><caption>Service monitoring by account</caption><thead><tr>
+            <th scope="col">Account</th><th scope="col">Customer / address</th><th scope="col">First unpaid bill</th>
+            <th scope="col">Second bill</th><th scope="col">Disconnection schedule</th>
+            <th scope="col">Balances</th><th scope="col">Status</th><th scope="col">Actions</th>
+        </tr></thead><tbody id="dmRows"></tbody></table>
+    </div>
+</section>
+<dialog id="dmConfirmation" class="dm-modal" aria-modal="true" aria-labelledby="dmConfirmationTitle" aria-describedby="dmConfirmationWarning">
+    <header class="dm-modal-header"><span class="dm-muted">Field action confirmation</span><h2 id="dmConfirmationTitle">Confirm Physical Disconnection</h2></header>
+    <dl class="dm-modal-details">
+        <div><dt>Account</dt><dd id="dmConfirmationAccount"></dd></div>
+        <div><dt>Customer</dt><dd id="dmConfirmationCustomer"></dd></div>
+        <div><dt>Scheduled Disconnection</dt><dd id="dmConfirmationSchedule"></dd></div>
+        <div><dt>Outstanding Balance</dt><dd id="dmConfirmationBalance"></dd></div>
+        <div id="dmReconnectionFee" hidden><dt>Reconnection Fee</dt><dd>Paid</dd></div>
+    </dl>
+    <div class="dm-warning" id="dmConfirmationWarning"><strong>Only confirm after the service has been physically disconnected in the field.</strong>
+        <p>Confirmation will:</p><ul><li>Record the actual disconnection.</li><li>Mark the account Suspended / service Disconnected.</li>
+        <li>Create one PHP 350 Reconnection Fee.</li><li>Preserve an audit record of the confirming staff member.</li></ul>
+        <p><strong>This action does not mean the balance is paid.</strong></p>
+    </div>
+    <p id="dmConfirmationMessage" role="status" aria-live="polite"></p>
+    <footer class="dm-modal-actions"><button type="button" id="dmCancel" class="dm-button" autofocus>Cancel</button>
+    <button type="button" id="dmConfirm" class="dm-button dm-button--danger">Confirm Physical Disconnection</button></footer>
+</dialog>
+<template id="dmReconnectionWarning"><strong>Only confirm after the service has been physically reconnected in the field.</strong>
+    <p>Confirmation will:</p><ul><li>Record the physical reconnection.</li><li>Restore the account to Active.</li><li>Preserve the reconnection audit.</li></ul>
+    <p>No new reconnection fee is created.</p></template>
+<partial name="_AccountLedger" />
+@section Scripts { <script src="~/js/disconnection-monitoring.js" asp-append-version="true"></script> }

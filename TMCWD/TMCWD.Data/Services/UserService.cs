@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 using TMCWD.Utility.Encryption;
@@ -41,9 +41,11 @@ namespace TMCWD.Data.Services
         {
             if(user.Id > 0)
             {
+                if (_dbContext.Entry(user).State == EntityState.Detached)
+                    throw new InvalidOperationException("User updates require a server-loaded user record.");
                 user.UpdatedBy = userId;
                 user.DateUpdated = DateTime.Now;
-                _dbContext.Users.Update(user);
+                // Track only changed fields so a profile edit cannot restore a concurrently changed password.
             }
             else
             {

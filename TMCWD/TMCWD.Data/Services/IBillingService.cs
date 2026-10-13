@@ -23,6 +23,7 @@ namespace TMCWD.Data.Services
         public Task<List<Billing>> GetByReadings(int[] readingIds);
 
         public Task<Billing> SaveUpdate(int userId, Billing billing);
+        Task<Billing> CreateChargeAnchor(int userId, int accountId);
 
         /// <summary>
         /// Returns the billing whose ServiceInvoiceNumber exactly matches the

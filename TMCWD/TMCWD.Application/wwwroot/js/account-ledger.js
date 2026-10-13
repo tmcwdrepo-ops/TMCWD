@@ -22,6 +22,7 @@
     const statusClass = label => {
         const normalized = String(label || '').trim().toLowerCase();
         if (normalized === 'paid') return 'account-ledger__status--paid';
+        if (normalized === 'unpaid' || normalized === 'disconnected') return 'account-ledger__status--danger';
         if (normalized === 'overdue') return 'account-ledger__status--overdue';
         if (normalized === 'future') return 'account-ledger__status--future';
         if (normalized === 'active') return 'account-ledger__status--active';

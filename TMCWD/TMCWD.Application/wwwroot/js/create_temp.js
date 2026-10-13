@@ -327,7 +327,8 @@
             var delTpl = templates.find(function (t) { return t.id === delId; });
             showConfirm('Delete "' + (delTpl ? delTpl.name : '') + '"? This cannot be undone.').then(function (confirmed) {
                 if (!confirmed) return;
-                fetch('/ReadingSheet/DeactivateReadingSheetTemplate?id=' + encodeURIComponent(delId), { method: 'POST' })
+                fetch('/ReadingSheet/DeactivateReadingSheetTemplate?id=' + encodeURIComponent(delId), { method: 'POST',
+                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' } })
                     .then(function (res) {
                         if (!res.ok) throw new Error('Delete failed');
                         return loadTemplates();
@@ -369,7 +370,7 @@
 
         fetch('/ReadingSheet/SaveReadingSheetTemplate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' },
             body: JSON.stringify(payload)
         })
             .then(function (res) {

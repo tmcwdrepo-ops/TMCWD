@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
 using TMCWD.Model.Billing.Interfaces;
 
 namespace TMCWD.Model.Billing
 {
     public class BillingAdjustment : IBillingAdjustment
     {
-
         public BillingAdjustment() { }
 
         [DisplayName("Id")]
@@ -23,6 +20,12 @@ namespace TMCWD.Model.Billing
         [DisplayName("Amount")]
         public decimal Amount { get; set; }
 
+        /// <summary>
+        /// Optional free-text reason. NULL for historical records.
+        /// </summary>
+        [DisplayName("Reason")]
+        public string? Reason { get; set; }
+
         [DisplayName("Created By")]
         public int CreatedBy { get; set; }
 
@@ -35,5 +38,4 @@ namespace TMCWD.Model.Billing
         [DisplayName("Date Updated")]
         public DateTime DateUpdated { get; set; }
     }
-
 }

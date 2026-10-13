@@ -29,9 +29,11 @@ namespace TMCWD.Data.Entities
         public DateTime? DateVerified { get; set; }
 
         [MaxLength(100), Column("Password")]
+        [System.Text.Json.Serialization.JsonIgnore]
         public string? Password { get; set; }
 
         [Column("RememberToken"), MaxLength(100)]
+        [System.Text.Json.Serialization.JsonIgnore]
         public string? RememberToken { get; set; }
 
         [Column("DateCreated")]

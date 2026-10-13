@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using TMCWD.Administration;
@@ -29,6 +29,7 @@ namespace TMCWD.Application.Controllers
         private readonly OtherChargeTransaction _otherChargeTrans;
         private readonly OtherFeeTypeTransaction _otherFeeTypeTrans;
         private readonly WaterRateTransaction _waterRateTrans;
+        private readonly MeterMaintenanceRateTransaction _meterMaintenanceRateTrans;
         private readonly PaymentTransaction _paymentTrans;
         private readonly BillingAdjustmentTransaction _billingAdjustmentTrans;
         private readonly DebitCreditMemoTransaction _debitCreditMemoTrans;
@@ -47,6 +48,7 @@ namespace TMCWD.Application.Controllers
             OtherFeeTypeTransaction otherFeeTypeTrans,
             UserTransaction userTrans,
             WaterRateTransaction waterRateTrans,
+            MeterMaintenanceRateTransaction meterMaintenanceRateTrans,
             PaymentTransaction paymentTrans,
             BillingAdjustmentTransaction billingAdjustmentTrans,
             DebitCreditMemoTransaction debitCreditMemoTrans)
@@ -62,6 +64,7 @@ namespace TMCWD.Application.Controllers
             _otherFeeTypeTrans = otherFeeTypeTrans;
             _userTrans = userTrans;
             _waterRateTrans = waterRateTrans;
+            _meterMaintenanceRateTrans = meterMaintenanceRateTrans;
             _paymentTrans = paymentTrans;
             _billingAdjustmentTrans = billingAdjustmentTrans;
             _debitCreditMemoTrans = debitCreditMemoTrans;
@@ -259,7 +262,7 @@ namespace TMCWD.Application.Controllers
 
         /// <summary>
         /// Returns Bill Adjustment history for a given account number.
-        /// Walks account → billings → adjustments per billing reference.
+        /// Walks account â†’ billings â†’ adjustments per billing reference.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetBillAdjustmentsByAccount(string accountNumber)
@@ -299,6 +302,56 @@ namespace TMCWD.Application.Controllers
             }
 
             return Ok(result.OrderByDescending(r => ((dynamic)r).dateCreated));
+        }
+
+        /// <summary>
+        /// GET /Billing/GetAdjustmentHistory?billingReferenceId=XXX
+        ///
+        /// Returns the read-only audit history for a billing reference as a JSON
+        /// array, calling through to the Data API History endpoint.
+        /// Protected by the existing MVC BillingOperations session check.
+        /// Returns an empty array rather than 404 when no adjustments exist.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetAdjustmentHistory(string billingReferenceId)
+        {
+            if (string.IsNullOrWhiteSpace(billingReferenceId))
+                return BadRequest("A billing reference is required.");
+            try
+            {
+                var history = await _billingAdjustmentTrans.GetHistory(billingReferenceId.Trim());
+                return Ok(history.Select(h => new
+                {
+                    id                   = h.Id,
+                    billingReferenceId   = h.BillingReferenceId,
+                    serviceInvoiceNumber = h.ServiceInvoiceNumber,
+                    adjustmentType       = h.AdjustmentType,
+                    amount               = h.Amount,
+                    reason               = h.Reason,
+                    createdBy            = h.CreatedBy,
+                    createdByName        = h.CreatedByName,
+                    dateCreated          = h.DateCreated,
+                    updatedBy            = h.UpdatedBy,
+                    updatedByName        = h.UpdatedByName,
+                    dateUpdated          = h.DateUpdated
+                }));
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(502, "Could not load adjustment history. Please try again.");
+            }
+        }
+
+        /// <summary>Combines the dropdown category and free-text explanation into one stored reason.</summary>
+        private static string? CombineReason(string? category, string? explanation)
+        {
+            var cat  = category?.Trim() ?? string.Empty;
+            var expl = explanation?.Trim() ?? string.Empty;
+            if (cat.Length == 0 && expl.Length == 0) return null;
+            if (cat.Length == 0) return expl.Length > 255 ? expl[..255] : expl;
+            if (expl.Length == 0) return cat;
+            var combined = $"{cat}: {expl}";
+            return combined.Length > 255 ? combined[..255] : combined;
         }
 
         public IActionResult Index() => View();
@@ -388,10 +441,10 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
             //    result.Add(new
             //    {
             //        billingReferenceId = billing.BillingReferenceId,
-            //        accountNumber = account?.AccountNumber ?? "â€”",
-            //        usage = 0,          // not yet tracked â€” see note
+            //        accountNumber = account?.AccountNumber ?? "Ã¢â‚¬â€",
+            //        usage = 0,          // not yet tracked Ã¢â‚¬â€ see note
             //        billAmount = billing.TotalBillAmount,
-            //        discount = 0,       // not yet tracked â€” see note
+            //        discount = 0,       // not yet tracked Ã¢â‚¬â€ see note
             //        penalty = activePenalties.Sum(p => p.Amount)
             //    });
             //}
@@ -409,6 +462,8 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
 
             if (model == null || string.IsNullOrWhiteSpace(model.ReferenceNo))
                 return BadRequest("Select a billing record before submitting an adjustment.");
+            if (model.AdjustmentOperationId == Guid.Empty)
+                return BadRequest("A stable adjustment operation ID is required.");
 
             var selectedLines = model.AdjustmentLines?
                 .Where(line => line.IsChecked)
@@ -426,8 +481,7 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
                 .FirstOrDefault(item => string.Equals(item.BillingReferenceId, model.ReferenceNo, StringComparison.OrdinalIgnoreCase));
             if (billing == null)
                 return BadRequest("The selected billing record no longer exists. Reload billing history.");
-            if (billing.PaymentStatus == PaymentStatus.Paid || billing.PaymentStatus == PaymentStatus.Waived)
-                return Conflict("A settled bill cannot be adjusted.");
+            // Data resolves successful retries before checking settled status under the billing row lock.
 
             try
             {
@@ -445,20 +499,25 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
                     {
                         Type = (int)type,
                         BillingReferenceId = billing.BillingReferenceId,
-                        Amount = amount
+                        Amount = amount,
+                        // Combine the dropdown category and free-text explanation into the
+                        // persisted Reason field. Either component may be absent.
+                        Reason = CombineReason(model.Remarks, model.Explanation)
                     });
                 }
 
-                var saved = await _billingAdjustmentTrans.SaveBatch(_user.User.Id, adjustments);
+                var saved = await _billingAdjustmentTrans.SaveBatch(_user.User.Id, adjustments, model.AdjustmentOperationId);
                 if (saved == null || saved.Count != adjustments.Count)
                     return StatusCode(502, "The billing adjustment was not saved. No changes were confirmed.");
 
                 TempData["SuccessMessage"] = $"{monetaryLines.Count} billing adjustment(s) saved successfully.";
+                TempData["CompletedAdjustmentOperationId"] = model.AdjustmentOperationId.ToString("D");
                 return RedirectToAction(nameof(BillAdjustment));
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException error)
             {
-                return StatusCode(502, "The billing adjustment was not saved. Please try again.");
+                return StatusCode((int)(error.StatusCode ?? System.Net.HttpStatusCode.BadGateway),
+                    "The adjustment was not confirmed. Keep the same operation identity when retrying.");
             }
         }
 
@@ -633,7 +692,7 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
                     result.Add(new
                     {
                         id = charge.Id,
-                        description = feeType?.Name ?? "—",
+                        description = feeType?.Name ?? "â€”",
                         payableIn = charge.PayableIn,
                         particulars = charge.Particulars,
                         amount = charge.Amount,
@@ -688,29 +747,7 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
             {
                 if (installmentCount > 1)
                     return BadRequest("An installment charge requires an existing billing period.");
-                // New connection accounts have no billing history yet —
-                // create an initial pre-billing stub so charges can be attached.
-                // This stub has zero amounts and Unpaid status; it will be
-                // superseded by the first proper metered billing cycle.
-                var stub = new Model.Billing.Billing
-                {
-                    AccountId          = account.Id,
-                    BillingReferenceId = Guid.NewGuid().ToString("N")[..12].ToUpper(),
-                    BillingPeriod      = DateTime.Now,
-                    TotalBillAmount    = 0,
-                    RemainingAmount    = 0,
-                    PaymentStatus      = PaymentStatus.Unpaid,
-                    DateCreated        = DateTime.Now,
-                    DateUpdated        = DateTime.Now
-                };
-                await _billingTrans.SaveUpdate(_user.User.Id, stub);
-
-                // Re-fetch after insert
-                var allBillings2 = await _billingTrans.GetAll() ?? new List<Model.Billing.Interfaces.BillingBase>();
-                currentBilling = allBillings2
-                    .Where(b => b.AccountId == account.Id)
-                    .OrderByDescending(b => b.DateCreated)
-                    .FirstOrDefault();
+                currentBilling = await _billingTrans.CreateChargeAnchor(account.Id);
 
                 if (currentBilling == null)
                     return BadRequest("Could not create a billing record for this account.");
@@ -741,7 +778,7 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
 
             if (saved == null)
             {
-                return BadRequest("OtherChargeTransaction.SaveUpdate returned null — the API call to TMCWD.Data likely failed. Check TMCWD.Data is running and reachable.");
+                return BadRequest("OtherChargeTransaction.SaveUpdate returned null â€” the API call to TMCWD.Data likely failed. Check TMCWD.Data is running and reachable.");
             }
 
             var feeType = await _otherFeeTypeTrans.Get(request.ChargeType);
@@ -749,7 +786,7 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
             return Ok(new
             {
                 id = saved.Id,
-                description = feeType?.Name ?? "—",
+                description = feeType?.Name ?? "â€”",
                 payableIn = saved.PayableIn,
                 particulars = saved.Particulars,
                 amount = saved.Amount,
@@ -796,10 +833,33 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetReadingsByZoneBook(int zone, int book)
+        public async Task<IActionResult> GetReadingsByZoneBook(int zone, int book, int readingSheetId)
         {
             if (zone <= 0 || book <= 0)
                 return BadRequest("Zone and book are required.");
+            if (readingSheetId <= 0)
+                return BadRequest(new { message = "An active reading sheet is required for a complete bill estimate." });
+            var sheets = await _readingSheetTrans.GetByZoneAndBook(zone, book);
+            var readingSheet = sheets?.SingleOrDefault(sheet => sheet.Id == readingSheetId
+                && (sheet.Status == ReadingStatus.Created || sheet.Status == ReadingStatus.InProgress));
+            if (readingSheet?.BillingDate == null)
+                return BadRequest(new { message = "The selected active reading sheet or its billing date was not found." });
+            MeterMaintenanceRateDto? maintenance;
+            try
+            {
+                maintenance = await _meterMaintenanceRateTrans.GetForBillingDate(
+                    DateOnly.FromDateTime(readingSheet.BillingDate.Value.Date));
+            }
+            catch (InvalidOperationException error)
+            {
+                return Conflict(new { message = error.Message });
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(502, new { message = "The Meter Maintenance configuration could not be loaded." });
+            }
+            if (maintenance == null)
+                return Conflict(new { message = "No Meter Maintenance rate is configured for this billing date. Posting and complete estimates are blocked." });
 
             // Load all accounts for the zone/book and their readings in parallel
             var accountsTask = _accountTrans.GetByZoneAndBook(zone, book);
@@ -814,15 +874,32 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
             if (accounts == null || !accounts.Any())
                 return Ok(new List<PresentReadingViewModel>());
 
-            // Fetch customer names for all accounts in parallel
-            var customerTasks = accounts.Select(a => _customerTrans.Get(a.CustomerId)).ToArray();
-            var customers = await Task.WhenAll(customerTasks);
-            var customerById = accounts
-                .Select((a, i) => new { a.CustomerId, Customer = customers[i] })
-                .Where(x => x.Customer != null)
-                .ToDictionary(x => x.CustomerId, x => x.Customer!);
+// One customer may own multiple accounts.
+// Fetch each unique customer only once so CustomerId remains unique in the dictionary.
+var customerIds = accounts
+    .Select(a => a.CustomerId)
+    .Distinct()
+    .ToList();
 
-            // Group readings by AccountId â€” keep only the most recent per account
+var customerTasks = customerIds
+    .Select(customerId => _customerTrans.Get(customerId))
+    .ToArray();
+
+var customers = await Task.WhenAll(customerTasks);
+
+var customerById = customerIds
+    .Select((customerId, index) => new
+    {
+        CustomerId = customerId,
+        Customer = customers[index]
+    })
+    .Where(x => x.Customer != null)
+    .ToDictionary(
+        x => x.CustomerId,
+        x => x.Customer!
+    );
+
+            // Group readings by AccountId Ã¢â‚¬â€ keep only the most recent per account
             var latestReading = readings
                 .GroupBy(r => r.AccountId)
                 .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.Id).First());
@@ -840,12 +917,13 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
 
                 if (reading != null)
                 {
-                    amount = await WaterChargeCalculator.ComputeWaterCharge(
+                    amount = await WaterChargeCalculator.ComputeBillAmount(
                         _waterRateTrans,
                         (int)previous,
                         (int)present,
                         account.Classification,
-                        account.MeterSize > 0 ? account.MeterSize : 0.5m);
+                        account.MeterSize > 0 ? account.MeterSize : 0.5m,
+                        maintenance.Amount);
                 }
 
                 var customerName = customerById.TryGetValue(account.CustomerId, out var cust) && cust != null
@@ -864,6 +942,7 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
                     PresentReading = present,
                     PreviousReading = previous,
                     Amount = amount,
+                    MeterMaintenanceFee = maintenance.Amount,
                     MeterSize = account.MeterSize
                 });
             }
@@ -874,12 +953,12 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
 
 
         /// <summary>
-        /// Live search â€” returns matching accounts (by account number, meter number, or address)
+        /// Live search Ã¢â‚¬â€ returns matching accounts (by account number, meter number, or address)
         /// together with each account's most recent reading. Used to populate the table as the
         /// user types in the Account Number field.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> SearchAccounts(string q)
+        public async Task<IActionResult> SearchAccounts(string q, int? readingSheetId)
         {
             if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 1)
                 return Ok(new List<object>());
@@ -889,8 +968,31 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
                 .ToList();
             if (accounts == null || !accounts.Any())
                 return Ok(new List<object>());
+            MeterMaintenanceRateDto? maintenance = null;
+            if (readingSheetId.HasValue)
+            {
+                var sheet = await _readingSheetTrans.Get(readingSheetId.Value);
+                if (sheet?.BillingDate == null
+                    || sheet.Status is not (ReadingStatus.Created or ReadingStatus.InProgress))
+                    return BadRequest(new { message = "An active reading sheet with a billing date is required for a complete bill estimate." });
+                try
+                {
+                    maintenance = await _meterMaintenanceRateTrans.GetForBillingDate(
+                        DateOnly.FromDateTime(sheet.BillingDate.Value.Date));
+                }
+                catch (InvalidOperationException error)
+                {
+                    return Conflict(new { message = error.Message });
+                }
+                catch (HttpRequestException)
+                {
+                    return StatusCode(502, new { message = "The Meter Maintenance configuration could not be loaded." });
+                }
+                if (maintenance == null)
+                    return Conflict(new { message = "No Meter Maintenance rate is configured for this billing date." });
+            }
 
-            // Fetch all readings in parallel â€” one Task per account instead of
+            // Fetch all readings in parallel Ã¢â‚¬â€ one Task per account instead of
             // two sequential awaits per account inside a foreach loop.
             var readingTasks = accounts.Select(a => _readingTrans.GetByAccount(a.Id));
             var allReadings = await Task.WhenAll(readingTasks);
@@ -922,12 +1024,13 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
 
                 if (current != null)
                 {
-                    amount = await WaterChargeCalculator.ComputeWaterCharge(
+                    amount = await WaterChargeCalculator.ComputeBillAmount(
                         _waterRateTrans,
                         (int)previousVal,
                         (int)present,
                         account.Classification,
-                        account.MeterSize > 0 ? account.MeterSize : 0.5m);
+                        account.MeterSize > 0 ? account.MeterSize : 0.5m,
+                        maintenance?.Amount ?? 0m);
                 }
 
                 var usage = Math.Max(0, present - previousVal);
@@ -944,7 +1047,8 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
                     presentReading = present,
                     previousReading = previousVal,
                     usage,
-                    amount
+                    amount,
+                    meterMaintenanceFee = maintenance?.Amount
                 });
             }
 
@@ -956,7 +1060,7 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
         /// Used to populate the Present Reading table when looking up by account.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetReadingsByAccount(string accountNumber)
+        public async Task<IActionResult> GetReadingsByAccount(string accountNumber, int? readingSheetId)
         {
             if (string.IsNullOrWhiteSpace(accountNumber))
                 return BadRequest("Account number is required.");
@@ -968,6 +1072,29 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
                 return Conflict("This account is not active yet. Complete the connection and House Tapping workflow before recording meter readings.");
 
             var readings = await _readingTrans.GetByAccount(account.Id);
+            MeterMaintenanceRateDto? maintenance = null;
+            if (readingSheetId.HasValue)
+            {
+                var sheet = await _readingSheetTrans.Get(readingSheetId.Value);
+                if (sheet?.BillingDate == null
+                    || sheet.Status is not (ReadingStatus.Created or ReadingStatus.InProgress))
+                    return BadRequest(new { message = "An active reading sheet with a billing date is required for a complete bill estimate." });
+                try
+                {
+                    maintenance = await _meterMaintenanceRateTrans.GetForBillingDate(
+                        DateOnly.FromDateTime(sheet.BillingDate.Value.Date));
+                }
+                catch (InvalidOperationException error)
+                {
+                    return Conflict(new { message = error.Message });
+                }
+                catch (HttpRequestException)
+                {
+                    return StatusCode(502, new { message = "The Meter Maintenance configuration could not be loaded." });
+                }
+                if (maintenance == null)
+                    return Conflict(new { message = "No Meter Maintenance rate is configured for this billing date." });
+            }
 
             if (readings == null || !readings.Any())
                 return Ok(new List<PresentReadingViewModel>());
@@ -979,12 +1106,20 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
                     0,
                     reading.CurrentReading - reading.PreviousReading);
 
-                var amount = await WaterChargeCalculator.ComputeWaterCharge(
+                var amount = maintenance == null
+                    ? await WaterChargeCalculator.ComputeWaterCharge(
                     _waterRateTrans,
                     (int)reading.PreviousReading,
                     (int)reading.CurrentReading,
                     account.Classification,
-                    account.MeterSize > 0 ? account.MeterSize : 0.5m);
+                    account.MeterSize > 0 ? account.MeterSize : 0.5m)
+                    : await WaterChargeCalculator.ComputeBillAmount(
+                        _waterRateTrans,
+                        (int)reading.PreviousReading,
+                        (int)reading.CurrentReading,
+                        account.Classification,
+                        account.MeterSize > 0 ? account.MeterSize : 0.5m,
+                        maintenance.Amount);
                 result.Add(new PresentReadingViewModel
                 {
                     ReadingId = reading.Id,
@@ -997,6 +1132,7 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
                     PresentReading = reading.CurrentReading,
                     PreviousReading = reading.PreviousReading,
                     Amount = amount,
+                    MeterMaintenanceFee = maintenance?.Amount,
                     MeterSize = account.MeterSize
                 });
             }
@@ -1233,7 +1369,7 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
                 result.Add(new
                 {
                     billingReferenceId = billing.BillingReferenceId,
-                    accountNumber = account?.AccountNumber ?? "â€”",
+                    accountNumber = account?.AccountNumber ?? "Ã¢â‚¬â€",
                     usage = 0,
                     billAmount = billing.TotalBillAmount,
                     discount = 0,
@@ -1248,3 +1384,4 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
 
     }
 }
+

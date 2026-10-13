@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
@@ -18,6 +18,8 @@ namespace TMCWD.Data.Controllers
             _inspectionReportService = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
+
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<ActionResult> SaveUpdate(int userId, [FromBody] InspectionReport report)
         {
@@ -26,6 +28,7 @@ namespace TMCWD.Data.Controllers
             return Ok(updatedReport);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<ActionResult> Get(int id)
         {
@@ -34,6 +37,7 @@ namespace TMCWD.Data.Controllers
             return Ok(report);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByRequestId/{requestId}")]
         public async Task<ActionResult> GetByRequestId(int requestId)
         {

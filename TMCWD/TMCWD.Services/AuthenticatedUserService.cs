@@ -8,6 +8,8 @@ namespace TMCWD.Services
     public class AuthenticatedUserService
     {
         public const string SessionKey = "TMCWD.AuthenticatedUser";
+        public const string SecurityStampSessionKey = "TMCWD.SecurityStamp";
+        public string? SecurityStamp { get; set; }
 
         #region fields
 

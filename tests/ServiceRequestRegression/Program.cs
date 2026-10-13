@@ -11,30 +11,57 @@ using TMCWD.Data.Entities;
 using TMCWD.Model.Dashboard;
 
 var root = Path.GetFullPath(args.Length > 0 ? args[0] : ".");
-var secretFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft/UserSecrets/TMCWD.Data-local-development/secrets.json");
-using var secrets = JsonDocument.Parse(File.ReadAllText(secretFile));
-var settings = new MySqlConnectionStringBuilder(Environment.GetEnvironmentVariable("SERVICE_REQUEST_CONNECTION")
-    ?? secrets.RootElement.GetProperty("ConnectionStrings:DefaultConnection").GetString());
-if (!new[] { "localhost", "127.0.0.1", "::1" }.Contains(settings.Server)) throw new Exception("Tests require local MySQL.");
+var testConnection = Environment.GetEnvironmentVariable("SERVICE_REQUEST_CONNECTION");
+if (string.IsNullOrWhiteSpace(testConnection))
+{
+    Console.Error.WriteLine("Explicit SERVICE_REQUEST_CONNECTION for local tmcwd_test is required; no application fallback.");
+    Environment.ExitCode = 2; return;
+}
+var settings = new MySqlConnectionStringBuilder(testConnection);
+if (!new[] { "localhost", "127.0.0.1", "::1" }.Contains(settings.Server))
+{
+    Console.Error.WriteLine("Tests require local MySQL."); Environment.ExitCode = 2; return;
+}
+if (!string.Equals(settings.Database, "tmcwd_test", StringComparison.Ordinal))
+{
+    Console.Error.WriteLine("Service regressions are restricted to tmcwd_test; no connection has been opened.");
+    Environment.ExitCode = 2; return;
+}
 settings.AllowUserVariables = true;
 settings.UseAffectedRows = false;
 await using var connection = new MySqlConnection(settings.ConnectionString);
 await connection.OpenAsync();
 async Task Execute(string sql) { await using var command = new MySqlCommand(sql, connection); await command.ExecuteNonQueryAsync(); }
 async Task<long> Count(string sql) { await using var command = new MySqlCommand(sql, connection); return Convert.ToInt64(await command.ExecuteScalarAsync()); }
-void Check(bool value, string message) { if (!value) throw new Exception(message); }
+var checks = 0;
+void Check(bool value, string message) { if (!value) throw new Exception(message); checks++; }
+var userTable = "tm_srq_" + Guid.NewGuid().ToString("N") + "_users";
+await using var schemaContext = new UserDbContext(new DbContextOptionsBuilder<UserDbContext>()
+    .UseMySql(connection, new MySqlServerVersion(new Version(8, 0, 46))).Options);
+var canonicalSchema = schemaContext.Database.GenerateCreateScript();
+var userDdl = Regex.Match(canonicalSchema, @"CREATE TABLE `users`[\s\S]*?;").Value;
+Check(userDdl.Length > 0, "Missing canonical user fixture schema.");
+await Execute(userDdl.Replace("`users`", $"`{userTable}`", StringComparison.Ordinal));
+try
+{
+await Execute($"INSERT INTO `{userTable}` (Id,Name,Email,Role,IsActive,IsVerified) VALUES (1,'Synthetic operator','operator@test.invalid',1,1,1)");
 
 // Every write uses a connection-local temporary table. Persistent records are
 // never modified, including when exercising the production migration SQL.
 foreach (var table in new[] { "requests", "request_details", "job_orders", "service_request_orders", "inspection_types", "water_connection_applications", "accounts", "customers", "readings" })
 {
-    string create;
-    await using (var command = new MySqlCommand($"SHOW CREATE TABLE `{table}`", connection))
+    var create = Regex.Match(canonicalSchema, $@"CREATE TABLE `{table}`[\s\S]*?;").Value;
+    if (create.Length == 0)
     {
-        await using var reader = await command.ExecuteReaderAsync();
-        await reader.ReadAsync(); create = reader.GetString(1);
+        // The migration's archived legacy table is not in the current EF model. Read DDL only, never archived rows.
+        var archive = await File.ReadAllTextAsync(Path.Combine(root,
+            "TMCWD/TMCWD.Data/Database/20260930_add_service_request_orders.sql"));
+        archive = archive.Replace("CREATE TABLE IF NOT EXISTS", "CREATE TABLE", StringComparison.Ordinal);
+        create = Regex.Match(archive, $@"CREATE TABLE `{table}`[\s\S]*?;").Value;
     }
-    create = Regex.Replace(create, @"(?m)^\s*CONSTRAINT .*\n?", "");
+    Check(create.Length > 0, "Missing synthetic schema for " + table);
+    create = create.Replace("utf8mb4_unicode_ci", "utf8mb4_0900_ai_ci", StringComparison.Ordinal);
+    create = Regex.Replace(create, @"(?m)^\s*CONSTRAINT .*FOREIGN KEY.*\n?", "");
     create = Regex.Replace(create, @",\s*\)", "\n)");
     await Execute(create.Replace("CREATE TABLE", "CREATE TEMPORARY TABLE", StringComparison.Ordinal));
 }
@@ -57,8 +84,9 @@ foreach (var statement in Statements(sections[0]))
     }
     await Execute(statement);
 }
-await Execute(@"INSERT INTO requests (Id,ControlNumber,CustomerId,AccountId,Status,CreatedBy,DateCreated,UpdatedBy,DateUpdated)
-    VALUES (1,'EXISTING',NULL,NULL,2,1,NOW(),1,NOW());");
+schemaContext.Requests.Add(new Request { Id = 1, ControlNumber = "EXISTING", Status = 2,
+    CreatedBy = 1, UpdatedBy = 1, DateCreated = DateTime.Now, DateUpdated = DateTime.Now });
+await schemaContext.SaveChangesAsync();
 foreach (var (id, status) in new[] { (1, "Open"), (2, "Closed"), (3, "Done"), (4, "Cancelled") })
 {
     await Execute($@"INSERT INTO service_request_orders
@@ -66,10 +94,11 @@ foreach (var (id, status) in new[] { (1, "Open"), (2, "Closed"), (3, "Done"), (4
          job_order_date,source,job_order_type,job_description,referred_to_user_id,date_referred,name,particulars,received_by_user_id,status,created_at,updated_at)
         VALUES ({id},1,'','','Test address','Reporter','09000000000','SRO-TEST-{id}',NOW(),'Phone','Maintenance','LEAK',-2,NOW(),'Crew','Test particulars',1,'{status}',NOW(),NOW());");
 }
-await Execute(@"INSERT INTO water_connection_applications
-    (tracking_number,full_name,address,barangay,contact_number,email,connection_type,source,stage,installation_data,created_at,updated_at)
-    VALUES ('MIGRATION-TEST','Test','Address','Barangay','09000000000','','residential','walk_in','installation',
-        '{""RequestId"":1,""JobOrderNumber"":""SRO-TEST-1""}',NOW(),NOW());");
+schemaContext.WaterConnectionApplications.Add(new WaterConnectionApplication { TrackingNumber = "MIGRATION-TEST",
+    FullName = "Test", Address = "Address", Barangay = "Barangay", ContactNumber = "09000000000",
+    Email = "", ConnectionType = "residential", Source = "walk_in", Stage = "installation",
+    InstallationData = "{\"RequestId\":1,\"JobOrderNumber\":\"SRO-TEST-1\"}", CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now });
+await schemaContext.SaveChangesAsync();
 
 async Task Backfill()
 {
@@ -110,7 +139,8 @@ Check(await Count("SELECT COUNT(*) FROM requests WHERE Id = 1 AND IsServiceReque
 Console.WriteLine("PASS: migration preserves links, job numbers and non-customer details; status mapping, snapshot remapping and reruns work.");
 
 var failure = new FailAfterSave();
-var options = new DbContextOptionsBuilder<UserDbContext>().UseMySql(connection, ServerVersion.AutoDetect(connection)).AddInterceptors(failure).Options;
+var options = new DbContextOptionsBuilder<UserDbContext>().UseMySql(connection, ServerVersion.AutoDetect(connection))
+    .AddInterceptors(failure, new SyntheticUserTable(userTable)).Options;
 await using var db = new UserDbContext(options);
 // User lookup is read-only; MySQL temporary tables cannot be read through two
 // separate aliases in the dashboard's receiver/referral projection.
@@ -228,6 +258,20 @@ db.ChangeTracker.Clear();
 Check(await db.Requests.CountAsync() == before && await db.RequestDetails.CountAsync() == beforeDetails && await db.JobOrders.CountAsync() == beforeJobs,
     "Failed creation left a partial request/detail/job.");
 Console.WriteLine("PASS: failure during creation rolls back all three tables.");
+Console.WriteLine($"PASS: {checks} service harness assertions; controller methods called directly, quarantined HTTP workflows remain BLOCKED BY POLICY.");
+}
+finally { await Execute($"DROP TABLE `{userTable}`"); }
+
+sealed class SyntheticUserTable(string table) : DbCommandInterceptor
+{
+    public override ValueTask<InterceptionResult<System.Data.Common.DbDataReader>> ReaderExecutingAsync(
+        System.Data.Common.DbCommand command, CommandEventData eventData,
+        InterceptionResult<System.Data.Common.DbDataReader> result, CancellationToken cancellationToken = default)
+    {
+        command.CommandText = command.CommandText.Replace("`users`", $"`{table}`", StringComparison.Ordinal);
+        return ValueTask.FromResult(result);
+    }
+}
 
 sealed class InjectedFailure : Exception { }
 sealed class FailAfterSave : SaveChangesInterceptor

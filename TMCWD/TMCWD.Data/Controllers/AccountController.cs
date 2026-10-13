@@ -20,6 +20,7 @@ namespace TMCWD.Data.Controllers
             _accountService = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetAll")]
         public async Task<ActionResult> GetAll()
         {
@@ -29,19 +30,29 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
-        public async Task<ActionResult> SaveUpdate(int userId, [FromBody] Account account)
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "CustomerService")]
+        public async Task<ActionResult> SaveUpdate(int userId, [FromBody] TMCWD.Model.CustomerSupport.AccountWriteRequest request)
         {
             //StringBuilder sb = new();
 
             //if (String.IsNullOrEmpty(account.FullAddress.Trim())) sb.AppendLine("Address is required to create an account.");
             //if (String.IsNullOrEmpty(account.MeterNumber.Trim())) sb.AppendLine("Meter number is required to create an account.");
 
-            var updatedAccount = await _accountService.SaveUpdate(userId, account);
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
+                return Unauthorized();
+            Account updatedAccount;
+            try { updatedAccount = await _accountService.SaveUpdate(userId, new Account {
+                Id = request.Id, CustomerId = request.CustomerId, MeterNumber = request.MeterNumber,
+                MeterSize = request.MeterSize, Classification = request.Classification,
+                UnitNumber = request.UnitNumber, Building = request.Building, HouseNumber = request.HouseNumber,
+                Street = request.Street, Barangay = request.Barangay, IsCurrentAddress = request.IsCurrentAddress }); }
+            catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
             if (updatedAccount == null || updatedAccount.Id <= 0) return BadRequest("Account was not created due to some issue(s).");
 
             return Ok(updatedAccount);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("Get/{id}")]
         public async Task<ActionResult> Get(int id)
         {
@@ -52,6 +63,7 @@ namespace TMCWD.Data.Controllers
             return Ok(account);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByAccountNumber/{accountNumber}")]
         public async Task<ActionResult> GetByAccountNumber(string accountNumber)
         {
@@ -62,6 +74,7 @@ namespace TMCWD.Data.Controllers
             return Ok(account);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByCustomerId/{customerId}")]
         public async Task<ActionResult> GetByCustomerId(int customerId)
         {
@@ -72,6 +85,7 @@ namespace TMCWD.Data.Controllers
             return Ok(accounts);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByMeterNumber/{meterNumber}")]
         public async Task<ActionResult> GetByMeterNumber(string meterNumber)
         {
@@ -82,6 +96,7 @@ namespace TMCWD.Data.Controllers
             return Ok(account);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByZoneAndBook/{zone}/{book}")]
         public async Task<ActionResult> GetByZoneAndBook(int zone, int book)
         {
@@ -91,6 +106,7 @@ namespace TMCWD.Data.Controllers
 
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByZoneBookAndSequence/{zone}/{book}/{seqFrom}/{seqTo}")]
         public async Task<IActionResult> GetByZoneBookAndSequence(int zone, int book, int seqFrom, int seqTo)
         {
@@ -99,6 +115,7 @@ namespace TMCWD.Data.Controllers
             return Ok(accounts);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("Search")]
         public async Task<IActionResult> Search([FromQuery] string q)
         {

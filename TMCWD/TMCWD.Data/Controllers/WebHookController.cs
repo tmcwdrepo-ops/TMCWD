@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
 
@@ -26,6 +26,7 @@ namespace TMCWD.Data.Controllers
 
         #region methods
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -38,6 +39,7 @@ namespace TMCWD.Data.Controllers
             return Ok(webHook);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -49,6 +51,7 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         public async Task<IActionResult> SaveUpdate(WebHook webHook)
         {
             var savedWebHook = await _service.SaveUpdate(webHook);

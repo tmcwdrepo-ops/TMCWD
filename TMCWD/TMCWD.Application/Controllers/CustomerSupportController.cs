@@ -80,7 +80,7 @@ namespace TMCWD.Application.Controllers
         /// Main customer information page. Loads the customer and their accounts.
         /// Pass customerId=0 (default) to open a blank form ready for searching.
         /// </summary>
-        public async Task<IActionResult> CustomerInformation(int customerId = 0)
+        public async Task<IActionResult> CustomerInformation(int customerId = 0, string? accountNumber = null)
         {
             var model = new CustomerInformationViewModel();
 
@@ -103,8 +103,10 @@ namespace TMCWD.Application.Controllers
 
                 model.Customer         = customerTask.Result  ?? new Customer();
                 model.CustomerAccounts = accountsTask.Result  ?? new List<Account>();
-                model.SelectedAccount  = model.CustomerAccounts.FirstOrDefault(a => a.IsCurrentAddress)
-                                         ?? model.CustomerAccounts.FirstOrDefault();
+                model.SelectedAccount = accountNumber == null
+                    ? model.CustomerAccounts.FirstOrDefault(a => a.IsCurrentAddress) ?? model.CustomerAccounts.FirstOrDefault()
+                    : model.CustomerAccounts.SingleOrDefault(a => a.AccountNumber == accountNumber.Trim());
+                if (accountNumber != null && model.SelectedAccount == null) return NotFound();
             }
 
                 ViewData["ActivePage"] = "customers";
@@ -142,6 +144,7 @@ namespace TMCWD.Application.Controllers
         /// AJAX – saves the customer portion of the Customer Information form.
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveCustomerInformation([FromBody] Customer customer)
         {
             if (customer == null) return BadRequest("Customer data is required.");
@@ -156,6 +159,7 @@ namespace TMCWD.Application.Controllers
         /// AJAX – saves the account (meter information) portion of the Customer Information form.
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveAccountInformation([FromBody] Account account)
         {
             if (account == null) return BadRequest("Account data is required.");
@@ -233,6 +237,7 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveCustomer(CustomerViewModel model)
         {
 
@@ -243,6 +248,8 @@ namespace TMCWD.Application.Controllers
             return RedirectToAction("Index", "CustomerSupport");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeactivateCustomer(int customerId)
         {
             Customer cust = new();
@@ -298,19 +305,8 @@ namespace TMCWD.Application.Controllers
             return View();
         }
 
-        public async Task<IActionResult> DeactivateAccount(int accountId)
-        {
-            Account acct = new();
-            acct = await _accountTransaction.Get(accountId);
-
-            if (acct != null)
-            {
-                acct.Status = AccountStatus.Closed;
-                await _accountTransaction.SaveUpdate(_authenticatedUserService.User.Id, acct);
-            }
-
-            return RedirectToAction("AddEditCustomer", "CustomerSupport", new { editCustomerId = acct?.CustomerId ?? 0 });
-        }
+        [HttpGet]
+        public IActionResult DeactivateAccount(int accountId) => Conflict("Account status changes require an approved service workflow.");
 
         public IActionResult RefreshAccountSelectComponent(int customerId)
         {
@@ -676,6 +672,53 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpGet]
+        public IActionResult DisconnectionMonitoring() => View();
+
+        [HttpGet]
+        public async Task<IActionResult> DisconnectionMonitoringData(string? q, int? zone, int? book)
+        {
+            try { return Ok(await _billingTransaction.GetDisconnectionMonitoring(q, zone, book)); }
+            catch (HttpRequestException e) { return StatusCode((int?)e.StatusCode ?? 502,
+                new { message = e.StatusCode == HttpStatusCode.ServiceUnavailable ? "Disconnection monitoring requires its reviewed database migration." : "Unable to load monitoring. Check access and retry." }); }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DisconnectionStatus(string accountNumber)
+        {
+            if (string.IsNullOrWhiteSpace(accountNumber) || accountNumber.Trim().Length > 50) return BadRequest();
+            try {
+                var result = await _billingTransaction.GetDisconnectionStatus(accountNumber.Trim());
+                return result == null ? NotFound() : Ok(result);
+            }
+            catch (HttpRequestException e) { return StatusCode((int?)e.StatusCode ?? 502,
+                new { message = "Service monitoring is unavailable. Check access and retry." }); }
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmDisconnection(string accountNumber, [FromBody] TMCWD.Model.Billing.ServiceConfirmationRequest? request)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            if (_authenticatedUserService.User.Role != (int)UserRole.CustomerServiceOic
+                && _authenticatedUserService.User.Role != (int)UserRole.SuperAdmin) return StatusCode(403);
+            if (string.IsNullOrWhiteSpace(accountNumber) || accountNumber.Trim().Length > 50 || request == null || request.OperationId == Guid.Empty) return BadRequest();
+            try { return Ok(await _billingTransaction.ConfirmDisconnection(accountNumber.Trim(), request.OperationId)); }
+            catch (HttpRequestException e) { return StatusCode((int?)e.StatusCode ?? 502,
+                new { message = "Disconnection was not confirmed. Reload and retry with the retained operation identity." }); }
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmReconnection(string accountNumber, [FromBody] TMCWD.Model.Billing.ServiceConfirmationRequest? request)
+        {
+            if (_authenticatedUserService.User.Id <= 0) return Unauthorized();
+            if (_authenticatedUserService.User.Role != (int)UserRole.CustomerServiceOic
+                && _authenticatedUserService.User.Role != (int)UserRole.SuperAdmin) return StatusCode(403);
+            if (string.IsNullOrWhiteSpace(accountNumber) || accountNumber.Trim().Length > 50 || request == null || request.OperationId == Guid.Empty) return BadRequest();
+            try { return Ok(await _billingTransaction.ConfirmReconnection(accountNumber.Trim(), request.OperationId)); }
+            catch (HttpRequestException e) { return StatusCode((int?)e.StatusCode ?? 502,
+                new { message = "Reconnection was not confirmed. Reload and retry with the retained operation identity." }); }
+        }
+
+        [HttpGet]
         public async Task<IActionResult> SearchDisconnectionAccounts(string q)
         {
             if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2) return Ok(new List<DisconnectionAccountRecord>());
@@ -797,3 +840,4 @@ namespace TMCWD.Application.Controllers
     }
 
 }
+

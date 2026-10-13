@@ -12,7 +12,7 @@
         @using (Html.BeginForm("SaveUser", "Admin", FormMethod.Post))
         {
             @Html.HiddenFor(x => x.AddEditUser.Id)
-            @Html.HiddenFor(x => x.AddEditUser.Password)
+            @Html.AntiForgeryToken()
             @Html.HiddenFor(x => x.AddEditUser.DateCreated)
             @Html.HiddenFor(x => x.AddEditUser.DateVerified)
             <div class="grid gap-6 mb-6 md:grid-cols-2">

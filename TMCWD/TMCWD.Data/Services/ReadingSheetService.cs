@@ -15,6 +15,7 @@ namespace TMCWD.Data.Services
         private readonly IWaterRateService _waterRateService;
         private readonly IAccountService _accountService;
         private readonly IReadingService _readingService;
+        private readonly IMeterMaintenanceRateService _meterMaintenanceRateService;
 
         #endregion
 
@@ -25,13 +26,15 @@ namespace TMCWD.Data.Services
             IBillingService billingService,
             IWaterRateService waterRateService,
             IAccountService accountService,
-            IReadingService readingService)
+            IReadingService readingService,
+            IMeterMaintenanceRateService meterMaintenanceRateService)
         {
             _context = context;
             _billingService = billingService;
             _waterRateService = waterRateService;
             _accountService = accountService;
             _readingService = readingService;
+            _meterMaintenanceRateService = meterMaintenanceRateService;
         }
 
         #endregion
@@ -61,15 +64,23 @@ namespace TMCWD.Data.Services
 
                 try
                 {
+                    using var document = JsonDocument.Parse(priorBill.InvoiceSnapshotJson);
+                    if (document.RootElement.ValueKind != JsonValueKind.Object
+                        || !HasDecimalProperty(document.RootElement, nameof(TMCWD.Model.Billing.OfficialInvoiceSnapshot.BillAmount))
+                        || !HasDecimalProperty(document.RootElement, nameof(TMCWD.Model.Billing.OfficialInvoiceSnapshot.MeterMaintenance)))
+                        return null;
+
                     var snapshot = JsonSerializer.Deserialize<TMCWD.Model.Billing.OfficialInvoiceSnapshot>(priorBill.InvoiceSnapshotJson);
-                    if (snapshot == null || snapshot.BillAmount < 0m || snapshot.MeterMaintenance < 0m)
+                    if (snapshot == null || snapshot.SchemaVersion != 1
+                        || snapshot.BillAmount < 0m || snapshot.MeterMaintenance < 0m
+                        || priorBill.RemainingAmount < 0m)
                         return null;
 
                     var activePenalty = activePriorPenaltyAmounts.TryGetValue(priorBill.BillingReferenceId, out var priorPenaltyAmount)
                         ? priorPenaltyAmount
                         : 0m;
 
-                    total += snapshot.BillAmount + snapshot.MeterMaintenance + activePenalty;
+                    total += priorBill.RemainingAmount + activePenalty;
                 }
                 catch (Exception ex) when (ex is JsonException or NotSupportedException)
                 {
@@ -78,6 +89,17 @@ namespace TMCWD.Data.Services
             }
 
             return total;
+
+            static bool HasDecimalProperty(JsonElement element, string name)
+            {
+                foreach (var property in element.EnumerateObject())
+                {
+                    if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                        return property.Value.ValueKind == JsonValueKind.Number
+                            && property.Value.TryGetDecimal(out _);
+                }
+                return false;
+            }
         }
 
         public async Task<ReadingSheet> Get(int id)
@@ -409,6 +431,15 @@ namespace TMCWD.Data.Services
                 return 0;
 
             var accountIds = pendingReadings.Select(r => r.AccountId).Distinct().ToList();
+            var readingIds = pendingReadings.Select(r => r.Id).ToList();
+            var billedReadingIds = await _context.Billings
+                .Where(b => readingIds.Contains(b.ReadingId))
+                .Select(b => b.ReadingId).ToListAsync();
+            var hasNewBill = pendingReadings.Any(reading => !billedReadingIds.Contains(reading.Id));
+            var maintenanceRate = hasNewBill
+                ? await _meterMaintenanceRateService.GetForBillingDate(
+                    DateOnly.FromDateTime(readingSheet.BillingDate.Value.Date))
+                : null;
             var accounts = await _context.Accounts
                 .Where(a => accountIds.Contains(a.Id))
                 .ToListAsync();
@@ -430,11 +461,6 @@ namespace TMCWD.Data.Services
                 .ToDictionaryAsync(x => x.BillingReferenceId, x => x.Amount);
 
             int postedCount = 0;
-
-            var readingIds = pendingReadings.Select(r => r.Id).ToList();
-            var billedReadingIds = await _context.Billings
-                .Where(b => readingIds.Contains(b.ReadingId))
-                .Select(b => b.ReadingId).ToListAsync();
 
             foreach (var reading in pendingReadings)
             {
@@ -459,18 +485,18 @@ namespace TMCWD.Data.Services
                 if (rate == null)
                     continue; // no rate configured — skip rather than fail the whole batch
 
-                var amount = ComputeWaterCharge(
+                var waterAmount = ComputeWaterCharge(
                     (int)reading.PreviousReading,
                     (int)reading.CurrentReading,
                     rate);
 
-                if (amount < 0) continue; // present < previous — invalid, skip
+                if (waterAmount < 0) continue; // present < previous — invalid, skip
 
                 var lines = InvoiceChargeLines((int)reading.PreviousReading, (int)reading.CurrentReading, rate);
-                var waterAmount = lines.Sum(line => line.Amount);
-                var maintenance = TMCWD.Model.Billing.BillingCharges.MeterMaintenanceFee;
-                if (waterAmount + maintenance != amount)
+                if (lines.Sum(line => line.Amount) != waterAmount)
                     throw new InvalidOperationException("Invoice charge lines do not match the posted bill.");
+                var maintenance = maintenanceRate!.Amount;
+                var amount = waterAmount + maintenance;
 
                 // The snapshot captures the water-charge components at the exact
                 // post time so they are immune to future rate changes.
@@ -586,8 +612,7 @@ namespace TMCWD.Data.Services
         {
             if (presentReading < previousReading) return -1;
 
-            return InvoiceChargeLines(previousReading, presentReading, rate).Sum(line => line.Amount)
-                + TMCWD.Model.Billing.BillingCharges.MeterMaintenanceFee;
+            return InvoiceChargeLines(previousReading, presentReading, rate).Sum(line => line.Amount);
         }
 
         private static IReadOnlyList<TMCWD.Model.Billing.InvoiceChargeLine> InvoiceChargeLines(int previous, int current, WaterRate rate)

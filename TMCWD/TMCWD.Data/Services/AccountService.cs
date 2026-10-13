@@ -58,20 +58,39 @@ namespace TMCWD.Data.Services
 
         public async Task<Account> SaveUpdate(int userId, Account account)
         {
-            if(account.Id > 0)
+            if (!await _dbContext.Customers.AnyAsync(c => c.Id == account.CustomerId))
+                throw new InvalidOperationException("Customer does not exist.");
+            if (account.Id > 0)
             {
-                account.UpdatedBy = userId;
-                account.DateUpdated = DateTime.Now;
-                _dbContext.Accounts.Update(account);
+                var stored = await _dbContext.Accounts.SingleOrDefaultAsync(a => a.Id == account.Id)
+                    ?? throw new InvalidOperationException("Account does not exist.");
+                if (stored.CustomerId != account.CustomerId)
+                    throw new InvalidOperationException("Account ownership requires the approved transfer workflow.");
+                if (stored.MeterNumber != account.MeterNumber || stored.MeterSize != account.MeterSize
+                    || stored.Classification != account.Classification)
+                {
+                    if (stored.Status != (int)AccountStatus.Pending
+                        || await _dbContext.Readings.AnyAsync(r => r.AccountId == stored.Id)
+                        || await _dbContext.Billings.AnyAsync(b => b.AccountId == stored.Id)
+                        || await _dbContext.WaterConnectionApplications.AnyAsync(a => a.AccountId == stored.Id))
+                        throw new InvalidOperationException("Meter and classification changes require an approved service workflow.");
+                    stored.MeterNumber = account.MeterNumber; stored.MeterSize = account.MeterSize;
+                    stored.Classification = account.Classification;
+                }
+                stored.UnitNumber = account.UnitNumber; stored.Building = account.Building;
+                stored.HouseNumber = account.HouseNumber; stored.Street = account.Street;
+                stored.Barangay = account.Barangay; stored.IsCurrentAddress = account.IsCurrentAddress;
+                account = stored;
             }
             else
             {
+                account.AccountNumber = $"ACCT{DateTime.Now:yyyy}-{DateTime.Now:MM}-{Guid.NewGuid().ToString("N")[..5]}";
                 account.Status = (int)AccountStatus.Pending;
-                account.CreatedBy = userId;
-                account.DateCreated = DateTime.Now;
-                _dbContext.Accounts.Update(account);
+                account.ZoneBookId = 0; account.Sequence = 0;
+                account.CreatedBy = userId; account.DateCreated = DateTime.Now;
+                _dbContext.Accounts.Add(account);
             }
-
+            account.UpdatedBy = userId; account.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
             return account;

@@ -4,6 +4,7 @@ namespace TMCWD.Application.Models
 {
     public class BillAdjustmentViewModel
     {
+        public Guid AdjustmentOperationId { get; set; }
         public string? AccountNumber { get; set; }
         public DateTime? BamDate { get; set; }
         public string? MeterReader { get; set; }

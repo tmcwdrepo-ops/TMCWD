@@ -42,9 +42,9 @@ namespace TMCWD.Application.Controllers
             var user = await _applicationLoginTransaction.Login();
 
             if (user == null || user.Id <= 0)
-                return Unauthorized(new { message = "Invalid email or password" });
+                return StatusCode(_applicationLoginTransaction.LastFailureStatusCode == 403 ? 403 : 401, new { message = "Invalid login or account unavailable." });
 
-            var token = GenerateJwtToken(user.Id, user?.Role ?? 0);
+            var token = GenerateJwtToken(user.Id, user.Role ?? 0);
 
             return Ok(new
             {
@@ -74,23 +74,12 @@ namespace TMCWD.Application.Controllers
                 return BadRequest(new { message = "Login identifier and password are required." });
 
             var identifier = request.Identifier.Trim();
-            int? expectedUserId = null;
-            if (int.TryParse(identifier, out var userId))
-            {
-                if (userId <= 0)
-                    return Unauthorized(new { message = "Invalid login or password." });
-                var account = await _userTransaction.Get(userId);
-                if (account == null || string.IsNullOrWhiteSpace(account.Email))
-                    return Unauthorized(new { message = "Invalid login or password." });
-                identifier = account.Email;
-                expectedUserId = userId;
-            }
-
+            int? expectedUserId = int.TryParse(identifier, out var parsedId) ? parsedId : null;
             _applicationLoginTransaction.Email = identifier;
             _applicationLoginTransaction.Password = request.Password;
             var user = await _applicationLoginTransaction.Login();
             if (user.Id <= 0 || (expectedUserId.HasValue && user.Id != expectedUserId.Value))
-                return Unauthorized(new { message = "Invalid login or password." });
+                return StatusCode(_applicationLoginTransaction.LastFailureStatusCode == 403 ? 403 : 401, new { message = "Invalid login or account unavailable." });
             if (user.Role != (int)UserRole.MeterReader || user.IsActive != true)
                 return StatusCode(StatusCodes.Status403Forbidden,
                     new { message = "An active meter-reader account is required." });
@@ -108,7 +97,8 @@ namespace TMCWD.Application.Controllers
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-                new Claim(ClaimTypes.Role, role.ToString())
+                new Claim(ClaimTypes.Role, role.ToString()),
+                new Claim(TMCWD.Utility.Encryption.UserSecurityStamp.ClaimType, _applicationLoginTransaction.SecurityStamp!)
             };
 
             var key = new SymmetricSecurityKey(
@@ -126,3 +116,5 @@ namespace TMCWD.Application.Controllers
         }
     }
 }
+
+

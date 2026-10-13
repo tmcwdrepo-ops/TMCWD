@@ -89,14 +89,14 @@ namespace TMCWD.Data.Services
             return result;
         }
 
-        public async Task<Reading> Sync(int readerId, int sheetId, TMCWD.Model.Billing.Requests.MobileReadingUpload upload)
+        public async Task<Reading> Sync(int readerId, int sheetId, TMCWD.Model.Billing.Requests.MobileReadingUpload upload, bool requireAssignment = true)
         {
             await using var transaction = await _context.Database.BeginTransactionAsync();
             var locked = await _context.ReadingSheets
                 .FromSqlInterpolated($"SELECT * FROM reading_sheets WHERE Id = {sheetId} FOR UPDATE").ToListAsync();
             var sheet = locked.SingleOrDefault();
             if (sheet == null || sheet.Status == ReadingStatus.Deleted) throw new KeyNotFoundException();
-            if (sheet.AssignedTo != readerId) throw new UnauthorizedAccessException();
+            if (requireAssignment && sheet.AssignedTo != readerId) throw new UnauthorizedAccessException();
             var roster = await _accounts.GetReadingSheetRoster(sheet);
             var account = roster.SingleOrDefault(a => a.Id == upload.AccountId);
             if (account == null) throw new ArgumentException("The account is not in this reading sheet's active roster.");
@@ -136,6 +136,8 @@ namespace TMCWD.Data.Services
             var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == reading.AccountId);
             if (account == null || account.ZoneBookId != sheet.ZoneBookId)
                 throw new InvalidOperationException("The account does not belong to this reading sheet.");
+            if (account.Status == (int)AccountStatus.Suspended)
+                throw new InvalidOperationException("A suspended account cannot receive a normal meter reading.");
 
             // A newly installed meter starts from the value recorded during
             // House Tapping. Only the first regular reading uses this baseline;

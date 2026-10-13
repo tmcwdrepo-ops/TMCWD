@@ -35,9 +35,9 @@ const server = http.createServer(async (req, res) => {
     if (url.searchParams.get('accountNumber') === 'EMPTY') return json({ account: { accountNumber: 'EMPTY', accountName: 'Empty Synthetic Account' },
       totalBalance: 0, collectibleOtherCharges: 0, bills: [], otherCharges: [], history: [] });
     const collectible = (state.otherCharges || []).reduce((sum, c) => sum + c.amount, 0);
-    return json({ account: { accountNumber: '01-010015', accountName: 'Authoritative Customer', serviceAddress: 'Authoritative Street', meterNumber: 'METER-1', classification: 'Residential', status: 'Active', rateCode: null },
+    return json({ account: { accountNumber: '01-010015', accountName: 'Authoritative Customer', serviceAddress: 'Authoritative Street', meterNumber: 'METER-1', classification: 'Residential', status: state.ledgerAccountStatus ?? 'Active', rateCode: null },
       totalBalance: state.bill.remainingAmount + state.bill.penalty + collectible, collectibleOtherCharges: collectible,
-      bills: [{ billingPeriod: '2026-10-01T00:00:00', readingDate: '2026-10-01T08:00:00', billingDate: '2026-10-02T00:00:00', paymentStatus: 1, collection: { ...state.bill, billingDate: '2026-10-02T00:00:00' } }],
+      bills: [{ billingPeriod: '2026-10-01T00:00:00', readingDate: '2026-10-01T08:00:00', billingDate: '2026-10-02T00:00:00', paymentStatus: state.ledgerPaymentStatus ?? 1, collection: { ...state.bill, billingDate: '2026-10-02T00:00:00' } }],
       otherCharges: [{ id: 501, description: 'Synthetic Fee', particulars: '<img src=x onerror="window.injected=true">', contractTotal: 1000, collectibleNow: collectible, installmentCount: 4, paymentStatus: 1, isActive: true,
         installments: [1,2,3,4].map(n => ({ id: 9000+n, installmentNumber: n, dueBillingPeriod: `2026-${String(9+n).padStart(2,'0')}-01`, amount: 250, paymentStatus: n > 1 ? 0 : collectible ? 1 : 2, paymentReference: n === 1 && !collectible ? 'CR009001' : null, activatedBillingReferenceId: n === 1 ? 'SYN-OC' : null })) }],
       history: [{ date: '2026-10-01T09:00:00', type: 'Water Bill Posted', reference: 'SYN-OC', description: 'Persisted invoice', debit: 360, credit: null, status: 'Unpaid' },
@@ -239,17 +239,17 @@ async function closeLedger() { await evaluate("document.querySelector('#accountL
     await ledgerCheck('default Bills tab', "document.querySelector('[data-ledger-tab=bills]').getAttribute('aria-selected')", 'true');
     await evaluate("document.querySelector('[data-ledger-tab=otherCharges]').click()");
     await ledgerCheck('Other Charges tab switches', "document.getElementById('al-panel-otherCharges').hidden", false);
-    await ledgerCheck('parent contract differs from collectible child', "document.querySelector('.al-charge').textContent.includes('1,000.00') && document.querySelector('[data-ledger-collectible]').textContent.endsWith('250.00')", true);
-    await ledgerCheck('ordered four installments', "[...document.querySelectorAll('.al-charge tbody tr')].map(x=>x.children[0].textContent)", ['1','2','3','4']);
-    await ledgerCheck('Draft children labeled Future', "[...document.querySelectorAll('.al-charge tbody .al-status')].map(x=>x.textContent)", ['Unpaid','Future','Future','Future']);
-    await ledgerCheck('untrusted particulars stay text', "document.querySelector('.al-charge img') === null && !window.injected && document.querySelector('.al-charge').textContent.includes('<img')", true);
+    await ledgerCheck('parent contract differs from collectible child', "document.querySelector('.account-ledger__charge').textContent.includes('1,000.00') && document.querySelector('[data-ledger-collectible]').textContent.endsWith('250.00')", true);
+    await ledgerCheck('ordered four installments', "[...document.querySelectorAll('.account-ledger__charge tbody tr')].map(x=>x.children[0].textContent)", ['1','2','3','4']);
+    await ledgerCheck('Draft children labeled Future', "[...document.querySelectorAll('.account-ledger__charge tbody .account-ledger__badge')].map(x=>x.textContent)", ['Unpaid','Future','Future','Future']);
+    await ledgerCheck('untrusted particulars stay text', "document.querySelector('.account-ledger__charge img') === null && !window.injected && document.querySelector('.account-ledger__charge').textContent.includes('<img')", true);
     await evaluate("document.querySelector('[data-ledger-tab=history]').click()");
     await ledgerCheck('History tab shows persisted event', "!document.getElementById('al-panel-history').hidden && document.querySelector('[data-ledger-history]').textContent.includes('Water Bill Posted')", true);
     await evaluate("document.querySelector('[data-ledger-tab=bills]').focus()");
     await command('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowRight', code: 'ArrowRight' });
     await ledgerCheck('keyboard tab navigation', "document.activeElement.dataset.ledgerTab", 'otherCharges');
     await command('Emulation.setDeviceMetricsOverride', { width: 600, height: 800, deviceScaleFactor: 1, mobile: false });
-    await ledgerCheck('narrow viewport keeps readable scrollable tables', "document.querySelector('#al-panel-otherCharges .al-scroll').scrollWidth > document.querySelector('#al-panel-otherCharges .al-scroll').clientWidth && document.getElementById('accountLedger').getBoundingClientRect().width <= 600", true);
+    await ledgerCheck('narrow viewport keeps readable scrollable tables', "document.querySelector('#al-panel-otherCharges .account-ledger__table-wrap').scrollWidth > document.querySelector('#al-panel-otherCharges .account-ledger__table-wrap').clientWidth && document.getElementById('accountLedger').getBoundingClientRect().width <= 600", true);
     await command('Emulation.clearDeviceMetricsOverride');
     collectionsLedgerStructure = await evaluate("[...document.querySelectorAll('#accountLedger thead')].map(x=>x.textContent)");
     await closeLedger(); await ledgerCheck('close exits modal', "document.getElementById('accountLedger').open", false);
@@ -260,7 +260,7 @@ async function closeLedger() { await evaluate("document.querySelector('#accountL
     await evaluate("window.openAccountLedger('EMPTY')");
     await waitFor("!document.querySelector('[data-ledger-content]').hidden");
     await ledgerCheck('empty account retains header and zero balance', "document.querySelector('[data-header=accountNumber]').textContent === 'EMPTY' && document.querySelector('[data-ledger-balance]').textContent.endsWith('0.00')", true);
-    await ledgerCheck('empty Bills Other Charges and History have clear states', "document.querySelector('[data-ledger-bills]').textContent.includes('No water bills') && document.querySelector('[data-ledger-charges]').textContent.includes('No Other Charge plans') && document.querySelector('[data-ledger-history]').textContent.includes('No persisted financial events')", true);
+    await ledgerCheck('empty Bills Other Charges and History have clear states', "document.querySelector('[data-ledger-bills]').textContent.includes('No bills found for this account.') && document.querySelector('[data-ledger-charges]').textContent.includes('No Other Charges found for this account.') && document.querySelector('[data-ledger-history]').textContent.includes('No transaction history found for this account.')", true);
     await evaluate("document.querySelector('#accountLedger form button').click(); window.openAccountLedger('FAILED')");
     await waitFor("document.querySelector('[data-ledger-message]').textContent.includes('Use Refresh')");
     await ledgerCheck('genuine HTTP failure hides stale balance and offers retry', "document.querySelector('[data-ledger-content]').hidden && !document.querySelector('[data-ledger-message]').textContent.includes('Unexpected server failure')", true);
@@ -288,7 +288,7 @@ async function closeLedger() { await evaluate("document.querySelector('#accountL
     assert.equal(state.bill.remainingAmount, 397);
     await openLedger();
     await ledgerCheck('payment reload reduces live balance', "document.querySelector('[data-ledger-balance]').textContent.endsWith('397.00')", true);
-    await ledgerCheck('paid child retains exact receipt in History', "document.querySelector('.al-charge tbody tr').textContent.includes('Paid') && document.querySelector('[data-ledger-history]').textContent.includes('CR009001') && document.querySelector('[data-ledger-history]').textContent.includes('installment #1')", true);
+    await ledgerCheck('paid child retains exact receipt in History', "document.querySelector('.account-ledger__charge tbody tr').textContent.includes('Paid') && document.querySelector('[data-ledger-history]').textContent.includes('CR009001') && document.querySelector('[data-ledger-history]').textContent.includes('installment #1')", true);
     await closeLedger();
     await evaluate("window.confirm=function(){return true;}; document.getElementById('cancelInvoiceBtn').click(); document.getElementById('ciInvoiceInput').value='CR009001'; document.getElementById('ciReasonSelect').value='Wrong amount'; document.getElementById('ciSubmitBtn').click();");
     await waitFor("document.getElementById('ciOverlay').style.display === 'none'");
@@ -302,7 +302,7 @@ async function closeLedger() { await evaluate("document.querySelector('#accountL
     console.log('PASS: actual Other Charges browser blank numeric count, validation, safe text, draft exclusion, 397 + 250 = 647, and payment by installment ID.');
     console.log('PASS: actual payment cancellation browser posts the receipt reference and restores its installment balance.');
     await command('Page.navigate', { url: url + 'dashboard' });
-    await waitFor("document.querySelector('[data-service-category=charging]') !== null");
+    await waitFor("location.pathname === '/dashboard' && document.readyState === 'complete' && document.querySelector('[data-service-category=charging]') !== null");
     await evaluate("document.querySelector('[data-service-category=charging]').click()");
     await waitFor("document.querySelector('[data-application-index]') !== null");
     await evaluate("document.querySelector('[data-application-index]').click()");
@@ -321,6 +321,54 @@ async function closeLedger() { await evaluate("document.querySelector('#accountL
     await waitFor("!document.getElementById('accountLedger').open");
     await ledgerCheck('Escape closes ledger and preserves Charging modal', "document.getElementById('chargeModal').classList.contains('is-open')", true);
     console.log(`PASS: ${ledgerChecks} Account Ledger browser checks across actual Collections and Dashboard entry points.`);
+    for (const [width, height] of [[1440, 900], [768, 1024], [390, 844]]) {
+      for (const theme of ['light', 'dark']) {
+        await command('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+        await command('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: theme }] });
+        await command('Page.navigate', { url });
+        await waitFor("location.pathname === '/' && document.readyState === 'complete' && document.getElementById('searchInput') !== null");
+        await evaluate(`document.documentElement.setAttribute('data-theme', '${theme}'); document.documentElement.classList.toggle('dark', ${theme === 'dark'})`);
+        await search();
+        await openLedger();
+        for (const [accountStatus, paymentStatus, accountClass, billClass, color] of [
+          ['Active', 2, 'active', 'paid', 'rgb(22, 101, 52)'],
+          ['Disconnected', 1, 'danger', 'danger', 'rgb(153, 27, 27)'],
+          ['  aCtIvE  ', ' pAiD ', 'active', 'paid', 'rgb(22, 101, 52)'],
+          ['<img src=x onerror="window.injected=true">', 'Unknown', 'default', 'default', 'rgb(71, 85, 105)']
+        ]) {
+          state.ledgerAccountStatus = accountStatus; state.ledgerPaymentStatus = paymentStatus;
+          await evaluate("window.openAccountLedger('01-010015')");
+          await waitFor(`!document.querySelector('[data-ledger-content]').hidden && document.querySelector('[data-header=status]').textContent === ${JSON.stringify(accountStatus)}`);
+          assert.equal(await evaluate(`(() => {
+            const header = document.querySelector('[data-header=status]');
+            const bill = document.querySelector('[data-ledger-bills] .account-ledger__badge');
+            const luminance = rgb => rgb.map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; })
+              .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+            return header.classList.contains('account-ledger__status--${accountClass}')
+              && bill.classList.contains('account-ledger__status--${billClass}')
+              && bill.textContent === ${JSON.stringify(typeof paymentStatus === 'number' ? ['Draft','Unpaid','Paid'][paymentStatus] : paymentStatus)}
+              && !header.querySelector('img') && !window.injected
+              && [header, bill].every(node => {
+                const style = getComputedStyle(node);
+                if (style.color !== ${JSON.stringify(color)}) return false;
+                if ('${accountClass}' === 'default') return true;
+                const foreground = luminance(style.color.match(/[\\d.]+/g).slice(0, 3).map(Number));
+                const background = luminance(style.backgroundColor.match(/[\\d.]+/g).slice(0, 3).map(Number));
+                return (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05) >= 4.5;
+              });
+          })()`), true, `Safe ${accountClass}/${billClass} badges and contrast at ${width}x${height} ${theme}`);
+        }
+        delete state.ledgerAccountStatus; delete state.ledgerPaymentStatus;
+        assert.equal(await evaluate(`(() => {
+          const dialog = document.getElementById('accountLedger').getBoundingClientRect();
+          return dialog.left >= -1 && dialog.right <= ${width + 1} && dialog.top >= -1
+            && dialog.bottom <= ${height + 1} && [...document.querySelectorAll('#accountLedger [role=tab]')]
+              .every(tab => { const r = tab.getBoundingClientRect(); return r.width > 0 && r.left >= -1 && r.right <= ${width + 1}; });
+        })()`), true, `Ledger controls fit ${width}x${height} ${theme}`);
+        await closeLedger();
+        console.log(`PASS: synthetic Collections/Ledger viewport ${width}x${height} ${theme}; dialog and tabs usable.`);
+      }
+    }
     assert.deepEqual(errors, [], 'Collections page raised browser exceptions.');
   } finally {
     if (socket?.readyState === WebSocket.OPEN) await command('Browser.close').catch(() => {});

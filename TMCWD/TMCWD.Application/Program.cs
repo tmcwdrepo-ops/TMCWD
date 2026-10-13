@@ -30,6 +30,7 @@ builder.Services.AddScoped<AuthenticatedUserService>(services =>
             var user = JsonSerializer.Deserialize<TMCWD.Model.Administrator.User>(serializedUser);
             if (user != null && user.Id > 0)
                 authenticatedUser.SetUser(user);
+            authenticatedUser.SecurityStamp = httpContext?.Session.GetString(AuthenticatedUserService.SecurityStampSessionKey);
         }
         catch (JsonException)
         {
@@ -61,6 +62,7 @@ builder.Services.AddTransient<BillingTransaction>();
 builder.Services.AddTransient<PenaltyTransaction>();
 builder.Services.AddTransient<PaymentTransaction>();
 builder.Services.AddTransient<WaterRateTransaction>(); 
+builder.Services.AddTransient<MeterMaintenanceRateTransaction>();
 builder.Services.AddTransient<ReadingSheetTransaction>();
 builder.Services.AddTransient<ZoneBookTransaction>();
 builder.Services.AddTransient<ReadingTransaction>();

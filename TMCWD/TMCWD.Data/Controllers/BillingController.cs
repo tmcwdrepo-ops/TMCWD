@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
 using BillingHistoryModel = TMCWD.Model.Billing.BillingHistory;
@@ -24,6 +24,7 @@ namespace TMCWD.Data.Controllers
             _readingService = readingService;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -61,6 +62,7 @@ namespace TMCWD.Data.Controllers
             catch (System.Text.Json.JsonException) { return Conflict(new { message = "An authoritative invoice is unavailable. Please contact billing support." }); }
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -69,6 +71,7 @@ namespace TMCWD.Data.Controllers
             return Ok(billings);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByAccountId/{accountId}")]
         public async Task<IActionResult> GetByAccountId(int accountId)
         {
@@ -77,6 +80,7 @@ namespace TMCWD.Data.Controllers
             return Ok(billings);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByJobOrderId/{jobOrderId}")]
         public async Task<IActionResult> GetByJobOrderId(int jobOrderId)
         {
@@ -85,6 +89,7 @@ namespace TMCWD.Data.Controllers
             return Ok(billings);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByBillingReference/{billingReferenceId}")]
         public async Task<IActionResult> GetByBillingReference(string billingReferenceId)
         {
@@ -96,6 +101,7 @@ namespace TMCWD.Data.Controllers
             return Ok(billing);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetPaymentTransactionId/{paymentTransactionId}")]
         public async Task<IActionResult> GetByPaymentTransactionId(string paymentTransactionId)
         {
@@ -109,7 +115,7 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
-        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         public async Task<IActionResult> SaveUpdate(int userId, [FromBody]Billing billing)
         {
             if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
@@ -118,6 +124,17 @@ namespace TMCWD.Data.Controllers
             return Ok(savedBilling);
         }
 
+        [HttpPost("ChargeAnchor")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
+        public async Task<IActionResult> ChargeAnchor(TMCWD.Model.Billing.ChargeAnchorRequest request)
+        {
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var actor) || actor <= 0)
+                return Unauthorized();
+            try { return Ok(await _billingService.CreateChargeAnchor(actor, request.AccountId)); }
+            catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("History/{accountNumber}")]
         public async Task<IActionResult> History(string accountNumber)
         {

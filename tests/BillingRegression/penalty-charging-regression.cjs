@@ -29,7 +29,13 @@ function page(fetch) {
 test('Loads all overdue bills by default and posts billing references, not account numbers', async () => {
     let request;
     const p = page(async (url, options) => {
-        if (!options) { assert.equal(url, '/Billing/GetPenaltyChargeEntries'); return { ok: true, json: async () => [entry('BILL-1'), entry('BILL-2')] }; }
+        if (!options) {
+            const requestUrl = new URL(url, 'http://localhost');
+            assert.equal(requestUrl.pathname, '/Billing/GetPenaltyChargeEntries');
+            assert.equal(requestUrl.searchParams.get('billingPeriod'), null);
+            assert.match(requestUrl.searchParams.get('postingDate'), /^\d{4}-\d{2}-\d{2}$/);
+            return { ok: true, json: async () => [entry('BILL-1'), entry('BILL-2')] };
+        }
         request = options;
         return { ok: true, json: async () => ({ postedCount: 2, totalPenalty: 200, postingDate: '2026-09-22T00:00:00' }) };
     });

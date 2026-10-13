@@ -47,6 +47,8 @@ namespace TMCWD.Data.Services
             if(paymentCheck.Id == 0)
             {
                 paymentCheck.CreatedBy = userId;
+                paymentCheck.UpdatedBy = userId;
+                paymentCheck.DateUpdated = DateTime.Now;
                 paymentCheck.DateCreated = DateTime.Now;
                 _context.PaymentChecks.Add(paymentCheck);
             }

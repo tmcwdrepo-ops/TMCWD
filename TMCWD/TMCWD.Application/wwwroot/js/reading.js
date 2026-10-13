@@ -258,8 +258,9 @@
 
   async function performSearch(q) {
     // Return cached result immediately
-    if (searchCache[q]) {
-      readingsList = searchCache[q];
+    const cacheKey = `${q}|${currentReadingSheetId}`;
+    if (searchCache[cacheKey]) {
+      readingsList = searchCache[cacheKey];
       currentPage  = 1;
       renderTable();
 
@@ -269,7 +270,9 @@
     }
 
     try {
-      const res = await fetch(`/Billing/SearchAccounts?q=${encodeURIComponent(q)}`);
+      const searchUrl = `/Billing/SearchAccounts?q=${encodeURIComponent(q)}`
+        + (currentReadingSheetId > 0 ? `&readingSheetId=${currentReadingSheetId}` : '');
+      const res = await fetch(searchUrl);
       if (!res.ok) {
         const errorText = await res.text();
         console.error('Search failed:', res.status, errorText);
@@ -304,7 +307,7 @@
         book          : ''
       }));
 
-      searchCache[q]  = mapped;
+      searchCache[cacheKey]  = mapped;
       readingsList    = mapped;
       currentPage     = 1;
       renderTable();
@@ -374,7 +377,11 @@
     };
 
     if (book) book.addEventListener('change', onChange);
-    if (reader) reader.addEventListener('change', loadReadingSheetSchedule);
+    if (reader) reader.addEventListener('change', async function () {
+      await loadReadingSheetSchedule();
+      await loadReadingsByZoneBook();
+      renderTable();
+    });
   }
 
   async function loadReadingsByZoneBook() {
@@ -384,7 +391,11 @@
     if (!zone || !book) { readingsList = []; return; }
 
     try {
-      const res = await fetch(`/Billing/GetReadingsByZoneBook?zone=${zone}&book=${book}`);
+      if (currentReadingSheetId <= 0) {
+        readingsList = [];
+        return;
+      }
+      const res = await fetch(`/Billing/GetReadingsByZoneBook?zone=${zone}&book=${book}&readingSheetId=${currentReadingSheetId}`);
       if (!res.ok) { readingsList = []; return; }
 
       const data = await res.json();
@@ -463,7 +474,7 @@
     if (usage > 20) total += (Math.min(usage, 30) - 20) * rates.r2;
     if (usage > 30) total += (Math.min(usage, 40) - 30) * rates.r3;
     if (usage > 40) total += (usage - 40) * rates.r4;
-    // Note: WaterMeterMaintenanceFee (₱20) is added server-side only after reading is saved
+    // The configured maintenance amount is selected server-side by the active sheet's billing date.
 
     if (amountEl) amountEl.value = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }

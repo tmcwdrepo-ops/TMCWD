@@ -148,7 +148,8 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(QrImageView), findsOneWidget);
-      expect(find.text('TMCWD|SI|TEST-00077'), findsOneWidget);
+      expect(tester.widget<ServiceInvoicePreview>(find.byType(ServiceInvoicePreview)).result.soa!.qrPayload,
+          'TMCWD|SI|TEST-00077');
       expect(find.text('Remaining Amount'), findsNothing);
       return tester
           .widgetList<Text>(
@@ -418,7 +419,6 @@ void main() {
         'Series',
         '0000001 - 9999999',
         'THIS DOCUMENT IS NOT VALID\nFOR CLAIM OF INPUT TAX',
-        'TMCWD|SI|TEST-00077',
       ]) {
         expect(text(value), findsWidgets, reason: value);
       }
@@ -459,7 +459,8 @@ void main() {
         findsOneWidget,
         reason: 'QrImageView must be present for the QR payload',
       );
-      // The QR payload text is verified above via text('TMCWD|SI|TEST-00077').
+      expect(tester.widget<ServiceInvoicePreview>(preview).result.soa!.qrPayload,
+          'TMCWD|SI|TEST-00077');
       expect(
         find.descendant(
           of: preview,
@@ -567,13 +568,14 @@ void main() {
             'Offline copy',
             'Last retrieved: ${labels.formatMediumDate(date)} ${labels.formatTimeOfDay(TimeOfDay.fromDateTime(date))}',
             'TEST-00077',
-            'TMCWD|SI|TEST-00077',
           ]) {
             expect(
               find.descendant(of: preview, matching: find.text(value)),
               findsOneWidget,
             );
           }
+          expect(tester.widget<ServiceInvoicePreview>(preview).result.soa!.qrPayload,
+              'TMCWD|SI|TEST-00077');
           expect(
             find.descendant(
               of: preview,

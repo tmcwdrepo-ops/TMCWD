@@ -15,6 +15,7 @@ namespace TMCWD.Model.Billing.Responses
         public string Trend { get; set; }
         public decimal Balance { get; set; }
         public decimal Amount { get; set; }
+        public decimal? MeterMaintenanceFee { get; set; }
         public decimal Total { get; set; }
         public string Status { get; set; }
         public string Category { get; set; }

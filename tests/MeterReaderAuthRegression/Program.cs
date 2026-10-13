@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -27,8 +28,10 @@ var controller = new AuthController(new ApplicationLoginTransaction(webService),
 
 async Task<IActionResult> Login(string identifier, string secret = password) =>
     await controller.MeterReaderLogin(new() { Identifier = identifier, Password = secret });
+int assertionCount = 0;
 void Check(bool result, string description)
 {
+    assertionCount++;
     if (!result) throw new Exception(description);
 }
 void Status(IActionResult result, int expected, string description)
@@ -58,6 +61,7 @@ foreach (var identifier in new[] { "reader@example.invalid", "10", "  reader@exa
     }, out var validated);
     Check(principal.FindFirst(ClaimTypes.NameIdentifier)?.Value == "10", "JWT reader identity mismatch.");
     Check(principal.IsInRole(((int)UserRole.MeterReader).ToString()), "JWT meter-reader role mismatch.");
+    Check(principal.FindFirst(UserSecurityStamp.ClaimType)?.Value == "synthetic-credential-stamp", "Login fingerprint was not retained.");
     Check(response.GetProperty("userId").GetInt32() == 10, "Response identity mismatch.");
     var expiry = response.GetProperty("expiresAt").GetDateTime();
     Check(expiry == validated.ValidTo && expiry.Kind == DateTimeKind.Utc, "Device expiry must match JWT expiry.");
@@ -82,7 +86,7 @@ foreach (var role in Enum.GetValues<UserRole>().Where(role => role != UserRole.M
 Status(await Login("11"), 401, "ID lookup resolving to a different identity accepted.");
 Status(await controller.Login(new() { Email = "role3@example.invalid", Password = password }), 200,
     "Existing general login behavior changed.");
-Console.WriteLine("PASS: reader credentials, input validation, active role, signed identity/expiry and legacy login.");
+Console.WriteLine($"PASS: {assertionCount} assertions for reader credentials, input validation, active role, signed identity/expiry, security fingerprint and legacy login.");
 
 sealed class SyntheticClientFactory(HttpClient client) : IHttpClientFactory
 {
@@ -91,31 +95,36 @@ sealed class SyntheticClientFactory(HttpClient client) : IHttpClientFactory
 
 sealed class SyntheticUsersHandler : HttpMessageHandler
 {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var path = Uri.UnescapeDataString(request.RequestUri!.AbsolutePath);
-        var identifier = path.Split('/').Last();
+        if (request.Method != HttpMethod.Post || path != "/api/auth/login")
+            throw new Exception("Login must send credentials in a body to the Data API.");
+        var command = await request.Content!.ReadFromJsonAsync<PasswordLoginRequest>(cancellationToken);
+        var identifier = command!.Identifier;
         User? user = identifier switch
         {
             "reader@example.invalid" or "10" => Make(10, "reader@example.invalid", 4, true),
             // Mimic an inconsistent/nonunique email mapping; it must not grant a different identity.
-            "11" => Make(11, "reader@example.invalid", 4, true),
+            "11" => Make(10, "reader@example.invalid", 4, true),
             "inactive@example.invalid" => Make(20, identifier, 4, false),
             "unknown-active@example.invalid" => Make(21, identifier, 4, null),
             _ when identifier.StartsWith("role") && int.TryParse(identifier[4..5], out var role)
                 => Make(30 + role, identifier, role, true),
             _ => null
         };
-        return Task.FromResult(new HttpResponseMessage(user == null ? HttpStatusCode.NotFound : HttpStatusCode.OK)
+        var status = user == null || command.Password != "Synthetic test password" ? HttpStatusCode.Unauthorized
+            : user.IsActive != true ? HttpStatusCode.Forbidden : HttpStatusCode.OK;
+        if (user != null) user.Password = null;
+        return new HttpResponseMessage(status)
         {
-            Content = new StringContent(JsonSerializer.Serialize(user), Encoding.UTF8, "application/json")
-        });
+            Content = new StringContent(JsonSerializer.Serialize(new { user?.Id, user?.Email, user?.Name, user?.Role, user?.IsActive, user?.IsVerified, securityStamp = "synthetic-credential-stamp" }), Encoding.UTF8, "application/json")
+        };
     }
 
     private static User Make(int id, string email, int role, bool? active) => new()
     {
-        Id = id, Email = email, Name = "Synthetic reader", Role = role, IsActive = active,
+        Id = id, Email = email, Name = "Synthetic reader", Role = role, IsActive = active, IsVerified = true,
         Password = StringEncyption.Encrypt("Synthetic test password")
     };
 }
-

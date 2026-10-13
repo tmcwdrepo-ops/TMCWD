@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Text.Json;
 using TMCWD.Data.Entities;
@@ -18,6 +18,7 @@ namespace TMCWD.Data.Controllers
             _service = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -28,6 +29,7 @@ namespace TMCWD.Data.Controllers
             return Ok(material);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -36,6 +38,7 @@ namespace TMCWD.Data.Controllers
             return Ok(materials);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByJobOrderId")]
         public async Task<IActionResult> GetByJobOrderId(int jobOrderId)
         {
@@ -44,6 +47,8 @@ namespace TMCWD.Data.Controllers
             return Ok(materials);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
+
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<IActionResult> SaveUpdate(int userId, int jobOrderId, [FromBody] Material material)
         {
@@ -51,6 +56,8 @@ namespace TMCWD.Data.Controllers
             if (material == null) return NoContent();
             return Ok(updatedMaterial);
         }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
 
         [HttpPut("UpdateQuantityOrNewUnitCost/{userId}")]
         public async Task<IActionResult> UpdateQuantityOrNewUnitCost(int userId, int requestId, [FromBody]Material updateMaterial)
@@ -66,6 +73,8 @@ namespace TMCWD.Data.Controllers
             if(material == null) return NotFound();
             return Ok(material);
         }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
 
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> DeleteMaterial(int id)

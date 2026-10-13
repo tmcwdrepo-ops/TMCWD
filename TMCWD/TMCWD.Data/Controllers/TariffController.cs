@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Services;
 
 namespace TMCWD.Data.Controllers
@@ -24,6 +24,7 @@ namespace TMCWD.Data.Controllers
 
         #region methods
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -32,6 +33,7 @@ namespace TMCWD.Data.Controllers
             return Ok(tariff);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
@@ -40,6 +42,7 @@ namespace TMCWD.Data.Controllers
             return Ok(tariffs);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "BillingOperations")]
         [HttpGet("GetByClassification/{classification}")]
         public async Task<IActionResult> GetByClassification(int classification)
         {

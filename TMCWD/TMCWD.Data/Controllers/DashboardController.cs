@@ -63,6 +63,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("ServiceSummary")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<ServiceDashboard>> ServiceSummary()
     {
         await BackfillApplicationAccountNumbers();
@@ -106,6 +107,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("ServiceApplications/{category}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<List<ServiceApplicationRecord>>> ServiceApplications(string category)
     {
         category = category.Trim().ToLowerInvariant();
@@ -154,6 +156,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpPost("NewConnection/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<NewConnectionApplicationRecord>> NewConnection(
         long userId, [FromBody] NewConnectionApplicationRecord record)
     {
@@ -213,6 +216,7 @@ public class DashboardController : ControllerBase
         return Ok(record);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     [HttpGet("DisconnectionAccounts")]
     public async Task<ActionResult<List<DisconnectionAccountRecord>>> DisconnectionAccounts([FromQuery] string q)
     {
@@ -251,6 +255,7 @@ public class DashboardController : ControllerBase
         }).ToList());
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     [HttpGet("DisconnectionOrders")]
     public async Task<ActionResult<List<DisconnectionOrderRecord>>> DisconnectionOrders()
     {
@@ -281,6 +286,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpPost("DisconnectionOrder/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<DisconnectionOrderRecord>> SaveDisconnectionOrder(
         long userId, [FromBody] DisconnectionOrderRecord record)
     {
@@ -345,6 +351,7 @@ public class DashboardController : ControllerBase
         return Ok(record);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     [HttpGet("AccountTransferAccounts")]
     public async Task<ActionResult<List<AccountTransferLookupRecord>>> AccountTransferAccounts([FromQuery] string q)
     {
@@ -376,6 +383,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpPost("AccountTransfer/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<AccountTransferRecord>> AccountTransfer(
         long userId, [FromBody] AccountTransferRecord record)
     {
@@ -431,6 +439,7 @@ public class DashboardController : ControllerBase
         return Ok(record);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     [HttpGet("ServiceRequestAssignees")]
     public async Task<ActionResult<List<ServiceRequestAssigneeRecord>>> ServiceRequestAssignees()
     {
@@ -446,6 +455,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("ServiceRequestsByDescription")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<List<object>>> ServiceRequestsByDescription([FromQuery] string? description, [FromQuery] string? status = null)
     {
         if (status != null && status != "Pending" && status != "Completed")
@@ -518,6 +528,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpPost("SaveServiceRequest/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<IActionResult> SaveServiceRequest(long userId, [FromBody] ServiceRequestOrderRecord record)
     {
         if (!await _context.Users.AnyAsync(x => x.Id == userId && x.IsActive == true)) return Unauthorized();
@@ -546,6 +557,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpPost("AccomplishServiceRequest/{requestId:long}/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<IActionResult> AccomplishServiceRequest(long requestId, long userId)
     {
         if (!await _context.Users.AnyAsync(x => x.Id == userId && x.IsActive == true)) return Unauthorized();
@@ -570,6 +582,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpPost("ServiceRequest/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<ServiceRequestOrderRecord>> ServiceRequest(
         long userId, [FromBody] ServiceRequestOrderRecord record)
     {
@@ -742,6 +755,7 @@ public class DashboardController : ControllerBase
         return Ok(record);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     [HttpGet("ServiceInspection/{requestId:long}")]
     public async Task<ActionResult<ServiceInspectionRecord>> ServiceInspection(long requestId)
     {
@@ -860,6 +874,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpPost("SaveServiceInspection/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<ServiceInspectionRecord>> SaveServiceInspection(long userId, [FromBody] ServiceInspectionRecord record)
     {
         var application = await _context.WaterConnectionApplications.FirstOrDefaultAsync(x => x.Id == record.RequestId);
@@ -1075,6 +1090,7 @@ public class DashboardController : ControllerBase
         return Ok(record);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     [HttpGet("ConnectOrder/{requestId:long}")]
     public async Task<ActionResult<ConnectOrderRecord>> ConnectOrder(long requestId)
     {
@@ -1182,6 +1198,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpPost("SaveConnectOrder/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<ConnectOrderRecord>> SaveConnectOrder(long userId, [FromBody] ConnectOrderRecord record)
     {
         var application = await _context.WaterConnectionApplications.FirstOrDefaultAsync(x => x.Id == record.RequestId);
@@ -1230,6 +1247,7 @@ public class DashboardController : ControllerBase
     }
 
     // ── Payment detail ──────────────────────────────────────────────────────
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     [HttpGet("ApplicationPayment/{applicationId:long}")]
     public async Task<ActionResult<ApplicationPaymentRecord>> ApplicationPayment(long applicationId)
     {
@@ -1319,6 +1337,7 @@ public class DashboardController : ControllerBase
         if (changed) await _context.SaveChangesAsync();
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     [HttpGet("ApplicationTicket/{applicationId:long}")]
     public async Task<ActionResult<ApplicationTicketRecord>> ApplicationTicket(long applicationId)
     {
@@ -1353,6 +1372,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("WorkOrder/{workOrderType}/{requestId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<ServiceWorkOrderRecord>> WorkOrder(string workOrderType, long requestId)
     {
         workOrderType = workOrderType.Trim().ToLowerInvariant();
@@ -1440,6 +1460,7 @@ public class DashboardController : ControllerBase
         return Ok(record);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     [HttpGet("HouseTapping/{requestId:long}")]
     public async Task<ActionResult<HouseTappingRecord>> HouseTapping(long requestId)
     {
@@ -1510,6 +1531,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpPost("SaveHouseTapping/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<HouseTappingRecord>> SaveHouseTapping(
         long userId, [FromBody] HouseTappingRecord record)
     {
@@ -1558,6 +1580,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpPost("SaveWorkOrder/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<ServiceWorkOrderRecord>> SaveWorkOrder(long userId, [FromBody] ServiceWorkOrderRecord record)
     {
         var application = await _context.WaterConnectionApplications.FirstOrDefaultAsync(x => x.Id == record.RequestId);
@@ -1617,6 +1640,7 @@ public class DashboardController : ControllerBase
     /// Must only be called once the application is at stage 'done' (or 'tapping' completed).
     /// </summary>
     [HttpPost("ActivateAccount/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<ActivateAccountResult>> ActivateAccount(
         long userId, [FromBody] ActivateAccountRequest request)
     {
@@ -1784,6 +1808,7 @@ public class DashboardController : ControllerBase
     /// (all other stage transitions happen automatically inside their Save endpoints)
     /// </summary>
     [HttpPost("AdvanceStage/{userId:long}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
     public async Task<ActionResult<AdvanceStageResult>> AdvanceStage(
         long userId, [FromBody] AdvanceStageRequest request)
     {

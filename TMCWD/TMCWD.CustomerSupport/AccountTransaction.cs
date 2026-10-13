@@ -45,26 +45,32 @@ namespace TMCWD.CustomerSupport
             StringBuilder sb = new();
 
             if (account == null) throw new Exception("Required account fields are not supplied");
-            if (account.Id > 0 && String.IsNullOrEmpty(account.AccountNumber.Trim())) sb.AppendLine("�ccount number is required");
+            if (account.Id > 0 && String.IsNullOrEmpty(account.AccountNumber.Trim())) sb.AppendLine("Account number is required");
             if (account.Id > 0 && String.IsNullOrEmpty(account.MeterNumber.Trim())) sb.AppendLine("Meter number is required");
             if (account.CustomerId <= 0) sb.AppendLine("No customer has been selected for this account");
             if (String.IsNullOrEmpty(account.HouseNumber.Trim())) sb.AppendLine("Account house number is required for account creation");
 
             if (!String.IsNullOrEmpty(sb.ToString().Trim())) throw new Exception(sb.ToString());
 
-            if(account.Id <= 0)
+            if (account.Id > 0)
             {
-                string shortGuid = Guid.NewGuid().ToString("N").Substring(0, 5);
-                account.AccountNumber = $"ACCT{DateTime.Now.ToString("yyyy")}-{DateTime.Now.ToString("MM")}-{shortGuid}";
+                var stored = await Get(account.Id) ?? throw new InvalidOperationException("Account not found.");
+                if ((account.Status != 0 && account.Status != stored.Status)
+                    || (account.ZoneBookId != 0 && account.ZoneBookId != stored.ZoneBookId)
+                    || (account.Sequence != 0 && account.Sequence != stored.Sequence)
+                    || (!string.IsNullOrEmpty(account.AccountNumber) && account.AccountNumber != stored.AccountNumber)
+                    || account.InitialReading != stored.InitialReading)
+                    throw new InvalidOperationException("Account status, numbering and roster changes require an approved workflow.");
             }
-
-            var content = JsonContent.Create(account);
-
+            var content = JsonContent.Create(new AccountWriteRequest { Id = account.Id, CustomerId = account.CustomerId,
+                MeterNumber = account.MeterNumber, MeterSize = account.MeterSize, Classification = (int)account.Classification,
+                UnitNumber = account.UnitNumber, Building = account.Building, HouseNumber = account.HouseNumber,
+                Street = account.Street, Barangay = account.Barangay, IsCurrentAddress = account.IsCurrentAddress });
             var response = await _webService.Client.PostAsync($"api/Account/SaveUpdate/{userId}", content);
 
             var data = await response.Content.ReadAsStringAsync();
 
-            if (!response.IsSuccessStatusCode) return null;
+            response.EnsureSuccessStatusCode();
 
             return ConvertJsonToAccount(data);
         }

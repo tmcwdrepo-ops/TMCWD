@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
 
@@ -40,25 +40,47 @@ namespace TMCWD.Data.Controllers
             return Ok(adjustments);
         }
 
+        /// <summary>
+        /// GET api/BillingAdjustment/History/{billingReferenceId}
+        ///
+        /// Returns the full audit history for a billing reference, newest first,
+        /// with resolved actor names. Returns an empty array (not 404) when no
+        /// adjustments exist — the caller needs to distinguish "no history yet"
+        /// from "bill not found". Read-only; no financial mutation.
+        /// </summary>
+        [HttpGet("History/{billingReferenceId}")]
+        public async Task<IActionResult> History(string billingReferenceId)
+        {
+            if (string.IsNullOrWhiteSpace(billingReferenceId))
+                return BadRequest(new { message = "A billing reference is required." });
+            var history = await _service.GetHistory(billingReferenceId.Trim());
+            return Ok(history);
+        }
+
         [HttpPost("SaveUpdate/{userId}")]
-        public async Task<IActionResult> SaveUpdate(int userId, [FromBody] BillingAdjustment billingAdjustment)
+        public async Task<IActionResult> SaveUpdate(int userId, [FromBody] BillingAdjustment billingAdjustment,
+            [FromHeader(Name = "Idempotency-Key")] Guid operationId)
         {
             if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
                 return Unauthorized();
-            var saved = await _service.SaveUpdate(userId, billingAdjustment);
-            if (saved == null) return BadRequest();
-            return Ok(saved);
+            try { return Ok(await _service.SaveUpdate(userId, billingAdjustment, operationId)); }
+            catch (KeyNotFoundException error) { return NotFound(new { message = error.Message }); }
+            catch (BillingAdjustmentConflictException error) { return Conflict(new { message = error.Message }); }
+            catch (InvalidOperationException error) { return BadRequest(new { message = error.Message }); }
         }
 
         [HttpPost("SaveBatch/{userId}")]
-        public async Task<IActionResult> SaveBatch(int userId, [FromBody] List<BillingAdjustment> billingAdjustments)
+        public async Task<IActionResult> SaveBatch(int userId, [FromBody] List<BillingAdjustment> billingAdjustments,
+            [FromHeader(Name = "Idempotency-Key")] Guid operationId)
         {
             try
             {
                 if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out userId) || userId <= 0)
                     return Unauthorized();
-                return Ok(await _service.SaveBatch(userId, billingAdjustments));
+                return Ok(await _service.SaveBatch(userId, billingAdjustments, operationId));
             }
+            catch (KeyNotFoundException error) { return NotFound(new { message = error.Message }); }
+            catch (BillingAdjustmentConflictException error) { return Conflict(new { message = error.Message }); }
             catch (InvalidOperationException ex)
             {
                 return BadRequest(new { message = ex.Message });

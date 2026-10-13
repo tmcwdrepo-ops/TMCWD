@@ -125,8 +125,35 @@
     }
 
     if (form) {
+        var submitting = false;
+        var operationStorage = 'tmcwd.adjustment.pending';
+        var operationInput = document.getElementById('AdjustmentOperationId');
+        try {
+            var completed = form.dataset.completedOperationId;
+            var pending = JSON.parse(sessionStorage.getItem(operationStorage) || 'null');
+            if (completed && pending && pending.id === completed) sessionStorage.removeItem(operationStorage);
+        } catch (_) { /* Submission below fails closed if retry storage is unavailable. */ }
         form.addEventListener("submit", function (e) {
-            if (!validate()) { e.preventDefault(); }
+            if (submitting || !validate()) { e.preventDefault(); return; }
+            try {
+                var data = new FormData(form);
+                var payload = JSON.stringify(Array.from(data.entries()).filter(function (item) {
+                    return item[0] === 'ReferenceNo' || /^AdjustmentLines\[\d+\]\.(Key|IsChecked|AsBilled|ShouldBe)$/.test(item[0]);
+                }));
+                var pending = JSON.parse(sessionStorage.getItem(operationStorage) || 'null');
+                if (!pending || pending.payload !== payload) pending = { id: crypto.randomUUID(), payload: payload };
+                sessionStorage.setItem(operationStorage, JSON.stringify(pending));
+                operationInput.value = pending.id;
+                submitting = true;
+                form.querySelectorAll('[type=submit]').forEach(function (button) { button.disabled = true; });
+            } catch (_) {
+                e.preventDefault();
+                showToast('Unable to preserve the adjustment retry identity. Enable session storage and retry.');
+            }
+        });
+        window.addEventListener('pageshow', function () {
+            submitting = false;
+            form.querySelectorAll('[type=submit]').forEach(function (button) { button.disabled = false; });
         });
     }
 
@@ -312,11 +339,130 @@
                 modal.classList.remove("show");
 
                 tryAutoFillAsBilled();
+
+                // Fire change so the adjustment history section reloads.
+                var refInput = document.getElementById("ReferenceNo");
+                if (refInput) refInput.dispatchEvent(new Event("change"));
             });
 
         });
 
     }
-    
+
+    // ── Adjustment History ──────────────────────────────────────────────────
+    var historySection  = document.getElementById('adjustmentHistorySection');
+    var historyLoading  = document.getElementById('adjustmentHistoryLoading');
+    var historyError    = document.getElementById('adjustmentHistoryError');
+    var historyEmpty    = document.getElementById('adjustmentHistoryEmpty');
+    var historyTableWrap = document.getElementById('adjustmentHistoryTableWrap');
+    var historyBody     = document.getElementById('adjustmentHistoryBody');
+
+    function showHistoryState(state) {
+        // state: 'loading' | 'error' | 'empty' | 'rows'
+        var show = function (el) { if (el) el.removeAttribute('hidden'); };
+        var hide = function (el) { if (el) el.setAttribute('hidden', ''); };
+        [historyLoading, historyError, historyEmpty, historyTableWrap].forEach(hide);
+        if (state === 'loading') show(historyLoading);
+        else if (state === 'error') show(historyError);
+        else if (state === 'empty') show(historyEmpty);
+        else if (state === 'rows') show(historyTableWrap);
+    }
+
+    function safeText(value) {
+        // Create a text node to prevent HTML injection from server-rendered values.
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(value == null ? '' : String(value)));
+        return d.innerHTML;
+    }
+
+    function formatAmount(n) {
+        if (n == null || isNaN(Number(n))) return '—';
+        var abs = Math.abs(Number(n)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return Number(n) < 0 ? '(' + abs + ')' : abs;
+    }
+
+    function formatDate(isoString) {
+        if (!isoString) return '—';
+        try {
+            var d = new Date(isoString);
+            if (isNaN(d)) return '—';
+            return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })
+                + ' ' + d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+        } catch (_) { return '—'; }
+    }
+
+    async function loadAdjustmentHistory(referenceId) {
+        if (!historySection) return;
+
+        if (!referenceId) {
+            historySection.setAttribute('hidden', '');
+            return;
+        }
+
+        historySection.removeAttribute('hidden');
+        showHistoryState('loading');
+
+        try {
+            var res = await fetch(
+                '/Billing/GetAdjustmentHistory?billingReferenceId=' +
+                encodeURIComponent(referenceId));
+
+            if (!res.ok) { showHistoryState('error'); return; }
+
+            var rows = await res.json();
+            if (!Array.isArray(rows) || rows.length === 0) {
+                showHistoryState('empty'); return;
+            }
+
+            historyBody.innerHTML = rows.map(function (r) {
+                var ref = r.serviceInvoiceNumber
+                    ? safeText(r.serviceInvoiceNumber)
+                    : '<span style="color:var(--color-text-faint);font-size:.9em;">'
+                        + safeText(r.billingReferenceId) + '</span>';
+                var actor = r.createdByName
+                    ? safeText(r.createdByName)
+                    : '<span style="color:var(--color-text-faint);">ID ' + safeText(String(r.createdBy)) + '</span>';
+                var updatedBy = r.updatedByName
+                    ? safeText(r.updatedByName)
+                    : '<span style="color:var(--color-text-faint);">ID ' + safeText(String(r.updatedBy)) + '</span>';
+                return '<tr>'
+                    + '<td>' + safeText(formatDate(r.dateCreated)) + '</td>'
+                    + '<td>' + ref + '</td>'
+                    + '<td>' + safeText(r.adjustmentType || '—') + '</td>'
+                    + '<td style="text-align:right;font-variant-numeric:tabular-nums;">'
+                        + safeText(formatAmount(r.amount)) + '</td>'
+                    + '<td>' + (r.reason ? safeText(r.reason) : '<span style="color:var(--color-text-faint);">—</span>') + '</td>'
+                    + '<td>' + actor + '</td>'
+                    + '<td style="font-size:.9em;color:var(--color-text-faint);">'
+                        + safeText(formatDate(r.dateUpdated)) + ' · ' + updatedBy + '</td>'
+                    + '</tr>';
+            }).join('');
+
+            showHistoryState('rows');
+        } catch (_) {
+            showHistoryState('error');
+        }
+    }
+
+    // Load history when a billing row is selected from the modal.
+    // Delegate: the original btnSelectBilling listeners already close the modal
+    // and set ReferenceNo — we watch for that and fire the history load.
+    var referenceInput = document.getElementById('ReferenceNo');
+    if (referenceInput) {
+        referenceInput.addEventListener('change', function () {
+            loadAdjustmentHistory(referenceInput.value.trim() || null);
+        });
+    }
+
+    // Also reload after a successful form redirect restores TempData success message.
+    // At page load, if ReferenceNo already has a value (e.g. model rebind), load immediately.
+    if (referenceInput && referenceInput.value.trim()) {
+        loadAdjustmentHistory(referenceInput.value.trim());
+    }
+
+    // After successful submission the page redirects and reloads — no additional
+    // JS refresh is needed. The referenceInput.change listener handles re-selection.
+
 })();
+
 

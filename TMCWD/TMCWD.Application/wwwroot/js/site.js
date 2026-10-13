@@ -835,7 +835,8 @@ class WebClient {
         await fetch(this.url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
             },
             body: JSON.stringify(this.data)
         }).then(response => {

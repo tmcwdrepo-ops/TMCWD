@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 
@@ -30,9 +30,11 @@ namespace TMCWD.Data.Services
         {
             if(type.Id > 0)
             {
-                type.UpdatedBy = userId;
-                type.DateUpdated = DateTime.Now;
-                _dbContext.InspectionTypes.Update(type);
+                var stored = await _dbContext.InspectionTypes.SingleAsync(t => t.Id == type.Id);
+                stored.Name = type.Name; stored.WithDetail = type.WithDetail;
+                stored.IsRequiredAccount = type.IsRequiredAccount; stored.IsNew = type.IsNew;
+                stored.IsActive = type.IsActive;
+                type = stored;
             }
             else
             {
@@ -40,6 +42,8 @@ namespace TMCWD.Data.Services
                 type.DateCreated = DateTime.Now;
                 _dbContext.InspectionTypes.Add(type);
             }
+            type.UpdatedBy = userId;
+            type.DateUpdated = DateTime.Now;
 
             await _dbContext.SaveChangesAsync();
 

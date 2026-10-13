@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Entities;
 using TMCWD.Data.Services;
 
@@ -16,6 +16,7 @@ namespace TMCWD.Data.Controllers
             _service = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -26,6 +27,7 @@ namespace TMCWD.Data.Controllers
             return Ok(finding);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll(int jobOrderId)
         {
@@ -36,6 +38,8 @@ namespace TMCWD.Data.Controllers
 
             return Ok(findings);
         }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
 
         [HttpPost("SaveUpdate/{userId}")]
         public async Task<IActionResult> SaveUpdate(int userId, int jobOrderId, Finding finding)

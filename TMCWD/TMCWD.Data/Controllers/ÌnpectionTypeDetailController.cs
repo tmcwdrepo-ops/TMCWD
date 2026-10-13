@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
 using TMCWD.Utility.Generic;
@@ -15,6 +15,8 @@ namespace TMCWD.Data.Controllers
         {
             _dbContext = dbContext;
         }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
 
         [HttpPost("SaveUpdate")]
         public ActionResult<bool> SaveUpdate([FromBody] InspectionTypeDetail inspectionTypeDetail)
@@ -42,6 +44,7 @@ namespace TMCWD.Data.Controllers
             return Ok(false);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetDetail")]
         public ActionResult<InspectionTypeDetail> GetDetail(int inspectionTypeId)
         {

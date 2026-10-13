@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TMCWD.Data.Context;
 using TMCWD.Data.Entities;
@@ -24,6 +24,7 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         public async Task<ActionResult<Request>> SaveUpdate(int userId, [FromBody] Request request)
         {
             if (request.Id > 0 && (await _requestService.Get(checked((int)request.Id)))?.IsServiceRequest == true)
@@ -37,6 +38,7 @@ namespace TMCWD.Data.Controllers
             return Ok(insertedRequest);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<ActionResult<Request>> Get(int id)
         {
@@ -45,6 +47,7 @@ namespace TMCWD.Data.Controllers
             return Ok(data);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetRequests")]
         public async Task<ActionResult<IEnumerable<Request>>> GetRequests()
         {
@@ -53,6 +56,7 @@ namespace TMCWD.Data.Controllers
             return Ok(data);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByUserId/{userId}")]
         public async Task<ActionResult<IEnumerable<Request>>> GetByUserId(int userId)
         {
@@ -61,6 +65,7 @@ namespace TMCWD.Data.Controllers
             return Ok(data);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByCustomerId/{customerId}")]
         public async Task<ActionResult<IEnumerable<Request>>> GetByCustomerId(int customerId)
         {
@@ -69,6 +74,7 @@ namespace TMCWD.Data.Controllers
             return Ok(data);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("SearchRequest/{searchString}")]
         public async Task<ActionResult<IEnumerable<Request>>> SearchRequest(string searchString)
         {

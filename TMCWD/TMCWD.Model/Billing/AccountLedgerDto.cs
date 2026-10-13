@@ -11,6 +11,8 @@ public sealed class AccountLedgerDto
         public string MeterNumber { get; set; } = "";
         public string Classification { get; set; } = "";
         public string Status { get; set; } = "";
+        public string OperationalAccountStatus { get; set; } = "";
+        public string PhysicalServiceStatus { get; set; } = "NO CONFIRMED EVENT";
     }
     public sealed class Bill
     {

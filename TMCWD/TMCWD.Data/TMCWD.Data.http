@@ -1,6 +1,34 @@
-@TMCWD.Data_HostAddress = http://localhost:5178
+﻿@TMCWD.Data_HostAddress = http://localhost:5178
 
 GET {{TMCWD.Data_HostAddress}}/users/
 Accept: application/json
 
 ###
+
+@superAdminToken = {{$dotenv TMCWD_SUPERADMIN_JWT}}
+@billingDate = 2025-01-01
+
+### Resolve the rate selected by the authoritative reading-sheet billing date.
+GET {{TMCWD.Data_HostAddress}}/api/MeterMaintenanceRate/by-billing-date/{{billingDate}}
+Authorization: Bearer {{superAdminToken}}
+Accept: application/json
+
+### List the effective-dated schedule (SuperAdmin only).
+GET {{TMCWD.Data_HostAddress}}/api/MeterMaintenanceRate
+Authorization: Bearer {{superAdminToken}}
+Accept: application/json
+
+### Add or update a scheduled rate (SuperAdmin only).
+POST {{TMCWD.Data_HostAddress}}/api/MeterMaintenanceRate
+Authorization: Bearer {{superAdminToken}}
+Content-Type: application/json
+
+{
+  "id": 0,
+  "amount": 20.00,
+  "effectiveFrom": "2025-01-01",
+  "effectiveTo": null
+}
+
+###
+

@@ -23,6 +23,7 @@ namespace TMCWD.Application.Controllers
         private readonly ReadingTransaction _readingTransaction;
         private readonly ReadingSheetTemplateTransaction _readingSheetTemplateTrans;
         private readonly WaterRateTransaction _waterRateTrans;
+        private readonly MeterMaintenanceRateTransaction _meterMaintenanceRateTrans;
 
         #endregion
 
@@ -35,7 +36,8 @@ namespace TMCWD.Application.Controllers
             AccountTransaction accountTransaction,
             ReadingTransaction readingTransaction,
             ReadingSheetTemplateTransaction readingSheetTemplateTrans,
-            WaterRateTransaction waterRateTrans)
+            WaterRateTransaction waterRateTrans,
+            MeterMaintenanceRateTransaction meterMaintenanceRateTrans)
 {
     _user = user;
     _readingSheetTrans = readingSheetTrans;
@@ -45,6 +47,7 @@ namespace TMCWD.Application.Controllers
     _readingTransaction = readingTransaction;
     _readingSheetTemplateTrans = readingSheetTemplateTrans;
     _waterRateTrans = waterRateTrans;
+    _meterMaintenanceRateTrans = meterMaintenanceRateTrans;
 }
 
         #endregion
@@ -465,6 +468,7 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveReadingSheetTemplate(
             [FromBody] SaveTemplateRequest request)
         {
@@ -528,6 +532,7 @@ namespace TMCWD.Application.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeactivateReadingSheetTemplate(int id)
         {
             var template = await _readingSheetTemplateTrans.Deactivate(id, _user.User.Id);
@@ -679,6 +684,26 @@ namespace TMCWD.Application.Controllers
         [HttpGet]
         public async Task<IActionResult> GetReadingSheetAccounts(int readingSheetId)
         {
+            var readingSheet = await _readingSheetTrans.Get(readingSheetId);
+            if (readingSheet?.BillingDate == null)
+                return NotFound(new { message = "The reading sheet or its billing date was not found." });
+            MeterMaintenanceRateDto? maintenance;
+            try
+            {
+                maintenance = await _meterMaintenanceRateTrans.GetForBillingDate(
+                    DateOnly.FromDateTime(readingSheet.BillingDate.Value.Date));
+            }
+            catch (InvalidOperationException error)
+            {
+                return Conflict(new { message = error.Message });
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(502, new { message = "The Meter Maintenance configuration could not be loaded." });
+            }
+            if (maintenance == null)
+                return Conflict(new { message = "No Meter Maintenance rate is configured for this billing date." });
+
             var accounts = await _readingSheetTrans.GetReadingSheetAccounts(readingSheetId);
 
             if (accounts == null)
@@ -690,18 +715,20 @@ namespace TMCWD.Application.Controllers
                 if (acct.Pres <= 0 && acct.Prev <= 0)
                     continue; // no reading yet — leave amount at 0
 
-                var amount = await WaterChargeCalculator.ComputeWaterCharge(
+                var amount = await WaterChargeCalculator.ComputeBillAmount(
                     _waterRateTrans,
                     (int)acct.Prev,
                     (int)present,
                     (AccountClassification)acct.Classification,
-                    acct.MeterSize);
+                    acct.MeterSize,
+                    maintenance.Amount);
 
-                if (amount >= 0)
+                if (amount > 0)
                 {
                     acct.Amount = amount;
-                    acct.Total = acct.Balance + amount;
+                    acct.Total = acct.Balance + acct.Amount;
                 }
+                acct.MeterMaintenanceFee = maintenance.Amount;
             }
 
             return Ok(accounts);
@@ -742,10 +769,14 @@ namespace TMCWD.Application.Controllers
         {
             try
             {
-                var postedCount = await _readingSheetTrans.PartialPostReadingSheet(readingSheetId, _user.User.Id);
+                var postedCount = await _readingSheetTrans.PartialPostReadingSheet(readingSheetId);
                 if (postedCount < 0)
                     return BadRequest("Failed to post reading sheet. Reload before retrying.");
                 return Ok(new { postedCount });
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+            {
+                return StatusCode((int)ex.StatusCode.Value);
             }
             catch (InvalidOperationException ex)
             {
@@ -755,12 +786,17 @@ namespace TMCWD.Application.Controllers
         [HttpPost]
         public async Task<IActionResult> CompleteReadingSheet(int readingSheetId)
         {
-            var sheet = await _readingSheetTrans.CompleteReadingSheet(readingSheetId, _user.User.Id);
-
-            if (sheet == null)
-                return BadRequest("Cannot complete this reading sheet — some accounts are still pending.");
-
-            return Ok(sheet);
+            try
+            {
+                var sheet = await _readingSheetTrans.CompleteReadingSheet(readingSheetId);
+                if (sheet == null)
+                    return BadRequest("Cannot complete this reading sheet — some accounts are still pending.");
+                return Ok(sheet);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+            {
+                return StatusCode((int)ex.StatusCode.Value);
+            }
         }
     }
 

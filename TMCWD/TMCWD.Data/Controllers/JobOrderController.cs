@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.Runtime.CompilerServices;
 using TMCWD.Data.Services;
 using TMCWD.Data.Entities;
@@ -16,6 +16,7 @@ namespace TMCWD.Data.Controllers
             _service = service;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("Get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -24,6 +25,7 @@ namespace TMCWD.Data.Controllers
             return Ok(jobOrder);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll(int requestId)
         {
@@ -32,6 +34,7 @@ namespace TMCWD.Data.Controllers
             return Ok(jobOrders);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByRequestId")]
         public async Task<IActionResult> GetByRequestId(int requestId)
         {
@@ -40,6 +43,7 @@ namespace TMCWD.Data.Controllers
             return Ok(jobOrders);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         [HttpGet("GetByRequestDetailId/{requestDetailId}")]
         public async Task<IActionResult> GetByRequestDetailId(int requestDetailId)
         {
@@ -49,6 +53,7 @@ namespace TMCWD.Data.Controllers
         }
 
         [HttpPost("SaveUpdate/{userId}")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "PendingAuthorizationDecision")]
         public async Task<IActionResult> SaveUpdate(int userId, [FromBody] JobOrder jobOrder)
         {var updatedJobOrder = await _service.SaveUpdate(userId, jobOrder);
             if (updatedJobOrder == null) return NoContent();

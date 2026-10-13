@@ -31,7 +31,9 @@
 
     <p role="status">Select a billing record, choose the bill or penalty amounts to adjust, then submit the correction.</p>
 
-    <form id="billAdjustmentForm" method="post" asp-action="SubmitAdjustment" asp-controller="Billing">
+    <form id="billAdjustmentForm" method="post" asp-action="SubmitAdjustment" asp-controller="Billing"
+          data-completed-operation-id="@TempData["CompletedAdjustmentOperationId"]">
+        <input type="hidden" name="AdjustmentOperationId" id="AdjustmentOperationId" value="@Model.AdjustmentOperationId" />
         @Html.AntiForgeryToken()
 
         <!-- ── Header fields ── -->   
@@ -228,6 +230,54 @@
 
     </form>
 
+</section>
+
+<!-- ── Adjustment History ─────────────────────────────────────────────── -->
+<section class="page-section" aria-label="Adjustment History"
+         id="adjustmentHistorySection" hidden>
+    <h2 style="font-size:var(--font-size-md);font-weight:600;
+                margin:var(--space-lg) 0 var(--space-sm);">
+        Adjustment History
+    </h2>
+    <div class="panel" style="border-radius:var(--radius-md);">
+
+        <div id="adjustmentHistoryLoading"
+             style="padding:var(--space-md);color:var(--color-text-faint);
+                    font-size:var(--font-size-sm);text-align:center;" hidden>
+            Loading…
+        </div>
+
+        <div id="adjustmentHistoryError"
+             role="alert"
+             style="padding:var(--space-md);color:#ff453a;
+                    font-size:var(--font-size-sm);text-align:center;" hidden>
+            Could not load adjustment history. Please retry.
+        </div>
+
+        <div id="adjustmentHistoryEmpty"
+             style="padding:var(--space-md);color:var(--color-text-faint);
+                    font-size:var(--font-size-sm);text-align:center;" hidden>
+            No adjustment history for this billing record.
+        </div>
+
+        <div id="adjustmentHistoryTableWrap" class="table-wrap" hidden>
+            <table class="data-table" aria-label="Adjustment history">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Service Invoice / Reference</th>
+                        <th>Type</th>
+                        <th style="text-align:right;">Amount</th>
+                        <th>Reason</th>
+                        <th>Made By</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody id="adjustmentHistoryBody"></tbody>
+            </table>
+        </div>
+
+    </div>
 </section>
 
 <!-- Billing History Modal -->
