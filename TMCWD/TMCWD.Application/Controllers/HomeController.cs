@@ -66,7 +66,8 @@ namespace TMCWD.Application.Controllers
                         return RedirectToAction("Inventory", "Engineering");
                     case (int)UserRole.CustomerServiceOic:
                         return RedirectToAction("Penalty", "Billing");
-                    case (int)UserRole.Cashier:
+                    case (int)UserRole.Billing:
+                    case (int)UserRole.BillingHead:
                         return RedirectToAction("Index", "Collections");
                 }
 

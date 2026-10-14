@@ -36,7 +36,7 @@ static class MvcApiAuthentication
         var reference = first.GetProperty("billingReferenceId").GetString()!;
         if (await scope.ServiceProvider.GetRequiredService<BillingTransaction>().GetCollectionBill(reference) == null)
             throw new Exception("Live Collection bill could not be retrieved.");
-        foreach (var (role, expected) in new[] { (UserRole.Cashier, HttpStatusCode.OK), (UserRole.MeterReader, HttpStatusCode.Forbidden) }) {
+        foreach (var (role, expected) in new[] { (UserRole.Billing, HttpStatusCode.OK), (UserRole.MeterReader, HttpStatusCode.Forbidden) }) {
             user.SetUser(new TMCWD.Model.Administrator.User { Id = 1, Role = (int)role });
             await using var roleScope = provider.CreateAsyncScope();
             using var response = await roleScope.ServiceProvider.GetRequiredService<WebService>().Client
@@ -52,18 +52,22 @@ static class MvcApiAuthentication
     public static async Task Run(Uri address, string key, string issuer, string audience)
     {
         foreach (var scenario in new (UserRole Role, string Issuer, string Audience, string Key, HttpStatusCode Status)[] {
-            (Role: UserRole.Cashier, Issuer: issuer, Audience: audience, Key: key, Status: HttpStatusCode.OK),
+            (Role: UserRole.Billing, Issuer: issuer, Audience: audience, Key: key, Status: HttpStatusCode.OK),
+            (UserRole.BillingHead, issuer, audience, key, HttpStatusCode.OK),
             (UserRole.SuperAdmin, issuer, audience, key, HttpStatusCode.OK),
+            (UserRole.GeneralServices, issuer, audience, key, HttpStatusCode.Forbidden),
+            (UserRole.Accounting, issuer, audience, key, HttpStatusCode.Forbidden),
             (UserRole.MeterReader, issuer, audience, key, HttpStatusCode.Forbidden),
-            (UserRole.Cashier, "wrong-issuer", audience, key, HttpStatusCode.Unauthorized),
-            (UserRole.Cashier, issuer, "wrong-audience", key, HttpStatusCode.Unauthorized),
-            (UserRole.Cashier, issuer, audience, Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)), HttpStatusCode.Unauthorized)
+            (UserRole.Billing, "wrong-issuer", audience, key, HttpStatusCode.Unauthorized),
+            (UserRole.Billing, issuer, "wrong-audience", key, HttpStatusCode.Unauthorized),
+            (UserRole.Billing, issuer, audience, Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)), HttpStatusCode.Unauthorized)
         }) {
             var services = new ServiceCollection();
             services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
                 ["Jwt:Key"] = scenario.Key, ["Jwt:Issuer"] = scenario.Issuer, ["Jwt:Audience"] = scenario.Audience
             }).Build());
             var user = new AuthenticatedUserService();
+            user.SecurityStamp = "synthetic-authentication-stamp";
             user.SetUser(new TMCWD.Model.Administrator.User { Id = 10, Role = (int)scenario.Role });
             services.AddSingleton(user);
             services.AddHttpClient("TmcWdApi", client => client.BaseAddress = address);
@@ -94,7 +98,7 @@ static class MvcApiAuthentication
         }
         await CheckControlledErrors();
         await CheckCashierTotals();
-        Console.WriteLine("PASS: actual MVC client registration -> Data JWT middleware: Cashier/SuperAdmin 200, reader 403, wrong issuer/audience/key 401; claims, expiry and request isolation; controlled MVC 401/403 responses.");
+        Console.WriteLine("PASS: actual MVC client registration -> Data JWT middleware: Billing/BillingHead/SuperAdmin 200, reader/GSO/Accounting 403, wrong issuer/audience/key 401; claims, expiry and request isolation; controlled MVC 401/403 responses.");
     }
 
     static async Task CheckCashierTotals()
@@ -103,7 +107,7 @@ static class MvcApiAuthentication
             using var client = new HttpClient(new CashierTotalsHandler(cashier)) { BaseAddress = new Uri("http://localhost/") };
             var web = new WebService(new ClientFactory(client));
             var user = new AuthenticatedUserService();
-            user.SetUser(new TMCWD.Model.Administrator.User { Id = cashier, Role = (int)UserRole.Cashier, Name = "Cashier " + cashier });
+            user.SetUser(new TMCWD.Model.Administrator.User { Id = cashier, Role = (int)UserRole.Billing, Name = "Cashier " + cashier });
             var services = new ServiceCollection().AddLogging().AddSingleton(user).AddSingleton(web);
             foreach (var parameter in typeof(TMCWD.Application.Controllers.CollectionsController).GetConstructors().Single().GetParameters())
                 if (parameter.ParameterType.Namespace is "TMCWD.Billing" or "TMCWD.Administration" or "TMCWD.CustomerSupport") services.AddTransient(parameter.ParameterType);

@@ -80,7 +80,7 @@ namespace TMCWD.Application.Controllers
                 return;
             }
 
-            if (_user.User.Role != (int)UserRole.Cashier && _user.User.Role != (int)UserRole.SuperAdmin)
+            if (_user.User.Role != (int)UserRole.Billing && _user.User.Role != (int)UserRole.BillingHead && _user.User.Role != (int)UserRole.SuperAdmin)
             {
                 context.Result = Forbid();
                 return;

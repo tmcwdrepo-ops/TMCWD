@@ -9,6 +9,7 @@ using TMCWD.Data.Controllers;
 
 
 // These pure calculation checks run even when the database is unavailable.
+await RoleModelRegression.Run();
 foreach (var (bill, expected) in new[] { (1000m, 100m), (245.55m, 24.56m), (0m, 0m), (-10m, 0m), (100.04m, 10m) })
 {
     if (TMCWD.Model.Billing.LatePaymentPenalty.Calculate(bill) != expected)

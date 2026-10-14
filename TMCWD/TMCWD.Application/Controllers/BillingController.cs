@@ -391,7 +391,7 @@ public async Task<IActionResult> GetPenaltyChargeEntries(
         public async Task<IActionResult> PostPenaltyCharges([FromBody] PostPenaltyChargesRequest request)
         {
             if (_user.User == null || _user.User.Id <= 0) return Unauthorized();
-            if (!HasRole(UserRole.Cashier, UserRole.SuperAdmin, UserRole.CustomerRepresentative, UserRole.CustomerServiceOic)) return Forbid();
+            if (!HasRole(UserRole.Billing, UserRole.BillingHead, UserRole.SuperAdmin, UserRole.CustomerRepresentative, UserRole.CustomerServiceOic)) return Forbid();
             if (!ModelState.IsValid || request == null) return BadRequest("Invalid penalty posting request.");
             try { return Ok(await _penaltyTrans.PostCharges(_user.User.Id, request)); }
             catch (InvalidOperationException ex) { return Conflict(ex.Message); }

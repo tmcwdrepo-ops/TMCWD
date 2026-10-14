@@ -25,7 +25,7 @@ public class ServiceInvoiceController(
     /// GET /api/collection/service-invoice/{serviceInvoiceNumber}
     ///
     /// Returns authoritative billing + account information for the given
-    /// service invoice number. Only Cashier and SuperAdmin may access it.
+    /// service invoice number. Only Billing, BillingHead and SuperAdmin may access it.
     /// </summary>
     [HttpGet("service-invoice/{serviceInvoiceNumber}")]
     public async Task<IActionResult> GetByServiceInvoice(string serviceInvoiceNumber)

@@ -33,12 +33,16 @@ static class MvcBoundarySecurity
         builder.Services.AddSessionApiClient();
         var controllers = new[] { typeof(TMCWD.Application.Controllers.AdminController), typeof(TMCWD.Application.Controllers.AccountController),
             typeof(TMCWD.Application.Controllers.CustomerController), typeof(TMCWD.Application.Controllers.CustomerSupportController),
-            typeof(TMCWD.Application.Controllers.ReadingSheetController), typeof(TMCWD.Application.Controllers.BillingController) };
+            typeof(TMCWD.Application.Controllers.ReadingSheetController), typeof(TMCWD.Application.Controllers.BillingController),
+            typeof(TMCWD.Application.Controllers.CollectionsController) };
         foreach (var dependency in controllers.SelectMany(c => c.GetConstructors().Single().GetParameters())
-            .Select(p => p.ParameterType).Where(t => t != typeof(AuthenticatedUserService)).Distinct())
+            .Select(p => p.ParameterType).Where(t => t != typeof(AuthenticatedUserService) && t != typeof(WebService)
+                && (!t.IsGenericType || t.GetGenericTypeDefinition() != typeof(ILogger<>))).Distinct())
             builder.Services.AddTransient(dependency);
         builder.Services.AddControllersWithViews().PartManager.ApplicationParts.Clear();
         builder.Services.AddControllersWithViews().AddApplicationPart(controllers[0].Assembly);
+        builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer();
         await using var app = builder.Build();
         app.MapControllers();
         app.MapControllerRoute("default", "{controller}/{action}");
@@ -50,6 +54,15 @@ static class MvcBoundarySecurity
         {
             using var client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) {
                 BaseAddress = new Uri(app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single()) };
+            await test("HTTP MVC Collections admits Billing/BillingHead/SuperAdmin and denies other roles", async () => {
+                foreach (var role in Enum.GetValues<UserRole>()) {
+                    user.SetUser(new TMCWD.Model.Administrator.User { Id = 3, Name = "Synthetic collector", Role = (int)role });
+                    using var response = await client.GetAsync("Collections/CurrentCollector");
+                    Check(response.StatusCode == (role is UserRole.Billing or UserRole.BillingHead or UserRole.SuperAdmin
+                        ? HttpStatusCode.OK : HttpStatusCode.Forbidden), "MVC Collections role boundary changed.");
+                }
+                user.SetUser(new TMCWD.Model.Administrator.User { Id = 3, Role = (int)UserRole.SuperAdmin });
+            });
             var paths = new[] { "Admin/SaveUser", "Admin/DeactivateUser?userId=1", "Admin/SaveUpdateInspectionType",
                 "Admin/DeactivateInspectionType?inspectionTypeId=1", "Account/SaveAccount", "Account/AddAccount", "Account/SaveUpdateAccount",
                 "Customer/SaveUpdateCustomer", "CustomerSupport/SaveCustomerInformation", "CustomerSupport/SaveAccountInformation",
@@ -125,7 +138,7 @@ static class MvcBoundarySecurity
                     request.Headers.Add("RequestVerificationToken", csrf);
                     return await client.SendAsync(request);
                 }
-                foreach (var deniedRole in new[] { UserRole.Cashier, UserRole.CustomerRepresentative, UserRole.MeterReader, UserRole.Engineer, UserRole.Guest }) {
+                foreach (var deniedRole in new[] { UserRole.Billing, UserRole.BillingHead, UserRole.GeneralServices, UserRole.Accounting, UserRole.CustomerRepresentative, UserRole.MeterReader, UserRole.Engineer, UserRole.Guest }) {
                     user.SetUser(new TMCWD.Model.Administrator.User { Id = 1, Role = (int)deniedRole });
                     using var rejected = await Submit(); Check(rejected.StatusCode == HttpStatusCode.Forbidden, "MVC enabled unauthorized role.");
                     var page = await client.GetStringAsync("CustomerSupport/DisconnectionMonitoring");
@@ -160,7 +173,7 @@ static class MvcBoundarySecurity
                             Content = JsonContent.Create(new { operationId = reconnectionKey, userId = 999, reconnectedBy = 999, actualReconnectionDateUtc = "2000-01-01" }) };
                         request.Headers.Add("RequestVerificationToken", csrf); return await client.SendAsync(request);
                     }
-                    foreach (var deniedRole in new[] { UserRole.Cashier, UserRole.CustomerRepresentative, UserRole.MeterReader, UserRole.Engineer, UserRole.Guest }) {
+                    foreach (var deniedRole in new[] { UserRole.Billing, UserRole.BillingHead, UserRole.GeneralServices, UserRole.Accounting, UserRole.CustomerRepresentative, UserRole.MeterReader, UserRole.Engineer, UserRole.Guest }) {
                         user.SetUser(new TMCWD.Model.Administrator.User { Id = 1, Role = (int)deniedRole });
                         using var denied = await Reconnect(); Check(denied.StatusCode == HttpStatusCode.Forbidden, "MVC reconnection allowed unauthorized role.");
                         var deniedPage = await client.GetStringAsync("CustomerSupport/DisconnectionMonitoring");

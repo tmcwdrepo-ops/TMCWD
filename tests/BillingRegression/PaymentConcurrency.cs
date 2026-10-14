@@ -45,7 +45,7 @@ static class PaymentConcurrency
                 foreach (var sql in migration.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)) await setup.Database.ExecuteSqlRawAsync(sql.Replace("{", "{{").Replace("}", "}}"));
             Check(await setup.PaymentReceipts.CountAsync() == 1 && await setup.Payments.CountAsync() == 2, "Migration lost bill lines or duplicated legacy receipt.");
             Console.WriteLine("PASS: additive receipt migration rerun preserves legacy multi-bill rows and seeds shared sequence.");
-            setup.Users.AddRange(new User { Id = 7, Name = "Cashier One", Role = (int)UserRole.Cashier }, new User { Id = 12, Name = "Cashier Two", Role = (int)UserRole.Cashier });
+            setup.Users.AddRange(new User { Id = 7, Name = "Cashier One", Role = (int)UserRole.Billing }, new User { Id = 12, Name = "Cashier Two", Role = (int)UserRole.Billing });
             setup.Billings.AddRange(new[] { "A", "B", "C", "D", "E", "F" }.Select((reference, index) => new Billing {
                 AccountId = index + 1, BillingReferenceId = reference, TotalBillAmount = 190m, RemainingAmount = 190m,
                 ServiceInvoiceNumber = "000000" + (index + 1), InvoiceSnapshotJson = "{\"immutable\":true}",
@@ -93,7 +93,7 @@ static class PaymentConcurrency
                     ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext { HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext {
                         User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[] {
                             new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, cashier.ToString()),
-                            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, ((int)UserRole.Cashier).ToString()) }, "test")) } } };
+                            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, ((int)UserRole.Billing).ToString()) }, "test")) } } };
                 var result = await controller.Save(new() { CollectorId = 999, Date = DateTime.Today, CashOnHand = 999m, Counts = new() { ["100"] = 1m } });
                 Check(result is Microsoft.AspNetCore.Mvc.OkObjectResult, "Own-cashier remittance failed.");
             }

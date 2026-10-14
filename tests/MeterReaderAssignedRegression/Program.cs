@@ -105,7 +105,7 @@ var chargeCashiers = new List<int>();
 var otherChargeService = DispatchProxy.Create<IOtherChargeService, SyntheticService>();
 ((SyntheticService)(object)otherChargeService).Call = (method, args) => {
     if (method != nameof(IOtherChargeService.ProcessPayment)) throw new NotSupportedException(method);
-    if (((TMCWD.Model.Billing.Requests.OtherChargePaymentRequest)args[1]!).OtherChargeIds.Contains(999))
+    if (((TMCWD.Model.Billing.Requests.OtherChargePaymentRequest)args[1]!).InstallmentIds.Contains(999))
         throw new TMCWD.Model.Billing.PaymentConflictException();
     chargeCashiers.Add((int)args[0]!);
     return Task.FromResult("CR000222");
@@ -194,14 +194,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         ValidAlgorithms = [SecurityAlgorithms.HmacSha256], ClockSkew = TimeSpan.Zero
     };
 });
-builder.Services.AddAuthorization(options => {
-    options.AddPolicy(nameof(UserRole.MeterReader), policy => policy.RequireAuthenticatedUser().RequireRole(((int)UserRole.MeterReader).ToString()));
-    options.AddPolicy("Collection", policy => policy.RequireAuthenticatedUser().RequireRole(((int)UserRole.Cashier).ToString(), ((int)UserRole.SuperAdmin).ToString()));
-    options.AddPolicy("BillingOperations", policy => policy.RequireAuthenticatedUser().RequireRole(
-        ((int)UserRole.Cashier).ToString(), ((int)UserRole.SuperAdmin).ToString(),
-        ((int)UserRole.CustomerRepresentative).ToString(), ((int)UserRole.CustomerServiceOic).ToString()));
-    options.AddPolicy(nameof(UserRole.SuperAdmin), policy => policy.RequireAuthenticatedUser().RequireRole(((int)UserRole.SuperAdmin).ToString()));
-});
+builder.Services.AddAuthorization(TMCWD.Data.AuthorizationPolicies.Configure);
 await using var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -255,7 +248,7 @@ try
     var pieces = token.Split('.');
     pieces[1] = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes("{\"sub\":\"11\",\"role\":\"4\"}"));
     await Status(string.Join('.', pieces), HttpStatusCode.Unauthorized, "Tampered identity accepted.");
-    await Status(Token(role: UserRole.Cashier), HttpStatusCode.Forbidden, "Non-reader token accepted.");
+    await Status(Token(role: UserRole.Billing), HttpStatusCode.Forbidden, "Non-reader token accepted.");
     await Status(Token(identity: "0"), HttpStatusCode.Unauthorized, "Nonpositive identity accepted.");
     await Status(Token(identity: "invalid"), HttpStatusCode.Unauthorized, "Malformed identity accepted.");
     await Status(Token(identity: ""), HttpStatusCode.Unauthorized, "Missing identity accepted.");
@@ -265,7 +258,7 @@ try
     reader.IsActive = false;
     await Status(token, HttpStatusCode.Forbidden, "Existing token retained disabled-reader access.");
     reader.IsActive = true;
-    reader.Role = (int)UserRole.Cashier;
+    reader.Role = (int)UserRole.Billing;
     await Status(token, HttpStatusCode.Forbidden, "Existing token retained changed-role access.");
     reader.Role = (int)UserRole.MeterReader;
     reader.IsVerified = false;
@@ -317,7 +310,7 @@ try
     await Download(1, null, HttpStatusCode.Unauthorized);
     await Download(1, "invalid", HttpStatusCode.Unauthorized);
     await Download(1, Token(expires: DateTime.UtcNow.AddMinutes(-1)), HttpStatusCode.Unauthorized);
-    await Download(1, Token(role: UserRole.Cashier), HttpStatusCode.Forbidden);
+    await Download(1, Token(role: UserRole.Billing), HttpStatusCode.Forbidden);
     sheets[0].SeqFrom = 11; sheets[0].SeqTo = 11;
     var baseline = await Download(1, token, HttpStatusCode.OK);
     Check(baseline.GetProperty("accounts").GetArrayLength() == 1
@@ -345,7 +338,7 @@ try
     await UploadStatus(null, 1, 21, HttpStatusCode.Unauthorized);
     await UploadStatus("invalid", 1, 21, HttpStatusCode.Unauthorized);
     await UploadStatus(Token(expires: DateTime.UtcNow.AddMinutes(-1)), 1, 21, HttpStatusCode.Unauthorized);
-    await UploadStatus(Token(role: UserRole.Cashier), 1, 21, HttpStatusCode.Forbidden);
+    await UploadStatus(Token(role: UserRole.Billing), 1, 21, HttpStatusCode.Forbidden);
     await UploadStatus(token, 5, 21, HttpStatusCode.Forbidden);
     await UploadStatus(token, 4, 21, HttpStatusCode.NotFound);
     await UploadStatus(token, 1, 20, HttpStatusCode.BadRequest);
@@ -400,7 +393,7 @@ try
     await Soa(2, 20, null, HttpStatusCode.Unauthorized);
     await Soa(2, 20, "invalid", HttpStatusCode.Unauthorized);
     await Soa(2, 20, Token(expires: DateTime.UtcNow.AddMinutes(-1)), HttpStatusCode.Unauthorized);
-    await Soa(2, 20, Token(role: UserRole.Cashier), HttpStatusCode.Forbidden);
+    await Soa(2, 20, Token(role: UserRole.Billing), HttpStatusCode.Forbidden);
     Check(sheets[1].Status == ReadingStatus.InProgress && sheets[1].DateUpload == null && soaBillings.Count == 1,
         "SOA changed posting/sheet state.");
     Console.WriteLine("PASS: Phase 6A SOA bearer/role/claims, assignment, deletion, sequence scope, unposted result, persisted amounts, paid/unpaid and DTO privacy.");
@@ -410,7 +403,7 @@ try
         using var lookup = new HttpRequestMessage(HttpMethod.Get, "/api/collection/service-invoice/TEST-000001");
         lookup.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(role: role));
         using var response = await client.SendAsync(lookup);
-        Check(response.StatusCode == (role is UserRole.Cashier or UserRole.SuperAdmin ? HttpStatusCode.OK : HttpStatusCode.Forbidden),
+        Check(response.StatusCode == (role is UserRole.Billing or UserRole.BillingHead or UserRole.SuperAdmin ? HttpStatusCode.OK : HttpStatusCode.Forbidden),
             $"Collection invoice authorization failed for {role}.");
         using var update = new HttpRequestMessage(HttpMethod.Post, "/api/BirInvoiceConfig/active?userId=11");
         update.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(role: role));
@@ -422,7 +415,7 @@ try
     Check(configWrites == 1, "An unauthorized role modified BIR config.");
     using (var missingAuth = await client.GetAsync("/api/collection/service-invoice/TEST-000001"))
         Check(missingAuth.StatusCode == HttpStatusCode.Unauthorized, "Collection lookup accepted missing authentication.");
-    Console.WriteLine("PASS: Phase 6D collection allows only Cashier/SuperAdmin; BIR modification allows only SuperAdmin; reader/other roles denied and claims identity preserved.");
+    Console.WriteLine("PASS: Phase 6D collection allows only Billing/BillingHead/SuperAdmin; BIR modification allows only SuperAdmin; reader/other roles denied and claims identity preserved.");
     foreach (var role in Enum.GetValues<UserRole>()) {
         using var payRequest = new HttpRequestMessage(HttpMethod.Post, "/api/Payment/ProcessCollection/999") {
             Content = JsonContent.Create(new TMCWD.Model.Billing.Requests.CollectionPaymentRequest {
@@ -430,29 +423,32 @@ try
                 Bills = new() { new() { BillingReferenceId = "SYNTHETIC", PaidAmount = 190m } } }) };
         payRequest.Headers.Authorization = new("Bearer", Token(role: role));
         using var response = await client.SendAsync(payRequest);
-        Check(response.StatusCode == (role is UserRole.Cashier or UserRole.SuperAdmin ? HttpStatusCode.OK : HttpStatusCode.Forbidden),
+        Check(response.StatusCode == (role is UserRole.Billing or UserRole.BillingHead or UserRole.SuperAdmin ? HttpStatusCode.OK : HttpStatusCode.Forbidden),
             $"Payment API authorization failed for {role}.");
         using var summaryRequest = new HttpRequestMessage(HttpMethod.Get, "/api/Billing/Collection/SYNTHETIC");
         summaryRequest.Headers.Authorization = new("Bearer", Token(role: role));
         using var summaryResponse = await client.SendAsync(summaryRequest);
-        Check(summaryResponse.StatusCode == (role is UserRole.Cashier or UserRole.SuperAdmin ? HttpStatusCode.OK : HttpStatusCode.Forbidden),
+        Check(summaryResponse.StatusCode == (role is UserRole.Billing or UserRole.BillingHead or UserRole.SuperAdmin ? HttpStatusCode.OK : HttpStatusCode.Forbidden),
             $"Collection summary authorization failed for {role}.");
         using var penaltyRequest = new HttpRequestMessage(HttpMethod.Post, "/api/Penalty/PostCharges/999") {
             Content = JsonContent.Create(new TMCWD.Model.Billing.PostPenaltyChargesRequest { BillingReferenceIds = new() { "SYNTHETIC" } }) };
         penaltyRequest.Headers.Authorization = new("Bearer", Token(role: role));
         using var penaltyResponse = await client.SendAsync(penaltyRequest);
-        Check(penaltyResponse.StatusCode == (role is UserRole.Cashier or UserRole.SuperAdmin or UserRole.CustomerRepresentative or UserRole.CustomerServiceOic
+        Check(penaltyResponse.StatusCode == (role is UserRole.Billing or UserRole.BillingHead or UserRole.SuperAdmin or UserRole.CustomerRepresentative or UserRole.CustomerServiceOic
             ? HttpStatusCode.OK : HttpStatusCode.Forbidden), $"Penalty posting authorization failed for {role}.");
     }
-    Check(cashierWrites.Count == 6 && cashierWrites.All(id => id == 10), "Financial write identity trusted a route user ID.");
+    Check(cashierWrites.Count == 8 && cashierWrites.All(id => id == 10), "Financial write identity trusted a route user ID.");
     using (var stale = new HttpRequestMessage(HttpMethod.Post, "/api/Payment/ProcessCollection/999") {
         Content = JsonContent.Create(new TMCWD.Model.Billing.Requests.CollectionPaymentRequest {
             InvoiceNumber = "STALE", Method = PaymentMethod.Cash, Bills = new() { new() { BillingReferenceId = "STALE", PaidAmount = 190m } } }) }) {
-        stale.Headers.Authorization = new("Bearer", Token(role: UserRole.Cashier));
+        stale.Headers.Authorization = new("Bearer", Token(role: UserRole.Billing));
         using var response = await client.SendAsync(stale);
         Check(response.StatusCode == HttpStatusCode.Conflict, "Stale payment did not return controlled 409.");
     }
-    foreach (var (role, expected) in new[] { (UserRole.Cashier, HttpStatusCode.Forbidden), (UserRole.SuperAdmin, HttpStatusCode.OK) }) {
+    foreach (var (role, expected) in new[] {
+        (UserRole.Billing, HttpStatusCode.Forbidden),
+        (UserRole.BillingHead, HttpStatusCode.Forbidden),
+        (UserRole.SuperAdmin, HttpStatusCode.OK) }) {
         using var otherCashier = new HttpRequestMessage(HttpMethod.Get, "/api/Payment/GetByCashier/11");
         otherCashier.Headers.Authorization = new("Bearer", Token(role: role));
         using var response = await client.SendAsync(otherCashier);
@@ -462,7 +458,7 @@ try
         using var reportResponse = await client.SendAsync(report);
         Check(reportResponse.StatusCode == HttpStatusCode.OK, "Authorized collection report failed.");
     }
-    Check(cashierReportFilters.SequenceEqual(new[] { 10, 11 }), "Cashier report trusted another collector ID or removed supervisor access.");
+    Check(cashierReportFilters.SequenceEqual(new[] { 10, 10, 11 }), "Cashier report trusted another collector ID or removed supervisor access.");
     using (var combinedReport = new HttpRequestMessage(HttpMethod.Get, "/api/Payment/GetByDateRange?from=2026-10-07&to=2026-10-07")) {
         combinedReport.Headers.Authorization = new("Bearer", Token(role: UserRole.SuperAdmin));
         using var response = await client.SendAsync(combinedReport);
@@ -470,17 +466,17 @@ try
     }
     using (var unauthenticatedPay = await client.PostAsJsonAsync("/api/Payment/ProcessCollection/999", new { }))
         Check(unauthenticatedPay.StatusCode == HttpStatusCode.Unauthorized, "Payment API accepted missing authentication.");
-    foreach (var role in new UserRole?[] { null, UserRole.MeterReader, UserRole.Cashier, UserRole.SuperAdmin }) {
+    foreach (var role in new UserRole?[] { null, UserRole.MeterReader, UserRole.Billing, UserRole.SuperAdmin }) {
         using var charges = new HttpRequestMessage(HttpMethod.Post, "/api/OtherCharge/ProcessPayment/999") {
             Content = JsonContent.Create(new TMCWD.Model.Billing.Requests.OtherChargePaymentRequest {
-                Method = PaymentMethod.Check, OtherChargeIds = new() { 1 }, AmountTendered = 20m }) };
+                Method = PaymentMethod.Check, InstallmentIds = new() { 1 }, AmountTendered = 20m }) };
         if (role.HasValue) charges.Headers.Authorization = new("Bearer", Token(role: role.Value));
         using var response = await client.SendAsync(charges);
         Check(response.StatusCode == (role == null ? HttpStatusCode.Unauthorized : role == UserRole.MeterReader ? HttpStatusCode.Forbidden : HttpStatusCode.OK),
             "Other Charges payment authorization failed.");
     }
     Check(chargeCashiers.SequenceEqual(new[] { 10, 10 }), "Other Charges trusted a browser cashier ID.");
-    foreach (var role in new UserRole?[] { null, UserRole.MeterReader, UserRole.Cashier, UserRole.SuperAdmin }) {
+    foreach (var role in new UserRole?[] { null, UserRole.MeterReader, UserRole.Billing, UserRole.SuperAdmin }) {
         using var cancel = new HttpRequestMessage(HttpMethod.Post, "/api/Payment/CancelInvoice/999") {
             Content = JsonContent.Create(new TMCWD.Model.Billing.CancelInvoiceRequest { InvoiceNo = "CR000222", Reason = "Synthetic correction" }) };
         if (role.HasValue) cancel.Headers.Authorization = new("Bearer", Token(role: role.Value));
@@ -491,19 +487,19 @@ try
     Check(cancellationCashiers.SequenceEqual(new[] { 10, 10 }), "Cancellation trusted a browser cashier ID.");
     using (var otherOwner = new HttpRequestMessage(HttpMethod.Post, "/api/Payment/CancelInvoice/999") {
         Content = JsonContent.Create(new TMCWD.Model.Billing.CancelInvoiceRequest { InvoiceNo = "OTHER-OWNER", Reason = "Synthetic correction" }) }) {
-        otherOwner.Headers.Authorization = new("Bearer", Token(role: UserRole.Cashier));
+        otherOwner.Headers.Authorization = new("Bearer", Token(role: UserRole.Billing));
         using var response = await client.SendAsync(otherOwner);
         Check(response.StatusCode == HttpStatusCode.Forbidden, "Another cashier's cancellation did not preserve 403.");
     }
     using (var staleCharge = new HttpRequestMessage(HttpMethod.Post, "/api/OtherCharge/ProcessPayment/999") {
-        Content = JsonContent.Create(new TMCWD.Model.Billing.Requests.OtherChargePaymentRequest { Method = PaymentMethod.Cash, OtherChargeIds = new() { 999 } }) }) {
-        staleCharge.Headers.Authorization = new("Bearer", Token(role: UserRole.Cashier));
+        Content = JsonContent.Create(new TMCWD.Model.Billing.Requests.OtherChargePaymentRequest { Method = PaymentMethod.Cash, InstallmentIds = new() { 999 } }) }) {
+        staleCharge.Headers.Authorization = new("Bearer", Token(role: UserRole.Billing));
         using var response = await client.SendAsync(staleCharge);
         Check(response.StatusCode == HttpStatusCode.Conflict, "Stale Other Charges did not return controlled 409.");
     }
     using (var rawPayment = new HttpRequestMessage(HttpMethod.Post, "/api/Payment/SaveUpdate/999") {
         Content = JsonContent.Create(new Payment { BillingReference = "SYNTHETIC", PaymentReference = "BYPASS", MacAddress = "WEB", PaidAmount = 190m }) }) {
-        rawPayment.Headers.Authorization = new("Bearer", Token(role: UserRole.Cashier));
+        rawPayment.Headers.Authorization = new("Bearer", Token(role: UserRole.Billing));
         using var rejected = await client.SendAsync(rawPayment);
         Check(rejected.StatusCode == HttpStatusCode.Conflict, "Raw payment endpoint bypassed atomic balance processing.");
     }

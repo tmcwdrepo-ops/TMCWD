@@ -60,17 +60,7 @@ static class ReadSessionSecurity
                 ValidAlgorithms = [SecurityAlgorithms.HmacSha256], ClockSkew = TimeSpan.Zero };
             options.Events = new JwtBearerEvents { OnTokenValidated = PersistedTokenValidation.Validate };
         });
-        builder.Services.AddAuthorization(options => {
-            options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
-            options.AddPolicy("PendingAuthorizationDecision", p => p.RequireAuthenticatedUser().RequireAssertion(_ => false));
-            options.AddPolicy("BillingOperations", p => p.RequireAuthenticatedUser().RequireRole("1", "2", "6", "7"));
-            options.AddPolicy("CustomerService", p => p.RequireAuthenticatedUser().RequireRole("1", "2", "6"));
-            options.AddPolicy("ConfirmDisconnection", p => p.RequireAuthenticatedUser().RequireRole("6", "1"));
-            options.AddPolicy("ConfirmReconnection", p => p.RequireAuthenticatedUser().RequireRole("6", "1"));
-            options.AddPolicy("Collection", p => p.RequireAuthenticatedUser().RequireRole("1", "7"));
-            options.AddPolicy("SuperAdmin", p => p.RequireAuthenticatedUser().RequireRole("1"));
-            options.AddPolicy("MeterReader", p => p.RequireAuthenticatedUser().RequireRole("4"));
-        });
+        builder.Services.AddAuthorization(TMCWD.Data.AuthorizationPolicies.Configure);
         await using var app = builder.Build();
         app.UseAuthentication(); app.UseAuthorization(); app.MapControllers();
         await app.StartAsync();
@@ -98,7 +88,7 @@ static class ReadSessionSecurity
             await File.WriteAllLinesAsync(".tmp/phase6ib4-read-inventory.md", inventory);
             async Task Actors()
             {
-                foreach (var (id, role) in new[] { (5, 3), (7, 7), (10, 4), (11, 4) })
+                foreach (var (id, role) in new[] { (5, 3), (7, 7), (8, 8), (9, 9), (12, 10), (10, 4), (11, 4) })
                     if (!await db.Users.AnyAsync(u => u.Id == id)) db.Users.Add(new User { Id = id,
                         Name = "Synthetic B4 actor", Email = $"b4-{id}@test.invalid", Role = role,
                         Password = StringEncyption.Encrypt("synthetic-current"), IsActive = true, IsVerified = true });
@@ -150,7 +140,24 @@ static class ReadSessionSecurity
                     await Reject(path, await Token(5), HttpStatusCode.Forbidden, method, method == HttpMethod.Post ? new[] { 1 } : null);
                 });
             }
-            foreach (var id in new[] { 1, 2, 3, 7 })
+            foreach (var (id, role) in new[] { (7, UserRole.Billing), (8, UserRole.BillingHead),
+                (9, UserRole.GeneralServices), (12, UserRole.Accounting) })
+                await test("HTTP numeric JWT persisted role boundary: " + role, async () => {
+                    await Actors();
+                    using var response = await Send("api/Billing/Collection/TEST", await Token(id));
+                    Check(role is UserRole.Billing or UserRole.BillingHead
+                        ? response.StatusCode is HttpStatusCode.OK or HttpStatusCode.NotFound
+                        : response.StatusCode == HttpStatusCode.Forbidden, "Numeric new-role JWT boundary failed.");
+                    await Reject("api/DebitCreditMemo/GetAll", await Token(id), HttpStatusCode.Forbidden);
+                    await Reject("api/Users/SaveUpdate/999", await Token(id), HttpStatusCode.Forbidden, HttpMethod.Post,
+                        new { id, role = (int)UserRole.SuperAdmin });
+                    var stale = await Token(id);
+                    var user = await db.Users.SingleAsync(u => u.Id == id);
+                    user.Role = (int)UserRole.Guest;
+                    await db.SaveChangesAsync(); db.ChangeTracker.Clear();
+                    await Reject("api/Billing/Collection/TEST", stale, HttpStatusCode.Unauthorized);
+                });
+            foreach (var id in new[] { 1, 2, 3, 7, 8 })
                 await test($"HTTP B4 established staff {id} customer/account/billing/reading/directory access", async () => {
                     await Actors(); var token = await Token(id);
                     foreach (var path in new[] { "api/Account/Get/1", "api/Customer/Get/1", "api/Billing/GetAll",

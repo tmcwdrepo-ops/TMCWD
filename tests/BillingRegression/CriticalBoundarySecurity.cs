@@ -30,6 +30,21 @@ static class CriticalBoundarySecurity
         const string accountBody = "{\"id\":1,\"customerId\":1,\"houseNumber\":\"Updated\",\"meterSize\":0.5,\"classification\":1}";
         const string passwordPath = "api/Users/password";
         const string passwordBody = "{\"currentPassword\":\"synthetic-current\",\"newPassword\":\"synthetic-new\",\"confirmPassword\":\"synthetic-new\"}";
+        foreach (var role in new[] { UserRole.BillingHead, UserRole.GeneralServices, UserRole.Accounting })
+            await test("HTTP role administration assigns " + role + " only through SuperAdmin", async () => {
+                using var response = await Send(userPath, new { id = 1, name = "Synthetic assigned user",
+                    email = "csr@test.invalid", role = (int)role, isActive = true }, UserRole.SuperAdmin, "3");
+                Check(response.StatusCode == HttpStatusCode.OK, "New canonical role assignment failed.");
+                db.ChangeTracker.Clear();
+                var saved = await db.Users.SingleAsync(u => u.Id == 1);
+                Check(saved.Role == (int)role && saved.UpdatedBy == 3, "Role assignment lost numeric value or claim actor.");
+            });
+        await test("HTTP ordinary roles cannot promote themselves to new roles or SuperAdmin", async () => {
+            foreach (var actor in Enum.GetValues<UserRole>().Where(r => r != UserRole.SuperAdmin))
+                foreach (var target in new[] { UserRole.SuperAdmin, UserRole.BillingHead, UserRole.GeneralServices, UserRole.Accounting })
+                    await reject(token(actor, "1"), HttpStatusCode.Forbidden, userPath, HttpMethod.Post,
+                        Body(JsonSerializer.Serialize(new { id = 1, name = "Synthetic user", email = "csr@test.invalid", role = (int)target })));
+        });
         var writes = new (string Path, string Body, UserRole Role, string Id)[] {
             (userPath, userBody, UserRole.SuperAdmin, "3"),
             (customerPath, customerBody, UserRole.CustomerRepresentative, "1"),

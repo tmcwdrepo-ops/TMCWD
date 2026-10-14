@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -15,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.IdentityModel.Tokens;
 using TMCWD.Application;
 using TMCWD.Billing;
@@ -68,24 +70,19 @@ static class PostingSecurity
                 ValidAlgorithms = [SecurityAlgorithms.HmacSha256], ClockSkew = TimeSpan.Zero
             };
         });
-        builder.Services.AddAuthorization(options =>
-        {
-            options.AddPolicy("PendingAuthorizationDecision", policy => policy.RequireAuthenticatedUser().RequireAssertion(_ => false));
-            options.AddPolicy("SuperAdmin", policy => policy.RequireAuthenticatedUser().RequireRole("1"));
-            options.AddPolicy("Collection", policy => policy.RequireAuthenticatedUser().RequireRole("1", "7"));
-            options.AddPolicy("CustomerService", policy => policy.RequireAuthenticatedUser().RequireRole("1", "2", "6"));
-            options.AddPolicy("ConfirmDisconnection", policy => policy.RequireAuthenticatedUser().RequireRole("6", "1"));
-            options.AddPolicy("ConfirmReconnection", policy => policy.RequireAuthenticatedUser().RequireRole("6", "1"));
-            options.AddPolicy(nameof(UserRole.MeterReader), policy => policy.RequireAuthenticatedUser().RequireRole("4"));
-            options.AddPolicy("BillingOperations", policy => policy.RequireAuthenticatedUser().RequireRole(
-                ((int)UserRole.SuperAdmin).ToString(), ((int)UserRole.CustomerRepresentative).ToString(),
-                ((int)UserRole.CustomerServiceOic).ToString(), ((int)UserRole.Cashier).ToString()));
-        });
+        builder.Services.AddAuthorization(TMCWD.Data.AuthorizationPolicies.Configure);
         await using var app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
         await app.StartAsync();
+        var policyRoutes = ((IEndpointRouteBuilder)app).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
+            .Select(e => new { Endpoint = e, Policies = e.Metadata.GetOrderedMetadata<IAuthorizeData>()
+                .Select(a => a.Policy).Where(p => p is "Collection" or "BillingOperations").Distinct().ToArray() })
+            .Where(e => e.Policies.Length > 0).OrderBy(e => e.Endpoint.RoutePattern.RawText)
+            .Select(e => $"| `/{e.Endpoint.RoutePattern.RawText}` | {string.Join('/', e.Endpoint.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods)} | {string.Join(", ", e.Policies)} |");
+        await File.WriteAllLinesAsync(".tmp/phase6kb0-policy-routes.md",
+            new[] { "| Route | Method | Policy |", "|---|---|---|" }.Concat(policyRoutes));
         try
         {
             using var client = new HttpClient { BaseAddress = new Uri(app.Services.GetRequiredService<IServer>()
@@ -161,7 +158,7 @@ static class PostingSecurity
                 (UserRole.CustomerServiceOic, "2", UserRole.SuperAdmin, "3"),
                 (UserRole.SuperAdmin, "3", UserRole.CustomerServiceOic, "2") })
             await test("HTTP Phase 6J " + firstRole + " confirmation/audit and cross-role idempotency", async () => {
-                foreach (var role in new[] { UserRole.SuperAdmin, UserRole.CustomerRepresentative, UserRole.CustomerServiceOic, UserRole.Cashier }) {
+                foreach (var role in new[] { UserRole.SuperAdmin, UserRole.CustomerRepresentative, UserRole.CustomerServiceOic, UserRole.Billing, UserRole.BillingHead }) {
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token(role));
                     using var response = await client.GetAsync("api/DisconnectionMonitoring/TEST");
                     Check(response.StatusCode == HttpStatusCode.OK, "Authorized monitoring read rejected.");
@@ -264,9 +261,9 @@ static class PostingSecurity
                     Body: JsonSerializer.Serialize(new { accountId = 1, readingSheetId = 1, currentReading = 10,
                         previousReading = 999, status = 3, isCompleted = true, createdBy = 999, updatedBy = 999,
                         dateCreated = DateTime.Now, remarks = "Normal Reading" })),
-                ("api/AdvancePayment/SaveUpdate/999", HttpMethod.Post, UserRole.Cashier,
+                ("api/AdvancePayment/SaveUpdate/999", HttpMethod.Post, UserRole.Billing,
                     "{\"accountId\":1,\"amount\":10,\"createdBy\":999,\"updatedBy\":999}"),
-                ("api/PaymentCheck/SaveUpdate/999", HttpMethod.Post, UserRole.Cashier,
+                ("api/PaymentCheck/SaveUpdate/999", HttpMethod.Post, UserRole.Billing,
                     "{\"paymentReference\":\"synthetic-check\",\"branch\":\"Synthetic\",\"checkNumber\":\"Synthetic\",\"amount\":10,\"createdBy\":999,\"updatedBy\":999}"),
                 ("api/ChargeType/SaveUpdate/999", HttpMethod.Post, UserRole.SuperAdmin,
                     "{\"name\":\"Synthetic\",\"classificationId\":1,\"createdBy\":999,\"updatedBy\":999}"),
@@ -339,10 +336,10 @@ static class PostingSecurity
                 foreach (var path in new[] { "api/AdvancePayment/SaveUpdate/999", "api/EWalletTransaction/SaveUpdate/999" })
                     await Reject(Token(UserRole.SuperAdmin), HttpStatusCode.MethodNotAllowed, path, HttpMethod.Get);
             });
-            await test("HTTP B2 persistence services cannot be invoked as MVC controller aliases", async () =>
+            await test("HTTP B2 persistence services require authentication before controller-alias resolution", async () =>
             {
-                await Reject(null, HttpStatusCode.NotFound, "api/AdvancePaymentService/SaveUpdate/999", HttpMethod.Get);
-                await Reject(null, HttpStatusCode.NotFound, "api/ChargeTypeService/SaveUpdate/999", HttpMethod.Post);
+                await Reject(null, HttpStatusCode.Unauthorized, "api/AdvancePaymentService/SaveUpdate/999", HttpMethod.Get);
+                await Reject(null, HttpStatusCode.Unauthorized, "api/ChargeTypeService/SaveUpdate/999", HttpMethod.Post);
             });
             await test("HTTP B2 web reading rejects accounts outside the active sequence roster", async () =>
             {
@@ -442,7 +439,7 @@ static class PostingSecurity
                         : "{\"id\":1,\"paymentReference\":\"forged\",\"branch\":\"Synthetic\",\"checkNumber\":\"Synthetic\",\"amount\":999,\"createdBy\":999,\"updatedBy\":999}";
                     using var request = new HttpRequestMessage(HttpMethod.Post, $"api/{kind}/SaveUpdate/999")
                     { Content = new StringContent(body, Encoding.UTF8, "application/json") };
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(UserRole.Cashier));
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token(UserRole.Billing));
                     using var response = await client.SendAsync(request);
                     Check(response.StatusCode == HttpStatusCode.OK, "Authorized payment metadata update failed.");
                     db.ChangeTracker.Clear();
@@ -472,7 +469,8 @@ static class PostingSecurity
                 await Prepare();
                 await Reject(null, HttpStatusCode.Unauthorized);
             });
-            foreach (var role in new[] { UserRole.Engineer, UserRole.MeterReader, UserRole.Guest, (UserRole)999 })
+            foreach (var role in new[] { UserRole.Engineer, UserRole.MeterReader, UserRole.Guest,
+                UserRole.GeneralServices, UserRole.Accounting, (UserRole)999 })
                 await test($"HTTP {role} posting returns 403 without writes", async () =>
                 {
                     await Prepare();
@@ -490,7 +488,7 @@ static class PostingSecurity
                 await Reject(Token(UserRole.CustomerRepresentative, expired: true), HttpStatusCode.Unauthorized);
                 await Reject(Token(UserRole.CustomerRepresentative, wrongKey: true), HttpStatusCode.Unauthorized);
             });
-            foreach (var role in new[] { UserRole.SuperAdmin, UserRole.CustomerRepresentative, UserRole.CustomerServiceOic, UserRole.Cashier })
+            foreach (var role in new[] { UserRole.SuperAdmin, UserRole.CustomerRepresentative, UserRole.CustomerServiceOic, UserRole.Billing, UserRole.BillingHead })
                 await test($"HTTP {role} posting ignores forged userId and preserves issued bill on retry", async () =>
                 {
                     await Prepare();

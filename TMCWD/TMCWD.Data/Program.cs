@@ -54,35 +54,7 @@
                 ClockSkew = TimeSpan.Zero
             };
         });
-    builder.Services.AddAuthorization(options =>
-    {
-        options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
-        // shortcut: Legacy writes stay disabled, enable only after Finance/Admin or provider trust rules are approved and implemented.
-        options.AddPolicy("PendingAuthorizationDecision", policy => policy.RequireAuthenticatedUser()
-            .RequireAssertion(_ => false));
-        options.AddPolicy(nameof(UserRole.MeterReader), policy => policy.RequireAuthenticatedUser()
-            .RequireRole(((int)UserRole.MeterReader).ToString(CultureInfo.InvariantCulture)));
-        options.AddPolicy("Collection", policy => policy.RequireAuthenticatedUser().RequireRole(
-            ((int)UserRole.Cashier).ToString(CultureInfo.InvariantCulture),
-            ((int)UserRole.SuperAdmin).ToString(CultureInfo.InvariantCulture)));
-        options.AddPolicy(nameof(UserRole.SuperAdmin), policy => policy.RequireAuthenticatedUser()
-            .RequireRole(((int)UserRole.SuperAdmin).ToString(CultureInfo.InvariantCulture)));
-        options.AddPolicy("BillingOperations", policy => policy.RequireAuthenticatedUser().RequireRole(
-            ((int)UserRole.SuperAdmin).ToString(CultureInfo.InvariantCulture),
-            ((int)UserRole.CustomerRepresentative).ToString(CultureInfo.InvariantCulture),
-            ((int)UserRole.CustomerServiceOic).ToString(CultureInfo.InvariantCulture),
-            ((int)UserRole.Cashier).ToString(CultureInfo.InvariantCulture)));
-        options.AddPolicy("CustomerService", policy => policy.RequireAuthenticatedUser().RequireRole(
-            ((int)UserRole.SuperAdmin).ToString(CultureInfo.InvariantCulture),
-            ((int)UserRole.CustomerRepresentative).ToString(CultureInfo.InvariantCulture),
-            ((int)UserRole.CustomerServiceOic).ToString(CultureInfo.InvariantCulture)));
-        options.AddPolicy("ConfirmDisconnection", policy => policy.RequireAuthenticatedUser().RequireRole(
-            ((int)UserRole.CustomerServiceOic).ToString(CultureInfo.InvariantCulture),
-            ((int)UserRole.SuperAdmin).ToString(CultureInfo.InvariantCulture)));
-        options.AddPolicy("ConfirmReconnection", policy => policy.RequireAuthenticatedUser().RequireRole(
-            ((int)UserRole.CustomerServiceOic).ToString(CultureInfo.InvariantCulture),
-            ((int)UserRole.SuperAdmin).ToString(CultureInfo.InvariantCulture)));
-    });
+    builder.Services.AddAuthorization(TMCWD.Data.AuthorizationPolicies.Configure);
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();
 

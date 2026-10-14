@@ -4,7 +4,7 @@
     var currentRole = AuthenticatedUser.User?.Role;
     var canUsePenaltyWaivers = currentRole == (int)UserRole.CustomerRepresentative
         || currentRole == (int)UserRole.CustomerServiceOic || currentRole == (int)UserRole.SuperAdmin;
-    var canUseCollections = currentRole == (int)UserRole.Cashier || currentRole == (int)UserRole.SuperAdmin;
+    var canUseCollections = currentRole == (int)UserRole.Billing || currentRole == (int)UserRole.BillingHead || currentRole == (int)UserRole.SuperAdmin;
 }
 <!DOCTYPE html>
 <html lang="en">

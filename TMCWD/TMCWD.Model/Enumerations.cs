@@ -6,7 +6,10 @@ public enum UserRole
     MeterReader = 4,
     Guest = 5,
     CustomerServiceOic = 6,
-    Cashier = 7
+    Billing = 7,
+    BillingHead = 8,
+    GeneralServices = 9,
+    Accounting = 10
 }
 
 public enum PenaltyWaiverRequestStatus

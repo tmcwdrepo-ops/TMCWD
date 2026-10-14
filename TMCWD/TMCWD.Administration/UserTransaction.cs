@@ -102,13 +102,16 @@ namespace TMCWD.Administration
         {
             return new List<SelectListItem>()
             {
-                { new SelectListItem(nameof(UserRole.Engineer), ((int)UserRole.Engineer).ToString()) },
-                { new SelectListItem(nameof(UserRole.SuperAdmin), ((int)UserRole.SuperAdmin).ToString()) },
-                { new SelectListItem(nameof(UserRole.Guest), ((int)UserRole.Guest).ToString()) },
-                { new SelectListItem(nameof(UserRole.CustomerRepresentative), ((int)UserRole.CustomerRepresentative).ToString()) },
-                { new SelectListItem(nameof(UserRole.CustomerServiceOic), ((int)UserRole.CustomerServiceOic).ToString()) },
-                { new SelectListItem(nameof(UserRole.Cashier), ((int)UserRole.Cashier).ToString()) },
-                { new SelectListItem(nameof(UserRole.MeterReader), ((int)UserRole.MeterReader).ToString()) }
+                new SelectListItem("Super Admin", ((int)UserRole.SuperAdmin).ToString()),
+                new SelectListItem("Customer Representative", ((int)UserRole.CustomerRepresentative).ToString()),
+                new SelectListItem("Engineer", ((int)UserRole.Engineer).ToString()),
+                new SelectListItem("Meter Reader", ((int)UserRole.MeterReader).ToString()),
+                new SelectListItem("Guest", ((int)UserRole.Guest).ToString()),
+                new SelectListItem("Customer Service OIC", ((int)UserRole.CustomerServiceOic).ToString()),
+                new SelectListItem("Billing", ((int)UserRole.Billing).ToString()),
+                new SelectListItem("Billing Head", ((int)UserRole.BillingHead).ToString()),
+                new SelectListItem("General Services", ((int)UserRole.GeneralServices).ToString()),
+                new SelectListItem("Accounting", ((int)UserRole.Accounting).ToString())
             };
         }
 
